@@ -1,6 +1,18 @@
 -- Create flight database
 CREATE DATABASE flights;
 
+-- Create language table
+CREATE TABLE language (
+	id serial NOT NULL,
+	PRIMARY KEY (id),
+	name character varying NOT NULL,
+	iso2 character varying (2),
+	iso3 character varying (3),
+	original_name character varying,
+	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	last_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Create country table
 CREATE TABLE country (
 	id serial NOT NULL,
@@ -10,9 +22,9 @@ CREATE TABLE country (
 	iso3 character varying (3) NOT NULL,
 	country_code integer NOT NULL,
 	domain_name character varying (10),
-	main_language character varying NOT NULL,
-	secondary_language character varying,
-	tertiary_language character varying,
+	main_language integer REFERENCES language (id),
+	secondary_language integer REFERENCES language (id),
+	tertiary_language integer REFERENCES language (id),
 	currency character varying NOT NULL,
 	nationality character varying NOT NULL,
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

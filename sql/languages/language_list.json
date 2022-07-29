@@ -1,0 +1,26 @@
+[
+    {
+        "name": "English",
+        "iso2": "EN",
+        "iso3": "ENG",
+        "original_name": "English"
+    },
+    {
+        "name": "German",
+        "iso2": "DE",
+        "iso3": "DEU",
+        "original_name": "Deutsch"
+    },
+    {
+        "name": "Tamil",
+        "iso2": "TA",
+        "iso3": "TAM",
+        "original_name": "Tamil"
+    },
+    {
+        "name": "Swedish",
+        "iso2": "SV",
+        "iso3": "SWE",
+        "original_name": "Svenska"
+    }
+]
