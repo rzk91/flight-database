@@ -1,34 +1,34 @@
 import io.circe._
-import io.circe.parser._
-import io.circe.syntax._
 import io.circe.generic.auto._
 import io.circe.generic.extras._
+import io.circe.parser._
+import io.circe.syntax._
+import objects.Currency
 
 import java.io._
-
-import scala.io.Source
 import java.nio.file.Paths
+import scala.io.Source
 
 object JsonToSqlConverter {
 
+  val inputFileName: String = "src/main/resources/sql/currencies/currency_list.json"
+  val outputFileName: String = "src/main/resources/sql/currencies/insert_currencies.sql"
+
   def main(args: Array[String]): Unit = {
-    val jsonContent = Source.fromFile("src/main/resources/sql/languages/language_list.json")
+    val jsonContent = Source.fromFile(inputFileName)
 
-    val languages = decode[List[Language]](jsonContent.getLines().mkString).toOption
+    val jsonList =
+      decode[List[Currency]](jsonContent.getLines().mkString).toOption
 
-    languages.foreach(_.map(_.sqlInsert).foreach(println))
+    jsonList.foreach(_.map(_.sqlInsert).foreach(println))
 
-    val outputFile = new File("src/main/resources/sql/languages/insert_languages.sql")
+    val outputFile = new File(outputFileName)
 
-    val writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(outputFile)))
+    val writer = new BufferedWriter(new FileWriter(outputFile))
 
-    languages.foreach(_.foreach { e =>
-      writer.write(s"${e.sqlInsert}\n")
-    })
+    jsonList.foreach(_.foreach(e => writer.write(s"${e.sqlInsert}\n")))
 
     jsonContent.close()
     writer.close()
   }
-
-
 }

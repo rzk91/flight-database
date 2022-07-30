@@ -3,6 +3,10 @@ CREATE TRIGGER update_language_last_update_time
 BEFORE UPDATE ON language
 FOR EACH ROW EXECUTE PROCEDURE update_last_updated_column();
 
+CREATE TRIGGER update_currency_last_update_time
+BEFORE UPDATE ON currency
+FOR EACH ROW EXECUTE PROCEDURE update_last_updated_column();
+
 CREATE TRIGGER update_country_last_update_time
 BEFORE UPDATE ON country
 FOR EACH ROW EXECUTE PROCEDURE update_last_updated_column();

@@ -5,7 +5,34 @@
         "iso3": "IND",
         "country_code": 91,
         "domain_name": ".co.in",
-        "primary_language": "Hindi",
-        "secondary_language": "English"
+        "main_language": "Hindi",
+        "secondary_language": "English",
+        "tertiary_language": "Tamil",
+        "currency": "Indian Rupee",
+        "nationality": "Indian"
+    },
+    {
+        "name": "Germany",
+        "iso2": "DE",
+        "iso3": "DEU",
+        "country_code": 49,
+        "domain_name": ".de",
+        "main_language": "German",
+        "secondary_language": null,
+        "tertiary_language": null,
+        "currency": "Euro",
+        "nationality": "German"
+    },
+    {
+        "name": "Sweden",
+        "iso2": "SE",
+        "iso3": "SWE",
+        "country_code": 46,
+        "domain_name": ".se",
+        "main_language": "Swedish",
+        "secondary_language": null,
+        "tertiary_language": null,
+        "currency": "Swedish Krona",
+        "nationality": "Swede"
     }
 ]

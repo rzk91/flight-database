@@ -1,0 +1,17 @@
+[
+    {
+        "name": "Indian Rupee",
+        "iso": "INR",
+        "symbol": "₹"
+    },
+    {
+        "name": "Euro",
+        "iso": "EUR",
+        "symbol": "€"
+    },
+    {
+        "name": "Swedish Krona",
+        "iso": "SEK",
+        "symbol": null
+    }
+]

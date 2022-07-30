@@ -13,6 +13,17 @@ CREATE TABLE language (
 	last_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Create currency table
+CREATE TABLE currency (
+	id serial NOT NULL,
+	PRIMARY KEY (id),
+	name character varying NOT NULL,
+	short_form character varying NOT NULL,
+	symbol character varying (1),
+	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	last_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Create country table
 CREATE TABLE country (
 	id serial NOT NULL,
@@ -25,7 +36,7 @@ CREATE TABLE country (
 	main_language integer REFERENCES language (id),
 	secondary_language integer REFERENCES language (id),
 	tertiary_language integer REFERENCES language (id),
-	currency character varying NOT NULL,
+	currency integer REFERNCES currency (id),
 	nationality character varying NOT NULL,
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	last_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
