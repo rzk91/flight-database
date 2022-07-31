@@ -23,11 +23,11 @@ import objects.CirceClass._
     |   VALUES (
     |       '$name', '$iso2', '$iso3', $countryCode,
     |       ${insertWithNull(domainName)},
-    |       ${selectIdStmt("language", mainLanguage)},
+    |       ${selectIdStmt("language", Some(mainLanguage))},
     |       ${selectIdStmt("language", secondaryLanguage)},
     |       ${selectIdStmt("language", tertiaryLanguage)},
     |       ${selectIdStmt("currency", Some(currency))},
     |       '$nationality'
-    |   )
+    |   );
     | """.stripMargin
 }

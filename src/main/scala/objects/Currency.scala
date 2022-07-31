@@ -1,6 +1,6 @@
 package objects
 
-import objects.CirceClass._
+import CirceClass._
 import io.circe.generic.extras._
 
 @ConfiguredJsonCodec final case class Currency(

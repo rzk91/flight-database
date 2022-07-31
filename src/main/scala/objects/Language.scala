@@ -1,7 +1,7 @@
 package objects
 
 import io.circe.generic.extras._
-import objects.CirceClass._
+import CirceClass._
 
 @ConfiguredJsonCodec final case class Language(
   name: String,

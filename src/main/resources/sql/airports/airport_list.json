@@ -1,0 +1,15 @@
+[
+    {
+        "name": "Frankfurt am Main Airport",
+        "icao": "EDDF",
+        "iata": "FRA",
+        "city_id": "Frankfurt am Main",
+        "country_id": "DE",
+        "hub_to": "Lufthansa",
+        "number_of_runways": 4,
+        "number_of_terminals": 3,
+        "capacity": 65000000,
+        "international": true,
+        "junction": true
+    }
+]

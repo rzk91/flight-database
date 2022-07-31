@@ -13,11 +13,12 @@ trait CirceClass {
     key: Option[String],
     keyField: String = "name"
   ): String =
-    key.map(k => s"SELECT id FROM $table WHERE $keyField = $k").orNull
+    key.map(k => s"SELECT id FROM $table WHERE $keyField = \'$k\'").orNull
 }
 
 object CirceClass {
 
+  // Allow for snake_case to camelCase conversion automatically
   implicit val config: Configuration =
     Configuration.default.withSnakeCaseMemberNames
 }

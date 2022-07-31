@@ -3,7 +3,7 @@ import io.circe.generic.auto._
 import io.circe.generic.extras._
 import io.circe.parser._
 import io.circe.syntax._
-import objects.Currency
+import objects._
 
 import java.io._
 import java.nio.file.Paths
@@ -11,14 +11,14 @@ import scala.io.Source
 
 object JsonToSqlConverter {
 
-  val inputFileName: String = "src/main/resources/sql/currencies/currency_list.json"
-  val outputFileName: String = "src/main/resources/sql/currencies/insert_currencies.sql"
+  val inputFileName: String = "src/main/resources/sql/airports/airport_list.json"
+  val outputFileName: String = "src/main/resources/sql/airports/insert_airports.sql"
 
   def main(args: Array[String]): Unit = {
     val jsonContent = Source.fromFile(inputFileName)
 
     val jsonList =
-      decode[List[Currency]](jsonContent.getLines().mkString).toOption
+      decode[List[Airport]](jsonContent.getLines().mkString)
 
     jsonList.foreach(_.map(_.sqlInsert).foreach(println))
 
