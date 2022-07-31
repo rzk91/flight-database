@@ -40,3 +40,17 @@ INSERT INTO country
        'Swede'
    );
  
+INSERT INTO country 
+       (name, iso2, iso3, country_code, domain_name, 
+       main_language, secondary_language, tertiary_language, 
+       currency, nationality)
+   VALUES (
+       'United Arab Emirates', 'AE', 'ARE', 971,
+       '.ae',
+       SELECT id FROM language WHERE name = 'Arabic',
+       SELECT id FROM language WHERE name = 'English',
+       null,
+       SELECT id FROM currency WHERE name = 'Dirham',
+       'Emirati'
+   );
+ 

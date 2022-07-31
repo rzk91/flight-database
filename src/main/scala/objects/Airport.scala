@@ -9,7 +9,7 @@ import CirceClass._
   iata: String,
   cityId: String,
   countryId: String,
-  hubTo: String,
+  hubTo: Option[String],
   @JsonKey("number_of_runways") numRunways: Int,
   @JsonKey("number_of_terminals") numTerminals: Int,
   capacity: Int,
@@ -26,7 +26,7 @@ import CirceClass._
      |       '$name', '$icao', '$iata',
      |       ${selectIdStmt("city", Some(cityId))},
      |       ${selectIdStmt("country", Some(countryId), keyField = "iso2")},
-     |       ${selectIdStmt("fleet", Some(hubTo))},
+     |       ${selectIdStmt("fleet", hubTo)},
      |       $numRunways, $numTerminals, $capacity,
      |       $international, $junction
      |   );

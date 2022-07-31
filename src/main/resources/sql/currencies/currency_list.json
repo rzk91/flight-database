@@ -12,6 +12,11 @@
     {
         "name": "Swedish Krona",
         "iso": "SEK",
+        "symbol": "kr"
+    },
+    {
+        "name": "Dirham",
+        "iso": "AED",
         "symbol": null
     }
 ]

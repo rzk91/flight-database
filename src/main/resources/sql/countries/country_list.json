@@ -34,5 +34,17 @@
         "tertiary_language": null,
         "currency": "Swedish Krona",
         "nationality": "Swede"
+    },
+    {
+        "name": "United Arab Emirates",
+        "iso2": "AE",
+        "iso3": "ARE",
+        "country_code": 971,
+        "domain_name": ".ae",
+        "main_language": "Arabic",
+        "secondary_language": "English",
+        "tertiary_language": null,
+        "currency": "Dirham",
+        "nationality": "Emirati"
     }
 ]

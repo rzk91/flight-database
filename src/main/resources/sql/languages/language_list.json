@@ -22,5 +22,11 @@
         "iso2": "SV",
         "iso3": "SWE",
         "original_name": "Svenska"
+    },
+    {
+        "name": "Arabic",
+        "iso2": "AR",
+        "iso3": "ARA",
+        "original_name": "Al-Arabiyyah"
     }
 ]

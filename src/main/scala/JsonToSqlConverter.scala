@@ -11,14 +11,14 @@ import scala.io.Source
 
 object JsonToSqlConverter {
 
-  val inputFileName: String = "src/main/resources/sql/airports/airport_list.json"
-  val outputFileName: String = "src/main/resources/sql/airports/insert_airports.sql"
+  val inputFileName: String = "src/main/resources/sql/currencies/currency_list.json"
+  val outputFileName: String = "src/main/resources/sql/currencies/insert_currencies.sql"
 
   def main(args: Array[String]): Unit = {
     val jsonContent = Source.fromFile(inputFileName)
 
     val jsonList =
-      decode[List[Airport]](jsonContent.getLines().mkString)
+      decode[List[Currency]](jsonContent.getLines().mkString)
 
     jsonList.foreach(_.map(_.sqlInsert).foreach(println))
 

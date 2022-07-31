@@ -11,5 +11,31 @@
         "capacity": 65000000,
         "international": true,
         "junction": true
+    },
+    {
+        "name": "Kempegowda International Airport",
+        "icao": "VOBL",
+        "iata": "BLR",
+        "city_id": "Bangalore",
+        "country_id": "IN",
+        "hub_to": null,
+        "number_of_runways": 2,
+        "number_of_terminals": 2,
+        "capacity": 16800000,
+        "international": true,
+        "junction": false
+    },
+    {
+        "name": "Dubai International Airport",
+        "icao": "OMDB",
+        "iata": "DXB",
+        "city_id": "Dubai",
+        "country_id": "AE",
+        "hub_to": "Emirates",
+        "number_of_runways": 2,
+        "number_of_terminals": 3,
+        "capacity": 92500000,
+        "international": true,
+        "junction": false
     }
 ]
