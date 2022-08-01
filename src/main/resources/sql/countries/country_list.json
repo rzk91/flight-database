@@ -46,5 +46,29 @@
         "tertiary_language": null,
         "currency": "Dirham",
         "nationality": "Emirati"
+    },
+    {
+        "name": "Netherlands",
+        "iso2": "NL",
+        "iso3": "NLD",
+        "country_code": 31,
+        "domain_name": ".nl",
+        "main_language": "Dutch",
+        "secondary_language": null,
+        "tertiary_language": null,
+        "currency": "Euro",
+        "nationality": "Dutch"
+    },
+    {
+        "name": "United States of America",
+        "iso2": "US",
+        "iso3": "USA",
+        "country_code": 1,
+        "domain_name": ".us",
+        "main_language": "English",
+        "secondary_language": "Spanish",
+        "tertiary_language": null,
+        "currency": "Dollar",
+        "nationality": "US citizen"
     }
 ]

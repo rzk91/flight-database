@@ -1,0 +1,26 @@
+[
+    {
+        "name": "A380",
+        "manufacturer_id": "Airbus",
+        "capacity": 853,
+        "max_range_km": 14800
+    },
+    {
+        "name": "747-8",
+        "manufacturer_id": "Boeing",
+        "capacity": 410,
+        "max_range_km": 14310
+    },
+    {
+        "name": "A320neo",
+        "manufacturer_id": "Airbus",
+        "capacity": 194,
+        "max_range_km": 6300
+    },
+    {
+        "name": "787-8",
+        "manufacturer_id": "Boeing",
+        "capacity": 248,
+        "max_range_km": 13530
+    }
+]

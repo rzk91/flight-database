@@ -30,5 +30,21 @@
         "population": 3490000,
         "latitude": 23.5,
         "longitude": 54.5
+    },
+    {
+        "name": "Leiden",
+        "country_id": "NL",
+        "capital": false,
+        "population": 125100,
+        "latitude": 52.16,
+        "longitude": 4.49
+    },
+    {
+        "name": "Chicago",
+        "country_id": "US",
+        "capital": false,
+        "population": 8901000,
+        "latitude": 41.85003,
+        "longitude": -87.65005
     }
 ]

@@ -28,5 +28,11 @@
         "iso2": "AR",
         "iso3": "ARA",
         "original_name": "Al-Arabiyyah"
+    },
+    {
+        "name": "Dutch",
+        "iso2": "NL",
+        "iso3": "NLD",
+        "original_name": "Nederlands"
     }
 ]

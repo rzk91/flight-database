@@ -18,5 +18,10 @@
         "name": "Dirham",
         "iso": "AED",
         "symbol": null
+    },
+    {
+        "name": "US Dollar",
+        "iso": "USD",
+        "symbol": "$"
     }
 ]

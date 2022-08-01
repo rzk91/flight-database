@@ -32,9 +32,9 @@ BEFORE UPDATE ON airplane
 FOR EACH ROW EXECUTE PROCEDURE update_last_updated_column();
 
 CREATE TRIGGER update_fleet_airplane_last_update_time
-BEFORE UPDATE ON fleet_airplane FOR EACH ROW EXECUTE PROCEDUR
-E update_last_updated_column();
+BEFORE UPDATE ON fleet_airplane
+FOR EACH ROW EXECUTE PROCEDURE update_last_updated_column();
 
 CREATE TRIGGER update_fleet_route_last_update_time
-BEFORE UPDATE ON fleet_route FOR EACH ROW EXECUTE PROCEDURE u
-pdate_last_updated_column();
+BEFORE UPDATE ON fleet_route
+FOR EACH ROW EXECUTE PROCEDURE update_last_updated_column();
