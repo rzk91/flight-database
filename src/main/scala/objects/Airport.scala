@@ -1,7 +1,7 @@
 package objects
 
 import io.circe.generic.extras._
-import CirceClass._
+import DbObject._
 
 @ConfiguredJsonCodec final case class Airport(
   name: String,
@@ -15,7 +15,7 @@ import CirceClass._
   capacity: Int,
   international: Boolean,
   junction: Boolean
-) extends CirceClass {
+) extends DbObject {
 
   def sqlInsert: String =
     s"""INSERT INTO airport 

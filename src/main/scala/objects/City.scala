@@ -1,7 +1,7 @@
 package objects
 
 import io.circe.generic.extras.ConfiguredJsonCodec
-import CirceClass._
+import DbObject._
 
 @ConfiguredJsonCodec final case class City(
   name: String,
@@ -10,7 +10,7 @@ import CirceClass._
   population: Int,
   latitude: Double,
   longitude: Double
-) extends CirceClass {
+) extends DbObject {
 
   def sqlInsert: String =
     s"""INSERT INTO city 

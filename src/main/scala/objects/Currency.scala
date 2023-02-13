@@ -1,13 +1,13 @@
 package objects
 
-import CirceClass._
+import DbObject._
 import io.circe.generic.extras._
 
 @ConfiguredJsonCodec final case class Currency(
   name: String,
   iso: String,
   symbol: Option[String]
-) extends CirceClass {
+) extends DbObject {
 
   def sqlInsert: String =
     s"INSERT INTO currency (name, iso, symbol) " +

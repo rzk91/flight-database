@@ -2,7 +2,7 @@ package objects
 
 import io.circe.generic.extras.Configuration
 
-trait CirceClass {
+trait DbObject {
   def sqlInsert: String
 
   def insertWithNull(field: Option[_]): String =
@@ -16,7 +16,7 @@ trait CirceClass {
     key.map(k => s"SELECT id FROM $table WHERE $keyField = \'$k\'").orNull
 }
 
-object CirceClass {
+object DbObject {
 
   // Allow for snake_case to camelCase conversion automatically
   implicit val config: Configuration =
