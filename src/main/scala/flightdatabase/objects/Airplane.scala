@@ -1,7 +1,7 @@
-package objects
+package flightdatabase.objects
 
 import io.circe.generic.extras._
-import DbObject._
+import flightdatabase.objects.DbObject._
 
 @ConfiguredJsonCodec final case class Airplane(
   name: String,

@@ -38,3 +38,23 @@ INSERT INTO city
        3490000, 23.5, 54.5
    );
  
+INSERT INTO city 
+       (name, country_id, capital, population, 
+       latitude, longitude)
+   VALUES (
+       'Leiden',
+       SELECT id FROM country WHERE iso2 = 'NL',
+       false,
+       125100, 52.16, 4.49
+   );
+ 
+INSERT INTO city 
+       (name, country_id, capital, population, 
+       latitude, longitude)
+   VALUES (
+       'Chicago',
+       SELECT id FROM country WHERE iso2 = 'US',
+       false,
+       8901000, 41.85003, -87.65005
+   );
+ 

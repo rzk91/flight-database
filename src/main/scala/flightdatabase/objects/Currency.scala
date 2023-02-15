@@ -1,6 +1,6 @@
-package objects
+package flightdatabase.objects
 
-import DbObject._
+import flightdatabase.objects.DbObject._
 import io.circe.generic.extras._
 
 @ConfiguredJsonCodec final case class Currency(

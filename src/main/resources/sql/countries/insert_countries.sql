@@ -54,3 +54,31 @@ INSERT INTO country
        'Emirati'
    );
  
+INSERT INTO country 
+       (name, iso2, iso3, country_code, domain_name, 
+       main_language, secondary_language, tertiary_language, 
+       currency, nationality)
+   VALUES (
+       'Netherlands', 'NL', 'NLD', 31,
+       '.nl',
+       SELECT id FROM language WHERE name = 'Dutch',
+       null,
+       null,
+       SELECT id FROM currency WHERE name = 'Euro',
+       'Dutch'
+   );
+ 
+INSERT INTO country 
+       (name, iso2, iso3, country_code, domain_name, 
+       main_language, secondary_language, tertiary_language, 
+       currency, nationality)
+   VALUES (
+       'United States of America', 'US', 'USA', 1,
+       '.us',
+       SELECT id FROM language WHERE name = 'English',
+       SELECT id FROM language WHERE name = 'Spanish',
+       null,
+       SELECT id FROM currency WHERE name = 'Dollar',
+       'US citizen'
+   );
+ 

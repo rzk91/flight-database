@@ -1,4 +1,4 @@
-package objects
+package flightdatabase.objects
 
 import io.circe.generic.extras.Configuration
 
