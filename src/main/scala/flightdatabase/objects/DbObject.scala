@@ -13,7 +13,7 @@ trait DbObject {
     key: Option[String],
     keyField: String = "name"
   ): String =
-    key.map(k => s"SELECT id FROM $table WHERE $keyField = \'$k\'").orNull
+    key.map(k => s"(SELECT id FROM $table WHERE $keyField = \'$k\')").orNull
 }
 
 object DbObject {

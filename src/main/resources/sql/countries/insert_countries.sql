@@ -5,10 +5,10 @@ INSERT INTO country
    VALUES (
        'India', 'IN', 'IND', 91,
        '.co.in',
-       SELECT id FROM language WHERE name = 'Hindi',
-       SELECT id FROM language WHERE name = 'English',
-       SELECT id FROM language WHERE name = 'Tamil',
-       SELECT id FROM currency WHERE name = 'Indian Rupee',
+       (SELECT id FROM language WHERE name = 'Hindi'),
+       (SELECT id FROM language WHERE name = 'English'),
+       (SELECT id FROM language WHERE name = 'Tamil'),
+       (SELECT id FROM currency WHERE name = 'Indian Rupee'),
        'Indian'
    );
  
@@ -19,10 +19,10 @@ INSERT INTO country
    VALUES (
        'Germany', 'DE', 'DEU', 49,
        '.de',
-       SELECT id FROM language WHERE name = 'German',
+       (SELECT id FROM language WHERE name = 'German'),
        null,
        null,
-       SELECT id FROM currency WHERE name = 'Euro',
+       (SELECT id FROM currency WHERE name = 'Euro'),
        'German'
    );
  
@@ -33,10 +33,10 @@ INSERT INTO country
    VALUES (
        'Sweden', 'SE', 'SWE', 46,
        '.se',
-       SELECT id FROM language WHERE name = 'Swedish',
+       (SELECT id FROM language WHERE name = 'Swedish'),
        null,
        null,
-       SELECT id FROM currency WHERE name = 'Swedish Krona',
+       (SELECT id FROM currency WHERE name = 'Swedish Krona'),
        'Swede'
    );
  
@@ -47,10 +47,10 @@ INSERT INTO country
    VALUES (
        'United Arab Emirates', 'AE', 'ARE', 971,
        '.ae',
-       SELECT id FROM language WHERE name = 'Arabic',
-       SELECT id FROM language WHERE name = 'English',
+       (SELECT id FROM language WHERE name = 'Arabic'),
+       (SELECT id FROM language WHERE name = 'English'),
        null,
-       SELECT id FROM currency WHERE name = 'Dirham',
+       (SELECT id FROM currency WHERE name = 'Dirham'),
        'Emirati'
    );
  
@@ -61,10 +61,10 @@ INSERT INTO country
    VALUES (
        'Netherlands', 'NL', 'NLD', 31,
        '.nl',
-       SELECT id FROM language WHERE name = 'Dutch',
+       (SELECT id FROM language WHERE name = 'Dutch'),
        null,
        null,
-       SELECT id FROM currency WHERE name = 'Euro',
+       (SELECT id FROM currency WHERE name = 'Euro'),
        'Dutch'
    );
  
@@ -75,10 +75,10 @@ INSERT INTO country
    VALUES (
        'United States of America', 'US', 'USA', 1,
        '.us',
-       SELECT id FROM language WHERE name = 'English',
-       SELECT id FROM language WHERE name = 'Spanish',
+       (SELECT id FROM language WHERE name = 'English'),
+       (SELECT id FROM language WHERE name = 'Spanish'),
        null,
-       SELECT id FROM currency WHERE name = 'Dollar',
+       (SELECT id FROM currency WHERE name = 'Dollar'),
        'US citizen'
    );
  

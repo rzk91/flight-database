@@ -34,5 +34,11 @@
         "iso2": "NL",
         "iso3": "NLD",
         "original_name": "Nederlands"
+    },
+    {
+        "name": "Hindi",
+        "iso2": "HI",
+        "iso3": "HIN",
+        "original_name": "Hindi"
     }
 ]
