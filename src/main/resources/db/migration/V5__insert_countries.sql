@@ -1,7 +1,7 @@
 INSERT INTO country 
        (name, iso2, iso3, country_code, domain_name, 
-       main_language, secondary_language, tertiary_language, 
-       currency, nationality)
+       main_language_id, secondary_language_id, tertiary_language_id, 
+       currency_id, nationality)
    VALUES (
        'India', 'IN', 'IND', 91,
        '.co.in',
@@ -14,8 +14,8 @@ INSERT INTO country
  
 INSERT INTO country 
        (name, iso2, iso3, country_code, domain_name, 
-       main_language, secondary_language, tertiary_language, 
-       currency, nationality)
+       main_language_id, secondary_language_id, tertiary_language_id, 
+       currency_id, nationality)
    VALUES (
        'Germany', 'DE', 'DEU', 49,
        '.de',
@@ -28,8 +28,8 @@ INSERT INTO country
  
 INSERT INTO country 
        (name, iso2, iso3, country_code, domain_name, 
-       main_language, secondary_language, tertiary_language, 
-       currency, nationality)
+       main_language_id, secondary_language_id, tertiary_language_id, 
+       currency_id, nationality)
    VALUES (
        'Sweden', 'SE', 'SWE', 46,
        '.se',
@@ -42,8 +42,8 @@ INSERT INTO country
  
 INSERT INTO country 
        (name, iso2, iso3, country_code, domain_name, 
-       main_language, secondary_language, tertiary_language, 
-       currency, nationality)
+       main_language_id, secondary_language_id, tertiary_language_id, 
+       currency_id, nationality)
    VALUES (
        'United Arab Emirates', 'AE', 'ARE', 971,
        '.ae',
@@ -56,8 +56,8 @@ INSERT INTO country
  
 INSERT INTO country 
        (name, iso2, iso3, country_code, domain_name, 
-       main_language, secondary_language, tertiary_language, 
-       currency, nationality)
+       main_language_id, secondary_language_id, tertiary_language_id, 
+       currency_id, nationality)
    VALUES (
        'Netherlands', 'NL', 'NLD', 31,
        '.nl',
@@ -70,8 +70,8 @@ INSERT INTO country
  
 INSERT INTO country 
        (name, iso2, iso3, country_code, domain_name, 
-       main_language, secondary_language, tertiary_language, 
-       currency, nationality)
+       main_language_id, secondary_language_id, tertiary_language_id, 
+       currency_id, nationality)
    VALUES (
        'United States of America', 'US', 'USA', 1,
        '.us',

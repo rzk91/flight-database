@@ -14,7 +14,7 @@ import flightdatabase.objects.DbObject._
 
   def sqlInsert: String =
     s"""INSERT INTO fleet 
-     |       (name, iso2, iso3, call_sign, hub_at, country_id)
+     |       (name, iso2, iso3, call_sign, hub_airport_id, country_id)
      |   VALUES (
      |       '$name', '$iso2', '$iso3', '$callSign',
      |       ${selectIdStmt("airport", Some(hubAt), keyField = "iata")},

@@ -1,0 +1,22 @@
+[
+    {
+        "fleet_id": "Lufthansa",
+        "airplane_id": "747-8"
+    },
+    {
+        "fleet_id": "Lufthansa",
+        "airplane_id": "A380"
+    },
+    {
+        "fleet_id": "Lufthansa",
+        "airplane_id": "A320neo"
+    },
+    {
+        "fleet_id": "Emirates",
+        "airplane_id": "A380"
+    },
+    {
+        "fleet_id": "Emirates",
+        "airplane_id": "A320neo"
+    }
+]

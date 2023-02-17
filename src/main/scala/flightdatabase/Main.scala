@@ -6,8 +6,8 @@ import com.typesafe.scalalogging.LazyLogging
 object Main extends LazyLogging {
 
   // TODO: Move these to application.conf
-  private val initialise: Boolean = true
-  private val clean: Boolean = true
+  private val initialise: Boolean = false
+  private val clean: Boolean = false
 
   def main(args: Array[String]): Unit = {
     if (initialise) setupScripts()

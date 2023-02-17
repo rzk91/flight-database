@@ -18,8 +18,8 @@ import flightdatabase.objects.DbObject._
   def sqlInsert: String =
     s"""INSERT INTO country 
     |       (name, iso2, iso3, country_code, domain_name, 
-    |       main_language, secondary_language, tertiary_language, 
-    |       currency, nationality)
+    |       main_language_id, secondary_language_id, tertiary_language_id, 
+    |       currency_id, nationality)
     |   VALUES (
     |       '$name', '$iso2', '$iso3', $countryCode,
     |       ${insertWithNull(domainName)},

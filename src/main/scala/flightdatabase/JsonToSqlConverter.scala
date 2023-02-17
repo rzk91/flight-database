@@ -28,38 +28,40 @@ object JsonToSqlConverter extends DbInitiation with LazyLogging {
       "manufacturers",
       "airports",
       "fleets",
-      "airplanes"
+      "airplanes",
+      "fleet_airplanes",
+      "fleet_routes"
     )
 
   def setupScripts(): Unit = {
     val jsonFiles = relevantFiles(relevantDbObjects)
 
-    jsonFiles
-    .zipWithIndex
-      .flatMap { 
+    jsonFiles.zipWithIndex
+      .flatMap {
         case (p, idx) =>
-        val dbObject = p.baseName
-        val versionIdx = idx + 3 // V1 and V2 are for init scripts
-        val content = {
-          val j = Source.fromFile(p.absolutePath)
-          val out = j.getLines().mkString
-          j.close()
-          out
-        }
-        val jsons: Option[List[DbObject]] = dbObject match {
-          case "airplanes"  => decode[List[Airplane]](content).toOptionWithDebug
-          case "airports"   => decode[List[Airport]](content).toOptionWithDebug
-          case "cities"     => decode[List[City]](content).toOptionWithDebug
-          case "countries"  => decode[List[Country]](content).toOptionWithDebug
-          case "currencies" => decode[List[Currency]](content).toOptionWithDebug
-          case "fleets"     => decode[List[Fleet]](content).toOptionWithDebug
-          case "languages"  => decode[List[Language]](content).toOptionWithDebug
-          case "manufacturers" =>
-            decode[List[Manufacturer]](content).toOptionWithDebug
-          case _ => None
-        }
+          val dbObject = p.baseName
+          val versionIdx = idx + 3 // V1 and V2 are for init scripts
+          val content = {
+            val j = Source.fromFile(p.absolutePath)
+            val out = j.getLines().mkString
+            j.close()
+            out
+          }
+          val jsons: Option[List[DbObject]] = dbObject match {
+            case "airplanes"       => decode[List[Airplane]](content).toOptionWithDebug
+            case "airports"        => decode[List[Airport]](content).toOptionWithDebug
+            case "cities"          => decode[List[City]](content).toOptionWithDebug
+            case "countries"       => decode[List[Country]](content).toOptionWithDebug
+            case "currencies"      => decode[List[Currency]](content).toOptionWithDebug
+            case "fleets"          => decode[List[Fleet]](content).toOptionWithDebug
+            case "languages"       => decode[List[Language]](content).toOptionWithDebug
+            case "manufacturers"   => decode[List[Manufacturer]](content).toOptionWithDebug
+            case "fleet_airplanes" => decode[List[FleetAirplane]](content).toOptionWithDebug
+            case "fleet_routes"    => decode[List[FleetRoute]](content).toOptionWithDebug
+            case _                 => None
+          }
 
-        jsons.map((versionIdx, dbObject, _))
+          jsons.map((versionIdx, dbObject, _))
       }
       .foreach {
         case (versionIdx, dbObject, jsonList) =>
@@ -76,7 +78,7 @@ object JsonToSqlConverter extends DbInitiation with LazyLogging {
 
   def relevantFiles(dbObjects: List[String]): List[Path] = {
     val files = Files
-      .walk(Paths.get(s"${resourcePath}/json/"))
+      .walk(Paths.get(s"$resourcePath/json/"))
       .filter(_.jsonFile)
       .iterator
       .asScala

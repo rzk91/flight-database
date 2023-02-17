@@ -44,10 +44,10 @@ CREATE TABLE country (
 	iso3 character varying (3) NOT NULL,
 	country_code integer NOT NULL,
 	domain_name character varying (10),
-	main_language integer REFERENCES language (id),
-	secondary_language integer REFERENCES language (id),
-	tertiary_language integer REFERENCES language (id),
-	currency integer REFERENCES currency (id),
+	main_language_id integer REFERENCES language (id),
+	secondary_language_id integer REFERENCES language (id),
+	tertiary_language_id integer REFERENCES language (id),
+	currency_id integer REFERENCES currency (id),
 	nationality character varying NOT NULL,
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	last_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -93,7 +93,7 @@ CREATE TABLE fleet (
 	iso2 character varying (2) NOT NULL,
 	iso3 character varying (3) NOT NULL,
 	call_sign character varying,
-	hub_at integer REFERENCES airport (id),
+	hub_airport_id integer REFERENCES airport (id),
 	country_id integer REFERENCES country (id),
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	last_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -104,7 +104,7 @@ CREATE TABLE manufacturer (
 	id serial NOT NULL,
 	PRIMARY KEY (id),
 	name character varying NOT NULL,
-	based_in integer REFERENCES city (id),
+	city_based_in integer REFERENCES city (id),
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	last_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -135,11 +135,10 @@ CREATE TABLE fleet_airplane (
 CREATE TABLE fleet_route (
 	id serial NOT NULL,
 	PRIMARY KEY (id),
-	fleet_id integer REFERENCES fleet (id) NOT NULL,
-	route_number INTEGER NOT NULL,
-	start integer REFERENCES airport (id) NOT NULL,
-	destination integer REFERENCES airport (id) NOT NULL,
-	airplane_id integer REFERENCES airplane (id) NOT NULL,
+	fleet_airplane_id integer REFERENCES fleet_airplane (id) NOT NULL,
+	route_number character varying (10) NOT NULL,
+	start_airport_id integer REFERENCES airport (id) NOT NULL,
+	destination_airport_id integer REFERENCES airport (id) NOT NULL,
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
 	last_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 );

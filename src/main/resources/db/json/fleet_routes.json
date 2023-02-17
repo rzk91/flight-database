@@ -1,0 +1,44 @@
+[
+    {
+        "fleet_id": "Lufthansa",
+        "airplane_id": "747-8",
+        "route_number": "LH754",
+        "start": "FRA",
+        "destination": "BLR"
+    },
+    {
+        "fleet_id": "Lufthansa",
+        "airplane_id": "747-8",
+        "route_number": "LH755",
+        "start": "BLR",
+        "destination": "FRA"
+    },
+    {
+        "fleet_id": "Emirates",
+        "airplane_id": "A320neo",
+        "route_number": "EK565",
+        "start": "BLR",
+        "destination": "DXB"
+    },
+    {
+        "fleet_id": "Emirates",
+        "airplane_id": "A320neo",
+        "route_number": "EK566",
+        "start": "DXB",
+        "destination": "BLR"
+    },
+    {
+        "fleet_id": "Emirates",
+        "airplane_id": "A380",
+        "route_number": "EK47",
+        "start": "DXB",
+        "destination": "FRA"
+    },
+    {
+        "fleet_id": "Emirates",
+        "airplane_id": "A380",
+        "route_number": "EK46",
+        "start": "FRA",
+        "destination": "DXB"
+    }
+]
