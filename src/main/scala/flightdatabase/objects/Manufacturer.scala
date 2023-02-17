@@ -10,6 +10,6 @@ import flightdatabase.objects.DbObject._
 
   def sqlInsert: String =
     s"""INSERT INTO manufacturer (name, based_in)
-        | VALUES ($name, ${selectIdStmt("city", Some(basedIn))});
+        | VALUES ('$name', ${selectIdStmt("city", Some(basedIn))});
         """.stripMargin
 }

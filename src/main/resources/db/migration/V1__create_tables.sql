@@ -1,12 +1,23 @@
--- Create flight database
-CREATE DATABASE flights;
+-- Create flight database (this is done manually)
+-- CREATE DATABASE flights;
+
+DROP TABLE IF EXISTS fleet_route;
+DROP TABLE IF EXISTS fleet_airplane;
+DROP TABLE IF EXISTS fleet;
+DROP TABLE IF EXISTS manufacturer;
+DROP TABLE IF EXISTS airplane;
+DROP TABLE IF EXISTS airport;
+DROP TABLE IF EXISTS city;
+DROP TABLE IF EXISTS country;
+DROP TABLE IF EXISTS currency;
+DROP TABLE IF EXISTS language;
 
 -- Create language table
 CREATE TABLE language (
 	id serial NOT NULL,
 	PRIMARY KEY (id),
 	name character varying NOT NULL,
-	iso2 character varying (2),
+	iso2 character varying (2) NOT NULL,
 	iso3 character varying (3),
 	original_name character varying,
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -18,8 +29,8 @@ CREATE TABLE currency (
 	id serial NOT NULL,
 	PRIMARY KEY (id),
 	name character varying NOT NULL,
-	short_form character varying NOT NULL,
-	symbol character varying (1),
+	iso character varying NOT NULL,
+	symbol character varying (3),
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	last_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -36,7 +47,7 @@ CREATE TABLE country (
 	main_language integer REFERENCES language (id),
 	secondary_language integer REFERENCES language (id),
 	tertiary_language integer REFERENCES language (id),
-	currency integer REFERNCES currency (id),
+	currency integer REFERENCES currency (id),
 	nationality character varying NOT NULL,
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	last_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -47,23 +58,11 @@ CREATE TABLE city (
 	id serial NOT NULL,
 	PRIMARY KEY (id),
 	name character varying NOT NULL,
-	country_id integer REFERENCES country (id),
+	country_id integer REFERENCES country (id) NOT NULL,
 	capital boolean NOT NULL,
 	population integer NOT NULL,
 	latitude numeric NOT NULL,
 	longitude numeric NOT NULL,
-	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	last_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Create fleet table
-CREATE TABLE fleet (
-	id serial NOT NULL,
-	PRIMARY KEY (id),
-	name character varying NOT NULL,
-	call_name character varying,
-	hub_at integer REFERENCES airport (id),
-	country_id integer REFERENCES country (id),
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	last_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -77,12 +76,25 @@ CREATE TABLE airport (
 	iata character varying (3) NOT NULL,
 	city_id integer REFERENCES city (id),
 	country_id integer REFERENCES country (id),
-	hub_to integer REFERENCES fleet (id),
 	number_of_runways integer NOT NULL,
 	number_of_terminals integer NOT NULL,
 	capacity integer,
 	international boolean NOT NULL,
 	junction boolean NOT NULL,
+	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	last_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create fleet table
+CREATE TABLE fleet (
+	id serial NOT NULL,
+	PRIMARY KEY (id),
+	name character varying NOT NULL,
+	iso2 character varying (2) NOT NULL,
+	iso3 character varying (3) NOT NULL,
+	call_sign character varying,
+	hub_at integer REFERENCES airport (id),
+	country_id integer REFERENCES country (id),
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	last_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -104,7 +116,30 @@ CREATE TABLE airplane (
 	name character varying NOT NULL,
 	manufacturer_id integer REFERENCES manufacturer (id),
 	capacity integer NOT NULL,
-	max_range_km  integer NOT NULL,
+	max_range_in_km integer NOT NULL,
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	last_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create fleet-airplane table
+CREATE TABLE fleet_airplane (
+	id serial NOT NULL,
+	PRIMARY KEY (id),
+	fleet_id integer REFERENCES fleet (id),
+	airplane_id integer REFERENCES airplane (id),
+	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	last_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create fleet-route table
+CREATE TABLE fleet_route (
+	id serial NOT NULL,
+	PRIMARY KEY (id),
+	fleet_id integer REFERENCES fleet (id) NOT NULL,
+	route_number INTEGER NOT NULL,
+	start integer REFERENCES airport (id) NOT NULL,
+	destination integer REFERENCES airport (id) NOT NULL,
+	airplane_id integer REFERENCES airplane (id) NOT NULL,
+	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+	last_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
 );

@@ -8,7 +8,7 @@
         "main_language": "Hindi",
         "secondary_language": "English",
         "tertiary_language": "Tamil",
-        "currency": "Indian Rupee",
+        "currency": "INR",
         "nationality": "Indian"
     },
     {
@@ -20,7 +20,7 @@
         "main_language": "German",
         "secondary_language": null,
         "tertiary_language": null,
-        "currency": "Euro",
+        "currency": "EUR",
         "nationality": "German"
     },
     {
@@ -32,7 +32,7 @@
         "main_language": "Swedish",
         "secondary_language": null,
         "tertiary_language": null,
-        "currency": "Swedish Krona",
+        "currency": "SEK",
         "nationality": "Swede"
     },
     {
@@ -44,7 +44,7 @@
         "main_language": "Arabic",
         "secondary_language": "English",
         "tertiary_language": null,
-        "currency": "Dirham",
+        "currency": "AED",
         "nationality": "Emirati"
     },
     {
@@ -56,7 +56,7 @@
         "main_language": "Dutch",
         "secondary_language": null,
         "tertiary_language": null,
-        "currency": "Euro",
+        "currency": "EUR",
         "nationality": "Dutch"
     },
     {
@@ -68,7 +68,7 @@
         "main_language": "English",
         "secondary_language": "Spanish",
         "tertiary_language": null,
-        "currency": "Dollar",
+        "currency": "USD",
         "nationality": "US citizen"
     }
 ]

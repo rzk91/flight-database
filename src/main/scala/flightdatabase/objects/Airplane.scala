@@ -7,16 +7,16 @@ import flightdatabase.objects.DbObject._
   name: String,
   manufacturerId: String,
   capacity: Int,
-  maxRangeKm: Int
+  @JsonKey("max_range_in_km") maxRangeInKm: Int
 ) extends DbObject {
 
   def sqlInsert: String =
     s"""INSERT INTO airplane 
-     |       (name, manufacturer_id, capacity, maxRangeKm)
+     |       (name, manufacturer_id, capacity, max_range_in_km)
      |   VALUES (
      |       '$name',
      |       ${selectIdStmt("manufacturer", Some(manufacturerId))},
-     |       $capacity, $maxRangeKm
+     |       $capacity, $maxRangeInKm
      |   );
      | """.stripMargin
 }

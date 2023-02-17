@@ -15,35 +15,38 @@ import scala.io.Source
 import scala.jdk.CollectionConverters._
 import com.typesafe.scalalogging.LazyLogging
 
-object JsonToSqlConverter extends LazyLogging {
+object JsonToSqlConverter extends DbInitiation with LazyLogging {
 
-  private val resourceSqlPath: String = "src/main/resources/sql/"
+  private val resourcePath: String = "src/main/resources/db"
 
-  private val relevantFolders: Set[String] =
-    Set(
-      "airplanes",
-      "airports",
-      "cities",
-      "countries",
-      "currencies",
-      "fleets",
+  private val relevantDbObjects: List[String] =
+    List(
       "languages",
-      "manufacturers"
+      "currencies",
+      "countries",
+      "cities",
+      "manufacturers",
+      "airports",
+      "fleets",
+      "airplanes"
     )
 
-  def main(args: Array[String]): Unit = {
-    val jsonFiles = relevantFiles(relevantFolders)
+  def setupScripts(): Unit = {
+    val jsonFiles = relevantFiles(relevantDbObjects)
 
     jsonFiles
-      .flatMap { p =>
-        val folder = p.folderName
+    .zipWithIndex
+      .flatMap { 
+        case (p, idx) =>
+        val dbObject = p.baseName
+        val versionIdx = idx + 3 // V1 and V2 are for init scripts
         val content = {
           val j = Source.fromFile(p.absolutePath)
           val out = j.getLines().mkString
           j.close()
           out
         }
-        val jsons: Option[List[DbObject]] = folder match {
+        val jsons: Option[List[DbObject]] = dbObject match {
           case "airplanes"  => decode[List[Airplane]](content).toOptionWithDebug
           case "airports"   => decode[List[Airport]](content).toOptionWithDebug
           case "cities"     => decode[List[City]](content).toOptionWithDebug
@@ -56,15 +59,14 @@ object JsonToSqlConverter extends LazyLogging {
           case _ => None
         }
 
-        jsons.map((folder, _))
+        jsons.map((versionIdx, dbObject, _))
       }
       .foreach {
-        case (folder, jsonList) =>
+        case (versionIdx, dbObject, jsonList) =>
           logger.debug(
-            s"[$folder] Converting to SQL insert statements: $jsonList"
+            s"[$dbObject] Converting to SQL insert statements: $jsonList"
           )
-          val outFile = new File(outputFile(folder))
-          val writer = new BufferedWriter(new FileWriter(outFile))
+          val writer = writerFor(outputFile(versionIdx, dbObject))
           jsonList.foreach(e => writer.write(s"${e.sqlInsert}\n"))
           writer.close()
       }
@@ -72,18 +74,22 @@ object JsonToSqlConverter extends LazyLogging {
     logger.info(s"Successfully created ${jsonFiles.length} SQL scripts!")
   }
 
-  def relevantFiles(folders: Set[String]): List[Path] = {
+  def relevantFiles(dbObjects: List[String]): List[Path] = {
     val files = Files
-      .walk(Paths.get(resourceSqlPath))
-      .filter(p => folders(p.folderName))
+      .walk(Paths.get(s"${resourcePath}/json/"))
       .filter(_.jsonFile)
+      .iterator
+      .asScala
+      .toList
 
-    files.iterator.asScala.toList
+    val filesWithFolder = files.map(_.baseName).zip(files).toMap
+
+    dbObjects.flatMap(filesWithFolder.get)
   }
 
-  def inputFile(folder: String): String =
-    s"$resourceSqlPath$folder/$folder.json"
+  def outputFile(idx: Int, dbObject: String): String =
+    s"$resourcePath/migration/V${idx}__insert_$dbObject.sql"
 
-  def outputFile(folder: String): String =
-    s"$resourceSqlPath$folder/insert_$folder.sql"
+  def writerFor(file: String): BufferedWriter =
+    new BufferedWriter(new FileWriter(new File(file)))
 }

@@ -17,7 +17,7 @@ import flightdatabase.objects.DbObject._
      |       (name, iso2, iso3, call_sign, hub_at, country_id)
      |   VALUES (
      |       '$name', '$iso2', '$iso3', '$callSign',
-     |       ${selectIdStmt("city", Some(hubAt))},
+     |       ${selectIdStmt("airport", Some(hubAt), keyField = "iata")},
      |       ${selectIdStmt("country", Some(countryId), keyField = "iso2")}
      |   );
      | """.stripMargin

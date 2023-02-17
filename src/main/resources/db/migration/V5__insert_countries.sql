@@ -8,7 +8,7 @@ INSERT INTO country
        (SELECT id FROM language WHERE name = 'Hindi'),
        (SELECT id FROM language WHERE name = 'English'),
        (SELECT id FROM language WHERE name = 'Tamil'),
-       (SELECT id FROM currency WHERE name = 'Indian Rupee'),
+       (SELECT id FROM currency WHERE iso = 'INR'),
        'Indian'
    );
  
@@ -22,7 +22,7 @@ INSERT INTO country
        (SELECT id FROM language WHERE name = 'German'),
        null,
        null,
-       (SELECT id FROM currency WHERE name = 'Euro'),
+       (SELECT id FROM currency WHERE iso = 'EUR'),
        'German'
    );
  
@@ -36,7 +36,7 @@ INSERT INTO country
        (SELECT id FROM language WHERE name = 'Swedish'),
        null,
        null,
-       (SELECT id FROM currency WHERE name = 'Swedish Krona'),
+       (SELECT id FROM currency WHERE iso = 'SEK'),
        'Swede'
    );
  
@@ -50,7 +50,7 @@ INSERT INTO country
        (SELECT id FROM language WHERE name = 'Arabic'),
        (SELECT id FROM language WHERE name = 'English'),
        null,
-       (SELECT id FROM currency WHERE name = 'Dirham'),
+       (SELECT id FROM currency WHERE iso = 'AED'),
        'Emirati'
    );
  
@@ -64,7 +64,7 @@ INSERT INTO country
        (SELECT id FROM language WHERE name = 'Dutch'),
        null,
        null,
-       (SELECT id FROM currency WHERE name = 'Euro'),
+       (SELECT id FROM currency WHERE iso = 'EUR'),
        'Dutch'
    );
  
@@ -78,7 +78,7 @@ INSERT INTO country
        (SELECT id FROM language WHERE name = 'English'),
        (SELECT id FROM language WHERE name = 'Spanish'),
        null,
-       (SELECT id FROM currency WHERE name = 'Dollar'),
+       (SELECT id FROM currency WHERE iso = 'USD'),
        'US citizen'
    );
  

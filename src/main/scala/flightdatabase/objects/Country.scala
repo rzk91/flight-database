@@ -26,7 +26,7 @@ import flightdatabase.objects.DbObject._
     |       ${selectIdStmt("language", Some(mainLanguage))},
     |       ${selectIdStmt("language", secondaryLanguage)},
     |       ${selectIdStmt("language", tertiaryLanguage)},
-    |       ${selectIdStmt("currency", Some(currency))},
+    |       ${selectIdStmt("currency", Some(currency), keyField = "iso")},
     |       '$nationality'
     |   );
     | """.stripMargin

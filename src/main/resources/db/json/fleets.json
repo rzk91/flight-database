@@ -4,7 +4,7 @@
         "iso2": "LH",
         "iso3": "DLH",
         "call_sign": "Lufthansa",
-        "hub_at": "Frankfurt am Main",
+        "hub_at": "FRA",
         "country_id": "DE"
     },
     {
@@ -12,7 +12,7 @@
         "iso2": "EK",
         "iso3": "UAE",
         "call_sign": "Emirates",
-        "hub_at": "Dubai",
+        "hub_at": "DXB",
         "country_id": "AE"
     }
 ]

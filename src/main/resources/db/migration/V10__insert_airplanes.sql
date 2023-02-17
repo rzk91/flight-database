@@ -1,5 +1,5 @@
 INSERT INTO airplane 
-       (name, manufacturer_id, capacity, maxRangeKm)
+       (name, manufacturer_id, capacity, max_range_in_km)
    VALUES (
        'A380',
        (SELECT id FROM manufacturer WHERE name = 'Airbus'),
@@ -7,7 +7,7 @@ INSERT INTO airplane
    );
  
 INSERT INTO airplane 
-       (name, manufacturer_id, capacity, maxRangeKm)
+       (name, manufacturer_id, capacity, max_range_in_km)
    VALUES (
        '747-8',
        (SELECT id FROM manufacturer WHERE name = 'Boeing'),
@@ -15,7 +15,7 @@ INSERT INTO airplane
    );
  
 INSERT INTO airplane 
-       (name, manufacturer_id, capacity, maxRangeKm)
+       (name, manufacturer_id, capacity, max_range_in_km)
    VALUES (
        'A320neo',
        (SELECT id FROM manufacturer WHERE name = 'Airbus'),
@@ -23,7 +23,7 @@ INSERT INTO airplane
    );
  
 INSERT INTO airplane 
-       (name, manufacturer_id, capacity, maxRangeKm)
+       (name, manufacturer_id, capacity, max_range_in_km)
    VALUES (
        '787-8',
        (SELECT id FROM manufacturer WHERE name = 'Boeing'),
