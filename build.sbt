@@ -20,7 +20,7 @@ val otherDependencies = Seq(
   "com.typesafe.scala-logging" %% "scala-logging" % "3.9.4",
   "commons-io"                 % "commons-io"     % "2.11.0",
   "org.postgresql"             % "postgresql"     % "42.2.5" % "provided",
-  "org.flywaydb"               % "flyway-core"    % "7.0.4"
+  "org.flywaydb"               % "flyway-core"    % "9.14.1"
 )
 
 scalacOptions ++= Seq(
