@@ -1,11 +1,12 @@
-package flightdatabase
+package flightdatabase.db
 
 import io.circe._
 import io.circe.generic.auto._
 import io.circe.generic.extras._
 import io.circe.parser._
 import io.circe.syntax._
-import flightdatabase.objects._
+import flightdatabase.db.DbInitiation
+import flightdatabase.db.objects._
 import flightdatabase.utils.FileHelper._
 import flightdatabase.utils.CollectionsHelper._
 

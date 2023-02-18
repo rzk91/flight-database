@@ -1,4 +1,4 @@
-package flightdatabase
+package flightdatabase.db
 
 import flightdatabase.config.Configuration.dbConfig._
 import flightdatabase.config.Configuration.setupConfig

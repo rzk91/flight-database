@@ -1,7 +1,7 @@
-package flightdatabase.objects
+package flightdatabase.db.objects
 
 import io.circe.generic.extras.ConfiguredJsonCodec
-import flightdatabase.objects.DbObject._
+import flightdatabase.db.objects.DbObject._
 
 @ConfiguredJsonCodec final case class Fleet(
   name: String,

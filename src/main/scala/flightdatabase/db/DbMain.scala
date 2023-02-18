@@ -1,10 +1,10 @@
-package flightdatabase
+package flightdatabase.db
 
 import flightdatabase.config.Configuration.setupConfig.createScripts
-import JsonToSqlConverter._
+import flightdatabase.db.JsonToSqlConverter._
 import com.typesafe.scalalogging.LazyLogging
 
-object Main extends LazyLogging {
+object DbMain extends LazyLogging {
 
   def main(args: Array[String]): Unit = {
     if (createScripts) setupScripts()
