@@ -1,15 +1,17 @@
 package flightdatabase
 
+import flightdatabase.config.Configuration.dbConfig._
+import flightdatabase.config.Configuration.setupConfig
 import org.flywaydb.core.Flyway
 
 trait DbInitiation {
-  def initiateDb(clean: Boolean = false): Unit = {
+  def initiateDb(): Unit = {
     val flyway = Flyway.configure()
-        .dataSource("jdbc:postgresql:flights", "postgres", "postgres")
-        .baselineVersion("2.0")
+        .dataSource(url, username, password)
+        .baselineVersion(baseline)
         .load()
 
-    if (clean) flyway.clean()
+    if (setupConfig.cleanDatabase) flyway.clean()
     flyway.migrate()
   }
 }

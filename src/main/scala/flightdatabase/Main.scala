@@ -1,17 +1,14 @@
 package flightdatabase
 
+import flightdatabase.config.Configuration.setupConfig.createScripts
 import JsonToSqlConverter._
 import com.typesafe.scalalogging.LazyLogging
 
 object Main extends LazyLogging {
 
-  // TODO: Move these to application.conf
-  private val initialise: Boolean = false
-  private val clean: Boolean = false
-
   def main(args: Array[String]): Unit = {
-    if (initialise) setupScripts()
-    initiateDb(clean)
+    if (createScripts) setupScripts()
+    initiateDb()
 
     logger.info("Successfully completed db setup!")
   }

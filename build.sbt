@@ -15,7 +15,7 @@ val circeDependencies = Seq(
 )
 
 val otherDependencies = Seq(
-  "com.typesafe"               % "config"         % "1.4.2",
+  "com.github.pureconfig"      %% "pureconfig"    % "0.17.2",
   "org.slf4j"                  % "slf4j-log4j12"  % "1.7.36",
   "com.typesafe.scala-logging" %% "scala-logging" % "3.9.4",
   "commons-io"                 % "commons-io"     % "2.11.0",
