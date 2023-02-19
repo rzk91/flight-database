@@ -1,22 +1,23 @@
 package flightdatabase.db
 
+import com.typesafe.scalalogging.LazyLogging
+import flightdatabase.db.objects._
+import flightdatabase.utils.CollectionsHelper._
+import flightdatabase.utils.FileHelper._
 import io.circe._
 import io.circe.generic.auto._
 import io.circe.generic.extras._
 import io.circe.parser._
 import io.circe.syntax._
-import flightdatabase.db.DbInitiation
-import flightdatabase.db.objects._
-import flightdatabase.utils.FileHelper._
-import flightdatabase.utils.CollectionsHelper._
 
 import java.io._
-import java.nio.file.{Files, Path, Paths}
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.Paths
 import scala.io.Source
 import scala.jdk.CollectionConverters._
-import com.typesafe.scalalogging.LazyLogging
 
-object JsonToSqlConverter extends DbInitiation with LazyLogging {
+object JsonToSqlConverter extends LazyLogging {
 
   private val resourcePath: String = "src/main/resources/db"
 

@@ -1,15 +1,21 @@
 package flightdatabase.db
 
-import flightdatabase.config.Configuration.setupConfig.createScripts
-import flightdatabase.db.JsonToSqlConverter._
-import com.typesafe.scalalogging.LazyLogging
+import cats.effect._
+import doobie.util.ExecutionContexts
+import flightdatabase.config.Configuration._
+import flightdatabase.db.DbInitiation._
+import flightdatabase.db.JsonToSqlConverter
 
-object DbMain extends LazyLogging {
+object DbMain extends IOApp {
 
-  def main(args: Array[String]): Unit = {
-    if (createScripts) setupScripts()
-    initiateDb()
+  val xa = for {
+    ec <- ExecutionContexts.fixedThreadPool[IO](dbConfig.threadPoolSize)
+    xa <- transactor(dbConfig, ec)
+  } yield xa
 
-    logger.info("Successfully completed db setup!")
+  def run(args: List[String]): IO[ExitCode] = {
+    if (setupConfig.createScripts) JsonToSqlConverter.setupScripts()
+
+    xa.use(initialize).as(ExitCode.Success)
   }
 }

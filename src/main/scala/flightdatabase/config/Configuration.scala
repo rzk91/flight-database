@@ -6,7 +6,14 @@ import pureconfig.generic.auto._
 object Configuration {
   final case class SetupConfig(createScripts: Boolean, cleanDatabase: Boolean)
 
-  final case class DatabaseConfig(url: String, username: String, password: String, baseline: String)
+  final case class Access(username: String, password: String)
+  final case class DatabaseConfig(
+    driver: String,
+    url: String,
+    access: Access,
+    baseline: String,
+    threadPoolSize: Int
+  )
 
   lazy val setupConfig: SetupConfig = ConfigSource.default.at("setup").loadOrThrow[SetupConfig]
 

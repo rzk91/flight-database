@@ -3,9 +3,10 @@ name         := "flight-database"
 organization := "rzk.scala"
 version      := "1.0"
 
-libraryDependencies ++= circeDependencies ++ otherDependencies
+libraryDependencies ++= circeDependencies ++ doobieDependencies ++ otherDependencies
 
 val circeVersion = "0.14.1"
+val doobieVersion = "1.0.0-RC1"
 
 val circeDependencies = Seq(
   "io.circe" %% "circe-core"           % circeVersion,
@@ -14,12 +15,17 @@ val circeDependencies = Seq(
   "io.circe" %% "circe-generic-extras" % circeVersion
 )
 
+val doobieDependencies = Seq(
+  "org.tpolecat" %% "doobie-core"     % doobieVersion,
+  "org.tpolecat" %% "doobie-postgres" % doobieVersion,
+  "org.tpolecat" %% "doobie-hikari"   % doobieVersion
+)
+
 val otherDependencies = Seq(
   "com.github.pureconfig"      %% "pureconfig"    % "0.17.2",
   "org.slf4j"                  % "slf4j-log4j12"  % "1.7.36",
   "com.typesafe.scala-logging" %% "scala-logging" % "3.9.4",
   "commons-io"                 % "commons-io"     % "2.11.0",
-  "org.postgresql"             % "postgresql"     % "42.2.5" % "provided",
   "org.flywaydb"               % "flyway-core"    % "9.14.1"
 )
 
