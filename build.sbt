@@ -3,10 +3,11 @@ name         := "flight-database"
 organization := "rzk.scala"
 version      := "1.0"
 
-libraryDependencies ++= circeDependencies ++ doobieDependencies ++ otherDependencies
+libraryDependencies ++= circeDependencies ++ doobieDependencies ++ http4sDependencies ++ otherDependencies
 
 val circeVersion = "0.14.1"
 val doobieVersion = "1.0.0-RC1"
+val http4sVersion = "0.23.18"
 
 val circeDependencies = Seq(
   "io.circe" %% "circe-core"           % circeVersion,
@@ -19,6 +20,13 @@ val doobieDependencies = Seq(
   "org.tpolecat" %% "doobie-core"     % doobieVersion,
   "org.tpolecat" %% "doobie-postgres" % doobieVersion,
   "org.tpolecat" %% "doobie-hikari"   % doobieVersion
+)
+
+val http4sDependencies = Seq(
+  "org.http4s" %% "http4s-ember-client" % http4sVersion,
+  "org.http4s" %% "http4s-ember-server" % http4sVersion,
+  "org.http4s" %% "http4s-dsl"          % http4sVersion,
+  "org.http4s" %% "http4s-circe"        % http4sVersion
 )
 
 val otherDependencies = Seq(
