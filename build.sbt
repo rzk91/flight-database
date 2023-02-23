@@ -3,7 +3,7 @@ name         := "flight-database"
 organization := "rzk.scala"
 version      := "1.0"
 
-libraryDependencies ++= circeDependencies ++ doobieDependencies ++ http4sDependencies ++ otherDependencies
+libraryDependencies ++= circeDependencies ++ doobieDependencies ++ http4sDependencies ++ otherDependencies ++ testingDependencies
 
 val circeVersion = "0.14.1"
 val doobieVersion = "1.0.0-RC1"
@@ -35,6 +35,11 @@ val otherDependencies = Seq(
   "com.typesafe.scala-logging" %% "scala-logging" % "3.9.4",
   "commons-io"                 % "commons-io"     % "2.11.0",
   "org.flywaydb"               % "flyway-core"    % "9.14.1"
+)
+
+val testingDependencies = Seq(
+  "org.scalactic" %% "scalactic" % "3.2.15",
+  "org.scalatest" %% "scalatest" % "3.2.15" % "test"
 )
 
 scalacOptions ++= Seq(

@@ -9,12 +9,15 @@ import org.http4s.dsl.io._
 object ApiEndpoints {
 
   val helloWorldService = HttpRoutes.of[IO] {
-    case GET -> Root / "hello" / name => Ok(s"Hello, $name")
+    case GET -> Root / "hello" / name =>
+      Ok(s"Hello, $name! Check out our amazing flight database!")
   }
+
+  object CountryQueryParamMatcher extends OptionalQueryParamDecoderMatcher[String]("country")
 
   val flightDbService = HttpRoutes.of[IO] {
     case GET -> Root / "countries" => runQuery(getCountryNames).flatMap(Ok(_))
-    case GET -> Root / "cities" / "bycountry" / country =>
-      runQuery(getCitiesFromCountry(country)).flatMap(Ok(_))
+    case GET -> Root / "cities" :? CountryQueryParamMatcher(maybeCountry) =>
+      runQuery(getCityNames(maybeCountry)).flatMap(Ok(_))
   }
 }
