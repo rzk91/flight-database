@@ -18,8 +18,8 @@ object DbMain extends IOApp with LazyLogging {
       for {
         _            <- DbInitiation.initialize(t)
         countries    <- getCountryNames.transact(t)
-        germanCities <- getCitiesFromCountry("Germany").transact(t)
-        indianCities <- getCitiesFromCountry("India").transact(t)
+        germanCities <- getCityNames(Some("Germany")).transact(t)
+        indianCities <- getCityNames(Some("India")).transact(t)
         _            <- IO(logger.info(s"Countries: $countries"))
         _            <- IO(logger.info(s"Cities in Germany: $germanCities"))
         _            <- IO(logger.info(s"Cities in India: $indianCities"))
