@@ -1,14 +1,13 @@
 package flightdatabase.db
 
 import com.typesafe.scalalogging.LazyLogging
-import flightdatabase.db.objects._
+import flightdatabase.model.objects._
 import flightdatabase.utils.CollectionsHelper._
 import flightdatabase.utils.FileHelper._
 import io.circe._
 import io.circe.generic.auto._
 import io.circe.generic.extras._
 import io.circe.parser._
-import io.circe.syntax._
 
 import java.io._
 import java.nio.file.Files

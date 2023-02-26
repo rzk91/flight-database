@@ -23,6 +23,6 @@ object ApiMain extends IOApp {
 
   def run(args: List[String]): IO[ExitCode] =
     server
-      .use(_ => IO.never)
+      .useForever
       .as(ExitCode.Success)
 }

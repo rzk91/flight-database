@@ -1,9 +1,10 @@
-package flightdatabase.db.objects
+package flightdatabase.model.objects
 
 import io.circe.generic.extras._
-import flightdatabase.db.objects.DbObject._
+import flightdatabase.model.objects.DbObject._
 
 @ConfiguredJsonCodec final case class FleetRoute(
+  id: Option[Long],
   fleetId: String,
   airplaneId: String,
   @JsonKey("route_number") route: String,

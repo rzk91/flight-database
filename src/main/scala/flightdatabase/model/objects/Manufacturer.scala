@@ -1,9 +1,10 @@
-package flightdatabase.db.objects
+package flightdatabase.model.objects
 
 import io.circe.generic.extras.ConfiguredJsonCodec
-import flightdatabase.db.objects.DbObject._
+import flightdatabase.model.objects.DbObject._
 
 @ConfiguredJsonCodec final case class Manufacturer(
+  id: Option[Long],
   name: String,
   basedIn: String
 ) extends DbObject {

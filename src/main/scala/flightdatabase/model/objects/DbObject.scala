@@ -1,9 +1,14 @@
-package flightdatabase.db.objects
+package flightdatabase.model.objects
 
 import io.circe.generic.extras.Configuration
+import doobie.util.fragment.Fragment
 
 trait DbObject {
+  def id: Option[Long]
+
   def sqlInsert: String
+
+  def doobieInsert: Fragment = Fragment.empty
 
   def insertWithNull(field: Option[_]): String =
     field.map(v => s"'$v'").orNull

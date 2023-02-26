@@ -12,14 +12,14 @@ object DbInitiation {
 
   def transactor(config: DatabaseConfig, ec: ExecutionContext): Resource[IO, HikariTransactor[IO]] =
     HikariTransactor.newHikariTransactor[IO](
-        config.driver,
-        config.url,
-        config.access.username,
-        config.access.password,
-        ec
-      )
+      config.driver,
+      config.url,
+      config.access.username,
+      config.access.password,
+      ec
+    )
 
-  def initialize(transactor: HikariTransactor[IO]): IO[Unit] =
+  def initialize(transactor: HikariTransactor[IO], clean: Boolean = false): IO[Unit] =
     transactor.configure { datasource =>
       IO {
         val flyway = Flyway
@@ -27,7 +27,7 @@ object DbInitiation {
           .dataSource(datasource)
           .baselineVersion(dbConfig.baseline)
           .load()
-        if (setupConfig.cleanDatabase) flyway.clean()
+        if (clean) flyway.clean()
         flyway.migrate()
         ()
       }

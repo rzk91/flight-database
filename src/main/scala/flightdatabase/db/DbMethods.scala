@@ -2,6 +2,7 @@ package flightdatabase.db
 
 import doobie._
 import doobie.implicits._
+import flightdatabase.model.objects._
 
 object DbMethods {
 
@@ -23,4 +24,11 @@ object DbMethods {
       // Get all cities in DB
       getNamesFragment("city").query[String].to[List]
   }
+
+  def getLanguages: ConnectionIO[List[String]] = getNamesFragment("language").query[String].to[List]
+
+  def insertLanguage(language: Language): ConnectionIO[Language] = for {
+    id <- language.doobieInsert.update.withUniqueGeneratedKeys[Long]("id")
+    lang = language.copy(id = Some(id))
+  } yield lang
 }

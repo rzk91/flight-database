@@ -1,9 +1,10 @@
-package flightdatabase.db.objects
+package flightdatabase.model.objects
 
 import io.circe.generic.extras.ConfiguredJsonCodec
-import flightdatabase.db.objects.DbObject._
+import flightdatabase.model.objects.DbObject._
 
 @ConfiguredJsonCodec final case class City(
+  id: Option[Long],
   name: String,
   countryId: String,
   capital: Boolean,

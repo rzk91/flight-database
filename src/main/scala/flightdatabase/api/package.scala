@@ -12,5 +12,6 @@ import org.http4s.circe._
 package object api {
   implicit def encoder[A: Encoder]: EntityEncoder[IO, A] = jsonEncoderOf[IO, A]
 
-  def runQuery[A](query: ConnectionIO[A]): IO[A] = xa.use(query.transact(_))
+  // TODO: Perhaps make transactor implicit and already perform DB initiation before making it available
+  def runStmt[A](query: ConnectionIO[A]): IO[A] = xa.use(query.transact(_))
 }
