@@ -13,7 +13,7 @@ object DbMethods {
 
   def getCityNames(maybeCountry: Option[String]): ConnectionIO[List[String]] = maybeCountry match {
     case Some(country) =>
-      // Get only cities from given coutnry
+      // Get only cities from given country
       for {
         countryId <- (getIdsFragment("country") ++ whereNameFragment(country)).query[Int].unique
         cities <- (getNamesFragment("city") ++ whereCountryIdFragment(countryId))
@@ -27,8 +27,9 @@ object DbMethods {
 
   def getLanguages: ConnectionIO[List[String]] = getNamesFragment("language").query[String].to[List]
 
-  def insertLanguage(language: Language): ConnectionIO[Language] = for {
-    id <- language.doobieInsert.update.withUniqueGeneratedKeys[Long]("id")
-    lang = language.copy(id = Some(id))
-  } yield lang
+  def insertLanguage(language: Language): ConnectionIO[Language] =
+    for {
+      id <- language.sqlInsert.update.withUniqueGeneratedKeys[Long]("id")
+      lang = language.copy(id = Some(id))
+    } yield lang
 }

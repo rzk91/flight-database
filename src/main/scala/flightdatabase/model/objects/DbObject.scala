@@ -1,29 +1,26 @@
 package flightdatabase.model.objects
 
+import doobie._
+import doobie.implicits._
 import io.circe.generic.extras.Configuration
-import doobie.util.fragment.Fragment
 
 trait DbObject {
   def id: Option[Long]
 
-  def sqlInsert: String
-
-  def doobieInsert: Fragment = Fragment.empty
-
-  def insertWithNull(field: Option[_]): String =
-    field.map(v => s"'$v'").orNull
+  def sqlInsert: Fragment
 
   def selectIdStmt(
     table: String,
     key: Option[String],
     keyField: String = "name"
-  ): String =
-    key.map(k => s"(SELECT id FROM $table WHERE $keyField = \'$k\')").orNull
+  ): Fragment =
+    key.map { k =>
+      fr"(SELECT id FROM" ++ Fragment.const(table) ++ fr"WHERE" ++ Fragment.const(keyField) ++ fr"= $k)"
+    }.orNull // FixMe: This can't be right
 }
 
 object DbObject {
 
   // Allow for snake_case to camelCase conversion automatically
-  implicit val config: Configuration =
-    Configuration.default.withSnakeCaseMemberNames
+  implicit val config: Configuration = Configuration.default.withSnakeCaseMemberNames
 }

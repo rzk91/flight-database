@@ -1,7 +1,9 @@
 package flightdatabase.model.objects
 
-import flightdatabase.model.objects.DbObject._
+import doobie._
+import doobie.implicits._
 import io.circe.generic.extras._
+import flightdatabase.model.objects.DbObject._
 
 @ConfiguredJsonCodec final case class Currency(
   id: Option[Long],
@@ -10,7 +12,6 @@ import io.circe.generic.extras._
   symbol: Option[String]
 ) extends DbObject {
 
-  def sqlInsert: String =
-    s"INSERT INTO currency (name, iso, symbol) " +
-    s"VALUES ('$name', '$iso', ${insertWithNull(symbol)});"
+  def sqlInsert: Fragment =
+    sql"INSERT INTO currency (name, iso, symbol) VALUES ($name, $iso, $symbol)"
 }

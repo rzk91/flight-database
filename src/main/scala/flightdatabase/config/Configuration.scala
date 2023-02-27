@@ -4,8 +4,6 @@ import pureconfig.generic.auto._
 
 object Configuration extends ConfigurationBase {
 
-  lazy val setupConfig: SetupConfig = source.at("setup").loadOrThrow[SetupConfig]
-
   lazy val dbConfig: DatabaseConfig =
     source.at("database").loadOrThrow[DatabaseConfig]
 

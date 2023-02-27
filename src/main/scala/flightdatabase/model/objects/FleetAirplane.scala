@@ -1,20 +1,22 @@
 package flightdatabase.model.objects
 
-import io.circe.generic.extras._
+import doobie._
+import doobie.implicits._
 import flightdatabase.model.objects.DbObject._
+import io.circe.generic.extras._
 
 @ConfiguredJsonCodec final case class FleetAirplane(
-	id: Option[Long],
+  id: Option[Long],
   fleetId: String,
   airplaneId: String
 ) extends DbObject {
 
-  def sqlInsert: String =
-    s"""INSERT INTO fleet_airplane
-		  |  	(fleet_id, airplane_id)
+  def sqlInsert: Fragment =
+    sql"""INSERT INTO fleet_airplane
+        |  	(fleet_id, airplane_id)
 	    |	VALUES (
-		  |  	${selectIdStmt("fleet", Some(fleetId))},
-		  |  	${selectIdStmt("airplane", Some(airplaneId))}
-	    |	);
-			|""".stripMargin
+        |  	${selectIdStmt("fleet", Some(fleetId))},
+        |  	${selectIdStmt("airplane", Some(airplaneId))}
+	    |	)
+        |""".stripMargin
 }

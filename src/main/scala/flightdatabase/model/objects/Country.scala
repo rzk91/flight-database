@@ -1,7 +1,9 @@
 package flightdatabase.model.objects
 
-import io.circe.generic.extras._
+import doobie._
+import doobie.implicits._
 import flightdatabase.model.objects.DbObject._
+import io.circe.generic.extras._
 
 @ConfiguredJsonCodec final case class Country(
   id: Option[Long],
@@ -16,19 +18,20 @@ import flightdatabase.model.objects.DbObject._
   currency: String,
   nationality: String
 ) extends DbObject {
-  def sqlInsert: String =
-    s"""INSERT INTO country 
+
+  def sqlInsert: Fragment =
+    sql"""INSERT INTO country 
     |       (name, iso2, iso3, country_code, domain_name, 
     |       main_language_id, secondary_language_id, tertiary_language_id, 
     |       currency_id, nationality)
     |   VALUES (
-    |       '$name', '$iso2', '$iso3', $countryCode,
-    |       ${insertWithNull(domainName)},
+    |       $name, $iso2, $iso3, $countryCode,
+    |       $domainName,
     |       ${selectIdStmt("language", Some(mainLanguage))},
     |       ${selectIdStmt("language", secondaryLanguage)},
     |       ${selectIdStmt("language", tertiaryLanguage)},
     |       ${selectIdStmt("currency", Some(currency), keyField = "iso")},
-    |       '$nationality'
+    |       $nationality
     |   );
     | """.stripMargin
 }

@@ -1,7 +1,9 @@
 package flightdatabase.model.objects
 
-import io.circe.generic.extras.ConfiguredJsonCodec
+import doobie._
+import doobie.implicits._
 import flightdatabase.model.objects.DbObject._
+import io.circe.generic.extras._
 
 @ConfiguredJsonCodec final case class Manufacturer(
   id: Option[Long],
@@ -9,8 +11,6 @@ import flightdatabase.model.objects.DbObject._
   basedIn: String
 ) extends DbObject {
 
-  def sqlInsert: String =
-    s"""INSERT INTO manufacturer (name, city_based_in)
-        | VALUES ('$name', ${selectIdStmt("city", Some(basedIn))});
-        """.stripMargin
+  def sqlInsert: Fragment =
+    sql"INSERT INTO manufacturer (name, city_based_in) VALUES ($name, ${selectIdStmt("city", Some(basedIn))})"
 }

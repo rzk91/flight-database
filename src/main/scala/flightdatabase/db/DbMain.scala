@@ -3,20 +3,13 @@ package flightdatabase.db
 import cats.effect._
 import com.typesafe.scalalogging.LazyLogging
 import doobie.implicits._
-import flightdatabase.db.DbInitiation
-import flightdatabase.config.Configuration.setupConfig
-
 import flightdatabase.db.DbMethods._
-import flightdatabase.db.JsonToSqlConverter
 
 object DbMain extends IOApp with LazyLogging {
 
-  def run(args: List[String]): IO[ExitCode] = {
-    if (setupConfig.createScripts) JsonToSqlConverter.setupScripts()
-
-    xa.use { t =>
+  def run(args: List[String]): IO[ExitCode] =
+    transactor.use { t =>
       for {
-        _            <- DbInitiation.initialize(t)
         countries    <- getCountryNames.transact(t)
         germanCities <- getCityNames(Some("Germany")).transact(t)
         indianCities <- getCityNames(Some("India")).transact(t)
@@ -25,5 +18,4 @@ object DbMain extends IOApp with LazyLogging {
         _            <- IO(logger.info(s"Cities in India: $indianCities"))
       } yield ExitCode.Success
     }
-  }
 }

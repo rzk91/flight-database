@@ -1,12 +1,8 @@
 package flightdatabase.config
 
-import pureconfig.ConfigSource
-import org.http4s.headers.Forwarded
 import com.comcast.ip4s._
 
 trait ConfigurationBase {
-  case class SetupConfig(createScripts: Boolean, cleanDatabase: Boolean)
-
   case class Access(username: String, password: String)
 
   case class DatabaseConfig(
@@ -14,7 +10,8 @@ trait ConfigurationBase {
     url: String,
     access: Access,
     baseline: String,
-    threadPoolSize: Int
+    threadPoolSize: Int,
+    cleanDatabase: Boolean
   )
 
   case class ApiConfig(host: String, port: Int) {

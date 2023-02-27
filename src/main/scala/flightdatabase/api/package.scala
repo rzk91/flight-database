@@ -2,16 +2,12 @@ package flightdatabase
 
 import cats.effect._
 import doobie._
+import doobie.hikari.HikariTransactor
 import doobie.implicits._
-import flightdatabase.db._
-import io.circe.Encoder
-import io.circe.generic.auto._
-import org.http4s._
-import org.http4s.circe._
 
 package object api {
-  implicit def encoder[A: Encoder]: EntityEncoder[IO, A] = jsonEncoderOf[IO, A]
+  implicit class MoreConnectionIOOps[A](private val stmt: ConnectionIO[A]) extends AnyVal {
 
-  // TODO: Perhaps make transactor implicit and already perform DB initiation before making it available
-  def runStmt[A](query: ConnectionIO[A]): IO[A] = xa.use(query.transact(_))
+    def runStmt(implicit xa: Resource[IO, HikariTransactor[IO]]): IO[A] = xa.use(stmt.transact(_))
+  }
 }

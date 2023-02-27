@@ -1,7 +1,9 @@
 package flightdatabase.model.objects
 
-import io.circe.generic.extras._
+import doobie._
+import doobie.implicits._
 import flightdatabase.model.objects.DbObject._
+import io.circe.generic.extras._
 
 @ConfiguredJsonCodec final case class Airplane(
   id: Option[Long],
@@ -11,13 +13,14 @@ import flightdatabase.model.objects.DbObject._
   @JsonKey("max_range_in_km") maxRangeInKm: Int
 ) extends DbObject {
 
-  def sqlInsert: String =
-    s"""INSERT INTO airplane 
+  def sqlInsert: Fragment =
+    sql"""INSERT INTO airplane
      |       (name, manufacturer_id, capacity, max_range_in_km)
      |   VALUES (
-     |       '$name',
+     |       $name,
      |       ${selectIdStmt("manufacturer", Some(manufacturerId))},
-     |       $capacity, $maxRangeInKm
-     |   );
+     |       $capacity,
+     |       $maxRangeInKm
+     |   )
      | """.stripMargin
 }
