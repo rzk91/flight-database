@@ -4,10 +4,13 @@ import cats.effect._
 import com.typesafe.scalalogging.LazyLogging
 import doobie.implicits._
 import flightdatabase.db.DbMethods._
+import flightdatabase.config.Configuration.dbConfig
 
 object DbMain extends IOApp with LazyLogging {
 
-  def run(args: List[String]): IO[ExitCode] =
+  def run(args: List[String]): IO[ExitCode] = {
+    DbInitiation.initializeDatabaseSeparately(dbConfig)
+
     transactor.use { t =>
       for {
         countries    <- getCountryNames.transact(t)
@@ -18,4 +21,5 @@ object DbMain extends IOApp with LazyLogging {
         _            <- IO(logger.info(s"Cities in India: $indianCities"))
       } yield ExitCode.Success
     }
+  }
 }

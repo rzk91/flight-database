@@ -8,8 +8,7 @@ import flightdatabase.config.Configuration.dbConfig
 
 package object db {
 
-  implicit lazy val transactor: Resource[IO, HikariTransactor[IO]] =
-    DbInitiation.transactor(dbConfig)
+  implicit val transactor: Resource[IO, HikariTransactor[IO]] = DbInitiation.transactor(dbConfig)
 
   // Get fragments
   def getNamesFragment(table: String): Fragment = fr"SELECT name FROM" ++ Fragment.const(table)

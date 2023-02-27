@@ -67,6 +67,16 @@ CREATE TABLE city (
 	last_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Create manufacturer table
+CREATE TABLE manufacturer (
+	id serial NOT NULL,
+	PRIMARY KEY (id),
+	name character varying NOT NULL,
+	city_based_in integer REFERENCES city (id),
+	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	last_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Create airport table
 CREATE TABLE airport (
 	id serial NOT NULL,
@@ -95,16 +105,6 @@ CREATE TABLE fleet (
 	call_sign character varying,
 	hub_airport_id integer REFERENCES airport (id),
 	country_id integer REFERENCES country (id),
-	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	last_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Create manufacturer table
-CREATE TABLE manufacturer (
-	id serial NOT NULL,
-	PRIMARY KEY (id),
-	name character varying NOT NULL,
-	city_based_in integer REFERENCES city (id),
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	last_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
