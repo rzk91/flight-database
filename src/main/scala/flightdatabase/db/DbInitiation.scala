@@ -20,20 +20,6 @@ object DbInitiation {
       )
     } yield xa
 
-  // FixMe: Find a proper way to use this function
-  private def initialize(xa: HikariTransactor[IO], config: DatabaseConfig): IO[Boolean] =
-    xa.configure { datasource =>
-      IO {
-        val flyway = Flyway
-          .configure()
-          .dataSource(datasource)
-          .baselineVersion(config.baseline)
-          .load()
-        if (cleanDatabase) flyway.clean()
-        flyway.migrate().success
-      }
-    }
-
   def initializeDatabaseSeparately(config: DatabaseConfig): Boolean = {
     val flyway = Flyway
       .configure()

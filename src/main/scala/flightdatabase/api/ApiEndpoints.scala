@@ -26,19 +26,23 @@ object ApiEndpoints {
 
     case GET -> Root / "languages" => getLanguages.runStmt.flatMap(Ok(_))
 
+    // FixMe!
     case req @ POST -> Root / "languages" =>
       req
         .attemptAs[Language]
         .foldF(
           _ => BadRequest("Invalid input"),
           language =>
-            for {
-              created <- insertLanguage(language).runStmt
-              response <- Created(
-                created,
-                Location(Uri.unsafeFromString(s"/flightdb/languages/${created.id.get}"))
-              )
-            } yield response
+            insertLanguage(language) match {
+              case Some(out) => for {
+                created <- out.runStmt
+                response <- Created(
+                  created,
+                  Location(Uri.unsafeFromString(s"/flightdb/languages/${created.id.get}"))
+                )
+              } yield response
+              case None => Conflict()
+            }
         )
   }
 }

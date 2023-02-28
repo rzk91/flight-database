@@ -27,9 +27,10 @@ object DbMethods {
 
   def getLanguages: ConnectionIO[List[String]] = getNamesFragment("language").query[String].to[List]
 
-  def insertLanguage(language: Language): ConnectionIO[Language] =
+  def insertLanguage(language: Language): ConnectionIO[Option[Language]] =
     for {
-      id <- language.sqlInsert.update.withUniqueGeneratedKeys[Long]("id")
-      lang = language.copy(id = Some(id))
+      errorOrId <- language.sqlInsert.update.withUniqueGeneratedKeys[Long]("id").attemptSql
+      lang = language.copy(id = errorOrId.toOption)
     } yield lang
+
 }
