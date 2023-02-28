@@ -18,31 +18,38 @@ object ApiEndpoints {
 
   object CountryQueryParamMatcher extends OptionalQueryParamDecoderMatcher[String]("country")
 
+  object LanguageNameQueryParamMatcher
+      extends OptionalQueryParamDecoderMatcher[Boolean]("only-names")
+
   val flightDbService: HttpRoutes[IO] = HttpRoutes.of[IO] {
     case GET -> Root / "countries" => getCountryNames.runStmt.flatMap(Ok(_))
 
     case GET -> Root / "cities" :? CountryQueryParamMatcher(maybeCountry) =>
       getCityNames(maybeCountry).runStmt.flatMap(Ok(_))
 
-    case GET -> Root / "languages" => getLanguages.runStmt.flatMap(Ok(_))
+    case GET -> Root / "languages" :? LanguageNameQueryParamMatcher(onlyNames) =>
+      onlyNames match {
+        case None | Some(false) => getLanguages.runStmt.flatMap(Ok(_))
+        case _                  => getLanguageNames.runStmt.flatMap(Ok(_))
+      }
 
-    // FixMe!
     case req @ POST -> Root / "languages" =>
       req
         .attemptAs[Language]
         .foldF(
           _ => BadRequest("Invalid input"),
           language =>
-            insertLanguage(language) match {
-              case Some(out) => for {
-                created <- out.runStmt
-                response <- Created(
-                  created,
-                  Location(Uri.unsafeFromString(s"/flightdb/languages/${created.id.get}"))
-                )
-              } yield response
-              case None => Conflict()
-            }
+            for {
+              maybeCreated <- insertLanguage(language).runStmt
+              response <- maybeCreated match {
+                case Right(v) =>
+                  Created(
+                    v,
+                    Location(Uri.unsafeFromString(s"/flightdb/languages/${v.id.get}"))
+                  )
+                case Left(e) => NotAcceptable(s"Error: $e")
+              }
+            } yield response
         )
   }
 }

@@ -3,6 +3,7 @@ package flightdatabase.db
 import doobie._
 import doobie.implicits._
 import flightdatabase.model.objects._
+import java.sql.SQLException
 
 object DbMethods {
 
@@ -25,12 +26,15 @@ object DbMethods {
       getNamesFragment("city").query[String].to[List]
   }
 
-  def getLanguages: ConnectionIO[List[String]] = getNamesFragment("language").query[String].to[List]
+  def getLanguageNames: ConnectionIO[List[String]] =
+    getNamesFragment("language").query[String].to[List]
 
-  def insertLanguage(language: Language): ConnectionIO[Option[Language]] =
-    for {
-      errorOrId <- language.sqlInsert.update.withUniqueGeneratedKeys[Long]("id").attemptSql
-      lang = language.copy(id = errorOrId.toOption)
-    } yield lang
+  def getLanguages: ConnectionIO[List[Language]] =
+    sql"SELECT id, name, iso2, iso3, original_name FROM language".query[Language].to[List]
 
+  def insertLanguage(language: Language): ConnectionIO[Either[SQLException, Language]] =
+    language.sqlInsert.update
+      .withUniqueGeneratedKeys[Long]("id")
+      .attemptSql
+      .map(_.map(l => language.copy(id = Some(l))))
 }
