@@ -9,6 +9,8 @@ trait DbObject {
 
   def sqlInsert: Fragment
 
+  def sqlSelectAll: Fragment = Fragment.empty // TODO: Remove this
+
   def selectIdStmt(
     table: String,
     key: Option[String],

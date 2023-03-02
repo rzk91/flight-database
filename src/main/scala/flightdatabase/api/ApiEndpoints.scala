@@ -3,6 +3,7 @@ package flightdatabase.api
 import cats.effect._
 import flightdatabase.db.DbMethods._
 import flightdatabase.db._
+import flightdatabase.model._
 import flightdatabase.model.objects._
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
@@ -22,34 +23,29 @@ object ApiEndpoints {
       extends OptionalQueryParamDecoderMatcher[Boolean]("only-names")
 
   val flightDbService: HttpRoutes[IO] = HttpRoutes.of[IO] {
-    case GET -> Root / "countries" => getCountryNames.runStmt.flatMap(Ok(_))
+    case GET -> Root / "countries" => getStringList("country").runStmt.flatMap(toResponse)
 
     case GET -> Root / "cities" :? CountryQueryParamMatcher(maybeCountry) =>
-      getCityNames(maybeCountry).runStmt.flatMap(Ok(_))
+      getCityNames(maybeCountry).runStmt.flatMap(toResponse)
 
     case GET -> Root / "languages" :? LanguageNameQueryParamMatcher(onlyNames) =>
       onlyNames match {
-        case None | Some(false) => getLanguages.runStmt.flatMap(Ok(_))
-        case _                  => getLanguageNames.runStmt.flatMap(Ok(_))
+        case None | Some(false) => getLanguages.runStmt.flatMap(toResponse)
+        case _                  => getStringList("language").runStmt.flatMap(toResponse)
       }
 
     case req @ POST -> Root / "languages" =>
       req
         .attemptAs[Language]
-        .foldF(
-          _ => BadRequest("Invalid input"),
-          language =>
-            for {
-              maybeCreated <- insertLanguage(language).runStmt
-              response <- maybeCreated match {
-                case Right(v) =>
-                  Created(
-                    v,
-                    Location(Uri.unsafeFromString(s"/flightdb/languages/${v.id.get}"))
-                  )
-                case Left(e) => NotAcceptable(s"Error: $e")
-              }
-            } yield response
+        .foldF[ApiResult[Language]](
+          _ => IO(Left(EntryInvalidFormat)),
+          language => insertLanguage(language).runStmt
         )
+        .flatMap(toResponse)
   }
 }
+
+// Created(
+//   v,
+//   Location(Uri.unsafeFromString(s"/flightdb/languages/${v.id.get}"))
+// )
