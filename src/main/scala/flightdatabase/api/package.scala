@@ -23,6 +23,7 @@ package object api {
   def toResponse[O](res: ApiResult[O]): IO[Response[IO]] = res match {
     case Right(result: GotStringList)                              => Ok(result.value)
     case Right(result: GotLanguageList)                            => Ok(result.value)
+    case Right(result: GotAirplaneList)                            => Ok(result.value)
     case Right(created: CreatedAirplane)                           => Created(created.value)
     case Right(created: CreatedAirport)                            => Created(created.value)
     case Right(created: CreatedCity)                               => Created(created.value)

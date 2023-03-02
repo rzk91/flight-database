@@ -8,7 +8,7 @@ import io.circe.generic.extras._
 @ConfiguredJsonCodec final case class Airplane(
   id: Option[Long],
   name: String,
-  manufacturerId: String,
+  @JsonKey("manufacturer") manufacturerId: String,
   capacity: Int,
   @JsonKey("max_range_in_km") maxRangeInKm: Int
 ) extends DbObject {

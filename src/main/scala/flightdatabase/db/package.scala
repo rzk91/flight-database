@@ -7,7 +7,7 @@ import doobie.implicits._
 import doobie.postgres._
 import flightdatabase.config.Configuration.dbConfig
 import flightdatabase.model._
-import flightdatabase.model.objects.Language
+import flightdatabase.model.objects._
 
 package object db {
 
@@ -32,4 +32,5 @@ package object db {
   // Lift to API Result
   def liftStringListToApiResult(list: List[String]): ApiResult[List[String]] = Right(GotStringList(list)).withLeft[ApiError]
   def liftLanguageListToApiResult(list: List[Language]): ApiResult[List[Language]] = Right(GotLanguageList(list)).withLeft[ApiError]
+  def liftAirplaneListToApiResult(list: List[Airplane]): ApiResult[List[Airplane]] = Right(GotAirplaneList(list)).withLeft[ApiError]
 }

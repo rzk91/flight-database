@@ -19,8 +19,10 @@ object ApiEndpoints {
 
   object CountryQueryParamMatcher extends OptionalQueryParamDecoderMatcher[String]("country")
 
-  object LanguageNameQueryParamMatcher
-      extends OptionalQueryParamDecoderMatcher[Boolean]("only-names")
+  object OnlyNameQueryParamMatcher extends OptionalQueryParamDecoderMatcher[Boolean]("only-names")
+
+  object ManufacturerQueryParamMatcher
+      extends OptionalQueryParamDecoderMatcher[String]("manufacturer")
 
   val flightDbService: HttpRoutes[IO] = HttpRoutes.of[IO] {
     case GET -> Root / "countries" => getStringList("country").runStmt.flatMap(toResponse)
@@ -28,10 +30,18 @@ object ApiEndpoints {
     case GET -> Root / "cities" :? CountryQueryParamMatcher(maybeCountry) =>
       getCityNames(maybeCountry).runStmt.flatMap(toResponse)
 
-    case GET -> Root / "languages" :? LanguageNameQueryParamMatcher(onlyNames) =>
+    case GET -> Root / "languages" :? OnlyNameQueryParamMatcher(onlyNames) =>
       onlyNames match {
         case None | Some(false) => getLanguages.runStmt.flatMap(toResponse)
         case _                  => getStringList("language").runStmt.flatMap(toResponse)
+      }
+
+    case GET -> Root / "airplanes" :?
+          ManufacturerQueryParamMatcher(maybeManufacturer) +&
+            OnlyNameQueryParamMatcher(onlyNames) =>
+      onlyNames match {
+        case None | Some(false) => getAirplanes(maybeManufacturer).runStmt.flatMap(toResponse)
+        case _                  => getAirplaneNames(maybeManufacturer).runStmt.flatMap(toResponse)
       }
 
     case req @ POST -> Root / "languages" =>

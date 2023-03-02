@@ -1,10 +1,10 @@
 package flightdatabase
 
+import cats.effect._
 import flightdatabase.model.objects._
+import io.circe._
 import org.http4s._
 import org.http4s.circe._
-import io.circe._
-import cats.effect._
 
 package object model {
 
@@ -26,10 +26,11 @@ package object model {
   // Obtained objects
   case class GotStringList(value: List[String]) extends ApiOutput[List[String]]
   case class GotLanguageList(value: List[Language]) extends ApiOutput[List[Language]]
+  case class GotAirplaneList(value: List[Airplane]) extends ApiOutput[List[Airplane]]
   // TODO the rest
 
   // API errors
-  sealed trait ApiError { def error: String = "Error: " }
+  sealed trait ApiError { def error: String = "Error:" }
 
   object ApiError {
 
