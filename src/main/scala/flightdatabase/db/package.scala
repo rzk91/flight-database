@@ -5,7 +5,7 @@ import doobie._
 import doobie.hikari.HikariTransactor
 import doobie.implicits._
 import doobie.postgres._
-import flightdatabase.config.Configuration.dbConfig
+import flightdatabase.config.Configuration._
 import flightdatabase.model._
 import flightdatabase.model.objects._
 
@@ -13,13 +13,21 @@ package object db {
 
   implicit val transactor: Resource[IO, HikariTransactor[IO]] = DbInitiation.transactor(dbConfig)
 
-  // Get fragments
+  // Implicit logging
+  implicit val logHandler: LogHandler =
+    if (environment.debugLogging) LogHandler.jdkLogHandler else LogHandler.nop
+
+  // Fragment functions
   def getNamesFragment(table: String): Fragment = fr"SELECT name FROM" ++ Fragment.const(table)
   def getIdsFragment(table: String): Fragment = fr"SELECT id FROM" ++ Fragment.const(table)
 
-  // Where fragments
   def whereNameFragment(name: String): Fragment = fr"WHERE name = $name"
   def whereIdFragment(id: Int): Fragment = fr"WHERE id = $id"
+
+  def getIdWhereNameFragment(table: String, name: String): Fragment =
+    getIdsFragment(table) ++ whereNameFragment(name)
+  def getNameWhereIdFragment(table: String, idField: String, id: Long): Fragment =
+    getNamesFragment(table) ++ fr"WHERE" ++ Fragment.const(idField) ++ fr"= $id"
 
   // SQL state to ApiError conversion
   def sqlStateToApiError(state: SqlState): ApiError = state match {

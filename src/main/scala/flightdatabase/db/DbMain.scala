@@ -14,10 +14,10 @@ object DbMain extends IOApp with LazyLogging {
     transactor.use { t =>
       for {
         countries    <- getStringList("country").transact(t)
-        germanCities <- getCityNames(Some("Germany")).transact(t)
-        indianCities <- getCityNames(Some("India")).transact(t)
         _            <- IO(logger.info(s"Countries: $countries"))
+        germanCities <- getStringListBy("city", "country", Some("Germany")).transact(t)
         _            <- IO(logger.info(s"Cities in Germany: $germanCities"))
+        indianCities <- getStringListBy("city", "country", Some("India")).transact(t)
         _            <- IO(logger.info(s"Cities in India: $indianCities"))
       } yield ExitCode.Success
     }

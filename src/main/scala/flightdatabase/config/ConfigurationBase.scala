@@ -4,7 +4,7 @@ import com.comcast.ip4s._
 import flightdatabase.config.EnvironmentEnum.Env
 
 trait ConfigurationBase {
-  case class Environment(env: Env)
+  case class Environment(env: Env, debugLogging: Boolean)
 
   case class Access(username: String, password: String)
 

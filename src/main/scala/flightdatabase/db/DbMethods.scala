@@ -16,6 +16,27 @@ object DbMethods {
       .to[List]
       .map(liftStringListToApiResult)
 
+  def getStringListBy(
+    field: String,
+    otherField: String,
+    otherValue: Option[String]
+  ): ConnectionIO[ApiResult[List[String]]] =
+    otherValue match {
+      case Some(value) =>
+        // Get only strings based on given value
+        for {
+          id <- getIdWhereNameFragment(otherField, value).query[Int].unique
+          strings <- getNameWhereIdFragment(field, s"${otherField}_id", id)
+            .query[String]
+            .to[List]
+            .map(liftStringListToApiResult)
+        } yield strings
+
+      case None =>
+        // Get all strings in DB
+        getStringList(field)
+    }
+
   def insertDbObject[O <: DbObject](
     obj: O
   )(implicit updateId: (Long, O) => O): ConnectionIO[Either[ApiError, O]] =
@@ -27,39 +48,39 @@ object DbMethods {
   def insertLanguage(lang: Language): ConnectionIO[ApiResult[Language]] =
     insertDbObject[Language](lang).map(_.map(CreatedLanguage(_)))
 
-  def getCityNames(maybeCountry: Option[String]): ConnectionIO[ApiResult[List[String]]] =
-    maybeCountry match {
-      case Some(country) =>
-        // Get only cities from given country
-        for {
-          countryId <- (getIdsFragment("country") ++ whereNameFragment(country)).query[Int].unique
-          cities <- (getNamesFragment("city") ++ fr"WHERE country_id = $countryId")
-            .query[String]
-            .to[List]
-            .map(liftStringListToApiResult)
-        } yield cities
-      case _ =>
-        // Get all cities in DB
-        getStringList("city")
-    }
+  // def getCityNames(maybeCountry: Option[String]): ConnectionIO[ApiResult[List[String]]] =
+  //   maybeCountry match {
+  //     case Some(country) =>
+  //       // Get only cities from given country
+  //       for {
+  //         countryId <- (getIdsFragment("country") ++ whereNameFragment(country)).query[Int].unique
+  //         cities <- (getNamesFragment("city") ++ fr"WHERE country_id = $countryId")
+  //           .query[String]
+  //           .to[List]
+  //           .map(liftStringListToApiResult)
+  //       } yield cities
+  //     case _ =>
+  //       // Get all cities in DB
+  //       getStringList("city")
+  //   }
 
-  def getAirplaneNames(maybeManufacturer: Option[String]): ConnectionIO[ApiResult[List[String]]] =
-    maybeManufacturer match {
-      case Some(manufacturer) =>
-        // Get only airplanes made by given manufacturer
-        for {
-          manufacturerId <- (getIdsFragment("manufacturer") ++ whereNameFragment(manufacturer))
-            .query[Int]
-            .unique
-          airplanes <- (getNamesFragment("airplane") ++ fr"WHERE manufacturer_id = $manufacturerId")
-            .query[String]
-            .to[List]
-            .map(liftStringListToApiResult)
-        } yield airplanes
-      case None =>
-        // Get all airplanes in DB
-        getStringList("airplane")
-    }
+  // def getAirplaneNames(maybeManufacturer: Option[String]): ConnectionIO[ApiResult[List[String]]] =
+  //   maybeManufacturer match {
+  //     case Some(manufacturer) =>
+  //       // Get only airplanes made by given manufacturer
+  //       for {
+  //         manufacturerId <- (getIdsFragment("manufacturer") ++ whereNameFragment(manufacturer))
+  //           .query[Int]
+  //           .unique
+  //         airplanes <- (getNamesFragment("airplane") ++ fr"WHERE manufacturer_id = $manufacturerId")
+  //           .query[String]
+  //           .to[List]
+  //           .map(liftStringListToApiResult)
+  //       } yield airplanes
+  //     case None =>
+  //       // Get all airplanes in DB
+  //       getStringList("airplane")
+  //   }
 
   def getAirplanes(maybeManufacturer: Option[String]): ConnectionIO[ApiResult[List[Airplane]]] = {
     val allAirplanes =

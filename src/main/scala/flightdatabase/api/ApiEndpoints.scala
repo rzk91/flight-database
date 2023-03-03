@@ -5,6 +5,7 @@ import flightdatabase.db.DbMethods._
 import flightdatabase.db._
 import flightdatabase.model._
 import flightdatabase.model.objects._
+import flightdatabase.utils.CollectionsHelper.MoreStringOps
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
 import org.http4s.dsl.io._
@@ -28,7 +29,8 @@ object ApiEndpoints {
     case GET -> Root / "countries" => getStringList("country").runStmt.flatMap(toResponse)
 
     case GET -> Root / "cities" :? CountryQueryParamMatcher(maybeCountry) =>
-      getCityNames(maybeCountry).runStmt.flatMap(toResponse)
+      getStringListBy("city", "country", maybeCountry.flatMap(_.toOption)).runStmt
+        .flatMap(toResponse)
 
     case GET -> Root / "languages" :? OnlyNameQueryParamMatcher(onlyNames) =>
       onlyNames match {
@@ -39,9 +41,11 @@ object ApiEndpoints {
     case GET -> Root / "airplanes" :?
           ManufacturerQueryParamMatcher(maybeManufacturer) +&
             OnlyNameQueryParamMatcher(onlyNames) =>
+      val m = maybeManufacturer.flatMap(_.toOption)
       onlyNames match {
-        case None | Some(false) => getAirplanes(maybeManufacturer).runStmt.flatMap(toResponse)
-        case _                  => getAirplaneNames(maybeManufacturer).runStmt.flatMap(toResponse)
+        case None | Some(false) => getAirplanes(m).runStmt.flatMap(toResponse)
+        case _ =>
+          getStringListBy("airplane", "manufacturer", m).runStmt.flatMap(toResponse)
       }
 
     case req @ POST -> Root / "languages" =>
