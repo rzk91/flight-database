@@ -3,8 +3,8 @@ package flightdatabase.db
 import cats.effect._
 import com.typesafe.scalalogging.LazyLogging
 import doobie.implicits._
-import flightdatabase.db.DbMethods._
 import flightdatabase.config.Configuration.dbConfig
+import flightdatabase.db.DbMethods._
 
 object DbMain extends IOApp with LazyLogging {
 
