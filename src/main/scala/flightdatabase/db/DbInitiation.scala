@@ -3,6 +3,7 @@ package flightdatabase.db
 import cats.effect._
 import doobie.hikari.HikariTransactor
 import doobie.util.ExecutionContexts
+import doobie.util.transactor.Transactor
 import flightdatabase.config.Configuration._
 import org.flywaydb.core.Flyway
 
@@ -19,6 +20,20 @@ object DbInitiation {
         ec
       )
     } yield xa
+
+  def simpleTransactor(config: DatabaseConfig): Transactor[IO] = {
+    val xa = Transactor.fromDriverManager[IO](
+      config.driver,
+      config.url,
+      config.access.username,
+      config.access.password
+    )
+
+    // TODO: Use the above transactor's datasource for Flyway migration?
+    initializeDatabaseSeparately(config)
+
+    xa
+  }
 
   def initializeDatabaseSeparately(config: DatabaseConfig): Boolean = {
     val flyway = Flyway

@@ -13,6 +13,7 @@ import flightdatabase.model.objects._
 
 package object db extends LazyLogging {
 
+  // Resource-based HikariTransactor for better connection pooling
   implicit val transactor: Resource[IO, HikariTransactor[IO]] = DbInitiation.transactor(dbConfig)
 
   // Implicit logging
