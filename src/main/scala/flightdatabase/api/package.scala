@@ -15,7 +15,7 @@ package object api {
 
   implicit class MoreConnectionIOOps[A](private val stmt: ConnectionIO[A]) extends AnyVal {
 
-    def runStmt(implicit xa: Resource[IO, HikariTransactor[IO]]): IO[A] = xa.use(stmt.transact(_))
+    def execute(implicit xa: Resource[IO, HikariTransactor[IO]]): IO[A] = xa.use(stmt.transact(_))
   }
 
   // Convert ApiResult to IO[Response]

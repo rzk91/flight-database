@@ -26,16 +26,16 @@ object ApiEndpoints {
       extends OptionalQueryParamDecoderMatcher[String]("manufacturer")
 
   val flightDbService: HttpRoutes[IO] = HttpRoutes.of[IO] {
-    case GET -> Root / "countries" => getStringList("country").runStmt.flatMap(toResponse)
+    case GET -> Root / "countries" => getStringList("country").execute.flatMap(toResponse)
 
     case GET -> Root / "cities" :? CountryQueryParamMatcher(maybeCountry) =>
-      getStringListBy("city", "country", maybeCountry.flatMap(_.toOption)).runStmt
+      getStringListBy("city", "country", maybeCountry.flatMap(_.toOption)).execute
         .flatMap(toResponse)
 
     case GET -> Root / "languages" :? OnlyNameQueryParamMatcher(onlyNames) =>
       onlyNames match {
-        case None | Some(false) => getLanguages.runStmt.flatMap(toResponse)
-        case _                  => getStringList("language").runStmt.flatMap(toResponse)
+        case None | Some(false) => getLanguages.execute.flatMap(toResponse)
+        case _                  => getStringList("language").execute.flatMap(toResponse)
       }
 
     case GET -> Root / "airplanes" :?
@@ -43,9 +43,9 @@ object ApiEndpoints {
             OnlyNameQueryParamMatcher(onlyNames) =>
       val m = maybeManufacturer.flatMap(_.toOption)
       onlyNames match {
-        case None | Some(false) => getAirplanes(m).runStmt.flatMap(toResponse)
+        case None | Some(false) => getAirplanes(m).execute.flatMap(toResponse)
         case _ =>
-          getStringListBy("airplane", "manufacturer", m).runStmt.flatMap(toResponse)
+          getStringListBy("airplane", "manufacturer", m).execute.flatMap(toResponse)
       }
 
     case req @ POST -> Root / "languages" =>
@@ -53,7 +53,7 @@ object ApiEndpoints {
         .attemptAs[Language]
         .foldF[ApiResult[Language]](
           _ => IO(Left(EntryInvalidFormat)),
-          language => insertLanguage(language).runStmt
+          language => insertLanguage(language).execute
         )
         .flatMap(toResponse)
   }
