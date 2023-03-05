@@ -4,12 +4,10 @@ import doobie._
 import doobie.implicits._
 import io.circe.generic.extras.Configuration
 
-trait DbObject {
+trait FlightDbBase {
   def id: Option[Long]
 
   def sqlInsert: Fragment
-
-  def sqlSelectAll: Fragment = Fragment.empty // TODO: Remove this
 
   def selectIdStmt(
     table: String,
@@ -21,7 +19,7 @@ trait DbObject {
     }.orNull // FixMe: This can't be right
 }
 
-object DbObject {
+object FlightDbBase {
 
   // Allow for snake_case to camelCase conversion automatically
   implicit val config: Configuration = Configuration.default.withSnakeCaseMemberNames

@@ -2,7 +2,7 @@ package flightdatabase.model.objects
 
 import doobie._
 import doobie.implicits._
-import flightdatabase.model.objects.DbObject._
+import flightdatabase.model.objects.FlightDbBase._
 import io.circe.generic.extras._
 
 @ConfiguredJsonCodec final case class Airport(
@@ -17,7 +17,7 @@ import io.circe.generic.extras._
   capacity: Int,
   international: Boolean,
   junction: Boolean
-) extends DbObject {
+) extends FlightDbBase {
 
   def sqlInsert: Fragment =
     sql"""INSERT INTO airport 

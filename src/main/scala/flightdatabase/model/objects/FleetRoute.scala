@@ -2,7 +2,7 @@ package flightdatabase.model.objects
 
 import doobie._
 import doobie.implicits._
-import flightdatabase.model.objects.DbObject._
+import flightdatabase.model.objects.FlightDbBase._
 import io.circe.generic.extras._
 
 @ConfiguredJsonCodec final case class FleetRoute(
@@ -12,7 +12,7 @@ import io.circe.generic.extras._
   @JsonKey("route_number") route: String,
   start: String,
   destination: String
-) extends DbObject {
+) extends FlightDbBase {
 
   def sqlInsert: Fragment =
     sql"""INSERT INTO fleet_route

@@ -2,7 +2,7 @@ package flightdatabase.model.objects
 
 import doobie._
 import doobie.implicits._
-import flightdatabase.model.objects.DbObject._
+import flightdatabase.model.objects.FlightDbBase._
 import io.circe.generic.extras._
 
 @ConfiguredJsonCodec final case class Airplane(
@@ -10,8 +10,8 @@ import io.circe.generic.extras._
   name: String,
   @JsonKey("manufacturer") manufacturerId: String,
   capacity: Int,
-  @JsonKey("max_range_in_km") maxRangeInKm: Int
-) extends DbObject {
+  maxRangeInKm: Int
+) extends FlightDbBase {
 
   def sqlInsert: Fragment =
     sql"""INSERT INTO airplane

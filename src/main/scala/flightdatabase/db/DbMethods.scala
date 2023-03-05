@@ -3,9 +3,8 @@ package flightdatabase.db
 import doobie._
 import doobie.implicits._
 import doobie.postgres._
-import flightdatabase.model.objects._
-import java.sql.SQLException
 import flightdatabase.model._
+import flightdatabase.model.objects._
 import flightdatabase.utils.CollectionsHelper._
 
 object DbMethods {
@@ -37,7 +36,7 @@ object DbMethods {
         getStringList(toTable)
     }
 
-  def insertDbObject[O <: DbObject](
+  def insertDbObject[O <: FlightDbBase](
     obj: O
   )(implicit updateId: (Long, O) => O): ConnectionIO[Either[ApiError, O]] =
     obj.sqlInsert.update
