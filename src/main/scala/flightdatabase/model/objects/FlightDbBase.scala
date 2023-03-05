@@ -3,11 +3,13 @@ package flightdatabase.model.objects
 import doobie._
 import doobie.implicits._
 import io.circe.generic.extras.Configuration
+import org.http4s.Uri
 
 trait FlightDbBase {
   def id: Option[Long]
+  def uri: Uri
 
-  def sqlInsert: Fragment
+  def sqlInsert: Fragment = fr""
 
   def selectIdStmt(
     table: String,

@@ -4,6 +4,7 @@ import doobie._
 import doobie.implicits._
 import io.circe.generic.extras._
 import flightdatabase.model.objects.FlightDbBase._
+import org.http4s.Uri
 
 @ConfiguredJsonCodec final case class Currency(
   id: Option[Long],
@@ -12,6 +13,8 @@ import flightdatabase.model.objects.FlightDbBase._
   symbol: Option[String]
 ) extends FlightDbBase {
 
-  def sqlInsert: Fragment =
+  def uri: Uri = ???
+
+  override def sqlInsert: Fragment =
     sql"INSERT INTO currency (name, iso, symbol) VALUES ($name, $iso, $symbol)"
 }

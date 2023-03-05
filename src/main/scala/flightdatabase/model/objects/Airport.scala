@@ -4,6 +4,7 @@ import doobie._
 import doobie.implicits._
 import flightdatabase.model.objects.FlightDbBase._
 import io.circe.generic.extras._
+import org.http4s.Uri
 
 @ConfiguredJsonCodec final case class Airport(
   id: Option[Long],
@@ -19,7 +20,9 @@ import io.circe.generic.extras._
   junction: Boolean
 ) extends FlightDbBase {
 
-  def sqlInsert: Fragment =
+  def uri: Uri = ???
+
+  override def sqlInsert: Fragment =
     sql"""INSERT INTO airport 
      |       (name, icao, iata, city_id, country_id, 
      |       number_of_runways, number_of_terminals, capacity, 
