@@ -9,10 +9,10 @@ import org.flywaydb.core.Flyway
 
 object DbInitiation {
 
-  def transactor(config: DatabaseConfig): Resource[IO, HikariTransactor[IO]] =
+  def transactor[F[_]: Async](config: DatabaseConfig): Resource[F, HikariTransactor[F]] =
     for {
-      ec <- ExecutionContexts.fixedThreadPool[IO](config.threadPoolSize)
-      xa <- HikariTransactor.newHikariTransactor[IO](
+      ec <- ExecutionContexts.fixedThreadPool[F](config.threadPoolSize)
+      xa <- HikariTransactor.newHikariTransactor[F](
         config.driver,
         config.url,
         config.access.username,
@@ -21,8 +21,8 @@ object DbInitiation {
       )
     } yield xa
 
-  def simpleTransactor(config: DatabaseConfig): Transactor[IO] = {
-    val xa = Transactor.fromDriverManager[IO](
+  def simpleTransactor[F[_]: Async](config: DatabaseConfig): Transactor[F] = {
+    val xa = Transactor.fromDriverManager[F](
       config.driver,
       config.url,
       config.access.username,

@@ -49,7 +49,6 @@ package object newmodel {
     uri: Uri
   ) extends FlightDbBase
 
-  // TODO: Remove countryId from insert script
   final case class Airport(
     id: Option[Long],
     name: String,
@@ -64,7 +63,6 @@ package object newmodel {
     uri: Uri
   ) extends FlightDbBase
 
-  // TODO: Remove countryId from insert script
   final case class Fleet(
     id: Option[Long],
     name: String,

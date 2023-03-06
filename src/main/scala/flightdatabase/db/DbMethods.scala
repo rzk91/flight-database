@@ -2,7 +2,6 @@ package flightdatabase.db
 
 import doobie._
 import doobie.implicits._
-import doobie.postgres._
 import flightdatabase.model._
 import flightdatabase.model.objects._
 import flightdatabase.utils.CollectionsHelper._
@@ -13,7 +12,7 @@ object DbMethods {
     getNamesFragment(table)
       .query[String]
       .to[List]
-      .map(liftStringListToApiResult)
+      .map(liftListToApiResult)
 
   def getStringListBy(
     toTable: String,
@@ -28,7 +27,7 @@ object DbMethods {
           strings <- getNameWhereIdFragment(toTable, s"${fromTable}_id", id)
             .query[String]
             .to[List]
-            .map(liftStringListToApiResult)
+            .map(liftListToApiResult)
         } yield strings
 
       case None =>
@@ -38,14 +37,13 @@ object DbMethods {
 
   def insertDbObject[O <: FlightDbBase](
     obj: O
-  )(implicit updateId: (Long, O) => O): ConnectionIO[Either[ApiError, O]] =
+  )(implicit updateId: (Long, O) => O): ConnectionIO[ApiResult[O]] =
     obj.sqlInsert.update
       .withUniqueGeneratedKeys[Long]("id")
       .attemptSqlState
-      .map(_.foldMap(sqlStateToApiError, updateId(_, obj)))
+      .map(_.foldMap(sqlStateToApiError, id => CreatedValue(updateId(id, obj))))
 
-  def insertLanguage(lang: Language): ConnectionIO[ApiResult[Language]] =
-    insertDbObject[Language](lang).map(_.map(CreatedLanguage(_)))
+  def insertLanguage(lang: Language): ConnectionIO[ApiResult[Language]] = insertDbObject[Language](lang)
 
   def getAirplanes(maybeManufacturer: Option[String]): ConnectionIO[ApiResult[List[Airplane]]] = {
     val allAirplanes =
@@ -54,12 +52,12 @@ object DbMethods {
 
     val addManufacturer = maybeManufacturer.fold(Fragment.empty)(m => fr"WHERE m.name = $m")
 
-    (allAirplanes ++ addManufacturer).query[Airplane].to[List].map(liftAirplaneListToApiResult)
+    (allAirplanes ++ addManufacturer).query[Airplane].to[List].map(liftListToApiResult)
   }
 
   def getLanguages: ConnectionIO[ApiResult[List[Language]]] =
     sql"SELECT id, name, iso2, iso3, original_name FROM language"
       .query[Language]
       .to[List]
-      .map(liftLanguageListToApiResult)
+      .map(liftListToApiResult)
 }

@@ -11,7 +11,7 @@ object DbMain extends IOApp with LazyLogging {
   def run(args: List[String]): IO[ExitCode] = {
     DbInitiation.initializeDatabaseSeparately(dbConfig)
 
-    transactor.use { t =>
+    transactor[IO].use { t =>
       for {
         countries    <- getStringList("country").transact(t)
         _            <- IO(logger.info(s"Countries: $countries"))

@@ -14,12 +14,13 @@ import flightdatabase.model.objects._
 package object db extends LazyLogging {
 
   // Resource-based HikariTransactor for better connection pooling
-  implicit val transactor: Resource[IO, HikariTransactor[IO]] = DbInitiation.transactor(dbConfig)
+  implicit def transactor[F[_]: Async]: Resource[F, HikariTransactor[F]] =
+    DbInitiation.transactor[F](dbConfig)
 
   // Implicit logging
   implicit val logHandler: LogHandler = LogHandler {
     case Success(s, a, e1, e2) =>
-      logger.debug(s"""Successful Statement Execution:
+      logger.debug(s"""Successful statement execution:
             |
             |  ${s.linesIterator.dropWhile(_.trim.isEmpty).mkString("\n  ")}
             |
@@ -29,7 +30,7 @@ package object db extends LazyLogging {
 
     case ProcessingFailure(s, a, e1, e2, t) =>
       logger.whenDebugEnabled {
-        logger.warn(s"""Failed Resultset Processing:
+        logger.warn(s"""Failed result set processing:
             |
             |  ${s.linesIterator.dropWhile(_.trim.isEmpty).mkString("\n  ")}
             |
@@ -41,7 +42,7 @@ package object db extends LazyLogging {
 
     case ExecFailure(s, a, e1, t) =>
       logger.whenDebugEnabled {
-        logger.error(s"""Failed Statement Execution:
+        logger.error(s"""Failed statement execution:
             |
             |  ${s.linesIterator.dropWhile(_.trim.isEmpty).mkString("\n  ")}
             |
@@ -74,12 +75,6 @@ package object db extends LazyLogging {
   }
 
   // Lift to API Result
-  def liftStringListToApiResult(list: List[String]): ApiResult[List[String]] =
-    Right(GotStringList(list)).withLeft[ApiError]
-
-  def liftLanguageListToApiResult(list: List[Language]): ApiResult[List[Language]] =
-    Right(GotLanguageList(list)).withLeft[ApiError]
-
-  def liftAirplaneListToApiResult(list: List[Airplane]): ApiResult[List[Airplane]] =
-    Right(GotAirplaneList(list)).withLeft[ApiError]
+  def liftListToApiResult[A](list: List[A]): ApiResult[List[A]] =
+    Right(GotValue[List[A]](list)).withLeft[ApiError]
 }

@@ -1,0 +1,38 @@
+package flightdatabase.api.services
+
+import cats.effect._
+import cats.implicits._
+import flightdatabase.api._
+import flightdatabase.db.DbMethods._
+import flightdatabase.db._
+import flightdatabase.model.objects.Airplane
+import flightdatabase.utils.CollectionsHelper.MoreStringOps
+import org.http4s._
+import org.http4s.circe.CirceEntityCodec._
+import org.http4s.dsl.Http4sDsl
+
+class AirplaneService[F[_]: Async] extends Http4sDsl[F] {
+
+  implicit val dsl: Http4sDslT[F] = Http4sDsl.apply[F]
+
+  object ManufacturerQueryParamMatcher
+      extends OptionalQueryParamDecoderMatcher[String]("manufacturer")
+
+  def service: HttpRoutes[F] = HttpRoutes.of {
+    case GET -> Root / "airplanes" :?
+          ManufacturerQueryParamMatcher(maybeManufacturer) +&
+            OnlyNameQueryParamMatcher(onlyNames) =>
+      val m = maybeManufacturer.flatMap(_.toOption)
+      onlyNames match {
+        case None | Some(false) => getAirplanes(m).execute.flatMap(toResponse[F, List[Airplane]])
+        case _ =>
+          getStringListBy("airplane", "manufacturer", m).execute
+            .flatMap(toResponse[F, List[String]])
+      }
+  }
+
+}
+
+object AirplaneService {
+  def apply[F[_]: Async]: HttpRoutes[F] = new AirplaneService().service
+}

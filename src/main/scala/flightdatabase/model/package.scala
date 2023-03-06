@@ -1,33 +1,17 @@
 package flightdatabase
 
-import cats.effect._
 import flightdatabase.model.objects._
-import io.circe._
-import org.http4s._
-import org.http4s.circe._
 
 package object model {
 
   type ApiResult[O] = Either[ApiError, ApiOutput[O]]
 
   // API Output
-  sealed trait ApiOutput[O]
-  // Created objects
-  case class CreatedAirplane(value: Airplane) extends ApiOutput[Airplane]
-  case class CreatedAirport(value: Airport) extends ApiOutput[Airport]
-  case class CreatedCity(value: City) extends ApiOutput[City]
-  case class CreatedCountry(value: Country) extends ApiOutput[Country]
-  case class CreatedCurrency(value: Currency) extends ApiOutput[Currency]
-  case class CreatedFleet(value: Fleet) extends ApiOutput[Fleet]
-  case class CreatedManufacturer(value: Manufacturer) extends ApiOutput[Manufacturer]
-  case class CreatedLanguage(value: Language) extends ApiOutput[Language]
-  case class CreatedFleetAirplane(value: FleetAirplane) extends ApiOutput[FleetAirplane]
-  case class CreatedFleetRoute(value: FleetRoute) extends ApiOutput[FleetRoute]
-  // Obtained objects
-  case class GotStringList(value: List[String]) extends ApiOutput[List[String]]
-  case class GotLanguageList(value: List[Language]) extends ApiOutput[List[Language]]
-  case class GotAirplaneList(value: List[Airplane]) extends ApiOutput[List[Airplane]]
-  // TODO the rest
+  sealed trait ApiOutput[O] { def value: O }
+
+  // Generic objects
+  case class CreatedValue[O](value: O) extends ApiOutput[O]
+  case class GotValue[O](value: O) extends ApiOutput[O]
 
   // API errors
   sealed trait ApiError { def error: String = "Error:" }

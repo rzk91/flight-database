@@ -1,12 +1,13 @@
 package flightdatabase
 
+import flightdatabase.config.EnvironmentEnum.{DEV, Env}
 import pureconfig._
+
 import scala.util.Try
-import flightdatabase.config.EnvironmentEnum.DEV
 
 package object config {
 
-  implicit val environmentReader = ConfigReader[String].map { s =>
+  implicit val environmentReader: ConfigReader[Env] = ConfigReader[String].map { s =>
     Try(EnvironmentEnum.withName(s.toUpperCase)).getOrElse(DEV)
   }
 
