@@ -81,4 +81,6 @@ INSERT INTO country
        (SELECT id FROM currency WHERE iso = 'USD'),
        'US citizen'
    );
+
+ALTER SEQUENCE country_id_seq RESTART WITH 7;
  

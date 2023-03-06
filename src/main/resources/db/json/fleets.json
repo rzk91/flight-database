@@ -4,15 +4,13 @@
         "iso2": "LH",
         "iso3": "DLH",
         "call_sign": "Lufthansa",
-        "hub_at": "FRA",
-        "country_id": "DE"
+        "hub_at": "FRA"
     },
     {
         "name": "Emirates",
         "iso2": "EK",
         "iso3": "UAE",
         "call_sign": "Emirates",
-        "hub_at": "DXB",
-        "country_id": "AE"
+        "hub_at": "DXB"
     }
 ]

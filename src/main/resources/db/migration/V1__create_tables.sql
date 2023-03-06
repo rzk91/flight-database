@@ -85,7 +85,6 @@ CREATE TABLE airport (
 	icao character varying (4) NOT NULL CHECK (btrim(icao::text) <> ''::text),
 	iata character varying (3) NOT NULL CHECK (btrim(iata::text) <> ''::text),
 	city_id integer REFERENCES city (id) ON DELETE CASCADE,
-	country_id integer REFERENCES country (id) ON DELETE CASCADE,
 	number_of_runways integer NOT NULL CHECK (number_of_runways > 0),
 	number_of_terminals integer NOT NULL CHECK (number_of_terminals > 0),
 	capacity integer CHECK (capacity > 0),
@@ -104,7 +103,6 @@ CREATE TABLE fleet (
 	iso3 character varying (3) NOT NULL CHECK (btrim(iso3::text) <> ''::text),
 	call_sign character varying,
 	hub_airport_id integer REFERENCES airport (id) ON DELETE CASCADE,
-	country_id integer REFERENCES country (id) ON DELETE CASCADE,
 	created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	last_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

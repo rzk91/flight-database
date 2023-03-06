@@ -33,3 +33,4 @@ INSERT INTO fleet_airplane
   	(SELECT id FROM airplane WHERE name = 'A320neo')
 	);
 
+ALTER SEQUENCE fleet_airplane_id_seq RESTART WITH 6;

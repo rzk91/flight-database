@@ -57,4 +57,5 @@ INSERT INTO city
        false,
        8901000, 41.85003, -87.65005
    );
- 
+
+ALTER SEQUENCE currency_id_seq RESTART WITH 7;

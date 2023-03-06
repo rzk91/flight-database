@@ -64,3 +64,4 @@ INSERT INTO fleet_route
       (SELECT id FROM airport WHERE iata = 'DXB')
   );
 
+ALTER SEQUENCE fleet_route_id_seq RESTART WITH 7;

@@ -30,3 +30,4 @@ INSERT INTO airplane
        248, 13530
    );
  
+ALTER SEQUENCE airplane_id_seq RESTART WITH 5;
