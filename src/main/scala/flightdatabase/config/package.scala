@@ -11,7 +11,7 @@ package object config {
     Try(EnvironmentEnum.withName(s.toUpperCase)).getOrElse(DEV)
   }
 
-  private[config] val source: ConfigSource = ConfigSource
+  private[config] val source: ConfigObjectSource = ConfigSource
     .resources("local.conf")
     .optional
     .withFallback(ConfigSource.resources("application.conf"))

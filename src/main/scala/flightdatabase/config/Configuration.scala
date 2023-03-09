@@ -1,5 +1,6 @@
 package flightdatabase.config
 
+import com.typesafe.scalalogging.LazyLogging
 import flightdatabase.config.EnvironmentEnum.DEV
 import flightdatabase.utils.CollectionsHelper.MoreStringOps
 import org.http4s.Uri
@@ -8,7 +9,9 @@ import pureconfig.generic.auto._
 
 import scala.util.Try
 
-object Configuration extends ConfigurationBase {
+object Configuration extends ConfigurationBase with LazyLogging {
+
+  logger.info(s"Effective configuration: ${source.config.map(_.root.render)}")
 
   lazy val environment: Environment = source.loadOrThrow[Environment]
 
