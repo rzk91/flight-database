@@ -1,8 +1,10 @@
 # Flight Database
 A Scala-based codebase of some microservices using [http4s](http://http4s.org/), [doobie](http://tpolecat.github.io/doobie/),
-and [circe](https://circe.github.io/circe/). These microservices allow for CRUD and other advanced operations of flight-related items, including countries, cities, airports, airplanes (incl. their manufacturers) and routes. 
+and [circe](https://circe.github.io/circe/). These microservices allow for CRUD and other advanced operations of flight-related items, including countries, cities, airports, airplanes (incl. their manufacturers) and routes.
 
-> Currently a work in progress
+The codebase also includes a comprehensive list of entries in the database.
+
+> Currently a work in progress (database is also incomplete)
 
 ## Application stack (at the moment)
 - http4s
