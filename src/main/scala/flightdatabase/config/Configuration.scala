@@ -11,7 +11,7 @@ import scala.util.Try
 
 object Configuration extends ConfigurationBase with LazyLogging {
 
-  logger.info(s"Effective configuration: ${source.config.map(_.root.render)}")
+  logger.info(s"Effective configuration: ${source.config().map(_.root.render)}")
 
   lazy val environment: Environment = source.loadOrThrow[Environment]
 
