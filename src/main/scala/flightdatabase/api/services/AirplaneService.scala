@@ -24,10 +24,8 @@ class AirplaneService[F[_]: Async] extends Http4sDsl[F] {
             OnlyNameQueryParamMatcher(onlyNames) =>
       val m = maybeManufacturer.flatMap(_.toOption)
       onlyNames match {
-        case None | Some(false) => getAirplanes(m).execute.flatMap(toResponse[F, List[Airplane]])
-        case _ =>
-          getStringListBy("airplane", "manufacturer", m).execute
-            .flatMap(toResponse[F, List[String]])
+        case None | Some(false) => getAirplanes(m).execute.flatMap(toResponse(_))
+        case _                  => getStringListBy("airplane", "manufacturer", m).execute.flatMap(toResponse(_))
       }
   }
 

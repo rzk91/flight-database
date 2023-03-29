@@ -10,6 +10,7 @@ import org.http4s.{HttpApp, HttpRoutes}
 class FlightDbApi[F[_]: Async] {
 
   private val languageService = LanguageService[F]
+  private val currencyService = CurrencyService[F]
   private val cityService = CityService[F]
   private val countryService = CountryService[F]
   private val airplaneService = AirplaneService[F]
@@ -18,7 +19,9 @@ class FlightDbApi[F[_]: Async] {
 
   // TODO: List is incomplete...
   val flightDbServices: HttpRoutes[F] =
-    List(languageService, cityService, countryService, airplaneService).reduceLeft(_ <+> _)
+    List(languageService, currencyService, cityService, countryService, airplaneService).reduceLeft(
+      _ <+> _
+    )
 
   def flightDbApp(
     includeLogging: Boolean = false,

@@ -60,4 +60,10 @@ object DbMethods {
       .query[Language]
       .to[List]
       .map(liftListToApiResult)
+
+  def getCurrencies: ConnectionIO[ApiResult[List[Currency]]] =
+    sql"SELECT id, name, iso, symbol FROM currency"
+      .query[Currency]
+      .to[List]
+      .map(liftListToApiResult)
 }

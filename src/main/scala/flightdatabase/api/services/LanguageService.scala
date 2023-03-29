@@ -19,8 +19,8 @@ class LanguageService[F[_]: Async](implicit F: Applicative[F]) extends Http4sDsl
   def service: HttpRoutes[F] = HttpRoutes.of {
     case GET -> Root / "languages" :? OnlyNameQueryParamMatcher(onlyNames) =>
       onlyNames match {
-        case None | Some(false) => getLanguages.execute.flatMap(toResponse[F, List[Language]])
-        case _                  => getStringList("language").execute.flatMap(toResponse[F, List[String]])
+        case None | Some(false) => getLanguages.execute.flatMap(toResponse(_))
+        case _                  => getStringList("language").execute.flatMap(toResponse(_))
       }
 
     case req @ POST -> Root / "languages" =>
@@ -30,7 +30,7 @@ class LanguageService[F[_]: Async](implicit F: Applicative[F]) extends Http4sDsl
           _ => F.pure(Left(EntryInvalidFormat)),
           language => insertLanguage(language).execute
         )
-        .flatMap(toResponse[F, Language])
+        .flatMap(toResponse(_))
   }
 }
 

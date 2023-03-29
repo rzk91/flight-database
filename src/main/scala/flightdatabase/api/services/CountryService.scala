@@ -14,8 +14,7 @@ class CountryService[F[_]: Async] extends Http4sDsl[F] {
   implicit val dsl: Http4sDslT[F] = Http4sDsl.apply[F]
 
   def service: HttpRoutes[F] = HttpRoutes.of {
-    case GET -> Root / "countries" =>
-      getStringList("country").execute.flatMap(toResponse[F, List[String]])
+    case GET -> Root / "countries" => getStringList("country").execute.flatMap(toResponse(_))
   }
 }
 

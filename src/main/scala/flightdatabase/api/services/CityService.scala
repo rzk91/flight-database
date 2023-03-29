@@ -19,7 +19,7 @@ class CityService[F[_]: Async] extends Http4sDsl[F] {
   def service: HttpRoutes[F] = HttpRoutes.of {
     case GET -> Root / "cities" :? CountryQueryParamMatcher(maybeCountry) =>
       getStringListBy("city", "country", maybeCountry.flatMap(_.toOption)).execute
-        .flatMap(toResponse[F, List[String]])
+        .flatMap(toResponse(_))
   }
 }
 
