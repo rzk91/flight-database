@@ -11,6 +11,8 @@ import org.http4s.dsl.Http4sDsl
 
 package object api {
 
+  type ApiResult[O] = Either[ApiError, ApiOutput[O]]
+
   implicit class MoreConnectionIOOps[A](private val stmt: ConnectionIO[A]) extends AnyVal {
 
     def execute[F[_]: Async](implicit xa: Resource[F, HikariTransactor[F]]): F[A] =

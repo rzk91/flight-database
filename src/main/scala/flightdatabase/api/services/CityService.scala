@@ -5,6 +5,7 @@ import cats.implicits._
 import flightdatabase.api._
 import flightdatabase.db.DbMethods._
 import flightdatabase.db._
+import flightdatabase.model.FlightDbTable._
 import flightdatabase.utils.CollectionsHelper._
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
@@ -18,7 +19,7 @@ class CityService[F[_]: Async] extends Http4sDsl[F] {
 
   def service: HttpRoutes[F] = HttpRoutes.of {
     case GET -> Root / "cities" :? CountryQueryParamMatcher(maybeCountry) =>
-      getStringListBy("city", "country", maybeCountry.flatMap(_.toOption)).execute
+      getStringListBy(CITY, COUNTRY, maybeCountry.flatMap(_.toOption)).execute
         .flatMap(toResponse(_))
   }
 }

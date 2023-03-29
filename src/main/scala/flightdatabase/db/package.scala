@@ -7,9 +7,10 @@ import doobie.hikari.HikariTransactor
 import doobie.implicits._
 import doobie.postgres._
 import doobie.util.log.{ExecFailure, ProcessingFailure, Success}
+import flightdatabase.api._
 import flightdatabase.config.Configuration._
+import flightdatabase.model.FlightDbTable._
 import flightdatabase.model._
-import flightdatabase.model.objects._
 
 package object db extends LazyLogging {
 
@@ -54,16 +55,16 @@ package object db extends LazyLogging {
   }
 
   // Fragment functions
-  def getNamesFragment(table: String): Fragment = fr"SELECT name FROM" ++ Fragment.const(table)
-  def getIdsFragment(table: String): Fragment = fr"SELECT id FROM" ++ Fragment.const(table)
+  def getNamesFragment(table: Table): Fragment = fr"SELECT name FROM" ++ Fragment.const(table.toString)
+  def getIdsFragment(table: Table): Fragment = fr"SELECT id FROM" ++ Fragment.const(table.toString)
 
   def whereNameFragment(name: String): Fragment = fr"WHERE name = $name"
   def whereIdFragment(id: Int): Fragment = fr"WHERE id = $id"
 
-  def getIdWhereNameFragment(table: String, name: String): Fragment =
+  def getIdWhereNameFragment(table: Table, name: String): Fragment =
     getIdsFragment(table) ++ whereNameFragment(name)
 
-  def getNameWhereIdFragment(table: String, idField: String, id: Long): Fragment =
+  def getNameWhereIdFragment(table: Table, idField: String, id: Long): Fragment =
     getNamesFragment(table) ++ fr"WHERE" ++ Fragment.const(idField) ++ fr"= $id"
 
   // SQL state to ApiError conversion
@@ -76,5 +77,5 @@ package object db extends LazyLogging {
 
   // Lift to API Result
   def liftListToApiResult[A](list: List[A]): ApiResult[List[A]] =
-    Right(GotValue[List[A]](list)).withLeft[ApiError]
+    Right(GotValue[List[A]](list)).asInstanceOf[ApiResult[List[A]]]
 }

@@ -6,7 +6,7 @@ import cats.implicits._
 import flightdatabase.api._
 import flightdatabase.db.DbMethods._
 import flightdatabase.db._
-import flightdatabase.model._
+import flightdatabase.model.FlightDbTable.CURRENCY
 import flightdatabase.model.objects.Currency
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
@@ -20,7 +20,7 @@ class CurrencyService[F[_]: Async] extends Http4sDsl[F] {
     case GET -> Root / "currencies" :? OnlyNameQueryParamMatcher(onlyNames) =>
       onlyNames match {
         case None | Some(false) => getCurrencies.execute.flatMap(toResponse(_))
-        case _                  => getStringList("currency").execute.flatMap(toResponse(_))
+        case _                  => getStringList(CURRENCY).execute.flatMap(toResponse(_))
       }
   }
 }

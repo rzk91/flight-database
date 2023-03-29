@@ -2,29 +2,31 @@ package flightdatabase.db
 
 import doobie._
 import doobie.implicits._
+import flightdatabase.api._
 import flightdatabase.model._
+import flightdatabase.model.FlightDbTable._
 import flightdatabase.model.objects._
 import flightdatabase.utils.CollectionsHelper._
 
 object DbMethods {
 
-  def getStringList(table: String): ConnectionIO[ApiResult[List[String]]] =
+  def getStringList(table: Table): ConnectionIO[ApiResult[List[String]]] =
     getNamesFragment(table)
       .query[String]
       .to[List]
       .map(liftListToApiResult)
 
   def getStringListBy(
-    toTable: String,
-    fromTable: String,
-    fromTableValue: Option[String]
+    mainTable: Table,
+    subTable: Table,
+    subTableValue: Option[String]
   ): ConnectionIO[ApiResult[List[String]]] =
-    fromTableValue match {
+    subTableValue match {
       case Some(value) =>
         // Get only strings based on given value
         for {
-          id <- getIdWhereNameFragment(fromTable, value).query[Int].unique
-          strings <- getNameWhereIdFragment(toTable, s"${fromTable}_id", id)
+          id <- getIdWhereNameFragment(subTable, value).query[Int].unique
+          strings <- getNameWhereIdFragment(mainTable, s"${subTable}_id", id)
             .query[String]
             .to[List]
             .map(liftListToApiResult)
@@ -32,7 +34,7 @@ object DbMethods {
 
       case None =>
         // Get all strings in DB
-        getStringList(toTable)
+        getStringList(mainTable)
     }
 
   def insertDbObject[O <: FlightDbBase](

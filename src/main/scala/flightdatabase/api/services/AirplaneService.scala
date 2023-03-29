@@ -6,6 +6,7 @@ import flightdatabase.api._
 import flightdatabase.db.DbMethods._
 import flightdatabase.db._
 import flightdatabase.model.objects.Airplane
+import flightdatabase.model.FlightDbTable._
 import flightdatabase.utils.CollectionsHelper.MoreStringOps
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
@@ -25,7 +26,7 @@ class AirplaneService[F[_]: Async] extends Http4sDsl[F] {
       val m = maybeManufacturer.flatMap(_.toOption)
       onlyNames match {
         case None | Some(false) => getAirplanes(m).execute.flatMap(toResponse(_))
-        case _                  => getStringListBy("airplane", "manufacturer", m).execute.flatMap(toResponse(_))
+        case _                  => getStringListBy(AIRPLANE, MANUFACTURER, m).execute.flatMap(toResponse(_))
       }
   }
 
