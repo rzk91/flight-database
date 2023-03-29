@@ -7,15 +7,16 @@ import flightdatabase.config.Configuration._
 import flightdatabase.db.DbInitiation
 import org.http4s.HttpApp
 
-object FlightDbMain extends Server[IO] with IOApp {
+object FlightDbMain extends Server[IO] with IOApp.Simple {
 
   val host: Option[Host] = apiConfig.hostName
   val port: Port = apiConfig.portNumber
   val httpApp: HttpApp[IO] = FlightDbApi[IO].flightDbApp(includeLogging = true)
 
-  def run(args: List[String]): IO[ExitCode] = {
-    DbInitiation.initializeDatabaseSeparately(dbConfig)
-
-    server.useForever.as(ExitCode.Success)
-  }
+  override def run: IO[Unit] = {
+    for {
+      _ <- DbInitiation.databaseInitialisation[IO](dbConfig, cleanDatabase)
+      _ <- server
+    } yield ()
+  }.useForever
 }

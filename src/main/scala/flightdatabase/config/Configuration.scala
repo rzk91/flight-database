@@ -20,7 +20,11 @@ object Configuration extends ConfigurationBase with LazyLogging {
 
   lazy val apiConfig: ApiConfig = source.at("api").loadOrThrow[ApiConfig]
 
-  def cleanDatabase: Boolean = environment.env == DEV && dbConfig.cleanDatabase
+  lazy val cleanDatabase: Boolean =
+    environment.env == DEV && source
+      .at("database.clean-database")
+      .load[Boolean]
+      .getOrElse(false)
 
   def flightDbBaseUri: Uri =
     Uri(

@@ -21,28 +21,30 @@ object DbInitiation {
       )
     } yield xa
 
-  def simpleTransactor[F[_]: Async](config: DatabaseConfig): Transactor[F] = {
-    val xa = Transactor.fromDriverManager[F](
+  def simpleTransactor[F[_]: Async](config: DatabaseConfig, clean: Boolean): Transactor[F] = {
+    databaseInitialisation[F](config, clean).use_
+
+    Transactor.fromDriverManager[F](
       config.driver,
       config.url,
       config.access.username,
       config.access.password
     )
-
-    // TODO: Use the above transactor's datasource for Flyway migration?
-    initializeDatabaseSeparately(config)
-
-    xa
   }
 
-  def initializeDatabaseSeparately(config: DatabaseConfig): Boolean = {
-    val flyway = Flyway
-      .configure()
-      .cleanDisabled(!cleanDatabase)
-      .dataSource(config.url, config.access.username, config.access.password)
-      .baselineVersion(config.baseline)
-      .load()
-    if (cleanDatabase) flyway.clean()
-    flyway.migrate().success
-  }
+  def databaseInitialisation[F[_]: Async](config: DatabaseConfig, clean: Boolean = false)(
+    implicit F: Async[F]
+  ): Resource[F, Boolean] =
+    Resource.eval {
+      F.delay {
+        val flyway = Flyway
+          .configure()
+          .cleanDisabled(!clean)
+          .dataSource(config.url, config.access.username, config.access.password)
+          .baselineVersion(config.baseline)
+          .load()
+        if (clean) flyway.clean()
+        flyway.migrate().success
+      }
+    }
 }

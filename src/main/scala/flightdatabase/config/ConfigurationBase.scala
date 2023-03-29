@@ -13,14 +13,13 @@ trait ConfigurationBase {
     url: String,
     access: Access,
     baseline: String,
-    threadPoolSize: Int,
-    cleanDatabase: Boolean
+    threadPoolSize: Int
   )
 
-  case class ApiConfig(host: String, port: Int) {
-    def hostName: Option[Host] = Host.fromString(host)
+  case class ApiConfig private (host: String, port: Int) {
+    lazy val hostName: Option[Host] = Host.fromString(host)
 
-    def portNumber: Port =
+    lazy val portNumber: Port =
       Port
         .fromInt(port)
         .getOrElse(
