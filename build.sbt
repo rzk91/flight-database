@@ -1,4 +1,4 @@
-scalaVersion := "2.13.8"
+scalaVersion := "2.13.13"
 name         := "flight-database"
 organization := "rzk.scala"
 version      := "1.0"
