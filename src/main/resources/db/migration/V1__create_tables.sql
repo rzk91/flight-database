@@ -1,5 +1,5 @@
 -- Create flight database (this is done manually)
--- CREATE DATABASE flights;
+-- CREATE DATABASE flightdb;
 
 DROP TABLE IF EXISTS fleet_route;
 DROP TABLE IF EXISTS fleet_airplane;
