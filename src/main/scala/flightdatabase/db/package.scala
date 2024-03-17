@@ -8,15 +8,11 @@ import doobie.implicits._
 import doobie.postgres._
 import doobie.util.log.{ExecFailure, ProcessingFailure, Success}
 import flightdatabase.api._
-import flightdatabase.config.Configuration._
+import flightdatabase.config.Configuration.DatabaseConfig
 import flightdatabase.model.FlightDbTable._
 import flightdatabase.model._
 
 package object db extends LazyLogging {
-
-  // Resource-based HikariTransactor for better connection pooling
-  implicit def transactor[F[_]: Async]: Resource[F, HikariTransactor[F]] =
-    DbInitiation.transactor[F](dbConfig)
 
   // Implicit logging
   implicit val logHandler: LogHandler = LogHandler {

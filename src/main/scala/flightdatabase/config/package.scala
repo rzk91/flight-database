@@ -1,14 +1,19 @@
 package flightdatabase
 
-import flightdatabase.config.EnvironmentEnum.{DEV, Env}
 import pureconfig._
 
 import scala.util.Try
+import pureconfig.error.CannotConvert
 
 package object config {
 
-  implicit val environmentReader: ConfigReader[Env] = ConfigReader[String].map { s =>
-    Try(EnvironmentEnum.withName(s.toUpperCase)).getOrElse(DEV)
+  implicit val environmentReader: ConfigReader[Environment] = ConfigReader[String].emap { env =>
+    env.toUpperCase match {
+      case "DEV"  => Right(DEV)
+      case "PROD" => Right(PROD)
+      case _ =>
+        Left(CannotConvert(env, "Environment", "Only available options are: 'DEV' and 'PROD'."))
+    }
   }
 
   private[config] val source: ConfigObjectSource = ConfigSource

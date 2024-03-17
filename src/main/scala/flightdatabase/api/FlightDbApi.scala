@@ -2,12 +2,15 @@ package flightdatabase.api
 
 import cats.effect._
 import cats.syntax.semigroupk._
+import doobie.hikari.HikariTransactor
 import flightdatabase.api.services._
 import org.http4s.server.Router
 import org.http4s.server.middleware.Logger
-import org.http4s.{HttpApp, HttpRoutes}
+import org.http4s.{HttpApp, HttpRoutes, Uri}
 
-class FlightDbApi[F[_]: Async] {
+class FlightDbApi[F[_]: Async](flightDbBaseUri: Uri)(
+  implicit transactor: Resource[F, HikariTransactor[F]]
+) {
 
   private val languageService = LanguageService[F]
   private val currencyService = CurrencyService[F]
@@ -15,7 +18,7 @@ class FlightDbApi[F[_]: Async] {
   private val countryService = CountryService[F]
   private val airplaneService = AirplaneService[F]
 
-  private val helloWorldService = HelloWorldService[F]
+  private val helloWorldService = HelloWorldService[F](flightDbBaseUri)
 
   // TODO: List is incomplete...
   val flightDbServices: HttpRoutes[F] =
@@ -34,5 +37,8 @@ class FlightDbApi[F[_]: Async] {
 }
 
 object FlightDbApi {
-  def apply[F[_]: Async]: FlightDbApi[F] = new FlightDbApi()
+
+  def apply[F[_]: Async](flightDbBaseUri: Uri)(
+    implicit transactor: Resource[F, HikariTransactor[F]]
+  ): FlightDbApi[F] = new FlightDbApi(flightDbBaseUri)
 }

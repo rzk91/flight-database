@@ -1,11 +1,10 @@
 package flightdatabase.api.services
 
 import cats.Monad
-import flightdatabase.config.Configuration.flightDbBaseUri
-import org.http4s.HttpRoutes
 import org.http4s.dsl.Http4sDsl
+import org.http4s.{HttpRoutes, Uri}
 
-class HelloWorldService[F[_]: Monad] extends Http4sDsl[F] {
+class HelloWorldService[F[_]: Monad](flightDbBaseUri: Uri) extends Http4sDsl[F] {
 
   def service: HttpRoutes[F] = HttpRoutes.of {
     case GET -> Root / name => Ok {
@@ -16,5 +15,5 @@ class HelloWorldService[F[_]: Monad] extends Http4sDsl[F] {
 }
 
 object HelloWorldService {
-  def apply[F[_]: Monad]: HttpRoutes[F] = new HelloWorldService().service
+  def apply[F[_]: Monad](flightDbBaseUri: Uri): HttpRoutes[F] = new HelloWorldService(flightDbBaseUri).service
 }

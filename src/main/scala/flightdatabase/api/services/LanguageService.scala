@@ -3,7 +3,8 @@ package flightdatabase.api.services
 import cats._
 import cats.effect._
 import cats.implicits._
-import flightdatabase.api._
+import doobie.hikari.HikariTransactor
+import flightdatabase.api.{EntryInvalidFormat, _}
 import flightdatabase.db.DbMethods._
 import flightdatabase.db._
 import flightdatabase.model.FlightDbTable.LANGUAGE
@@ -12,8 +13,10 @@ import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
 import org.http4s.dsl.Http4sDsl
 
-import flightdatabase.api.EntryInvalidFormat
-class LanguageService[F[_]: Async](implicit F: Applicative[F]) extends Http4sDsl[F] {
+class LanguageService[F[_]: Async](
+  implicit F: Applicative[F],
+  transactor: Resource[F, HikariTransactor[F]]
+) extends Http4sDsl[F] {
 
   implicit val dsl: Http4sDslT[F] = Http4sDsl.apply[F]
 
@@ -37,5 +40,8 @@ class LanguageService[F[_]: Async](implicit F: Applicative[F]) extends Http4sDsl
 
 object LanguageService {
 
-  def apply[F[_]: Async](implicit F: Applicative[F]): HttpRoutes[F] = new LanguageService[F].service
+  def apply[F[_]: Async](
+    implicit F: Applicative[F],
+    transactor: Resource[F, HikariTransactor[F]]
+  ): HttpRoutes[F] = new LanguageService[F].service
 }

@@ -15,9 +15,9 @@ val circeDependencies = Seq(
 )
 
 val doobieDependencies = Seq(
-  "org.tpolecat" %% "doobie-core"     % doobieVersion,
-  "org.tpolecat" %% "doobie-hikari"   % doobieVersion,
-  "org.tpolecat" %% "doobie-postgres" % doobieVersion,
+  "org.tpolecat" %% "doobie-core"      % doobieVersion,
+  "org.tpolecat" %% "doobie-hikari"    % doobieVersion,
+  "org.tpolecat" %% "doobie-postgres"  % doobieVersion,
   "org.tpolecat" %% "doobie-scalatest" % doobieVersion
 )
 
@@ -29,11 +29,12 @@ val http4sDependencies = Seq(
 )
 
 val otherDependencies = Seq(
-  "com.github.pureconfig"      %% "pureconfig"    % "0.17.2",
-  "org.slf4j"                  % "slf4j-log4j12"  % "2.0.5",
-  "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5",
-  "commons-io"                 % "commons-io"     % "2.11.0",
-  "org.flywaydb"               % "flyway-core"    % "9.15.0"
+  "com.github.pureconfig"      %% "pureconfig"             % "0.17.4",
+  "com.github.pureconfig"      %% "pureconfig-cats-effect" % "0.17.4",
+  "org.slf4j"                  % "slf4j-log4j12"           % "2.0.5",
+  "com.typesafe.scala-logging" %% "scala-logging"          % "3.9.5",
+  "commons-io"                 % "commons-io"              % "2.11.0",
+  "org.flywaydb"               % "flyway-core"             % "9.15.0"
 )
 
 val testingDependencies = Seq(
@@ -42,6 +43,8 @@ val testingDependencies = Seq(
 )
 
 libraryDependencies ++= circeDependencies ++ doobieDependencies ++ http4sDependencies ++ otherDependencies ++ testingDependencies
+
+addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
 
 scalacOptions ++= Seq(
   "-encoding",

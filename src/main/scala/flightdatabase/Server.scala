@@ -6,12 +6,9 @@ import org.http4s.HttpApp
 import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.server.{Server => ApiServer}
 
-abstract class Server[F[_]: Async] {
-  def host: Option[Host]
-  def port: Port
-  def httpApp: HttpApp[F]
+object Server {
 
-  def server: Resource[F, ApiServer] =
+  def start[F[_]: Async](host: Option[Host], port: Port, httpApp: HttpApp[F]): Resource[F, ApiServer] =
     EmberServerBuilder
       .default[F]
       .withHostOption(host)
