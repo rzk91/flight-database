@@ -30,27 +30,7 @@ object Configuration extends LazyLogging {
 
   case class Config(env: Environment, dbConfig: DatabaseConfig, apiConfig: ApiConfig) {
 
-    lazy val cleanDatabase: Boolean =
-      env == DEV && dbConfig.cleanDatabase
-
-    lazy val flightDbBaseUri: Uri =
-      Uri(
-        Some(Scheme.http),
-        Some(
-          Authority(
-            host = UriHost.unsafeFromString {
-              val original = apiConfig.host
-              (for {
-                h <- original.toOption
-                if h.startsWith("0") || h.startsWith("127")
-                host = "localhost"
-              } yield host).getOrElse(original)
-            },
-            port = apiConfig.portNumber.map(_.value).toOption
-          )
-        ),
-        Path.unsafeFromString("flightdb")
-      )
+    lazy val cleanDatabase: Boolean = env == DEV && dbConfig.cleanDatabase
   }
 
   case class Access(username: String, password: String)
@@ -64,7 +44,14 @@ object Configuration extends LazyLogging {
     cleanDatabase: Boolean
   )
 
-  case class ApiConfig(host: String, private val port: Int) {
+  case class ApiLogging(active: Boolean, withHeaders: Boolean, withBody: Boolean)
+
+  case class ApiConfig(
+    private val host: String,
+    private val port: Int,
+    entryPoint: String,
+    logging: ApiLogging
+  ) {
     lazy val hostName: Option[Host] = Host.fromString(host)
 
     lazy val portNumber: Either[Throwable, Port] =
@@ -75,5 +62,24 @@ object Configuration extends LazyLogging {
             s"Port number $port is invalid. Must be an integer between 0 and 65535."
           )
         )
+
+    lazy val flightDbBaseUri: Uri =
+      Uri(
+        Some(Scheme.http),
+        Some(
+          Authority(
+            host = UriHost.unsafeFromString {
+              val original = host
+              (for {
+                h <- original.toOption
+                if h.startsWith("0") || h.startsWith("127")
+                host = "localhost"
+              } yield host).getOrElse(original)
+            },
+            port = portNumber.map(_.value).toOption
+          )
+        ),
+        Path.unsafeFromString(entryPoint)
+      )
   }
 }

@@ -17,11 +17,9 @@ object FlightDbMain extends IOApp.Simple {
       _    <- DbInitiation.databaseInitialisation[IO](conf.dbConfig, conf.cleanDatabase)
       // Resource-based HikariTransactor for better connection pooling
       implicit0(xa: Resource[IO, HikariTransactor[IO]]) = DbInitiation.transactor[IO](conf.dbConfig)
-      port <- Resource.eval(IO.fromEither(conf.apiConfig.portNumber))
-      httpApp <- Resource.eval(
-        IO(FlightDbApi[IO](conf.flightDbBaseUri).flightDbApp(includeLogging = true))
-      )
-      _ <- Server.start(conf.apiConfig.hostName, port, httpApp)
+      port    <- Resource.eval(IO.fromEither(conf.apiConfig.portNumber))
+      httpApp <- Resource.eval(FlightDbApi[IO](conf.apiConfig).flightDbApp())
+      _       <- Server.start(conf.apiConfig.hostName, port, httpApp)
     } yield ()
   }.useForever
 }

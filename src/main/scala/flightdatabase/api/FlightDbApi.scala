@@ -7,8 +7,9 @@ import flightdatabase.api.services._
 import org.http4s.server.Router
 import org.http4s.server.middleware.Logger
 import org.http4s.{HttpApp, HttpRoutes, Uri}
+import flightdatabase.config.Configuration.ApiConfig
 
-class FlightDbApi[F[_]: Async](flightDbBaseUri: Uri)(
+class FlightDbApi[F[_]: Async](apiConfig: ApiConfig)(
   implicit transactor: Resource[F, HikariTransactor[F]]
 ) {
 
@@ -18,7 +19,7 @@ class FlightDbApi[F[_]: Async](flightDbBaseUri: Uri)(
   private val countryService = CountryService[F]
   private val airplaneService = AirplaneService[F]
 
-  private val helloWorldService = HelloWorldService[F](flightDbBaseUri)
+  private val helloWorldService = HelloWorldService[F](apiConfig.flightDbBaseUri)
 
   // TODO: List is incomplete...
   val flightDbServices: HttpRoutes[F] =
@@ -26,19 +27,19 @@ class FlightDbApi[F[_]: Async](flightDbBaseUri: Uri)(
       _ <+> _
     )
 
-  def flightDbApp(
-    includeLogging: Boolean = false,
-    withHeaders: Boolean = false,
-    withBody: Boolean = false
-  ): HttpApp[F] = {
-    val app = Router("/hello" -> helloWorldService, "/flightdb" -> flightDbServices).orNotFound
-    if (includeLogging) Logger.httpApp(withHeaders, withBody)(app) else app
+  def flightDbApp(): F[HttpApp[F]] = {
+    val app =
+      Router("/hello" -> helloWorldService, s"/${apiConfig.entryPoint}" -> flightDbServices).orNotFound
+    val logging = apiConfig.logging
+    Sync[F].delay(
+      if (logging.active) Logger.httpApp(logging.withHeaders, logging.withBody)(app) else app
+    )
   }
 }
 
 object FlightDbApi {
 
-  def apply[F[_]: Async](flightDbBaseUri: Uri)(
+  def apply[F[_]: Async](apiConfig: ApiConfig)(
     implicit transactor: Resource[F, HikariTransactor[F]]
-  ): FlightDbApi[F] = new FlightDbApi(flightDbBaseUri)
+  ): FlightDbApi[F] = new FlightDbApi(apiConfig)
 }
