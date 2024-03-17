@@ -15,6 +15,8 @@
 `CREATE DATABASE flightdb;`
 - List all databases  
 `\l`
+- Switch to database "flightdb"  
+`\c flightdb`
 - List all relations  
 `\d`
 - List all tables  
@@ -23,8 +25,6 @@
 `\d airports`
 - List all users  
 `\du`
-- Switch to database "flightdb"  
-`\c flightdb`
 - Show help  
 `\h`
 
