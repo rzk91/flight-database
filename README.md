@@ -13,9 +13,9 @@ The codebase also includes a comprehensive list of entries in the database.
 - flyway
 
 ## Requirements (at the moment)
-- sbt
-- JDK 19
-- PostgreSQL 15
+- sbt 1.9.9
+- JDK 21
+- PostgreSQL 16
 
 ## Future plans
 - Include a Kafka-based queue of current flight status
