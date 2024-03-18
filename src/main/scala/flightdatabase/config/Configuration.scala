@@ -1,15 +1,18 @@
 package flightdatabase.config
 
-import cats.effect.Sync
 import cats.effect.Resource
+import cats.effect.Sync
 import cats.implicits._
+import com.comcast.ip4s._
 import com.typesafe.scalalogging.LazyLogging
 import flightdatabase.utils.CollectionsHelper.MoreStringOps
 import org.http4s.Uri
-import org.http4s.Uri.{Authority, Host => UriHost, Path, Scheme}
+import org.http4s.Uri.Authority
+import org.http4s.Uri.Path
+import org.http4s.Uri.Scheme
+import org.http4s.Uri.{Host => UriHost}
 import pureconfig.generic.auto._
 import pureconfig.module.catseffect.syntax._
-import com.comcast.ip4s._
 
 object Configuration extends LazyLogging {
 

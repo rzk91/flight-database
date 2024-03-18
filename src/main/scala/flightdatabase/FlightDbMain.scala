@@ -1,7 +1,8 @@
 package flightdatabase
 
 import cats.effect._
-import com.comcast.ip4s.{Host, Port}
+import com.comcast.ip4s.Host
+import com.comcast.ip4s.Port
 import doobie.hikari.HikariTransactor
 import flightdatabase.api.FlightDbApi
 import flightdatabase.config.Configuration

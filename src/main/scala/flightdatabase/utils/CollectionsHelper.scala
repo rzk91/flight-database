@@ -17,7 +17,7 @@ object CollectionsHelper extends LazyLogging {
 
     def toOptionWithDebug: Option[B] = either match {
       case Left(value) =>
-        logger.info(s"Encountered an error: $value")
+        logger.warn(s"Encountered an error: $value")
         None
       case Right(value) =>
         logger.debug(s"Successfully obtained $value")

@@ -4,7 +4,8 @@ import cats._
 import cats.effect._
 import cats.implicits._
 import doobie.hikari.HikariTransactor
-import flightdatabase.api.{EntryInvalidFormat, _}
+import flightdatabase.api.EntryInvalidFormat
+import flightdatabase.api._
 import flightdatabase.db.DbMethods._
 import flightdatabase.db._
 import flightdatabase.model.FlightDbTable.LANGUAGE

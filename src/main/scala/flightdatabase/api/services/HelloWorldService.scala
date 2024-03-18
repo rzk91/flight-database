@@ -1,8 +1,9 @@
 package flightdatabase.api.services
 
 import cats.Monad
+import org.http4s.HttpRoutes
+import org.http4s.Uri
 import org.http4s.dsl.Http4sDsl
-import org.http4s.{HttpRoutes, Uri}
 
 class HelloWorldService[F[_]: Monad](flightDbBaseUri: Uri) extends Http4sDsl[F] {
 

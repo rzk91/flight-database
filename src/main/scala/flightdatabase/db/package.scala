@@ -6,7 +6,9 @@ import doobie._
 import doobie.hikari.HikariTransactor
 import doobie.implicits._
 import doobie.postgres._
-import doobie.util.log.{ExecFailure, ProcessingFailure, Success}
+import doobie.util.log.ExecFailure
+import doobie.util.log.ProcessingFailure
+import doobie.util.log.Success
 import flightdatabase.api._
 import flightdatabase.config.Configuration.DatabaseConfig
 import flightdatabase.model.FlightDbTable._

@@ -1,7 +1,8 @@
 package flightdatabase
 
 import cats.effect._
-import com.comcast.ip4s.{Host, Port}
+import com.comcast.ip4s.Host
+import com.comcast.ip4s.Port
 import org.http4s.HttpApp
 import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.server.{Server => ApiServer}

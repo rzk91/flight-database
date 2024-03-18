@@ -1,13 +1,15 @@
 package flightdatabase.api
 
 import cats.effect._
-import cats.syntax.semigroupk._
+import cats.implicits._
 import doobie.hikari.HikariTransactor
 import flightdatabase.api.services._
+import flightdatabase.config.Configuration.ApiConfig
+import org.http4s.HttpApp
+import org.http4s.HttpRoutes
+import org.http4s.Uri
 import org.http4s.server.Router
 import org.http4s.server.middleware.Logger
-import org.http4s.{HttpApp, HttpRoutes, Uri}
-import flightdatabase.config.Configuration.ApiConfig
 
 class FlightDbApi[F[_]: Async](apiConfig: ApiConfig)(
   implicit transactor: Resource[F, HikariTransactor[F]]
