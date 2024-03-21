@@ -9,7 +9,20 @@ import org.http4s.server.{Server => ApiServer}
 
 object Server {
 
-  def start[F[_]: Async](host: Option[Host], port: Port, httpApp: HttpApp[F]): Resource[F, ApiServer] =
+  /**
+    * Starts the API server with the specified host, port, and HTTP app.
+    *
+    * @param host     An optional host to bind the server to.
+    * @param port     The port number to listen on.
+    * @param httpApp  The HTTP app to handle incoming requests.
+    * @tparam F The effect type, which must have an instance of `Async`.
+    * @return         A resource representing the running API server.
+    */
+  def start[F[_]: Async](
+    host: Option[Host],
+    port: Port,
+    httpApp: HttpApp[F]
+  ): Resource[F, ApiServer] =
     EmberServerBuilder
       .default[F]
       .withHostOption(host)

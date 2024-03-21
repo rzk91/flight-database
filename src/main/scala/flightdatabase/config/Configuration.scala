@@ -27,7 +27,7 @@ object Configuration extends LazyLogging {
 
   def configUnsafe: Config = {
     val conf = source.loadOrThrow[Config]
-    logger.info(s"conf")
+    logger.info(s"$conf")
     conf
   }
 
