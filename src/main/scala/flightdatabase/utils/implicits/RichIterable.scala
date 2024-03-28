@@ -1,38 +1,11 @@
-package flightdatabase.utils
+package flightdatabase.utils.implicits
 
-import com.typesafe.scalalogging.LazyLogging
-
+import scala.util.Try
 import scala.annotation.tailrec
-import scala.util.{Failure, Success, Try}
+import scala.util.Failure
+import scala.util.Success
 
-object CollectionsHelper extends LazyLogging {
-
-  implicit class EitherOps[A, B](private val either: Either[A, B]) extends AnyVal {
-
-    def foldMap[C, D](fa: A => C, fb: B => D): Either[C, D] =
-      either match {
-        case Left(value)  => Left(fa(value)).withRight[D]
-        case Right(value) => Right(fb(value)).withLeft[C]
-      }
-
-    def toOptionWithDebug: Option[B] = either match {
-      case Left(value) =>
-        logger.warn(s"Encountered an error: $value")
-        None
-      case Right(value) =>
-        logger.debug(s"Successfully obtained $value")
-        Option(value)
-    }
-  }
-
-  implicit def iterableToRichIterable[A](l: Iterable[A]): RichIterable[A] =
-    new RichIterable(l)
-
-  implicit def arrayToRichIterable[A](l: Array[A]): RichIterable[A] = new RichIterable(l)
-
-  implicit def stringToRichIterable(s: String): RichIterable[Char] = new RichIterable(s)
-
-  class RichIterable[A](private val iterable: Iterable[A]) {
+class RichIterable[A](private val iterable: Iterable[A]) {
     def sumBy[B](f: A => B)(implicit num: Numeric[B]): B = iterable.map(f).sum
 
     def averageBy[B](f: A => B)(implicit num: Numeric[B]): Option[Double] =
@@ -113,62 +86,3 @@ object CollectionsHelper extends LazyLogging {
       if (len < 0) 1 else loop(0, iterable)
     }
   }
-
-  implicit class MoreStringOps(private val str: String) extends AnyVal {
-    // Safe conversion methods
-    def asInt: Option[Int] = Try(str.trim.toInt).toOption
-    def asLong: Option[Long] = Try(str.trim.toLong).toOption
-    def asDouble: Option[Double] = Try(str.toDouble).toOption
-
-    def asBoolean: Option[Boolean] =
-      Try(str.trim.toLowerCase).collect {
-        case v: String if v == "true" || v == "1"  => true
-        case v: String if v == "false" || v == "0" => false
-      }.toOption
-
-    // Other helper methods
-    def toOption: Option[String] = if (str.isBlank) None else Some(str)
-    def hasValue: Boolean = toOption.isDefined
-    def trimEdges: String = str.tail.init
-    def validRegex: Boolean = Try(str.r).isSuccess
-    def removeSubstring(substr: String): String = str.replace(substr, "")
-    def removeSeparator(sep: Char): String = str.replaceAll(escape(sep), "")
-    def removeQuotes(): String = removeSeparator('"')
-    def removeSpaces(): String = removeSeparator(' ')
-    def fixDecimalNotation(sep: Char = ','): String = str.trim.replaceAll(escape(sep), ".")
-    def deToEnNotation(): String = removeSeparator('.').fixDecimalNotation()
-    def encodeSpacesInUrl(): String = str.replaceAll(" ", "%20")
-    def encodePlusInUrl(): String = str.replaceAll("\\+", "%2B")
-    def elseIfBlank(default: => String): String = if (str.isBlank) default else str
-
-    def elseIfContains(substr: String, default: => String): String =
-      if (str.contains(substr)) default else str
-
-    def splitInTwo(by: Char): (String, String) = {
-      val split = str.split(by)
-      (split.head, split.last)
-    }
-
-    private def escape(char: Char): String = {
-      val W = "(\\w)".r
-      char match {
-        case W(_) => char.toString
-        case _    => s"\\$char"
-      }
-    }
-  }
-
-  implicit class TryOps[A](private val tryA: Try[A]) extends AnyVal {
-    // Additional methods based on `Option` class
-    def exists(f: A => Boolean): Boolean = tryA.isSuccess && f(tryA.get)
-    def forall(f: A => Boolean): Boolean = tryA.isFailure || f(tryA.get)
-    def contains[B >: A](b: B): Boolean = tryA.isSuccess && b == tryA.get
-    def toList: List[A] = tryA.toOption.toList
-    def toSet: Set[A] = tryA.toOption.toSet
-  }
-
-  implicit class DoubleOps(val x: Double) extends AnyVal {
-    def isDefined: Boolean = !x.isNaN && !x.isInfinity
-    def isUndefined: Boolean = !isDefined
-  }
-}

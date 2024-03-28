@@ -5,7 +5,7 @@ import cats.effect.Sync
 import cats.implicits._
 import com.comcast.ip4s._
 import com.typesafe.scalalogging.LazyLogging
-import flightdatabase.utils.CollectionsHelper.MoreStringOps
+import flightdatabase.utils.implicits._
 import org.http4s.Uri
 import org.http4s.Uri.Authority
 import org.http4s.Uri.Path

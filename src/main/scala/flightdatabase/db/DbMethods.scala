@@ -3,10 +3,10 @@ package flightdatabase.db
 import doobie._
 import doobie.implicits._
 import flightdatabase.api._
-import flightdatabase.model._
 import flightdatabase.model.FlightDbTable._
+import flightdatabase.model._
 import flightdatabase.model.objects._
-import flightdatabase.utils.CollectionsHelper._
+import flightdatabase.utils.implicits._
 
 object DbMethods {
 

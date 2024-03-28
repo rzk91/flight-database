@@ -7,7 +7,7 @@ import flightdatabase.api._
 import flightdatabase.db.DbMethods._
 import flightdatabase.db._
 import flightdatabase.model.FlightDbTable._
-import flightdatabase.utils.CollectionsHelper._
+import flightdatabase.utils.implicits._
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
 import org.http4s.dsl.Http4sDsl
