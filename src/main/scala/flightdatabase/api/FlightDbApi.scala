@@ -7,7 +7,6 @@ import flightdatabase.api.services._
 import flightdatabase.config.Configuration.ApiConfig
 import org.http4s.HttpApp
 import org.http4s.HttpRoutes
-import org.http4s.Uri
 import org.http4s.server.Router
 import org.http4s.server.middleware.Logger
 

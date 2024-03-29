@@ -5,7 +5,6 @@ import cats.effect._
 import doobie._
 import doobie.hikari.HikariTransactor
 import doobie.implicits._
-import flightdatabase.model._
 import org.http4s._
 import org.http4s.dsl.Http4sDsl
 

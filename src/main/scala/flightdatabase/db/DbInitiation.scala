@@ -69,7 +69,7 @@ object DbInitiation {
     *               Defaults to false.
     * @return True if the migration is successful, false otherwise.
     */
-  def flywayMigration(config: DatabaseConfig, clean: Boolean = false): Boolean = {
+  private def flywayMigration(config: DatabaseConfig, clean: Boolean = false): Boolean = {
     val flyway = Flyway
       .configure()
       .cleanDisabled(!clean)

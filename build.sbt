@@ -1,4 +1,6 @@
-scalaVersion := "2.13.13"
+val scalaV = "2.13.13"
+
+scalaVersion := scalaV
 name         := "flight-database"
 organization := "rzk.scala"
 version      := "1.0"
@@ -46,6 +48,17 @@ libraryDependencies ++= circeDependencies ++ doobieDependencies ++ http4sDepende
 
 addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
 
+// For scalafix
+inThisBuild(
+  List(
+    scalaVersion := scalaV,
+    semanticdbEnabled := true,
+    semanticdbVersion := scalafixSemanticdb.revision
+  )
+)
+
+scalafixScalaBinaryVersion := scalaV.split('.').take(2).mkString(".")
+
 scalacOptions ++= Seq(
   "-encoding",
   "utf8",
@@ -57,5 +70,6 @@ scalacOptions ++= Seq(
   "-language:implicitConversions",
   "-language:higherKinds",
   "-language:existentials",
-  "-language:postfixOps"
+  "-language:postfixOps",
+  "-Wunused:imports",
 )
