@@ -1,9 +1,9 @@
 package flightdatabase.utils.implicits
 
-import scala.util.Try
 import scala.annotation.tailrec
 import scala.util.Failure
 import scala.util.Success
+import scala.util.Try
 
 class RichIterable[A](private val iterable: Iterable[A]) {
     def sumBy[B](f: A => B)(implicit num: Numeric[B]): B = iterable.map(f).sum

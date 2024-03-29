@@ -5,7 +5,6 @@ import cats.implicits._
 import doobie.hikari.HikariTransactor
 import flightdatabase.api._
 import flightdatabase.db.DbMethods._
-import flightdatabase.db._
 import flightdatabase.model.FlightDbTable._
 import flightdatabase.utils.implicits._
 import org.http4s._
@@ -16,7 +15,7 @@ class CityService[F[_]: Async](implicit transactor: Resource[F, HikariTransactor
 
   implicit val dsl: Http4sDslT[F] = Http4sDsl.apply[F]
 
-  object CountryQueryParamMatcher extends OptionalQueryParamDecoderMatcher[String]("country")
+  private object CountryQueryParamMatcher extends OptionalQueryParamDecoderMatcher[String]("country")
 
   def service: HttpRoutes[F] = HttpRoutes.of {
     case GET -> Root / "cities" :? CountryQueryParamMatcher(maybeCountry) =>

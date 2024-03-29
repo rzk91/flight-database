@@ -1,8 +1,8 @@
 package flightdatabase
 
-import org.http4s._
-import model.objects.FlightDbBase
+import flightdatabase.model.objects.FlightDbBase
 import io.circe.generic.extras._
+import org.http4s._
 
 package object newmodel {
 

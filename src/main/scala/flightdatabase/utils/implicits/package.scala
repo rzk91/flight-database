@@ -1,7 +1,7 @@
 package flightdatabase.utils
 
-import scala.util.Try
 import java.nio.file.Path
+import scala.util.Try
 
 package object implicits {
 

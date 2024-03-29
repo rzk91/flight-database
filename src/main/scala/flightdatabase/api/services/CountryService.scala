@@ -5,7 +5,6 @@ import cats.implicits._
 import doobie.hikari.HikariTransactor
 import flightdatabase.api._
 import flightdatabase.db.DbMethods._
-import flightdatabase.db._
 import flightdatabase.model.FlightDbTable._
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._

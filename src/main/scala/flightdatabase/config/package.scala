@@ -1,8 +1,6 @@
 package flightdatabase
 
 import pureconfig._
-
-import scala.util.Try
 import pureconfig.error.CannotConvert
 
 package object config {

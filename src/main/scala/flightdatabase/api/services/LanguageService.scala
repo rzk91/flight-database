@@ -7,7 +7,6 @@ import doobie.hikari.HikariTransactor
 import flightdatabase.api.EntryInvalidFormat
 import flightdatabase.api._
 import flightdatabase.db.DbMethods._
-import flightdatabase.db._
 import flightdatabase.model.FlightDbTable.LANGUAGE
 import flightdatabase.model.objects.Language
 import org.http4s._

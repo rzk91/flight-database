@@ -1,5 +1,6 @@
 package flightdatabase.db
 
+import cats.implicits._
 import doobie._
 import doobie.implicits._
 import flightdatabase.api._
@@ -25,11 +26,16 @@ object DbMethods {
       case Some(value) =>
         // Get only strings based on given value
         for {
-          id <- getIdWhereNameFragment(subTable, value).query[Int].unique
-          strings <- getNameWhereIdFragment(mainTable, s"${subTable}_id", id)
-            .query[String]
-            .to[List]
-            .map(liftListToApiResult)
+          id <- getIdWhereNameFragment(subTable, value).query[Int].option
+          strings <- {
+            id match {
+              case Some(i) =>
+                getNameWhereIdFragment(mainTable, s"${subTable}_id", i)
+                  .query[String]
+                  .to[List]
+              case None => List.empty[String].pure[ConnectionIO]
+            }
+          }.map(liftListToApiResult)
         } yield strings
 
       case None =>
@@ -45,7 +51,8 @@ object DbMethods {
       .attemptSqlState
       .map(_.foldMap(sqlStateToApiError, id => CreatedValue(updateId(id, obj))))
 
-  def insertLanguage(lang: Language): ConnectionIO[ApiResult[Language]] = insertDbObject[Language](lang)
+  def insertLanguage(lang: Language): ConnectionIO[ApiResult[Language]] =
+    insertDbObject[Language](lang)
 
   def getAirplanes(maybeManufacturer: Option[String]): ConnectionIO[ApiResult[List[Airplane]]] = {
     val allAirplanes =

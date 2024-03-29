@@ -1,8 +1,9 @@
 package flightdatabase.utils.implicits
 
-import java.nio.file.Path
-import java.io.File
 import org.apache.commons.io.FilenameUtils
+
+import java.io.File
+import java.nio.file.Path
 
 class RichPath(val path: Path) extends AnyVal {
   def fileName: String = path.getFileName.toString
