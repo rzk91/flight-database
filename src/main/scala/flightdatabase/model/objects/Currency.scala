@@ -2,8 +2,8 @@ package flightdatabase.model.objects
 
 import doobie._
 import doobie.implicits._
-import io.circe.generic.extras._
 import flightdatabase.model.objects.FlightDbBase._
+import io.circe.generic.extras._
 import org.http4s.Uri
 
 @ConfiguredJsonCodec final case class Currency(
