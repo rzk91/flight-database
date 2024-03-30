@@ -12,7 +12,7 @@ class DbMethodsTests extends AnyFlatSpec with Matchers with IOChecker {
 
   val config: Configuration.Config = Configuration.configUnsafe
 
-  val transactor: Transactor[IO] = DbInitiation.simpleTransactor(config.dbConfig, config.cleanDatabase)
+  val transactor: Transactor[IO] = Database.simpleTransactor(config.dbConfig, config.cleanDatabase)
 
   "A simple get cities query" should "not fail" in {
     check(getNamesFragment(CITY).query[String])

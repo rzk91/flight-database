@@ -7,7 +7,7 @@ import doobie.util.transactor.Transactor
 import flightdatabase.config.Configuration._
 import org.flywaydb.core.Flyway
 
-object DbInitiation {
+object Database {
 
   /**
     * Creates a transactor for executing database operations.
@@ -30,6 +30,9 @@ object DbInitiation {
 
   /**
     * Creates a simple transactor for the flight database.
+    * 
+    * Note that this function is not wrapped in any effect type. 
+    * It is intended to only be used in tests or for non-production use cases.
     *
     * @param config The database configuration.
     * @param clean  Indicates whether to clean the database before initialization.
@@ -48,14 +51,14 @@ object DbInitiation {
   }
 
   /**
-    * Initializes the database using Flyway migration.
+    * Initialises the database using Flyway migration.
     *
     * @param config The database configuration.
     * @param clean  Flag indicating whether to clean the database before migration.
     * @tparam F The effect type, which must have an instance of `Async`.
     * @return A resource that encapsulates the database initialization process.
     */
-  def databaseInitialisation[F[_]: Async](
+  def initialise[F[_]: Async](
     config: DatabaseConfig,
     clean: Boolean
   ): Resource[F, Boolean] =

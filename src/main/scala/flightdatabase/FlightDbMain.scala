@@ -4,16 +4,16 @@ import cats.effect._
 import doobie.hikari.HikariTransactor
 import flightdatabase.api.FlightDbApi
 import flightdatabase.config.Configuration
-import flightdatabase.db.DbInitiation
+import flightdatabase.db.Database
 
 object FlightDbMain extends IOApp.Simple {
 
   override def run: IO[Unit] = {
     for {
       conf <- Configuration.configAsResource[IO]
-      _    <- DbInitiation.databaseInitialisation[IO](conf.dbConfig, conf.cleanDatabase)
+      _    <- Database.initialise[IO](conf.dbConfig, conf.cleanDatabase)
       // Implicit resource-based HikariTransactor for better connection pooling
-      implicit0(xa: Resource[IO, HikariTransactor[IO]]) = DbInitiation.transactor[IO](conf.dbConfig)
+      implicit0(xa: Resource[IO, HikariTransactor[IO]]) = Database.transactor[IO](conf.dbConfig)
       port    <- Resource.eval(IO.fromEither(conf.apiConfig.portNumber))
       httpApp <- Resource.eval(FlightDbApi[IO](conf.apiConfig).flightDbApp())
       _       <- Server.start(conf.apiConfig.hostName, port, httpApp)
