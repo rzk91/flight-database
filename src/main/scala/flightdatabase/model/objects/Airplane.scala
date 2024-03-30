@@ -2,7 +2,7 @@ package flightdatabase.model.objects
 
 import doobie._
 import doobie.implicits._
-import flightdatabase.model.objects.FlightDbBase._
+import flightdatabase.model._
 import io.circe.generic.extras._
 import org.http4s.Uri
 

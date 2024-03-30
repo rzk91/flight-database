@@ -1,8 +1,12 @@
 package flightdatabase
 
 import flightdatabase.model.objects._
+import io.circe.generic.extras.Configuration
 
 package object model {
+
+  // Allow for snake_case to camelCase conversion automatically
+  implicit val config: Configuration = Configuration.default.withSnakeCaseMemberNames
 
   // Implicit definitions
   implicit def updateAirplaneId: (Long, Airplane) => Airplane = (l, obj) => obj.copy(id = Some(l))

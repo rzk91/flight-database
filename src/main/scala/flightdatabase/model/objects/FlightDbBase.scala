@@ -2,7 +2,6 @@ package flightdatabase.model.objects
 
 import doobie._
 import doobie.implicits._
-import io.circe.generic.extras.Configuration
 import org.http4s.Uri
 
 trait FlightDbBase {
@@ -19,10 +18,4 @@ trait FlightDbBase {
     key.map { k =>
       fr"(SELECT id FROM" ++ Fragment.const(table) ++ fr"WHERE" ++ Fragment.const(keyField) ++ fr"= $k)"
     }.orNull // FixMe: This can't be right
-}
-
-object FlightDbBase {
-
-  // Allow for snake_case to camelCase conversion automatically
-  implicit val config: Configuration = Configuration.default.withSnakeCaseMemberNames
 }
