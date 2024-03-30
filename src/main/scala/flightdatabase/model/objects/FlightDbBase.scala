@@ -17,5 +17,5 @@ trait FlightDbBase {
   ): Fragment =
     key.map { k =>
       fr"(SELECT id FROM" ++ Fragment.const(table) ++ fr"WHERE" ++ Fragment.const(keyField) ++ fr"= $k)"
-    }.orNull // FixMe: This can't be right
+    }.orNull
 }
