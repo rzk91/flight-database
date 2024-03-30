@@ -11,6 +11,7 @@ import flightdatabase.utils.implicits._
 
 object DbMethods {
 
+  // Move helper methods to package object of repository
   def getStringList(table: Table): ConnectionIO[ApiResult[List[String]]] =
     getNamesFragment(table)
       .query[String]
@@ -64,12 +65,15 @@ object DbMethods {
     (allAirplanes ++ addManufacturer).query[Airplane].to[List].map(liftListToApiResult)
   }
 
+  // TODO: Move this to LanguageRepository
   def getLanguages: ConnectionIO[ApiResult[List[Language]]] =
     sql"SELECT id, name, iso2, iso3, original_name FROM language"
       .query[Language]
       .to[List]
       .map(liftListToApiResult)
 
+
+  // TODO: Move this to CurrencyRepository
   def getCurrencies: ConnectionIO[ApiResult[List[Currency]]] =
     sql"SELECT id, name, iso, symbol FROM currency"
       .query[Currency]
