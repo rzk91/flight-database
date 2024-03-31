@@ -16,6 +16,8 @@ import org.http4s.Uri
 
   def uri: Uri = ???
 
+  override def updateId(newId: Long): Airplane = copy(id = Some(newId))
+
   override def sqlInsert: Fragment =
     sql"""INSERT INTO airplane
      |       (name, manufacturer_id, capacity, max_range_in_km)

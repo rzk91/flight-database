@@ -18,6 +18,8 @@ import org.http4s.Uri
 
   def uri: Uri = ???
 
+  override def updateId(newId: Long): City = copy(id = Some(newId))
+
   override def sqlInsert: Fragment =
     sql"""INSERT INTO city 
        |       (name, country_id, capital, population, 

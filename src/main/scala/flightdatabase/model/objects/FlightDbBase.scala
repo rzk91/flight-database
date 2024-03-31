@@ -8,6 +8,7 @@ trait FlightDbBase {
   def id: Option[Long]
   def uri: Uri
 
+  def updateId(newId: Long): FlightDbBase
   def sqlInsert: Fragment = fr""
 
   def selectIdStmt(

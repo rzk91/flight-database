@@ -5,7 +5,6 @@ import doobie._
 import doobie.implicits._
 import flightdatabase.api._
 import flightdatabase.model.FlightDbTable._
-import flightdatabase.model._
 import flightdatabase.model.objects._
 import flightdatabase.utils.implicits._
 
@@ -44,13 +43,11 @@ object DbMethods {
         getStringList(mainTable)
     }
 
-  def insertDbObject[O <: FlightDbBase](
-    obj: O
-  )(implicit updateId: (Long, O) => O): ConnectionIO[ApiResult[O]] =
+  def insertDbObject[O <: FlightDbBase](obj: O): ConnectionIO[ApiResult[O]] =
     obj.sqlInsert.update
       .withUniqueGeneratedKeys[Long]("id")
       .attemptSqlState
-      .map(_.foldMap(sqlStateToApiError, id => CreatedValue(updateId(id, obj))))
+      .map(_.foldMap(sqlStateToApiError, id => CreatedValue(obj.updateId(id).asInstanceOf[O])))
 
   def insertLanguage(lang: Language): ConnectionIO[ApiResult[Language]] =
     insertDbObject[Language](lang)

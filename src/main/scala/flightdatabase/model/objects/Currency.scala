@@ -15,6 +15,8 @@ import org.http4s.Uri
 
   def uri: Uri = ???
 
+  override def updateId(newId: Long): Currency = copy(id = Some(newId))
+
   override def sqlInsert: Fragment =
     sql"INSERT INTO currency (name, iso, symbol) VALUES ($name, $iso, $symbol)"
 }

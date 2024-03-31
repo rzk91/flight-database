@@ -14,6 +14,8 @@ import org.http4s.Uri
 
   def uri: Uri = ???
 
+  override def updateId(newId: Long): Manufacturer = copy(id = Some(newId))
+
   override def sqlInsert: Fragment =
     sql"INSERT INTO manufacturer (name, city_based_in) VALUES ($name, ${selectIdStmt("city", Some(basedIn))})"
 }
