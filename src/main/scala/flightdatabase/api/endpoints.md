@@ -2,7 +2,7 @@
 -----------------------------
 
 ### Language
-These endpoints serve as an example of a simple set of endpoints without any dependency to other tables.
+Using the `language` table as an example for some simple set of endpoints where the queries do not depend on other tables.
 1. **Basic CRUD Operations:**
    - GET /languages: Retrieve a list of all languages.
    - GET /languages/{id}: Retrieve a specific language by its ID.
@@ -25,4 +25,25 @@ These endpoints serve as an example of a simple set of endpoints without any dep
 ### Country
 These endpoints are slightly complicated given the dependency to many other tables.
 1. **Basic CRUD Operations:**
+	- Same as the above. The complications arise when we actually implement these.
 2. **Filter/Search-Based Endpoints:**
+	 - Pretty much similar to the ones above but again, the complications arise due to dependency on other tables.
+3. **Endpoints for Language Relationships:**
+   - GET /countries/{id}/main_language: Retrieve the main language spoken in the specified country.
+   - GET /countries/{id}/secondary_language: Retrieve the secondary language spoken in the specified country.
+   - GET /countries/{id}/tertiary_language: Retrieve the tertiary language spoken in the specified country.
+   - GET /languages/{language_id}/countries: Retrieve a list of countries where the specified language is spoken as a main, secondary, or tertiary language.
+
+4. **Endpoints for Currency Relationship:**
+   - GET /countries/{id}/currency: Retrieve the currency used in the specified country.
+   - GET /currencies/{currency_id}/countries: Retrieve a list of countries that use the specified currency.
+
+5. **Some other endpoints based on other tables:**
+	- GET /cities?name={name}: Retrieve cities by name.
+	- GET /cities?country_id={country_id}: Retrieve cities in a specific country.
+	- GET /cities?population_greater_than={value}: Retrieve cities with a population greater than a certain value.
+	- GET /cities?population_less_than={value}: Retrieve cities with a population less than a certain value.
+	- GET /cities?latitude={latitude}&longitude={longitude}&radius={radius}: Retrieve cities within a certain radius of a given latitude and longitude.
+Endpoints for Country Relationship:
+	- GET /cities/{id}/country: Retrieve the country to which the specified city belongs.
+	- GET /countries/{country_id}/cities: Retrieve a list of cities in the specified country.
