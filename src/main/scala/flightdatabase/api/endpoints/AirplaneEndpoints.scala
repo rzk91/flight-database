@@ -1,4 +1,4 @@
-package flightdatabase.api.services
+package flightdatabase.api.endpoints
 
 import cats.effect._
 import cats.implicits._
@@ -9,18 +9,16 @@ import flightdatabase.model.FlightDbTable._
 import flightdatabase.utils.implicits._
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
-import org.http4s.dsl.Http4sDsl
 
-class AirplaneService[F[_]: Async](implicit transactor: Resource[F, HikariTransactor[F]])
-    extends Http4sDsl[F] {
-
-  implicit val dsl: Http4sDslT[F] = Http4sDsl.apply[F]
+class AirplaneEndpoints[F[_]: Concurrent] private (prefix: String)(
+  implicit transactor: Resource[F, HikariTransactor[F]]
+) extends Endpoints[F](prefix) {
 
   object ManufacturerQueryParamMatcher
       extends OptionalQueryParamDecoderMatcher[String]("manufacturer")
 
-  def service: HttpRoutes[F] = HttpRoutes.of {
-    case GET -> Root / "airplanes" :?
+  override def endpoints: HttpRoutes[F] = HttpRoutes.of {
+    case GET -> Root :?
           ManufacturerQueryParamMatcher(maybeManufacturer) +&
             OnlyNameQueryParamMatcher(onlyNames) =>
       val m = maybeManufacturer.flatMap(_.toOption)
@@ -32,8 +30,10 @@ class AirplaneService[F[_]: Async](implicit transactor: Resource[F, HikariTransa
 
 }
 
-object AirplaneService {
+object AirplaneEndpoints {
 
-  def apply[F[_]: Async](implicit transactor: Resource[F, HikariTransactor[F]]): HttpRoutes[F] =
-    new AirplaneService().service
+  def apply[F[_]: Concurrent](
+    prefix: String
+  )(implicit transactor: Resource[F, HikariTransactor[F]]): HttpRoutes[F] =
+    new AirplaneEndpoints(prefix).routes
 }

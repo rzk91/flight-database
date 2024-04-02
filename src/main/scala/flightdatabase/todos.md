@@ -1,7 +1,7 @@
-# TODO list
-------------
+TODO list
+----------
 
-- Rename `services` to `endpoints` and accordingly all file names, e.g., `AirplaneService` to `AirplaneEndpoint`.
+- Rename `services` to `endpoints` and accordingly all file names, e.g., `AirplaneService` to `AirplaneEndpoint`. DONE!
 - Add a new package called `Service` that includes all possible queries that one can run against a table (basically an abstraction between the endpoints and the actual queries).
 	- For example, `LanguageService` would include all queries like `get`, `getById`, etc. that one could do against the `language` table.
 	- This would be a bunch of `trait`s that define the services offered here irrespective of the actual implementation of them (depending on the database library used, e.g., doobie).

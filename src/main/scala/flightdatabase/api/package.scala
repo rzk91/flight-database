@@ -14,7 +14,7 @@ package object api {
 
   implicit class MoreConnectionIOOps[A](private val stmt: ConnectionIO[A]) extends AnyVal {
 
-    def execute[F[_]: Async](implicit xa: Resource[F, HikariTransactor[F]]): F[A] =
+    def execute[F[_]: Concurrent](implicit xa: Resource[F, HikariTransactor[F]]): F[A] =
       xa.use(stmt.transact(_))
   }
 

@@ -30,9 +30,9 @@
 
 ## cURL commands
 - Simple API GET request with `-i` to include HTTP header info  
-`curl -i http://localhost:18181/hello/me`
+`curl -i http://localhost:18181/v1/flightdb/hello/rahul`
 - Get currencies and pretty print JSON output (`-s` suppresses any other output)  
-`curl -s http://localhost:18181/flightdb/currencies | jq .` 
+`curl -s http://localhost:18181/v1/flightdb/currencies | jq .` 
 - Post a new language with JSON input  
 ```sh
 curl -X POST -H "Content-Type: application/json" \

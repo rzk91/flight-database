@@ -1,5 +1,5 @@
-# List of possible endpoints
------------------------------
+List of possible endpoints
+---------------------------
 
 ### Language
 Using the `language` table as an example for some simple set of endpoints where the queries do not depend on other tables.
