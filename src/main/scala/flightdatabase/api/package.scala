@@ -1,22 +1,11 @@
 package flightdatabase
 
 import cats._
-import cats.effect._
-import doobie._
-import doobie.hikari.HikariTransactor
-import doobie.implicits._
 import flightdatabase.domain._
 import org.http4s._
 import org.http4s.dsl.Http4sDsl
 
 package object api {
-
-  // TODO: Move this to `repository` package
-  implicit class MoreConnectionIOOps[A](private val stmt: ConnectionIO[A]) extends AnyVal {
-
-    def execute[F[_]: Concurrent](implicit xa: Resource[F, HikariTransactor[F]]): F[A] =
-      xa.use(stmt.transact(_))
-  }
 
   def toResponse[F[_]: Monad, A](
     res: ApiResult[A]

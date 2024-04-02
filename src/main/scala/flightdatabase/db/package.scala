@@ -7,8 +7,8 @@ import doobie.postgres._
 import doobie.util.log.ExecFailure
 import doobie.util.log.ProcessingFailure
 import doobie.util.log.Success
-import flightdatabase.domain._
 import flightdatabase.domain.FlightDbTable._
+import flightdatabase.domain._
 
 package object db extends LazyLogging {
 

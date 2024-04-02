@@ -6,6 +6,7 @@ import doobie.hikari.HikariTransactor
 import flightdatabase.api._
 import flightdatabase.db.DbMethods._
 import flightdatabase.domain.FlightDbTable.CURRENCY
+import flightdatabase.utils.implicits._
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
 

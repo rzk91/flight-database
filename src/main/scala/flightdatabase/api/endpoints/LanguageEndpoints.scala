@@ -6,9 +6,11 @@ import cats.implicits._
 import doobie.hikari.HikariTransactor
 import flightdatabase.api._
 import flightdatabase.db.DbMethods._
+import flightdatabase.domain.ApiResult
+import flightdatabase.domain.EntryInvalidFormat
 import flightdatabase.domain.FlightDbTable.LANGUAGE
 import flightdatabase.domain.language.LanguageModel
-import flightdatabase.domain.{ApiResult, EntryInvalidFormat}
+import flightdatabase.utils.implicits._
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
 
