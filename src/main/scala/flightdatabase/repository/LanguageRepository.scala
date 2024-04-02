@@ -8,4 +8,4 @@ package flightdatabase.repository
 //      and use it in the endpoints
 // Move the transactor to the constructor of each repository
 
-class LanguageRepo
+class LanguageRepository

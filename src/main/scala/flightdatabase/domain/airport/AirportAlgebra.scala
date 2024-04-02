@@ -1,14 +1,16 @@
 package flightdatabase.domain.airport
 
+import flightdatabase.domain.ApiResult
+
 trait AirportAlgebra[F[_]] {
-  def getAirports: F[List[AirportModel]]
-  def getAirportsOnlyNames: F[List[String]]
-  def getAirportById(id: Long): F[Option[AirportModel]]
-  def getAirportByIata(iata: String): F[Option[AirportModel]]
-  def getAirportByIcao(icao: String): F[Option[AirportModel]]
-  def getAirportByCity(city: String): F[List[AirportModel]]
-  def getAirportByCountry(country: String): F[List[AirportModel]]
-  def createAirport(airport: AirportModel): F[Long]
-  def updateAirport(airport: AirportModel): F[Option[AirportModel]]
-  def deleteAirport(id: Long): F[Option[AirportModel]]
+  def getAirports: F[ApiResult[List[AirportModel]]]
+  def getAirportsOnlyNames: F[ApiResult[List[String]]]
+  def getAirportById(id: Long): F[ApiResult[AirportModel]]
+  def getAirportByIata(iata: String): F[ApiResult[AirportModel]]
+  def getAirportByIcao(icao: String): F[ApiResult[AirportModel]]
+  def getAirportByCity(city: String): F[ApiResult[List[AirportModel]]]
+  def getAirportByCountry(country: String): F[ApiResult[List[AirportModel]]]
+  def createAirport(airport: AirportModel): F[ApiResult[Long]]
+  def updateAirport(airport: AirportModel): F[ApiResult[AirportModel]]
+  def deleteAirport(id: Long): F[ApiResult[AirportModel]]
 }

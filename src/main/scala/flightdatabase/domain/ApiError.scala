@@ -1,4 +1,4 @@
-package flightdatabase.api
+package flightdatabase.domain
 
 // API errors
 sealed trait ApiError { def error: String }

@@ -1,10 +1,12 @@
 package flightdatabase.domain.country
 
+import flightdatabase.domain.ApiResult
+
 trait CountryAlgebra[F[_]] {
-  def getCountries: F[List[CountryModel]]
-  def getCountriesOnlyNames: F[List[String]]
-  def getCountryById(id: Long): F[Option[CountryModel]]
-  def createCountry(country: CountryModel): F[Long]
-  def updateCountry(country: CountryModel): F[Option[CountryModel]]
-  def deleteCountry(id: Long): F[Option[CountryModel]]
+  def getCountries: F[ApiResult[List[CountryModel]]]
+  def getCountriesOnlyNames: F[ApiResult[List[String]]]
+  def getCountryById(id: Long): F[ApiResult[CountryModel]]
+  def createCountry(country: CountryModel): F[ApiResult[Long]]
+  def updateCountry(country: CountryModel): F[ApiResult[CountryModel]]
+  def deleteCountry(id: Long): F[ApiResult[CountryModel]]
 }

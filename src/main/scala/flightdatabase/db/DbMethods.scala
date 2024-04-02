@@ -3,9 +3,8 @@ package flightdatabase.db
 import cats.implicits._
 import doobie._
 import doobie.implicits._
-import flightdatabase.api._
+import flightdatabase.domain.{ApiResult, CreatedValue, ModelBase}
 import flightdatabase.domain.FlightDbTable._
-import flightdatabase.domain.ModelBase
 import flightdatabase.domain.airplane.AirplaneModel
 import flightdatabase.domain.currency.CurrencyModel
 import flightdatabase.domain.language.LanguageModel

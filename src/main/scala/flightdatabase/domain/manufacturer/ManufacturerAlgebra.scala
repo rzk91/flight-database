@@ -1,10 +1,12 @@
 package flightdatabase.domain.manufacturer
 
+import flightdatabase.domain.ApiResult
+
 trait ManufacturerAlgebra[F[_]] {
-  def getManufacturers: F[List[ManufacturerModel]]
-  def getManufacturerOnlyNames: F[List[String]]
-  def getManufacturerById(id: Long): F[Option[ManufacturerModel]]
-  def createManufacturer(manufacturer: ManufacturerModel): F[Long]
-  def updateManufacturer(manufacturer: ManufacturerModel): F[Option[ManufacturerModel]]
-  def deleteManufacturer(id: Long): F[Option[ManufacturerModel]]
+  def getManufacturers: F[ApiResult[List[ManufacturerModel]]]
+  def getManufacturerOnlyNames: F[ApiResult[List[String]]]
+  def getManufacturerById(id: Long): F[ApiResult[ManufacturerModel]]
+  def createManufacturer(manufacturer: ManufacturerModel): F[ApiResult[Long]]
+  def updateManufacturer(manufacturer: ManufacturerModel): F[ApiResult[ManufacturerModel]]
+  def deleteManufacturer(id: Long): F[ApiResult[ManufacturerModel]]
 }

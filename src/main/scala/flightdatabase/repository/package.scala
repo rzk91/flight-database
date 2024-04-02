@@ -4,9 +4,8 @@ import cats.implicits._
 import doobie._
 import doobie.implicits._
 import doobie.postgres._
-import flightdatabase.api._
+import flightdatabase.domain._
 import flightdatabase.domain.FlightDbTable.Table
-import flightdatabase.domain.ModelBase
 import flightdatabase.utils.implicits._
 
 package object repository {

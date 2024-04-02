@@ -8,6 +8,7 @@ import flightdatabase.api._
 import flightdatabase.db.DbMethods._
 import flightdatabase.domain.FlightDbTable.LANGUAGE
 import flightdatabase.domain.language.LanguageModel
+import flightdatabase.domain.{ApiResult, EntryInvalidFormat}
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
 
