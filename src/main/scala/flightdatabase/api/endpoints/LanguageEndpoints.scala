@@ -6,8 +6,8 @@ import cats.implicits._
 import doobie.hikari.HikariTransactor
 import flightdatabase.api._
 import flightdatabase.db.DbMethods._
-import flightdatabase.model.FlightDbTable.LANGUAGE
-import flightdatabase.model.objects.Language
+import flightdatabase.domain.FlightDbTable.LANGUAGE
+import flightdatabase.domain.language.LanguageModel
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
 
@@ -24,8 +24,8 @@ class LanguageEndpoints[F[_]: Concurrent] private (prefix: String)(
 
     case req @ POST -> Root =>
       req
-        .attemptAs[Language]
-        .foldF[ApiResult[Language]](
+        .attemptAs[LanguageModel]
+        .foldF[ApiResult[LanguageModel]](
           _ => Applicative[F].pure(Left(EntryInvalidFormat)),
           language => insertLanguage(language).execute
         )

@@ -1,4 +1,4 @@
-package flightdatabase.model
+package flightdatabase.domain
 
 object FlightDbTable extends Enumeration {
     type Table = Value

@@ -5,8 +5,8 @@ import doobie._
 import doobie.implicits._
 import doobie.postgres._
 import flightdatabase.api._
-import flightdatabase.model.FlightDbTable.Table
-import flightdatabase.model.objects.FlightDbBase
+import flightdatabase.domain.FlightDbTable.Table
+import flightdatabase.domain.ModelBase
 import flightdatabase.utils.implicits._
 
 package object repository {
@@ -44,7 +44,7 @@ package object repository {
         getStringList(mainTable)
     }
 
-  def insertDbObject[O <: FlightDbBase](obj: O): ConnectionIO[ApiResult[O]] =
+  def insertDbObject[O <: ModelBase](obj: O): ConnectionIO[ApiResult[O]] =
     obj.sqlInsert.update
       .withUniqueGeneratedKeys[Long]("id")
       .attemptSqlState

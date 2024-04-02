@@ -4,7 +4,7 @@ import cats.effect._
 import doobie._
 import doobie.scalatest._
 import flightdatabase.config.Configuration
-import flightdatabase.model.FlightDbTable._
+import flightdatabase.domain.FlightDbTable._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 

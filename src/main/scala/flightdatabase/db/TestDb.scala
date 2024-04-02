@@ -5,7 +5,7 @@ import com.typesafe.scalalogging.LazyLogging
 import doobie.implicits._
 import flightdatabase.config.Configuration
 import flightdatabase.db.DbMethods._
-import flightdatabase.model.FlightDbTable._
+import flightdatabase.domain.FlightDbTable._
 
 object TestDb extends IOApp.Simple with LazyLogging {
 

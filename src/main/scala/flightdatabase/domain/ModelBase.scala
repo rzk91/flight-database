@@ -1,14 +1,14 @@
-package flightdatabase.model.objects
+package flightdatabase.domain
 
-import doobie._
+import doobie.Fragment
 import doobie.implicits._
 import org.http4s.Uri
 
-trait FlightDbBase {
+trait ModelBase {
   def id: Option[Long]
   def uri: Uri
 
-  def updateId(newId: Long): FlightDbBase
+  def updateId(newId: Long): ModelBase
   def sqlInsert: Fragment = fr""
 
   def selectIdStmt(
