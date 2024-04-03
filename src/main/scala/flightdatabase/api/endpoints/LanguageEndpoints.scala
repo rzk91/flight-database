@@ -39,5 +39,5 @@ object LanguageEndpoints {
 
   def apply[F[_]: Concurrent](prefix: String, algebra: LanguageAlgebra[F])(
     implicit transactor: Resource[F, HikariTransactor[F]]
-  ): HttpRoutes[F] = new LanguageEndpoints(prefix, algebra).routes
+  ): Endpoints[F] = new LanguageEndpoints(prefix, algebra)
 }

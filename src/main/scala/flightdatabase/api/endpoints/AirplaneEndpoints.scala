@@ -34,6 +34,6 @@ object AirplaneEndpoints {
   def apply[F[_]: Concurrent](
     prefix: String,
     algebra: AirplaneAlgebra[F]
-  )(implicit transactor: Resource[F, HikariTransactor[F]]): HttpRoutes[F] =
-    new AirplaneEndpoints(prefix, algebra).routes
+  )(implicit transactor: Resource[F, HikariTransactor[F]]): Endpoints[F] =
+    new AirplaneEndpoints(prefix, algebra)
 }

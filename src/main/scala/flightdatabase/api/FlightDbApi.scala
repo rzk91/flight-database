@@ -38,9 +38,7 @@ class FlightDbApi[F[_]: Async] private (
       countryEndpoints,
       currencyEndpoints,
       languageEndpoints
-    ).reduceLeft(
-      _ <+> _
-    )
+    ).foldLeft(HttpRoutes.empty[F])(_ <+> _.routes)
 
   def flightDbApp(): F[HttpApp[F]] = {
     val app = Router(apiConfig.entryPoint -> flightDbServices).orNotFound

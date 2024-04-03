@@ -33,6 +33,6 @@ object CityEndpoints {
   def apply[F[_]: Concurrent](
     prefix: String,
     algebra: CityAlgebra[F]
-  )(implicit transactor: Resource[F, HikariTransactor[F]]): HttpRoutes[F] =
-    new CityEndpoints(prefix, algebra).routes
+  )(implicit transactor: Resource[F, HikariTransactor[F]]): Endpoints[F] =
+    new CityEndpoints(prefix, algebra)
 }

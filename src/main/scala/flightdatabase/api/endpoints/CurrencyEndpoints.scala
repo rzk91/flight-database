@@ -26,6 +26,6 @@ object CurrencyEndpoints {
   def apply[F[_]: Concurrent](
     prefix: String,
     algebra: CurrencyAlgebra[F]
-  )(implicit transactor: Resource[F, HikariTransactor[F]]): HttpRoutes[F] =
-    new CurrencyEndpoints(prefix, algebra).routes
+  )(implicit transactor: Resource[F, HikariTransactor[F]]): Endpoints[F] =
+    new CurrencyEndpoints(prefix, algebra)
 }

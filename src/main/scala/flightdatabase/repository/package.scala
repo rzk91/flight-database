@@ -27,15 +27,14 @@ package object repository {
         // Get only strings based on given value
         for {
           id <- getIdWhereNameFragment(subTable, value).query[Int].option
-          strings <- {
-            id match {
-              case Some(i) =>
-                getNameWhereIdFragment(mainTable, s"${subTable}_id", i)
-                  .query[String]
-                  .to[List]
-              case None => List.empty[String].pure[ConnectionIO]
-            }
-          }.map(liftListToApiResult)
+          strings <- id match {
+            case Some(i) =>
+              getNameWhereIdFragment(mainTable, s"${subTable}_id", i)
+                .query[String]
+                .to[List]
+                .map(liftListToApiResult)
+            case None => liftErrorToApiResult[List[String]](EntryNotFound).pure[ConnectionIO]
+          }
         } yield strings
 
       case None =>
@@ -73,5 +72,8 @@ package object repository {
 
   // Lift to API Result
   def liftListToApiResult[A](list: List[A]): ApiResult[List[A]] =
-    Right(GotValue[List[A]](list)).asInstanceOf[ApiResult[List[A]]]
+    GotValue[List[A]](list).asRight[ApiError]
+
+  def liftErrorToApiResult[A](error: ApiError): ApiResult[A] =
+    error.asLeft[ApiOutput[A]]
 }

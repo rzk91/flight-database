@@ -18,6 +18,6 @@ class HelloWorldEndpoints[F[_]: Monad](prefix: String, flightDbBaseUri: Uri)
 
 object HelloWorldEndpoints {
 
-  def apply[F[_]: Monad](prefix: String, flightDbBaseUri: Uri): HttpRoutes[F] =
-    new HelloWorldEndpoints(prefix, flightDbBaseUri).routes
+  def apply[F[_]: Monad](prefix: String, flightDbBaseUri: Uri): Endpoints[F] =
+    new HelloWorldEndpoints(prefix, flightDbBaseUri)
 }

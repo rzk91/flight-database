@@ -8,6 +8,6 @@ import org.http4s.server.Router
 abstract class Endpoints[F[_]: Monad](prefix: String) extends Http4sDsl[F] {
 
   implicit val dsl: Http4sDslT[F] = Http4sDsl.apply[F]
+  lazy val routes: HttpRoutes[F] = Router(prefix -> endpoints)
   def endpoints: HttpRoutes[F]
-  def routes: HttpRoutes[F] = Router(prefix -> endpoints)
 }
