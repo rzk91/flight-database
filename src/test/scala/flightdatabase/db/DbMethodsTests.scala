@@ -5,6 +5,7 @@ import doobie._
 import doobie.scalatest._
 import flightdatabase.config.Configuration
 import flightdatabase.domain.FlightDbTable._
+import flightdatabase.repository.getNamesFragment
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 

@@ -4,13 +4,12 @@ import cats.effect._
 import cats.implicits._
 import doobie.hikari.HikariTransactor
 import flightdatabase.api._
-import flightdatabase.db.DbMethods._
-import flightdatabase.domain.FlightDbTable._
+import flightdatabase.domain.city.CityAlgebra
 import flightdatabase.utils.implicits._
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
 
-class CityEndpoints[F[_]: Concurrent] private (prefix: String)(
+class CityEndpoints[F[_]: Concurrent] private (prefix: String, algebra: CityAlgebra[F])(
   implicit transactor: Resource[F, HikariTransactor[F]]
 ) extends Endpoints[F](prefix) {
 
@@ -18,16 +17,22 @@ class CityEndpoints[F[_]: Concurrent] private (prefix: String)(
       extends OptionalQueryParamDecoderMatcher[String]("country")
 
   override def endpoints: HttpRoutes[F] = HttpRoutes.of {
-    case GET -> Root :? CountryQueryParamMatcher(maybeCountry) =>
-      getStringListBy(CITY, COUNTRY, maybeCountry.flatMap(_.toOption)).execute
-        .flatMap(toResponse(_))
+    case GET -> Root :?
+          CountryQueryParamMatcher(maybeCountry) +&
+            OnlyNameQueryParamMatcher(onlyNames) =>
+      val c = maybeCountry.flatMap(_.toOption)
+      onlyNames match {
+        case None | Some(false) => algebra.getCities(c).flatMap(toResponse(_))
+        case _                  => algebra.getCitiesOnlyNames(c).flatMap(toResponse(_))
+      }
   }
 }
 
 object CityEndpoints {
 
   def apply[F[_]: Concurrent](
-    prefix: String
+    prefix: String,
+    algebra: CityAlgebra[F]
   )(implicit transactor: Resource[F, HikariTransactor[F]]): HttpRoutes[F] =
-    new CityEndpoints(prefix).routes
+    new CityEndpoints(prefix, algebra).routes
 }

@@ -43,11 +43,11 @@ package object repository {
         getStringList(mainTable)
     }
 
-  def insertDbObject[O <: ModelBase](obj: O): ConnectionIO[ApiResult[O]] =
+  def insertDbObject[O <: ModelBase](obj: O): ConnectionIO[ApiResult[Long]] =
     obj.sqlInsert.update
       .withUniqueGeneratedKeys[Long]("id")
       .attemptSqlState
-      .map(_.foldMap(sqlStateToApiError, id => CreatedValue(obj.updateId(id).asInstanceOf[O])))
+      .map(_.foldMap(sqlStateToApiError, CreatedValue(_)))
 
   // Fragment functions
   def getNamesFragment(table: Table): Fragment =
