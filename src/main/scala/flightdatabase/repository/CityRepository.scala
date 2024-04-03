@@ -15,18 +15,20 @@ class CityRepository[F[_]: Concurrent] private (
   implicit transactor: Resource[F, HikariTransactor[F]]
 ) extends CityAlgebra[F] {
 
-  override def getCities(maybeCountry: Option[String]): F[ApiResult[List[CityModel]]] = ???
+  override def getCities(maybeCountry: Option[String]): F[ApiResult[List[CityModel]]] =
+    featureNotImplemented[F, List[CityModel]]
 
   override def getCitiesOnlyNames(maybeCountry: Option[String]): F[ApiResult[List[String]]] =
     getStringListBy(CITY, COUNTRY, maybeCountry).execute
 
-  override def getCityById(id: Long): F[ApiResult[CityModel]] = ???
+  override def getCityById(id: Long): F[ApiResult[CityModel]] = featureNotImplemented[F, CityModel]
 
-  override def createCity(city: CityModel): F[ApiResult[Long]] = ???
+  override def createCity(city: CityModel): F[ApiResult[Long]] = featureNotImplemented[F, Long]
 
-  override def updateCity(city: CityModel): F[ApiResult[CityModel]] = ???
+  override def updateCity(city: CityModel): F[ApiResult[CityModel]] =
+    featureNotImplemented[F, CityModel]
 
-  override def deleteCity(id: Long): F[ApiResult[CityModel]] = ???
+  override def deleteCity(id: Long): F[ApiResult[CityModel]] = featureNotImplemented[F, CityModel]
 }
 
 object CityRepository {

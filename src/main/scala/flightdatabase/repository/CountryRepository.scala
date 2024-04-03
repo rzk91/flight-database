@@ -14,18 +14,23 @@ class CountryRepository[F[_]: Concurrent] private (
   implicit transactor: Resource[F, HikariTransactor[F]]
 ) extends CountryAlgebra[F] {
 
-  override def getCountries: F[ApiResult[List[CountryModel]]] = ???
+  override def getCountries: F[ApiResult[List[CountryModel]]] =
+    featureNotImplemented[F, List[CountryModel]]
 
   override def getCountriesOnlyNames: F[ApiResult[List[String]]] =
     getStringList(COUNTRY).execute
 
-  override def getCountryById(id: Long): F[ApiResult[CountryModel]] = ???
+  override def getCountryById(id: Long): F[ApiResult[CountryModel]] =
+    featureNotImplemented[F, CountryModel]
 
-  override def createCountry(country: CountryModel): F[ApiResult[Long]] = ???
+  override def createCountry(country: CountryModel): F[ApiResult[Long]] =
+    featureNotImplemented[F, Long]
 
-  override def updateCountry(country: CountryModel): F[ApiResult[CountryModel]] = ???
+  override def updateCountry(country: CountryModel): F[ApiResult[CountryModel]] =
+    featureNotImplemented[F, CountryModel]
 
-  override def deleteCountry(id: Long): F[ApiResult[CountryModel]] = ???
+  override def deleteCountry(id: Long): F[ApiResult[CountryModel]] =
+    featureNotImplemented[F, CountryModel]
 }
 
 object CountryRepository {

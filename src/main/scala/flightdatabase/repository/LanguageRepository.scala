@@ -31,14 +31,17 @@ class LanguageRepository[F[_]: Concurrent] private (
   override def getLanguagesOnlyNames: F[ApiResult[List[String]]] =
     getStringList(LANGUAGE).execute
 
-  override def getLanguage(id: Long): F[ApiResult[LanguageModel]] = ???
+  override def getLanguage(id: Long): F[ApiResult[LanguageModel]] =
+    featureNotImplemented[F, LanguageModel]
 
   override def createLanguage(language: LanguageModel): F[ApiResult[Long]] =
     insertDbObject(language).execute
 
-  override def updateLanguage(language: LanguageModel): F[ApiResult[LanguageModel]] = ???
+  override def updateLanguage(language: LanguageModel): F[ApiResult[LanguageModel]] =
+    featureNotImplemented[F, LanguageModel]
 
-  override def deleteLanguage(id: Long): F[ApiResult[LanguageModel]] = ???
+  override def deleteLanguage(id: Long): F[ApiResult[LanguageModel]] =
+    featureNotImplemented[F, LanguageModel]
 }
 
 object LanguageRepository {

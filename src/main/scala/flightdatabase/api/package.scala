@@ -13,13 +13,14 @@ package object api {
     import dsl._
 
     res match {
-      case Right(result: GotValue[A])                                => Ok(result.value)
-      case Right(created: CreatedValue[A])                           => Created(created.value)
-      case Left(value: ApiError) if ApiError.badRequestErrors(value) => BadRequest(value.error)
-      case Left(value: ApiError) if ApiError.conflictErrors(value)   => Conflict(value.error)
-      case Left(value: ApiError) if ApiError.notFoundErrors(value)   => NotFound(value.error)
-      case Left(value: ApiError) if ApiError.otherErrors(value)      => UnprocessableEntity(value.error)
-      case Left(_)                                                   => InternalServerError()
+      case Right(result: GotValue[A])                              => Ok(result.value)
+      case Right(created: CreatedValue[A])                         => Created(created.value)
+      case Left(value: ApiError) if ApiError.badRequests(value)    => BadRequest(value.error)
+      case Left(value: ApiError) if ApiError.conflicts(value)      => Conflict(value.error)
+      case Left(value: ApiError) if ApiError.notFound(value)       => NotFound(value.error)
+      case Left(value: ApiError) if ApiError.notImplemented(value) => NotImplemented(value.error)
+      case Left(value: ApiError) if ApiError.others(value)         => UnprocessableEntity(value.error)
+      case Left(_)                                                 => InternalServerError()
     }
   }
 

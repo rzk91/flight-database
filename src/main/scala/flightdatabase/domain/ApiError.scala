@@ -5,11 +5,12 @@ sealed trait ApiError { def error: String }
 
 object ApiError {
 
-  val badRequestErrors: Set[ApiError] =
+  val badRequests: Set[ApiError] =
     Set(EntryCheckFailed, EntryNullCheckFailed, EntryInvalidFormat)
-  val conflictErrors: Set[ApiError] = Set(EntryAlreadyExists)
-  val notFoundErrors: Set[ApiError] = Set(EntryNotFound)
-  val otherErrors: Set[ApiError] = Set(UnknownError)
+  val conflicts: Set[ApiError] = Set(EntryAlreadyExists)
+  val notFound: Set[ApiError] = Set(EntryNotFound)
+  val notImplemented: Set[ApiError] = Set(FeatureNotImplemented)
+  val others: Set[ApiError] = Set(UnknownError)
 }
 
 case object EntryAlreadyExists extends ApiError {
@@ -32,6 +33,10 @@ case object EntryInvalidFormat extends ApiError {
 
 case object EntryNotFound extends ApiError {
   override def error: String = s"Error: Entry not found"
+}
+
+case object FeatureNotImplemented extends ApiError {
+  override def error: String = s"Error: Feature still under development..."
 }
 
 case object UnknownError extends ApiError {

@@ -1,5 +1,6 @@
 package flightdatabase
 
+import cats.Applicative
 import cats.implicits._
 import doobie._
 import doobie.implicits._
@@ -47,6 +48,9 @@ package object repository {
       .withUniqueGeneratedKeys[Long]("id")
       .attemptSqlState
       .map(_.foldMap(sqlStateToApiError, CreatedValue(_)))
+
+  def featureNotImplemented[F[_]: Applicative, A]: F[ApiResult[A]] =
+    liftErrorToApiResult[A](FeatureNotImplemented).pure[F]
 
   // Fragment functions
   def getNamesFragment(table: Table): Fragment =
