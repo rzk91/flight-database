@@ -7,16 +7,14 @@ import doobie.implicits._
 import doobie.postgres._
 import flightdatabase.domain.FlightDbTable.Table
 import flightdatabase.domain._
+import flightdatabase.repository.queries._
 import flightdatabase.utils.implicits._
 
 package object repository {
 
   // Helper methods to access DB
   def getStringList(table: Table): ConnectionIO[ApiResult[List[String]]] =
-    getNamesFragment(table)
-      .query[String]
-      .to[List]
-      .map(liftListToApiResult)
+    stringQuery(table).to[List].map(liftListToApiResult)
 
   def getStringListBy(
     mainTable: Table,
@@ -27,11 +25,10 @@ package object repository {
       case Some(value) =>
         // Get only strings based on given value
         for {
-          id <- getIdWhereNameFragment(subTable, value).query[Int].option
+          id <- idWhereNameQuery(subTable, value).option
           strings <- id match {
             case Some(i) =>
-              getNameWhereIdFragment(mainTable, s"${subTable}_id", i)
-                .query[String]
+              nameWhereIdQuery(mainTable, subTable, i)
                 .to[List]
                 .map(liftListToApiResult)
             case None => liftErrorToApiResult[List[String]](EntryNotFound).pure[ConnectionIO]

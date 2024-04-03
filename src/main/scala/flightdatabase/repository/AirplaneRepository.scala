@@ -3,14 +3,13 @@ package flightdatabase.repository
 import cats.effect.Concurrent
 import cats.effect.Resource
 import cats.implicits._
-import doobie.Fragment
 import doobie.hikari.HikariTransactor
-import doobie.implicits._
 import flightdatabase.domain.ApiResult
 import flightdatabase.domain.FlightDbTable.AIRPLANE
 import flightdatabase.domain.FlightDbTable.MANUFACTURER
 import flightdatabase.domain.airplane.AirplaneAlgebra
 import flightdatabase.domain.airplane.AirplaneModel
+import flightdatabase.repository.queries.AirplaneQueries._
 import flightdatabase.utils.implicits._
 
 // TODO: Perhaps replace the resource with a simple instance of `Transactor[F]`
@@ -21,15 +20,8 @@ class AirplaneRepository[F[_]: Concurrent] private (
 
   override def getAirplanes(
     maybeManufacturer: Option[String]
-  ): F[ApiResult[List[AirplaneModel]]] = {
-    val allAirplanes =
-      fr"SELECT a.id, a.name, m.name, a.capacity, a.max_range_in_km" ++
-        fr"FROM airplane a INNER JOIN manufacturer m on a.manufacturer_id = m.id"
-
-    val addManufacturer = maybeManufacturer.fold(Fragment.empty)(m => fr"WHERE m.name = $m")
-
-    (allAirplanes ++ addManufacturer).query[AirplaneModel].to[List].map(liftListToApiResult).execute
-  }
+  ): F[ApiResult[List[AirplaneModel]]] =
+    getAllAirplanes(maybeManufacturer).to[List].map(liftListToApiResult).execute
 
   override def getAirplanesOnlyNames(
     maybeManufacturer: Option[String]
