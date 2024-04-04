@@ -23,7 +23,7 @@ class CurrencyRepository[F[_]: Concurrent] private (
       .execute
 
   override def getCurrenciesOnlyNames: F[ApiResult[List[String]]] =
-    getStringList(CURRENCY).execute
+    getNameList(CURRENCY).execute
 
   override def getCurrencyById(id: Long): F[ApiResult[CurrencyModel]] =
     featureNotImplemented[F, CurrencyModel]

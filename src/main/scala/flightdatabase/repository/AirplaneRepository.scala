@@ -1,16 +1,14 @@
 package flightdatabase.repository
 
-import cats.effect.Concurrent
-import cats.effect.Resource
+import cats.effect.{Concurrent, Resource}
 import cats.implicits._
 import doobie.hikari.HikariTransactor
 import flightdatabase.domain.ApiResult
-import flightdatabase.domain.FlightDbTable.AIRPLANE
-import flightdatabase.domain.FlightDbTable.MANUFACTURER
-import flightdatabase.domain.airplane.AirplaneAlgebra
-import flightdatabase.domain.airplane.AirplaneModel
+import flightdatabase.domain.FlightDbTable.{AIRPLANE, MANUFACTURER}
+import flightdatabase.domain.airplane.{AirplaneAlgebra, AirplaneModel}
 import flightdatabase.repository.queries.AirplaneQueries._
 import flightdatabase.utils.implicits._
+import flightdatabase.utils.TableValue
 
 // TODO: Perhaps replace the resource with a simple instance of `Transactor[F]`
 // Question: how does it then work with pooling then?
@@ -21,12 +19,12 @@ class AirplaneRepository[F[_]: Concurrent] private (
   override def getAirplanes(
     maybeManufacturer: Option[String]
   ): F[ApiResult[List[AirplaneModel]]] =
-    allAirplanes(maybeManufacturer).to[List].map(liftListToApiResult).execute
+    selectAllAirplanes(maybeManufacturer).asList.execute
 
   override def getAirplanesOnlyNames(
     maybeManufacturer: Option[String]
   ): F[ApiResult[List[String]]] =
-    getStringListBy(AIRPLANE, MANUFACTURER, maybeManufacturer).execute
+    getNameList(AIRPLANE, maybeManufacturer.map(TableValue(MANUFACTURER, _))).execute
 
   override def getAirplane(id: Long): F[ApiResult[AirplaneModel]] =
     featureNotImplemented[F, AirplaneModel]

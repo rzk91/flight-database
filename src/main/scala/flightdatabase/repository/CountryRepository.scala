@@ -18,7 +18,7 @@ class CountryRepository[F[_]: Concurrent] private (
     featureNotImplemented[F, List[CountryModel]]
 
   override def getCountriesOnlyNames: F[ApiResult[List[String]]] =
-    getStringList(COUNTRY).execute
+    getNameList(COUNTRY).execute
 
   override def getCountryById(id: Long): F[ApiResult[CountryModel]] =
     featureNotImplemented[F, CountryModel]

@@ -6,6 +6,7 @@ import doobie.implicits._
 import flightdatabase.config.Configuration
 import flightdatabase.domain.FlightDbTable._
 import flightdatabase.repository._
+import flightdatabase.utils.TableValue
 
 object TestDb extends IOApp.Simple with LazyLogging {
 
@@ -15,11 +16,11 @@ object TestDb extends IOApp.Simple with LazyLogging {
       _    <- Database.initialise[IO](conf.dbConfig, conf.cleanDatabase)
       xa   <- Database.transactor[IO](conf.dbConfig)
     } yield for {
-      countries    <- getStringList(COUNTRY).transact(xa)
+      countries    <- getNameList(COUNTRY).transact(xa)
       _            <- IO(logger.info(s"Countries: $countries"))
-      germanCities <- getStringListBy(CITY, COUNTRY, Some("Germany")).transact(xa)
+      germanCities <- getNameList(CITY, Some(TableValue(COUNTRY, "Germany"))).transact(xa)
       _            <- IO(logger.info(s"Cities in Germany: $germanCities"))
-      indianCities <- getStringListBy(CITY, COUNTRY, Some("India")).transact(xa)
+      indianCities <- getNameList(CITY, Some(TableValue(COUNTRY, "India"))).transact(xa)
       _            <- IO(logger.info(s"Cities in India: $indianCities"))
     } yield ()
   }.useEval

@@ -5,63 +5,38 @@ import cats.implicits._
 import doobie._
 import doobie.implicits._
 import doobie.postgres._
-import flightdatabase.domain.FlightDbTable.Table
 import flightdatabase.domain._
+import flightdatabase.domain.FlightDbTable.Table
 import flightdatabase.repository.queries._
-import flightdatabase.utils.implicits._
+import flightdatabase.utils.TableValue
+import flightdatabase.utils.implicits.enrichQuery
 
 package object repository {
 
   // Helper methods to access DB
-  def getStringList(table: Table): ConnectionIO[ApiResult[List[String]]] =
-    getStringQuery(table).to[List].map(liftListToApiResult)
-
-  def getStringListBy(
-    mainTable: Table,
-    subTable: Table,
-    subTableValue: Option[String]
+  def getNameList[W](
+    selectTable: Table,
+    whereTableValue: Option[TableValue[W]] = None
   ): ConnectionIO[ApiResult[List[String]]] =
-    subTableValue match {
-      case Some(value) =>
-        // Get only strings based on given value
+    whereTableValue match {
+      case Some(TableValue(whereTable, whereValue)) =>
+        // Get only names based on given value
         for {
-          id <- getIdWhereNameQuery(subTable, value).option
-          strings <- id match {
+          id <- selectWhereQuery[Int, W]("id", whereTable, "name", whereValue).option
+          names <- id match {
             case Some(i) =>
-              getNameWhereIdQuery(mainTable, subTable, i)
-                .to[List]
-                .map(liftListToApiResult)
+              selectWhereQuery[String, Int]("name", selectTable, s"${whereTable}_id", i).asList
             case None => liftErrorToApiResult[List[String]](EntryNotFound).pure[ConnectionIO]
           }
-        } yield strings
+        } yield names
 
       case None =>
-        // Get all strings in DB
-        getStringList(mainTable)
+        // Get all names in DB
+        selectFragment("name", selectTable).query[String].asList
     }
-
-  def insertDbObject[O <: ModelBase](obj: O): ConnectionIO[ApiResult[Long]] =
-    obj.sqlInsert.update
-      .withUniqueGeneratedKeys[Long]("id")
-      .attemptSqlState
-      .map(_.foldMap(sqlStateToApiError, CreatedValue(_)))
 
   def featureNotImplemented[F[_]: Applicative, A]: F[ApiResult[A]] =
     liftErrorToApiResult[A](FeatureNotImplemented).pure[F]
-
-  // Fragment functions
-  def getNamesFragment(table: Table): Fragment =
-    fr"SELECT name FROM" ++ Fragment.const(table.toString)
-  def getIdsFragment(table: Table): Fragment = fr"SELECT id FROM" ++ Fragment.const(table.toString)
-
-  def whereNameFragment(name: String): Fragment = fr"WHERE name = $name"
-  def whereIdFragment(id: Int): Fragment = fr"WHERE id = $id"
-
-  def getIdWhereNameFragment(table: Table, name: String): Fragment =
-    getIdsFragment(table) ++ whereNameFragment(name)
-
-  def getNameWhereIdFragment(table: Table, idField: String, id: Long): Fragment =
-    getNamesFragment(table) ++ fr"WHERE" ++ Fragment.const(idField) ++ fr"= $id"
 
 // SQL state to ApiError conversion
   def sqlStateToApiError(state: SqlState): ApiError = state match {

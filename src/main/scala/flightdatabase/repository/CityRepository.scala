@@ -1,15 +1,13 @@
 package flightdatabase.repository
 
-import cats.effect.Concurrent
-import cats.effect.Resource
+import cats.effect.{Concurrent, Resource}
 import cats.implicits._
 import doobie.hikari.HikariTransactor
 import flightdatabase.domain.ApiResult
-import flightdatabase.domain.FlightDbTable.CITY
-import flightdatabase.domain.FlightDbTable.COUNTRY
-import flightdatabase.domain.city.CityAlgebra
-import flightdatabase.domain.city.CityModel
+import flightdatabase.domain.FlightDbTable.{CITY, COUNTRY}
+import flightdatabase.domain.city.{CityAlgebra, CityModel}
 import flightdatabase.utils.implicits._
+import flightdatabase.utils.TableValue
 
 class CityRepository[F[_]: Concurrent] private (
   implicit transactor: Resource[F, HikariTransactor[F]]
@@ -19,7 +17,7 @@ class CityRepository[F[_]: Concurrent] private (
     featureNotImplemented[F, List[CityModel]]
 
   override def getCitiesOnlyNames(maybeCountry: Option[String]): F[ApiResult[List[String]]] =
-    getStringListBy(CITY, COUNTRY, maybeCountry).execute
+    getNameList(CITY, maybeCountry.map(TableValue(COUNTRY, _))).execute
 
   override def getCityById(id: Long): F[ApiResult[CityModel]] = featureNotImplemented[F, CityModel]
 

@@ -1,17 +1,32 @@
 package flightdatabase.repository
 
-import doobie.Query0
+import doobie.{Fragment, Query0}
+import doobie.implicits._
 import flightdatabase.domain.FlightDbTable.Table
 
 package object queries {
 
   // Helper methods for queries
-  def getStringQuery(table: Table): Query0[String] =
-    getNamesFragment(table).query[String]
+  def selectWhereQuery[S, W](
+    selectField: String,
+    selectTable: Table,
+    whereField: String,
+    whereValue: W
+  ): Query0[S] = {
+    selectFragment(selectField, selectTable) ++
+    whereFragment(whereField, whereValue)
+  }.query[S]
 
-  def getIdWhereNameQuery(table: Table, name: String): Query0[Int] =
-    getIdWhereNameFragment(table, name).query[Int]
+  def selectIdWhereNameQuery(
+    selectTable: Table,
+    whereField: String
+  ): Query0[Int] = selectWhereQuery[Int, String]("id", selectTable, "name", whereField)
 
-  def getNameWhereIdQuery(mainTable: Table, subTable: Table, id: Int): Query0[String] =
-    getNameWhereIdFragment(mainTable, s"${subTable}_id", id).query[String]
+  def selectFragment(field: String, table: Table): Fragment =
+    fr"SELECT" ++ Fragment.const(field) ++ fr"FROM" ++ Fragment.const(table.toString)
+
+  def whereFragment[A](
+    field: String,
+    value: A
+  ): Fragment = fr"WHERE" ++ Fragment.const(field) ++ fr"= $value"
 }
