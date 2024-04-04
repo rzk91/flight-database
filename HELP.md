@@ -33,6 +33,10 @@
 `curl -i http://localhost:18181/v1/flightdb/hello/rahul`
 - Get currencies and pretty print JSON output (`-s` suppresses any other output)  
 `curl -s http://localhost:18181/v1/flightdb/currencies | jq .` 
+- Get airplanes of a certain manufacturer (e.g. Airbus)
+`curl -s "http://localhost:18181/v1/flightdb/airplanes?manufacturer=Airbus" | jq .`
+- Get only names of cities in a certain country (e.g. Germany)
+`curl -s "http://localhost:18181/v1/flightdb/cities?country=Germany&only-names" | jq .`
 - Post a new language with JSON input  
 ```sh
 curl -X POST -H "Content-Type: application/json" \

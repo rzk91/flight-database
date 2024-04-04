@@ -14,7 +14,7 @@ package object repository {
 
   // Helper methods to access DB
   def getStringList(table: Table): ConnectionIO[ApiResult[List[String]]] =
-    stringQuery(table).to[List].map(liftListToApiResult)
+    getStringQuery(table).to[List].map(liftListToApiResult)
 
   def getStringListBy(
     mainTable: Table,
@@ -25,10 +25,10 @@ package object repository {
       case Some(value) =>
         // Get only strings based on given value
         for {
-          id <- idWhereNameQuery(subTable, value).option
+          id <- getIdWhereNameQuery(subTable, value).option
           strings <- id match {
             case Some(i) =>
-              nameWhereIdQuery(mainTable, subTable, i)
+              getNameWhereIdQuery(mainTable, subTable, i)
                 .to[List]
                 .map(liftListToApiResult)
             case None => liftErrorToApiResult[List[String]](EntryNotFound).pure[ConnectionIO]

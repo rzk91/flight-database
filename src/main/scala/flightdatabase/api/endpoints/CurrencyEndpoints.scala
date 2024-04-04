@@ -13,10 +13,11 @@ class CurrencyEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Curr
 ) extends Endpoints[F](prefix) {
 
   override def endpoints: HttpRoutes[F] = HttpRoutes.of {
-    case GET -> Root :? OnlyNameQueryParamMatcher(onlyNames) =>
-      onlyNames match {
-        case None | Some(false) => algebra.getCurrencies.flatMap(toResponse(_))
-        case _                  => algebra.getCurrenciesOnlyNames.flatMap(toResponse(_))
+    case GET -> Root :? OnlyNamesFlagMatcher(onlyNames) =>
+      if (onlyNames) {
+        algebra.getCurrenciesOnlyNames.flatMap(toResponse(_))
+      } else {
+        algebra.getCurrencies.flatMap(toResponse(_))
       }
   }
 }

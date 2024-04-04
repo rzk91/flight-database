@@ -13,10 +13,11 @@ class CountryEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Count
 ) extends Endpoints[F](prefix) {
 
   override def endpoints: HttpRoutes[F] = HttpRoutes.of {
-    case GET -> Root :? OnlyNameQueryParamMatcher(onlyNames) =>
-      onlyNames match {
-        case None | Some(false) => algebra.getCountries.flatMap(toResponse(_))
-        case _                  => algebra.getCountriesOnlyNames.flatMap(toResponse(_))
+    case GET -> Root :? OnlyNamesFlagMatcher(onlyNames) =>
+      if (onlyNames) {
+        algebra.getCountriesOnlyNames.flatMap(toResponse(_))
+      } else {
+        algebra.getCountries.flatMap(toResponse(_))
       }
   }
 }

@@ -17,10 +17,11 @@ class LanguageEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Lang
 ) extends Endpoints[F](prefix) {
 
   override def endpoints: HttpRoutes[F] = HttpRoutes.of {
-    case GET -> Root :? OnlyNameQueryParamMatcher(onlyNames) =>
-      onlyNames match {
-        case None | Some(false) => algebra.getLanguages.flatMap(toResponse(_))
-        case _                  => algebra.getLanguagesOnlyNames.flatMap(toResponse(_))
+    case GET -> Root :? OnlyNamesFlagMatcher(onlyNames) =>
+      if (onlyNames) {
+        algebra.getLanguagesOnlyNames.flatMap(toResponse(_))
+      } else {
+        algebra.getLanguages.flatMap(toResponse(_))
       }
 
     // TODO: Refactor (move actual logic to `LanguageRepository`)

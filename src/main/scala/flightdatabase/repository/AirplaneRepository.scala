@@ -21,7 +21,7 @@ class AirplaneRepository[F[_]: Concurrent] private (
   override def getAirplanes(
     maybeManufacturer: Option[String]
   ): F[ApiResult[List[AirplaneModel]]] =
-    getAllAirplanes(maybeManufacturer).to[List].map(liftListToApiResult).execute
+    allAirplanes(maybeManufacturer).to[List].map(liftListToApiResult).execute
 
   override def getAirplanesOnlyNames(
     maybeManufacturer: Option[String]

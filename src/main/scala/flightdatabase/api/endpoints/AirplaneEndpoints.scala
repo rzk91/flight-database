@@ -19,11 +19,12 @@ class AirplaneEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airp
   override def endpoints: HttpRoutes[F] = HttpRoutes.of {
     case GET -> Root :?
           ManufacturerQueryParamMatcher(maybeManufacturer) +&
-            OnlyNameQueryParamMatcher(onlyNames) =>
+            OnlyNamesFlagMatcher(onlyNames) =>
       val m = maybeManufacturer.flatMap(_.toOption)
-      onlyNames match {
-        case None | Some(false) => algebra.getAirplanes(m).flatMap(toResponse(_))
-        case _                  => algebra.getAirplanesOnlyNames(m).flatMap(toResponse(_))
+      if (onlyNames) {
+        algebra.getAirplanesOnlyNames(m).flatMap(toResponse(_))
+      } else {
+        algebra.getAirplanes(m).flatMap(toResponse(_))
       }
   }
 
