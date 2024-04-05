@@ -5,7 +5,6 @@ import cats.effect.Resource
 import cats.implicits._
 import doobie.hikari.HikariTransactor
 import flightdatabase.domain.ApiResult
-import flightdatabase.domain.FlightDbTable.COUNTRY
 import flightdatabase.domain.country.CountryAlgebra
 import flightdatabase.domain.country.CountryModel
 import flightdatabase.utils.implicits._
@@ -18,7 +17,7 @@ class CountryRepository[F[_]: Concurrent] private (
     featureNotImplemented[F, List[CountryModel]]
 
   override def getCountriesOnlyNames: F[ApiResult[List[String]]] =
-    getNameList(COUNTRY).execute
+    getNameList[CountryModel].execute
 
   override def getCountryById(id: Long): F[ApiResult[CountryModel]] =
     featureNotImplemented[F, CountryModel]

@@ -1,7 +1,7 @@
 package flightdatabase.domain.fleet
 
-import flightdatabase.domain._
 import flightdatabase.domain.FlightDbTable.FLEET
+import flightdatabase.domain._
 import io.circe.generic.extras.ConfiguredJsonCodec
 
 @ConfiguredJsonCodec final case class FleetModel(

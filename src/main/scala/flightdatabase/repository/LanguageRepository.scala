@@ -1,11 +1,14 @@
 package flightdatabase.repository
 
-import cats.effect.{Concurrent, Resource}
+import cats.effect.Concurrent
+import cats.effect.Resource
 import cats.syntax.all._
 import doobie.hikari.HikariTransactor
 import flightdatabase.domain.ApiResult
-import flightdatabase.domain.language.{LanguageAlgebra, LanguageModel}
-import flightdatabase.repository.queries.LanguageQueries.{insertLanguage, selectAllLanguages}
+import flightdatabase.domain.language.LanguageAlgebra
+import flightdatabase.domain.language.LanguageModel
+import flightdatabase.repository.queries.LanguageQueries.insertLanguage
+import flightdatabase.repository.queries.LanguageQueries.selectAllLanguages
 import flightdatabase.utils.implicits._
 
 class LanguageRepository[F[_]: Concurrent] private (

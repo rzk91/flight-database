@@ -1,6 +1,7 @@
 package flightdatabase.repository.queries
 
-import doobie.{Query0, Update0}
+import doobie.Query0
+import doobie.Update0
 import doobie.implicits.toSqlInterpolator
 import flightdatabase.domain.country.CountryModel
 

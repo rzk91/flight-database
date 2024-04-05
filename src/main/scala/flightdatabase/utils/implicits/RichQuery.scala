@@ -1,6 +1,7 @@
 package flightdatabase.utils.implicits
 
-import doobie.{ConnectionIO, Query0}
+import doobie.ConnectionIO
+import doobie.Query0
 import flightdatabase.domain.ApiResult
 import flightdatabase.repository.liftListToApiResult
 

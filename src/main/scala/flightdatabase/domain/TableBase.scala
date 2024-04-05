@@ -4,7 +4,7 @@ import flightdatabase.domain.FlightDbTable.Table
 
 trait TableBase[A] {
   def table: Table
-  val asString: String = table.toString
+  def asString: String = table.toString
 }
 
 object TableBase {

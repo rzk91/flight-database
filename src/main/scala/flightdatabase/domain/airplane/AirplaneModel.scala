@@ -1,7 +1,7 @@
 package flightdatabase.domain.airplane
 
 import flightdatabase.domain.FlightDbTable.AIRPLANE
-import flightdatabase.domain.TableBase
+import flightdatabase.domain._
 import io.circe.generic.extras._
 
 @ConfiguredJsonCodec final case class AirplaneModel(

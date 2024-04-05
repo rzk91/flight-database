@@ -9,7 +9,7 @@ TODO list
 - ~~Compose basic algebraic operations in all `{dbObject}Algebra` traits, e.g., `get`, `getById`, `insert`, `update`, `delete`, etc.~~ DONE!
 - ~~Rewrite the `endpoints` to call the right algebra based on the routes and then convert the query output to a `Response`.~~ DONE!
 - ~~In the package `repository`, we will have the implementation of the services that we offer with respect to the database library. Perhaps a subpackage called `doobie` for all doobie-based queries. This would also perform query execution in the same code.~~ DONE!
-- Fix all domain models after changes to ModelBase.
+- ~~Fix all domain models after changes to ModelBase.~~ DONE!
 - Implement all doobie queries.
 - Write tests for all doobie queries.
 - Implement all endpoints using algebras.

@@ -1,7 +1,7 @@
 package flightdatabase.domain.city
 
-import flightdatabase.domain._
 import flightdatabase.domain.FlightDbTable.CITY
+import flightdatabase.domain._
 import io.circe.generic.extras.ConfiguredJsonCodec
 
 @ConfiguredJsonCodec final case class CityModel(

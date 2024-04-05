@@ -1,11 +1,12 @@
 package flightdatabase.repository
 
-import cats.effect.{Concurrent, Resource}
+import cats.effect.Concurrent
+import cats.effect.Resource
 import cats.implicits._
 import doobie.hikari.HikariTransactor
 import flightdatabase.domain.ApiResult
-import flightdatabase.domain.FlightDbTable.CURRENCY
-import flightdatabase.domain.currency.{CurrencyAlgebra, CurrencyModel}
+import flightdatabase.domain.currency.CurrencyAlgebra
+import flightdatabase.domain.currency.CurrencyModel
 import flightdatabase.repository.queries.CurrencyQueries.selectAllCurrencies
 import flightdatabase.utils.implicits._
 
@@ -17,7 +18,7 @@ class CurrencyRepository[F[_]: Concurrent] private (
     selectAllCurrencies.asList.execute
 
   override def getCurrenciesOnlyNames: F[ApiResult[List[String]]] =
-    getNameList(CURRENCY).execute
+    getNameList[CurrencyModel].execute
 
   override def getCurrencyById(id: Long): F[ApiResult[CurrencyModel]] =
     featureNotImplemented[F, CurrencyModel]

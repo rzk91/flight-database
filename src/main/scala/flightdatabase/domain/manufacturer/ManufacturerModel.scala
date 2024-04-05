@@ -1,7 +1,7 @@
 package flightdatabase.domain.manufacturer
 
-import flightdatabase.domain._
 import flightdatabase.domain.FlightDbTable.MANUFACTURER
+import flightdatabase.domain._
 import io.circe.generic.extras.ConfiguredJsonCodec
 
 @ConfiguredJsonCodec final case class ManufacturerModel(

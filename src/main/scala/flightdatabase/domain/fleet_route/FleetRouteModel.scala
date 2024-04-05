@@ -1,7 +1,7 @@
 package flightdatabase.domain.fleet_route
 
-import flightdatabase.domain._
 import flightdatabase.domain.FlightDbTable.FLEET_ROUTE
+import flightdatabase.domain._
 import io.circe.generic.extras._
 
 @ConfiguredJsonCodec final case class FleetRouteModel(

@@ -1,6 +1,9 @@
 package flightdatabase.utils
 
-import doobie.{ConnectionIO, Fragment, Query0, Update0}
+import doobie.ConnectionIO
+import doobie.Fragment
+import doobie.Query0
+import doobie.Update0
 
 import java.nio.file.Path
 import scala.util.Try

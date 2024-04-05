@@ -1,7 +1,7 @@
 package flightdatabase.domain.currency
 
-import flightdatabase.domain._
 import flightdatabase.domain.FlightDbTable.CURRENCY
+import flightdatabase.domain._
 import io.circe.generic.extras.ConfiguredJsonCodec
 
 @ConfiguredJsonCodec final case class CurrencyModel(

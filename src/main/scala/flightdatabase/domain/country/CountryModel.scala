@@ -1,7 +1,7 @@
 package flightdatabase.domain.country
 
-import flightdatabase.domain._
 import flightdatabase.domain.FlightDbTable.COUNTRY
+import flightdatabase.domain._
 import io.circe.generic.extras.ConfiguredJsonCodec
 
 @ConfiguredJsonCodec final case class CountryModel(

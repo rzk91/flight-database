@@ -1,7 +1,7 @@
 package flightdatabase.domain.language
 
-import flightdatabase.domain._
 import flightdatabase.domain.FlightDbTable.LANGUAGE
+import flightdatabase.domain._
 import io.circe.generic.extras.ConfiguredJsonCodec
 
 @ConfiguredJsonCodec final case class LanguageModel(
