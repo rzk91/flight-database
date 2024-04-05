@@ -1,29 +1,28 @@
 package flightdatabase.repository
 
-import doobie.{Fragment, Query0}
+import doobie.{Fragment, Query0, Update0}
 import doobie.implicits._
-import flightdatabase.domain.FlightDbTable.Table
+import flightdatabase.domain.TableBase
 
 package object queries {
 
   // Helper methods for queries
-  def selectWhereQuery[S, W](
+  def selectWhereQuery[ST: TableBase, SV, W](
     selectField: String,
-    selectTable: Table,
     whereField: String,
     whereValue: W
-  ): Query0[S] = {
-    selectFragment(selectField, selectTable) ++
-    whereFragment(whereField, whereValue)
-  }.query[S]
+  ): Query0[SV] = {
+    selectFragment[ST](selectField) ++ whereFragment(whereField, whereValue)
+  }.query[SV]
 
-  def selectIdWhereNameQuery(
-    selectTable: Table,
-    whereField: String
-  ): Query0[Int] = selectWhereQuery[Int, String]("id", selectTable, "name", whereField)
+  def selectAllQuery[T](implicit table: TableBase[T]): Query0[T] =
+    (fr"SELECT * FROM" ++ Fragment.const(table.asString)).query[T]
 
-  def selectFragment(field: String, table: Table): Fragment =
-    fr"SELECT" ++ Fragment.const(field) ++ fr"FROM" ++ Fragment.const(table.toString)
+  def deleteWhereId[T](id: Int)(implicit table: TableBase[T]): Update0 =
+    (fr"DELETE FROM" ++ Fragment.const(table.asString) ++ fr"WHERE id = $id").update
+
+  def selectFragment[T](field: String)(implicit table: TableBase[T]): Fragment =
+    fr"SELECT" ++ Fragment.const(field) ++ fr"FROM" ++ Fragment.const(table.asString)
 
   def whereFragment[A](
     field: String,

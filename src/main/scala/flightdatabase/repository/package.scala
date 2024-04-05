@@ -14,25 +14,25 @@ import flightdatabase.utils.implicits.enrichQuery
 package object repository {
 
   // Helper methods to access DB
-  def getNameList[W](
-    selectTable: Table,
-    whereTableValue: Option[TableValue[W]] = None
+  def getNameList[S: TableBase, WT: TableBase, WV](
+    whereTableValue: Option[TableValue[WT, WV]] = None
   ): ConnectionIO[ApiResult[List[String]]] =
     whereTableValue match {
-      case Some(TableValue(whereTable, whereValue)) =>
+      case Some(tv @ TableValue(whereValue)) =>
+        val whereTable = tv.asString
         // Get only names based on given value
         for {
-          id <- selectWhereQuery[Int, W]("id", whereTable, "name", whereValue).option
+          id <- selectWhereQuery[S, Int, WV]("id", "name", whereValue).option
           names <- id match {
             case Some(i) =>
-              selectWhereQuery[String, Int]("name", selectTable, s"${whereTable}_id", i).asList
+              selectWhereQuery[S, String, Int]("name", s"${whereTable}_id", i).asList
             case None => liftErrorToApiResult[List[String]](EntryNotFound).pure[ConnectionIO]
           }
         } yield names
 
       case None =>
         // Get all names in DB
-        selectFragment("name", selectTable).query[String].asList
+        selectFragment[S]("name").query[String].asList
     }
 
   def featureNotImplemented[F[_]: Applicative, A]: F[ApiResult[A]] =

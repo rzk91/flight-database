@@ -1,5 +1,7 @@
 package flightdatabase.domain.language
 
+import flightdatabase.domain._
+import flightdatabase.domain.FlightDbTable.LANGUAGE
 import io.circe.generic.extras.ConfiguredJsonCodec
 
 @ConfiguredJsonCodec final case class LanguageModel(
@@ -9,3 +11,7 @@ import io.circe.generic.extras.ConfiguredJsonCodec
   iso3: Option[String],
   originalName: String
 )
+
+object LanguageModel {
+  implicit val languageModelTable: TableBase[LanguageModel] = TableBase.instance(LANGUAGE)
+}

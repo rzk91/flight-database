@@ -7,9 +7,7 @@ import flightdatabase.domain.language.LanguageModel
 
 private[repository] object LanguageQueries {
 
-  def selectAllLanguages: Query0[LanguageModel] =
-    sql"SELECT id, name, iso2, iso3, original_name FROM language"
-      .query[LanguageModel]
+  def selectAllLanguages: Query0[LanguageModel] = selectAllQuery[LanguageModel]
 
   def insertLanguage(model: LanguageModel): Update0 =
     sql"""
@@ -17,6 +15,5 @@ private[repository] object LanguageQueries {
        | VALUES (${model.name}, ${model.iso2}, ${model.iso3}, ${model.originalName}) 
        """.stripMargin.update
 
-  def deleteLanguage(id: Long): Update0 =
-    sql"DELETE FROM language WHERE id = $id".update
+  def deleteLanguage(id: Int): Update0 = deleteWhereId[LanguageModel](id)
 }

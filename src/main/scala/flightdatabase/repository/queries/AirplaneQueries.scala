@@ -3,7 +3,6 @@ package flightdatabase.repository.queries
 import doobie.{Query0, Update0}
 import doobie.implicits._
 import flightdatabase.domain.airplane.AirplaneModel
-import flightdatabase.domain.FlightDbTable.MANUFACTURER
 
 private[repository] object AirplaneQueries {
 
@@ -26,12 +25,11 @@ private[repository] object AirplaneQueries {
          |       (name, manufacturer_id, capacity, max_range_in_km)
          |   VALUES (
          |       ${model.name},
-         |       (${selectIdWhereNameQuery(MANUFACTURER, model.manufacturerId).toFragment}),
+         |       ${model.manufacturerId},
          |       ${model.capacity},
          |       ${model.maxRangeInKm}
          |   )
          | """.stripMargin.update
 
-  def deleteAirplane(id: Long): Update0 =
-    sql"DELETE FROM airplane WHERE id = $id".update
+  def deleteAirplane(id: Int): Update0 = deleteWhereId[AirplaneModel](id)
 }
