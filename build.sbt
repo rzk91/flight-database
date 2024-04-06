@@ -5,9 +5,10 @@ name         := "flight-database"
 organization := "rzk.scala"
 version      := "1.0"
 
-val circeVersion = "0.14.1"
-val doobieVersion = "1.0.0-RC1"
-val http4sVersion = "0.23.18"
+val circeVersion = "0.14.3"
+val doobieVersion = "1.0.0-RC5"
+val http4sVersion = "0.23.26"
+val pureconfigVersion = "0.17.6"
 
 val circeDependencies = Seq(
   "io.circe" %% "circe-core"           % circeVersion,
@@ -31,17 +32,17 @@ val http4sDependencies = Seq(
 )
 
 val otherDependencies = Seq(
-  "com.github.pureconfig"      %% "pureconfig"             % "0.17.4",
-  "com.github.pureconfig"      %% "pureconfig-cats-effect" % "0.17.4",
-  "org.slf4j"                  % "slf4j-log4j12"           % "2.0.5",
+  "com.github.pureconfig"      %% "pureconfig"             % pureconfigVersion,
+  "com.github.pureconfig"      %% "pureconfig-cats-effect" % pureconfigVersion,
+  "org.slf4j"                  % "slf4j-log4j12"           % "2.0.9",
   "com.typesafe.scala-logging" %% "scala-logging"          % "3.9.5",
-  "commons-io"                 % "commons-io"              % "2.11.0",
-  "org.flywaydb"               % "flyway-core"             % "9.15.0"
+  "commons-io"                 % "commons-io"              % "2.15.1",
+  "org.flywaydb"               % "flyway-core"             % "9.22.3"
 )
 
 val testingDependencies = Seq(
-  "org.scalactic" %% "scalactic" % "3.2.15",
-  "org.scalatest" %% "scalatest" % "3.2.15" % "test"
+  "org.scalactic" %% "scalactic" % "3.2.17",
+  "org.scalatest" %% "scalatest" % "3.2.17" % "test"
 )
 
 libraryDependencies ++= circeDependencies ++ doobieDependencies ++ http4sDependencies ++ otherDependencies ++ testingDependencies
@@ -51,7 +52,7 @@ addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
 // For scalafix
 inThisBuild(
   List(
-    scalaVersion := scalaV,
+    scalaVersion      := scalaV,
     semanticdbEnabled := true,
     semanticdbVersion := scalafixSemanticdb.revision
   )
@@ -71,5 +72,5 @@ scalacOptions ++= Seq(
   "-language:higherKinds",
   "-language:existentials",
   "-language:postfixOps",
-  "-Wunused:imports",
+  "-Wunused:imports"
 )

@@ -12,9 +12,10 @@ object FlightDbMain extends IOApp.Simple {
   override def run: IO[Unit] = {
     for {
       conf <- Configuration.configAsResource[IO]
-      _    <- Database.initialise[IO](conf.dbConfig, conf.cleanDatabase)
+      db   <- Database.resource[IO](conf.dbConfig, conf.cleanDatabase)
+      _    <- db.initialise()
       // Implicit resource-based HikariTransactor for better connection pooling
-      implicit0(xa: Resource[IO, HikariTransactor[IO]]) = Database.transactor[IO](conf.dbConfig)
+      implicit0(xa: Resource[IO, HikariTransactor[IO]]) = db.hikariTransactor
       port <- Resource.eval(IO.fromEither(conf.apiConfig.portNumber))
       // TODO: Think of a better way to pass these repositories to `httpApp`
       airplaneRepo <- AirplaneRepository.resource[IO]

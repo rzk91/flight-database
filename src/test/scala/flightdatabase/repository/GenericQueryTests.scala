@@ -14,8 +14,9 @@ import org.scalatest.matchers.should.Matchers
 class GenericQueryTests extends AnyFlatSpec with Matchers with IOChecker {
 
   val config: Configuration.Config = Configuration.configUnsafe
+  val db: Database[IO] = Database.makeUnsafe(config.dbConfig, config.cleanDatabase)
 
-  val transactor: Transactor[IO] = Database.simpleTransactor(config.dbConfig, config.cleanDatabase)
+  val transactor: Transactor[IO] = db.simpleTransactor
 
   "A simple get query" should "not fail" in {
     check(selectFragment[CityModel]("name").query[String])

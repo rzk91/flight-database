@@ -3,6 +3,7 @@ package flightdatabase
 import cats.effect._
 import com.comcast.ip4s.Host
 import com.comcast.ip4s.Port
+import fs2.io.net.Network
 import org.http4s.HttpApp
 import org.http4s.ember.server.EmberServerBuilder
 import org.http4s.server.{Server => ApiServer}
@@ -22,11 +23,13 @@ object Server {
     host: Option[Host],
     port: Port,
     httpApp: HttpApp[F]
-  ): Resource[F, ApiServer] =
+  ): Resource[F, ApiServer] = {
+    implicit val network: Network[F] = Network.forAsync[F]
     EmberServerBuilder
       .default[F]
       .withHostOption(host)
       .withPort(port)
       .withHttpApp(httpApp)
       .build
+  }
 }

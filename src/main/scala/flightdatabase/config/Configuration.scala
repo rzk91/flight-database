@@ -44,7 +44,8 @@ object Configuration extends LazyLogging {
     access: Access,
     baseline: String,
     threadPoolSize: Int,
-    cleanDatabase: Boolean
+    cleanDatabase: Boolean,
+    loggingActive: Boolean
   )
 
   case class ApiLogging(active: Boolean, withHeaders: Boolean, withBody: Boolean)

@@ -10,11 +10,11 @@ TODO list
 - ~~Rewrite the `endpoints` to call the right algebra based on the routes and then convert the query output to a `Response`.~~ DONE!
 - ~~In the package `repository`, we will have the implementation of the services that we offer with respect to the database library. Perhaps a subpackage called `doobie` for all doobie-based queries. This would also perform query execution in the same code.~~ DONE!
 - ~~Fix all domain models after changes to ModelBase.~~ DONE!
-- Add logging for doobie queries.
+- ~~Upgrade all dependencies, especially doobie and http4s since they have some major changes.~~ DONE!
+- ~~Add logging for doobie queries.~~ DONE!
 - Implement all doobie queries.
 - Write tests for all doobie queries.
 - Implement all endpoints using algebras.
 - Write tests for all endpoints and algebras.
 - Expand API endpoint list to include more complex operations as indicated in `endpoints.md`.
-- Upgrade all dependencies, especially doobie and http4s since they have some major changes
 - Perhaps consider using `fly4s` instead of the original Java implementation of `Flyway`.

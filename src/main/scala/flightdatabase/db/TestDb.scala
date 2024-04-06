@@ -14,8 +14,9 @@ object TestDb extends IOApp.Simple with LazyLogging {
   override def run: IO[Unit] = {
     for {
       conf <- Configuration.configAsResource[IO]
-      _    <- Database.initialise[IO](conf.dbConfig, conf.cleanDatabase)
-      xa   <- Database.transactor[IO](conf.dbConfig)
+      db   <- Database.resource[IO](conf.dbConfig, conf.cleanDatabase)
+      _    <- db.initialise()
+      xa   <- db.hikariTransactor
     } yield for {
       countries <- getNameList[CountryModel].transact(xa)
       _         <- IO(logger.info(s"Countries: $countries"))
