@@ -7,9 +7,7 @@ import doobie.hikari.HikariTransactor
 import flightdatabase.domain.ApiResult
 import flightdatabase.domain.airplane.AirplaneAlgebra
 import flightdatabase.domain.airplane.AirplaneModel
-import flightdatabase.domain.manufacturer.ManufacturerModel
 import flightdatabase.repository.queries.AirplaneQueries._
-import flightdatabase.utils.TableValue
 import flightdatabase.utils.implicits._
 
 // TODO: Perhaps replace the resource with a simple instance of `Transactor[F]`
@@ -18,27 +16,26 @@ class AirplaneRepository[F[_]: Concurrent] private (
   implicit transactor: Resource[F, HikariTransactor[F]]
 ) extends AirplaneAlgebra[F] {
 
-  override def getAirplanes(
-    maybeManufacturer: Option[String]
-  ): F[ApiResult[List[AirplaneModel]]] =
-    selectAllAirplanes(maybeManufacturer).asList.execute
+  override def getAirplanes: F[ApiResult[List[AirplaneModel]]] =
+    selectAllAirplanes.asList.execute
 
-  override def getAirplanesOnlyNames(
-    maybeManufacturer: Option[String]
-  ): F[ApiResult[List[String]]] =
-    getNameList[AirplaneModel, ManufacturerModel, String](maybeManufacturer.map(TableValue(_))).execute
+  override def getAirplanesOnlyNames: F[ApiResult[List[String]]] =
+    getNameList[AirplaneModel].execute
 
-  override def getAirplane(id: Long): F[ApiResult[AirplaneModel]] =
+  override def getAirplane(id: Int): F[ApiResult[AirplaneModel]] =
     featureNotImplemented[F, AirplaneModel]
 
-  override def createAirplane(airplane: AirplaneModel): F[ApiResult[Long]] =
-    featureNotImplemented[F, Long]
+  override def getAirplanesByManufacturer(manufacturer: String): F[ApiResult[List[AirplaneModel]]] =
+    selectAllAirplanesByManufacturer(manufacturer).asList.execute
+
+  override def createAirplane(airplane: AirplaneModel): F[ApiResult[Int]] =
+    insertAirplane(airplane).attemptInsert.execute
 
   override def updateAirplane(airplane: AirplaneModel): F[ApiResult[AirplaneModel]] =
     featureNotImplemented[F, AirplaneModel]
 
-  override def deleteAirplane(id: Long): F[ApiResult[AirplaneModel]] =
-    featureNotImplemented[F, AirplaneModel]
+  override def removeAirplane(id: Int): F[ApiResult[Unit]] =
+    deleteAirplane(id).attemptDelete.execute
 }
 
 object AirplaneRepository {

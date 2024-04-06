@@ -7,6 +7,8 @@ import doobie.hikari.HikariTransactor
 import flightdatabase.domain.ApiResult
 import flightdatabase.domain.currency.CurrencyAlgebra
 import flightdatabase.domain.currency.CurrencyModel
+import flightdatabase.repository.queries.CurrencyQueries.deleteCurrency
+import flightdatabase.repository.queries.CurrencyQueries.insertCurrency
 import flightdatabase.repository.queries.CurrencyQueries.selectAllCurrencies
 import flightdatabase.utils.implicits._
 
@@ -20,17 +22,17 @@ class CurrencyRepository[F[_]: Concurrent] private (
   override def getCurrenciesOnlyNames: F[ApiResult[List[String]]] =
     getNameList[CurrencyModel].execute
 
-  override def getCurrencyById(id: Long): F[ApiResult[CurrencyModel]] =
+  override def getCurrency(id: Int): F[ApiResult[CurrencyModel]] =
     featureNotImplemented[F, CurrencyModel]
 
-  override def createCurrency(currency: CurrencyModel): F[ApiResult[Long]] =
-    featureNotImplemented[F, Long]
+  override def createCurrency(currency: CurrencyModel): F[ApiResult[Int]] =
+    insertCurrency(currency).attemptInsert.execute
 
   override def updateCurrency(currency: CurrencyModel): F[ApiResult[CurrencyModel]] =
     featureNotImplemented[F, CurrencyModel]
 
-  override def deleteCurrency(id: Long): F[ApiResult[CurrencyModel]] =
-    featureNotImplemented[F, CurrencyModel]
+  override def removeCurrency(id: Int): F[ApiResult[Unit]] =
+    deleteCurrency(id).attemptDelete.execute
 }
 
 object CurrencyRepository {

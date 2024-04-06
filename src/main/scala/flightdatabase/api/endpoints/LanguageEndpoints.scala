@@ -28,7 +28,7 @@ class LanguageEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Lang
     case req @ POST -> Root =>
       req
         .attemptAs[LanguageModel]
-        .foldF[ApiResult[Long]](
+        .foldF[ApiResult[Int]](
           _ => Applicative[F].pure(Left(EntryInvalidFormat)),
           algebra.createLanguage
         )

@@ -15,10 +15,3 @@ object FleetAirplaneModel {
   implicit val fleetAirplaneModelTable: TableBase[FleetAirplaneModel] =
     TableBase.instance(FLEET_AIRPLANE)
 }
-//    sql"""INSERT INTO fleet_airplane
-//         |  	(fleet_id, airplane_id)
-//	     |	VALUES (
-//         |  	${selectIdStmt("fleet", Some(fleetId))},
-//         |  	${selectIdStmt("airplane", Some(airplaneId))}
-//	     |	)
-//         |""".stripMargin

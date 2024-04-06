@@ -7,6 +7,9 @@ import doobie.hikari.HikariTransactor
 import flightdatabase.domain.ApiResult
 import flightdatabase.domain.country.CountryAlgebra
 import flightdatabase.domain.country.CountryModel
+import flightdatabase.repository.queries.CountryQueries.deleteCountry
+import flightdatabase.repository.queries.CountryQueries.insertCountry
+import flightdatabase.repository.queries.CountryQueries.selectAllCountries
 import flightdatabase.utils.implicits._
 
 class CountryRepository[F[_]: Concurrent] private (
@@ -14,22 +17,22 @@ class CountryRepository[F[_]: Concurrent] private (
 ) extends CountryAlgebra[F] {
 
   override def getCountries: F[ApiResult[List[CountryModel]]] =
-    featureNotImplemented[F, List[CountryModel]]
+    selectAllCountries.asList.execute
 
   override def getCountriesOnlyNames: F[ApiResult[List[String]]] =
     getNameList[CountryModel].execute
 
-  override def getCountryById(id: Long): F[ApiResult[CountryModel]] =
+  override def getCountry(id: Int): F[ApiResult[CountryModel]] =
     featureNotImplemented[F, CountryModel]
 
-  override def createCountry(country: CountryModel): F[ApiResult[Long]] =
-    featureNotImplemented[F, Long]
+  override def createCountry(country: CountryModel): F[ApiResult[Int]] =
+    insertCountry(country).attemptInsert.execute
 
   override def updateCountry(country: CountryModel): F[ApiResult[CountryModel]] =
     featureNotImplemented[F, CountryModel]
 
-  override def deleteCountry(id: Long): F[ApiResult[CountryModel]] =
-    featureNotImplemented[F, CountryModel]
+  override def removeCountry(id: Int): F[ApiResult[Unit]] =
+    deleteCountry(id).attemptDelete.execute
 }
 
 object CountryRepository {

@@ -5,7 +5,6 @@ import cats.implicits._
 import doobie.hikari.HikariTransactor
 import flightdatabase.api._
 import flightdatabase.domain.city.CityAlgebra
-import flightdatabase.utils.implicits.enrichString
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
 
@@ -13,20 +12,18 @@ class CityEndpoints[F[_]: Concurrent] private (prefix: String, algebra: CityAlge
   implicit transactor: Resource[F, HikariTransactor[F]]
 ) extends Endpoints[F](prefix) {
 
-  private object CountryQueryParamMatcher
-      extends OptionalQueryParamDecoderMatcher[String]("country")
-
   override def endpoints: HttpRoutes[F] = HttpRoutes.of {
-    // GET /cities?country=Germany&only-names
-    case GET -> Root :?
-          CountryQueryParamMatcher(maybeCountry) +&
-            OnlyNamesFlagMatcher(onlyNames) =>
-      val c = maybeCountry.flatMap(_.toOption)
+    // GET /cities?only-names
+    case GET -> Root :? OnlyNamesFlagMatcher(onlyNames) =>
       if (onlyNames) {
-        algebra.getCitiesOnlyNames(c).flatMap(toResponse(_))
+        algebra.getCitiesOnlyNames.flatMap(toResponse(_))
       } else {
-        algebra.getCities(c).flatMap(toResponse(_))
+        algebra.getCities.flatMap(toResponse(_))
       }
+
+    // GET /cities/country/{country_name}
+    case GET -> Root / "country" / country =>
+      algebra.getCitiesByCountry(country).flatMap(toResponse(_))
   }
 }
 

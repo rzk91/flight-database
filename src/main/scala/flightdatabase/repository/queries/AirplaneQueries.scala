@@ -7,19 +7,19 @@ import flightdatabase.domain.airplane.AirplaneModel
 
 private[repository] object AirplaneQueries {
 
-  def selectAllAirplanes(maybeManufacturer: Option[String]): Query0[AirplaneModel] =
-//    val allAirplanes =
-//      sql"""
-//           | SELECT a.id, a.name, m.name, a.capacity, a.max_range_in_km
-//           | FROM airplane a
-//           | INNER JOIN manufacturer m
-//           | ON a.manufacturer_id = m.id
-//         """.stripMargin
-//
-//    maybeManufacturer
-//      .fold(allAirplanes)(m => allAirplanes ++ whereFragment("m.name", m))
-//      .query[AirplaneModel]
-    selectAllQuery[AirplaneModel]
+  def selectAllAirplanes: Query0[AirplaneModel] = selectAllQuery[AirplaneModel]
+
+  def selectAllAirplanesByManufacturer(manufacturer: String): Query0[AirplaneModel] = {
+    val allAirplanes =
+      sql"""
+           | SELECT *
+           | FROM airplane a
+           | INNER JOIN manufacturer m
+           | ON a.manufacturer_id = m.id
+     """.stripMargin
+
+    (allAirplanes ++ whereFragment("m.name", manufacturer)).query[AirplaneModel]
+  }
 
   def insertAirplane(model: AirplaneModel): Update0 =
     sql"""INSERT INTO airplane

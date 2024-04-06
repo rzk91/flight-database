@@ -7,6 +7,7 @@ import doobie.hikari.HikariTransactor
 import flightdatabase.domain.ApiResult
 import flightdatabase.domain.language.LanguageAlgebra
 import flightdatabase.domain.language.LanguageModel
+import flightdatabase.repository.queries.LanguageQueries.deleteLanguage
 import flightdatabase.repository.queries.LanguageQueries.insertLanguage
 import flightdatabase.repository.queries.LanguageQueries.selectAllLanguages
 import flightdatabase.utils.implicits._
@@ -15,29 +16,23 @@ class LanguageRepository[F[_]: Concurrent] private (
   implicit transactor: Resource[F, HikariTransactor[F]]
 ) extends LanguageAlgebra[F] {
 
-  // TODO: Perhaps move the actual queries to a separate object
-  //    and call them from here
-  //    - keep the repository clean
-  //    - make it easier to test
-  //    - make it easier to reuse the queries
-  //    - make it easier to use either list or stream
   override def getLanguages: F[ApiResult[List[LanguageModel]]] =
     selectAllLanguages.asList.execute
 
   override def getLanguagesOnlyNames: F[ApiResult[List[String]]] =
-    selectAllLanguages.map(_.name).asList.execute
+    getNameList[LanguageModel].execute
 
-  override def getLanguage(id: Long): F[ApiResult[LanguageModel]] =
+  override def getLanguage(id: Int): F[ApiResult[LanguageModel]] =
     featureNotImplemented[F, LanguageModel]
 
-  override def createLanguage(language: LanguageModel): F[ApiResult[Long]] =
-    insertLanguage(language).insert.execute
+  override def createLanguage(language: LanguageModel): F[ApiResult[Int]] =
+    insertLanguage(language).attemptInsert.execute
 
   override def updateLanguage(language: LanguageModel): F[ApiResult[LanguageModel]] =
     featureNotImplemented[F, LanguageModel]
 
-  override def deleteLanguage(id: Long): F[ApiResult[LanguageModel]] =
-    featureNotImplemented[F, LanguageModel]
+  override def removeLanguage(id: Int): F[ApiResult[Unit]] =
+    deleteLanguage(id).attemptDelete.execute
 }
 
 object LanguageRepository {

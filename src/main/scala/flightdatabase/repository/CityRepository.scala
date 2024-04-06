@@ -7,28 +7,30 @@ import doobie.hikari.HikariTransactor
 import flightdatabase.domain.ApiResult
 import flightdatabase.domain.city.CityAlgebra
 import flightdatabase.domain.city.CityModel
-import flightdatabase.domain.country.CountryModel
-import flightdatabase.utils.TableValue
+import flightdatabase.repository.queries.CityQueries._
 import flightdatabase.utils.implicits._
 
 class CityRepository[F[_]: Concurrent] private (
   implicit transactor: Resource[F, HikariTransactor[F]]
 ) extends CityAlgebra[F] {
 
-  override def getCities(maybeCountry: Option[String]): F[ApiResult[List[CityModel]]] =
-    featureNotImplemented[F, List[CityModel]]
+  override def getCities: F[ApiResult[List[CityModel]]] = selectAllCities.asList.execute
 
-  override def getCitiesOnlyNames(maybeCountry: Option[String]): F[ApiResult[List[String]]] =
-    getNameList[CityModel, CountryModel, String](maybeCountry.map(TableValue(_))).execute
+  override def getCitiesOnlyNames: F[ApiResult[List[String]]] = getNameList[CityModel].execute
 
-  override def getCityById(id: Long): F[ApiResult[CityModel]] = featureNotImplemented[F, CityModel]
+  override def getCity(id: Int): F[ApiResult[CityModel]] = featureNotImplemented[F, CityModel]
 
-  override def createCity(city: CityModel): F[ApiResult[Long]] = featureNotImplemented[F, Long]
+  override def getCitiesByCountry(country: String): F[ApiResult[List[CityModel]]] =
+    selectAllCitiesByCountry(country).asList.execute
+
+  override def createCity(city: CityModel): F[ApiResult[Int]] =
+    insertCity(city).attemptInsert.execute
 
   override def updateCity(city: CityModel): F[ApiResult[CityModel]] =
     featureNotImplemented[F, CityModel]
 
-  override def deleteCity(id: Long): F[ApiResult[CityModel]] = featureNotImplemented[F, CityModel]
+  override def removeCity(id: Int): F[ApiResult[Unit]] =
+    deleteCity(id).attemptDelete.execute
 }
 
 object CityRepository {

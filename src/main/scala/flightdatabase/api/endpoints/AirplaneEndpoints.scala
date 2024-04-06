@@ -5,7 +5,6 @@ import cats.implicits._
 import doobie.hikari.HikariTransactor
 import flightdatabase.api._
 import flightdatabase.domain.airplane.AirplaneAlgebra
-import flightdatabase.utils.implicits._
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
 
@@ -13,19 +12,18 @@ class AirplaneEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airp
   implicit transactor: Resource[F, HikariTransactor[F]]
 ) extends Endpoints[F](prefix) {
 
-  object ManufacturerQueryParamMatcher
-      extends OptionalQueryParamDecoderMatcher[String]("manufacturer")
-
   override def endpoints: HttpRoutes[F] = HttpRoutes.of {
-    case GET -> Root :?
-          ManufacturerQueryParamMatcher(maybeManufacturer) +&
-            OnlyNamesFlagMatcher(onlyNames) =>
-      val m = maybeManufacturer.flatMap(_.toOption)
+    // GET /airplanes?onlyNames
+    case GET -> Root :? OnlyNamesFlagMatcher(onlyNames) =>
       if (onlyNames) {
-        algebra.getAirplanesOnlyNames(m).flatMap(toResponse(_))
+        algebra.getAirplanesOnlyNames.flatMap(toResponse(_))
       } else {
-        algebra.getAirplanes(m).flatMap(toResponse(_))
+        algebra.getAirplanes.flatMap(toResponse(_))
       }
+
+    // GET /airplanes/manufacturer/{manufacturer_name}
+    case GET -> Root / "manufacturer" / manufacturer =>
+      algebra.getAirplanesByManufacturer(manufacturer).flatMap(toResponse(_))
   }
 
 }

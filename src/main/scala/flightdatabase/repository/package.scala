@@ -49,8 +49,11 @@ package object repository {
   }
 
   // Lift to API Result
+  def liftToApiResult[A](value: A): ApiResult[A] =
+    GotValue[A](value).asRight[ApiError]
+
   def liftListToApiResult[A](list: List[A]): ApiResult[List[A]] =
-    GotValue[List[A]](list).asRight[ApiError]
+    if (list.isEmpty) liftErrorToApiResult(EntryNotFound) else liftToApiResult(list)
 
   def liftErrorToApiResult[A](error: ApiError): ApiResult[A] =
     error.asLeft[ApiOutput[A]]
