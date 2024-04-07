@@ -7,9 +7,8 @@ import doobie.hikari.HikariTransactor
 import flightdatabase.domain.ApiResult
 import flightdatabase.domain.airport.AirportAlgebra
 import flightdatabase.domain.airport.AirportModel
-import flightdatabase.repository.queries.AirportQueries.deleteAirport
-import flightdatabase.repository.queries.AirportQueries.insertAirport
-import flightdatabase.repository.queries.AirportQueries.selectAllAirports
+import flightdatabase.domain.city.CityModel
+import flightdatabase.repository.queries.AirportQueries._
 import flightdatabase.utils.implicits._
 
 class AirportRepository[F[_]: Concurrent] private (
@@ -23,18 +22,22 @@ class AirportRepository[F[_]: Concurrent] private (
     getNameList[AirportModel].execute
 
   override def getAirport(id: Long): F[ApiResult[AirportModel]] =
-    featureNotImplemented[F, AirportModel]
+    selectAirportBy("id", id).asSingle.execute
 
   override def getAirportByIata(iata: String): F[ApiResult[AirportModel]] =
-    featureNotImplemented[F, AirportModel]
+    selectAirportBy("iata", iata).asSingle.execute
 
   override def getAirportByIcao(icao: String): F[ApiResult[AirportModel]] =
-    featureNotImplemented[F, AirportModel]
+    selectAirportBy("icao", icao).asSingle.execute
 
   override def getAirportByCity(city: String): F[ApiResult[List[AirportModel]]] =
-    featureNotImplemented[F, List[AirportModel]]
+    selectAllAirportsByExternal[CityModel, String]("name", city).asList.execute
 
   override def getAirportByCountry(country: String): F[ApiResult[List[AirportModel]]] =
+    // TODO: Nested query structure
+    //  - Get name of all cities in the country --> getNameList[CityModel, CountryModel, String]?
+    //  - Get all airports in the cities
+    //  - Return the list of airports
     featureNotImplemented[F, List[AirportModel]]
 
   override def createAirport(airport: AirportModel): F[ApiResult[Long]] =

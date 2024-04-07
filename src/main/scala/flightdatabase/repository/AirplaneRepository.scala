@@ -7,6 +7,7 @@ import doobie.hikari.HikariTransactor
 import flightdatabase.domain.ApiResult
 import flightdatabase.domain.airplane.AirplaneAlgebra
 import flightdatabase.domain.airplane.AirplaneModel
+import flightdatabase.domain.manufacturer.ManufacturerModel
 import flightdatabase.repository.queries.AirplaneQueries._
 import flightdatabase.utils.implicits._
 
@@ -23,10 +24,10 @@ class AirplaneRepository[F[_]: Concurrent] private (
     getNameList[AirplaneModel].execute
 
   override def getAirplane(id: Long): F[ApiResult[AirplaneModel]] =
-    featureNotImplemented[F, AirplaneModel]
+    selectAirplaneBy("id", id).asSingle.execute
 
   override def getAirplanesByManufacturer(manufacturer: String): F[ApiResult[List[AirplaneModel]]] =
-    selectAllAirplanesByManufacturer(manufacturer).asList.execute
+    selectAllAirplanesByExternal[ManufacturerModel, String]("name", manufacturer).asList.execute
 
   override def createAirplane(airplane: AirplaneModel): F[ApiResult[Long]] =
     insertAirplane(airplane).attemptInsert.execute

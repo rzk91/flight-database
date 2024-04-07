@@ -1,15 +1,17 @@
 package flightdatabase.repository
 
+import flightdatabase.domain.manufacturer.ManufacturerModel
 import flightdatabase.repository.queries._
 import flightdatabase.testutils.DbChecker
 
 // TODO: Checks are incomplete (e.g. insert, update, failure checks, etc. are missing)
-final class DomainSpecificTests extends DbChecker {
+final class DomainSpecificQueryTests extends DbChecker {
 
   // Airplane checks
   "All airplane queries" should "work correctly" in {
     check(AirplaneQueries.selectAllAirplanes)
-    check(AirplaneQueries.selectAllAirplanesByManufacturer("Airbus"))
+    check(AirplaneQueries.selectAirplaneBy("id", 1L))
+    check(AirplaneQueries.selectAllAirplanesByExternal[ManufacturerModel, String]("name", "Airbus"))
     check(AirplaneQueries.deleteAirplane(1))
   }
 

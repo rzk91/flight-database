@@ -25,4 +25,17 @@ package object queries {
     field: String,
     value: A
   ): Fragment = fr"WHERE" ++ Fragment.const(field) ++ fr"= $value"
+
+  def innerJoinWhereFragment[MT: TableBase, ET: TableBase, EV: Put](
+    externalField: String,
+    externalValue: EV
+  ): Fragment = {
+    val mainTable = implicitly[TableBase[MT]].asString
+    val externalTable = implicitly[TableBase[ET]].asString
+    fr"INNER JOIN" ++ Fragment.const(externalTable) ++ fr"ON" ++
+    Fragment.const(s"$mainTable.${externalTable}_id") ++ fr"=" ++ Fragment.const(
+      s"$externalTable.id"
+    ) ++
+    whereFragment(s"$externalTable.$externalField", externalValue)
+  }
 }

@@ -31,6 +31,7 @@ case object EntryInvalidFormat extends ApiError {
   override def error: String = s"Error: Entry has invalid format"
 }
 
+// TODO: Add more specific error messages for each case of missing entry
 case object EntryNotFound extends ApiError {
   override def error: String = s"Error: Entry not found"
 }
