@@ -1,5 +1,6 @@
 package flightdatabase.repository.queries
 
+import doobie.Fragment
 import doobie.Query0
 import doobie.Update0
 import doobie.implicits._
@@ -7,18 +8,13 @@ import flightdatabase.domain.airplane.AirplaneModel
 
 private[repository] object AirplaneQueries {
 
-  def selectAllAirplanes: Query0[AirplaneModel] = selectAllQuery[AirplaneModel]
+  def selectAllAirplanes: Query0[AirplaneModel] = selectAll.query[AirplaneModel]
 
   def selectAllAirplanesByManufacturer(manufacturer: String): Query0[AirplaneModel] = {
-    val allAirplanes =
-      sql"""
-           | SELECT *
-           | FROM airplane a
-           | INNER JOIN manufacturer m
-           | ON a.manufacturer_id = m.id
-     """.stripMargin
-
-    (allAirplanes ++ whereFragment("m.name", manufacturer)).query[AirplaneModel]
+    val innerJoinManufacturer =
+      fr"INNER JOIN manufacturer m ON a.manufacturer_id = m.id"
+    (selectAll ++ innerJoinManufacturer ++ whereFragment("m.name", manufacturer))
+      .query[AirplaneModel]
   }
 
   def insertAirplane(model: AirplaneModel): Update0 =
@@ -32,5 +28,11 @@ private[repository] object AirplaneQueries {
          |   )
          | """.stripMargin.update
 
-  def deleteAirplane(id: Int): Update0 = deleteWhereId[AirplaneModel](id)
+  def deleteAirplane(id: Long): Update0 = deleteWhereId[AirplaneModel](id)
+
+  private def selectAll: Fragment =
+    fr"""
+         | SELECT a.id, a.name, a.manufacturer_id, a.capacity, a.max_range_in_km
+         | FROM airplane a
+       """.stripMargin
 }

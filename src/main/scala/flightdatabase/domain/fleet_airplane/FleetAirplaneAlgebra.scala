@@ -4,10 +4,10 @@ import flightdatabase.domain.ApiResult
 
 trait FleetAirplaneAlgebra[F[_]] {
   def getFleetAirplanes: F[ApiResult[List[FleetAirplaneModel]]]
-  def getFleetAirplane(id: Int): F[ApiResult[FleetAirplaneModel]]
+  def getFleetAirplane(id: Long): F[ApiResult[FleetAirplaneModel]]
   def getFleetAirplanesByAirplaneName(airplaneName: String): F[ApiResult[List[FleetAirplaneModel]]]
   def getFleetAirplanesByFleetName(fleetName: String): F[ApiResult[List[FleetAirplaneModel]]]
-  def createFleetAirplane(fleetAirplane: FleetAirplaneModel): F[ApiResult[Int]]
+  def createFleetAirplane(fleetAirplane: FleetAirplaneModel): F[ApiResult[Long]]
   def updateFleetAirplane(fleetAirplane: FleetAirplaneModel): F[ApiResult[FleetAirplaneModel]]
-  def removeFleetAirplane(id: Int): F[ApiResult[Unit]]
+  def removeFleetAirplane(id: Long): F[ApiResult[Unit]]
 }

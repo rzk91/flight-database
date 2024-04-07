@@ -7,11 +7,12 @@ import io.circe.generic.extras.ConfiguredJsonCodec
 @ConfiguredJsonCodec final case class CityModel(
   id: Option[Long],
   name: String,
-  countryId: Int,
+  countryId: Long,
   capital: Boolean,
-  population: Int,
-  latitude: Double,
-  longitude: Double
+  population: Long,
+  latitude: BigDecimal,
+  longitude: BigDecimal,
+  timezone: String
 )
 
 object CityModel {

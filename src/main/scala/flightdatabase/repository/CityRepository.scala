@@ -18,18 +18,18 @@ class CityRepository[F[_]: Concurrent] private (
 
   override def getCitiesOnlyNames: F[ApiResult[List[String]]] = getNameList[CityModel].execute
 
-  override def getCity(id: Int): F[ApiResult[CityModel]] = featureNotImplemented[F, CityModel]
+  override def getCity(id: Long): F[ApiResult[CityModel]] = featureNotImplemented[F, CityModel]
 
   override def getCitiesByCountry(country: String): F[ApiResult[List[CityModel]]] =
     selectAllCitiesByCountry(country).asList.execute
 
-  override def createCity(city: CityModel): F[ApiResult[Int]] =
+  override def createCity(city: CityModel): F[ApiResult[Long]] =
     insertCity(city).attemptInsert.execute
 
   override def updateCity(city: CityModel): F[ApiResult[CityModel]] =
     featureNotImplemented[F, CityModel]
 
-  override def removeCity(id: Int): F[ApiResult[Unit]] =
+  override def removeCity(id: Long): F[ApiResult[Unit]] =
     deleteCity(id).attemptDelete.execute
 }
 

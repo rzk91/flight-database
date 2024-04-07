@@ -1,5 +1,6 @@
 package flightdatabase.repository.queries
 
+import doobie.Fragment
 import doobie.Query0
 import doobie.implicits._
 import doobie.util.update.Update0
@@ -7,7 +8,7 @@ import flightdatabase.domain.language.LanguageModel
 
 private[repository] object LanguageQueries {
 
-  def selectAllLanguages: Query0[LanguageModel] = selectAllQuery[LanguageModel]
+  def selectAllLanguages: Query0[LanguageModel] = selectAll.query[LanguageModel]
 
   def insertLanguage(model: LanguageModel): Update0 =
     sql"""
@@ -15,5 +16,8 @@ private[repository] object LanguageQueries {
        | VALUES (${model.name}, ${model.iso2}, ${model.iso3}, ${model.originalName}) 
        """.stripMargin.update
 
-  def deleteLanguage(id: Int): Update0 = deleteWhereId[LanguageModel](id)
+  def deleteLanguage(id: Long): Update0 = deleteWhereId[LanguageModel](id)
+
+  private def selectAll: Fragment =
+    fr"SELECT id, name, iso2, iso3, original_name FROM language"
 }

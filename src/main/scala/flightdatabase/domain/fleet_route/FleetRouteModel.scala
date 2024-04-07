@@ -6,10 +6,10 @@ import io.circe.generic.extras._
 
 @ConfiguredJsonCodec final case class FleetRouteModel(
   id: Option[Long],
-  fleetAirplaneId: Int,
+  fleetAirplaneId: Long,
   @JsonKey("route_number") route: String,
-  @JsonKey("start_airport_id") start: Int,
-  @JsonKey("destination_airport_id") destination: Int
+  @JsonKey("start_airport_id") start: Long,
+  @JsonKey("destination_airport_id") destination: Long
 )
 
 object FleetRouteModel {

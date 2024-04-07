@@ -17,7 +17,7 @@ class FleetRouteRepository[F[_]: Concurrent] private (
   override def getFleetRoutes: F[ApiResult[List[FleetRouteModel]]] =
     selectAllFleetRoutes.asList.execute
 
-  override def getFleetRoute(id: Int): F[ApiResult[FleetRouteModel]] =
+  override def getFleetRoute(id: Long): F[ApiResult[FleetRouteModel]] =
     featureNotImplemented[F, FleetRouteModel]
 
   override def getFleetRoutesByRouteNumber(
@@ -28,23 +28,23 @@ class FleetRouteRepository[F[_]: Concurrent] private (
     featureNotImplemented[F, List[FleetRouteModel]]
 
   override def getInboundFleetRoutesByAirportId(
-    airportId: Int
+    airportId: Long
   ): F[ApiResult[List[FleetRouteModel]]] = featureNotImplemented[F, List[FleetRouteModel]]
 
   override def getOutboundFleetRoutesByAirportId(
-    airportId: Int
+    airportId: Long
   ): F[ApiResult[List[FleetRouteModel]]] = featureNotImplemented[F, List[FleetRouteModel]]
 
-  override def getFleetRoutesByAirplaneId(airplaneId: Int): F[ApiResult[List[FleetRouteModel]]] =
+  override def getFleetRoutesByAirplaneId(airplaneId: Long): F[ApiResult[List[FleetRouteModel]]] =
     featureNotImplemented[F, List[FleetRouteModel]]
 
-  override def createFleetRoute(fleetRoute: FleetRouteModel): F[ApiResult[Int]] =
+  override def createFleetRoute(fleetRoute: FleetRouteModel): F[ApiResult[Long]] =
     insertFleetRoute(fleetRoute).attemptInsert.execute
 
   override def updateFleetRoute(fleetRoute: FleetRouteModel): F[ApiResult[FleetRouteModel]] =
     featureNotImplemented[F, FleetRouteModel]
 
-  override def removeFleetRoute(id: Int): F[ApiResult[Unit]] =
+  override def removeFleetRoute(id: Long): F[ApiResult[Unit]] =
     deleteFleetRoute(id).attemptDelete.execute
 }
 

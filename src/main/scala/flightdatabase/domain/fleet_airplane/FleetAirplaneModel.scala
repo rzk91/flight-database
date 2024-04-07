@@ -6,8 +6,8 @@ import io.circe.generic.extras.ConfiguredJsonCodec
 
 @ConfiguredJsonCodec final case class FleetAirplaneModel(
   id: Option[Long],
-  fleetId: String,
-  airplaneId: String
+  fleetId: Long,
+  airplaneId: Long
 )
 
 object FleetAirplaneModel {

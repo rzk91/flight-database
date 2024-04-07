@@ -7,7 +7,7 @@ import io.circe.generic.extras._
 @ConfiguredJsonCodec final case class ManufacturerModel(
   id: Option[Long],
   name: String,
-  @JsonKey("city_based_in") basedIn: Int
+  @JsonKey("city_based_in") basedIn: Long
 )
 
 object ManufacturerModel {

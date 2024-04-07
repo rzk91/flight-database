@@ -15,10 +15,7 @@ package object queries {
     selectFragment[ST](selectField) ++ whereFragment(whereField, whereValue)
   }.query[SV]
 
-  def selectAllQuery[T: Read](implicit table: TableBase[T]): Query0[T] =
-    (fr"SELECT * FROM" ++ Fragment.const(table.asString)).query[T]
-
-  def deleteWhereId[T](id: Int)(implicit table: TableBase[T]): Update0 =
+  def deleteWhereId[T](id: Long)(implicit table: TableBase[T]): Update0 =
     (fr"DELETE FROM" ++ Fragment.const(table.asString) ++ fr"WHERE id = $id").update
 
   def selectFragment[T](field: String)(implicit table: TableBase[T]): Fragment =

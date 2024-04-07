@@ -7,7 +7,7 @@ import io.circe.generic.extras._
 @ConfiguredJsonCodec final case class AirplaneModel(
   id: Option[Long],
   name: String,
-  manufacturerId: Int,
+  manufacturerId: Long,
   capacity: Int,
   maxRangeInKm: Int
 )

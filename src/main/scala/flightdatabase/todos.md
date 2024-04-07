@@ -12,8 +12,9 @@ TODO list
 - ~~Fix all domain models after changes to ModelBase.~~ DONE!
 - ~~Upgrade all dependencies, especially doobie and http4s since they have some major changes.~~ DONE!
 - ~~Add logging for doobie queries.~~ DONE!
+- ~~Write tests for all generic doobie queries.~~ DONE!
 - Implement all doobie queries.
-- Write tests for all doobie queries.
+- Write tests for all specific doobie queries.
 - Implement all endpoints using algebras.
 - Write tests for all endpoints and algebras.
 - Expand API endpoint list to include more complex operations as indicated in `endpoints.md`.

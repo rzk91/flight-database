@@ -11,10 +11,10 @@ import io.circe.generic.extras.ConfiguredJsonCodec
   iso3: String,
   countryCode: Int,
   domainName: Option[String],
-  mainLanguageId: Int,
-  secondaryLanguageId: Option[Int],
-  tertiaryLanguageId: Option[Int],
-  currencyId: Int,
+  mainLanguageId: Long,
+  secondaryLanguageId: Option[Long],
+  tertiaryLanguageId: Option[Long],
+  currencyId: Long,
   nationality: String
 )
 

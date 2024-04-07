@@ -1,12 +1,13 @@
 package flightdatabase.repository.queries
 
+import doobie.Fragment
 import doobie.Query0
 import doobie.Update0
 import doobie.implicits._
 import flightdatabase.domain.fleet.FleetModel
 
 private[repository] object FleetQueries {
-  def selectAllFleets: Query0[FleetModel] = selectAllQuery[FleetModel]
+  def selectAllFleets: Query0[FleetModel] = selectAll.query[FleetModel]
 
   def insertFleet(model: FleetModel): Update0 =
     sql"""INSERT INTO fleet
@@ -20,5 +21,12 @@ private[repository] object FleetQueries {
          |   )
          | """.stripMargin.update
 
-  def deleteFleet(id: Int): Update0 = deleteWhereId[FleetModel](id)
+  def deleteFleet(id: Long): Update0 = deleteWhereId[FleetModel](id)
+
+  private def selectAll: Fragment =
+    fr"""
+        | SELECT
+        |  id, name, iso2, iso3, call_sign, hub_airport_id
+        | FROM fleet
+      """.stripMargin
 }

@@ -9,11 +9,10 @@ import io.circe.generic.extras._
   name: String,
   icao: String,
   iata: String,
-  cityId: Int,
-  countryId: Int,
+  cityId: Long,
   @JsonKey("number_of_runways") numRunways: Int,
   @JsonKey("number_of_terminals") numTerminals: Int,
-  capacity: Int,
+  capacity: Long,
   international: Boolean,
   junction: Boolean
 )

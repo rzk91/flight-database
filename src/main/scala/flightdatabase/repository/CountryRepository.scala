@@ -22,16 +22,16 @@ class CountryRepository[F[_]: Concurrent] private (
   override def getCountriesOnlyNames: F[ApiResult[List[String]]] =
     getNameList[CountryModel].execute
 
-  override def getCountry(id: Int): F[ApiResult[CountryModel]] =
+  override def getCountry(id: Long): F[ApiResult[CountryModel]] =
     featureNotImplemented[F, CountryModel]
 
-  override def createCountry(country: CountryModel): F[ApiResult[Int]] =
+  override def createCountry(country: CountryModel): F[ApiResult[Long]] =
     insertCountry(country).attemptInsert.execute
 
   override def updateCountry(country: CountryModel): F[ApiResult[CountryModel]] =
     featureNotImplemented[F, CountryModel]
 
-  override def removeCountry(id: Int): F[ApiResult[Unit]] =
+  override def removeCountry(id: Long): F[ApiResult[Unit]] =
     deleteCountry(id).attemptDelete.execute
 }
 

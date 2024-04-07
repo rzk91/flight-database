@@ -17,7 +17,7 @@ class FleetAirplaneRepository[F[_]: Concurrent] private (
   override def getFleetAirplanes: F[ApiResult[List[FleetAirplaneModel]]] =
     selectAllFleetAirplanes.asList.execute
 
-  override def getFleetAirplane(id: Int): F[ApiResult[FleetAirplaneModel]] =
+  override def getFleetAirplane(id: Long): F[ApiResult[FleetAirplaneModel]] =
     featureNotImplemented[F, FleetAirplaneModel]
 
   override def getFleetAirplanesByAirplaneName(
@@ -30,14 +30,14 @@ class FleetAirplaneRepository[F[_]: Concurrent] private (
   ): F[ApiResult[List[FleetAirplaneModel]]] =
     featureNotImplemented[F, List[FleetAirplaneModel]]
 
-  override def createFleetAirplane(fleetAirplane: FleetAirplaneModel): F[ApiResult[Int]] =
+  override def createFleetAirplane(fleetAirplane: FleetAirplaneModel): F[ApiResult[Long]] =
     insertFleetAirplane(fleetAirplane).attemptInsert.execute
 
   override def updateFleetAirplane(
     fleetAirplane: FleetAirplaneModel
   ): F[ApiResult[FleetAirplaneModel]] = featureNotImplemented[F, FleetAirplaneModel]
 
-  override def removeFleetAirplane(id: Int): F[ApiResult[Unit]] =
+  override def removeFleetAirplane(id: Long): F[ApiResult[Unit]] =
     deleteFleetAirplane(id).attemptDelete.execute
 }
 

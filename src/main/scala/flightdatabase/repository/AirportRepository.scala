@@ -22,7 +22,7 @@ class AirportRepository[F[_]: Concurrent] private (
   override def getAirportsOnlyNames: F[ApiResult[List[String]]] =
     getNameList[AirportModel].execute
 
-  override def getAirport(id: Int): F[ApiResult[AirportModel]] =
+  override def getAirport(id: Long): F[ApiResult[AirportModel]] =
     featureNotImplemented[F, AirportModel]
 
   override def getAirportByIata(iata: String): F[ApiResult[AirportModel]] =
@@ -37,13 +37,13 @@ class AirportRepository[F[_]: Concurrent] private (
   override def getAirportByCountry(country: String): F[ApiResult[List[AirportModel]]] =
     featureNotImplemented[F, List[AirportModel]]
 
-  override def createAirport(airport: AirportModel): F[ApiResult[Int]] =
+  override def createAirport(airport: AirportModel): F[ApiResult[Long]] =
     insertAirport(airport).attemptInsert.execute
 
   override def updateAirport(airport: AirportModel): F[ApiResult[AirportModel]] =
     featureNotImplemented[F, AirportModel]
 
-  override def removeAirport(id: Int): F[ApiResult[Unit]] =
+  override def removeAirport(id: Long): F[ApiResult[Unit]] =
     deleteAirport(id).attemptDelete.execute
 }
 

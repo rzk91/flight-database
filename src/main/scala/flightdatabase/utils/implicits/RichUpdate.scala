@@ -12,9 +12,9 @@ import flightdatabase.repository.sqlStateToApiError
 
 class RichUpdate(private val update: Update0) extends AnyVal {
 
-  def attemptInsert: ConnectionIO[ApiResult[Int]] =
+  def attemptInsert: ConnectionIO[ApiResult[Long]] =
     update
-      .withUniqueGeneratedKeys[Int]("id")
+      .withUniqueGeneratedKeys[Long]("id")
       .attemptSqlState
       .map(_.foldMap(sqlStateToApiError, CreatedValue(_)))
 

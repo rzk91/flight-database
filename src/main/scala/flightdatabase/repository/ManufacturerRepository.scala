@@ -20,7 +20,7 @@ class ManufacturerRepository[F[_]: Concurrent] private (
   override def getManufacturerOnlyNames: F[ApiResult[List[String]]] =
     getNameList[ManufacturerModel].execute
 
-  override def getManufacturer(id: Int): F[ApiResult[ManufacturerModel]] =
+  override def getManufacturer(id: Long): F[ApiResult[ManufacturerModel]] =
     featureNotImplemented[F, ManufacturerModel]
 
   override def getManufacturersByCity(city: String): F[ApiResult[List[ManufacturerModel]]] =
@@ -29,14 +29,14 @@ class ManufacturerRepository[F[_]: Concurrent] private (
   override def getManufacturersByCountry(country: String): F[ApiResult[List[ManufacturerModel]]] =
     featureNotImplemented[F, List[ManufacturerModel]]
 
-  override def createManufacturer(manufacturer: ManufacturerModel): F[ApiResult[Int]] =
+  override def createManufacturer(manufacturer: ManufacturerModel): F[ApiResult[Long]] =
     insertManufacturer(manufacturer).attemptInsert.execute
 
   override def updateManufacturer(
     manufacturer: ManufacturerModel
   ): F[ApiResult[ManufacturerModel]] = featureNotImplemented[F, ManufacturerModel]
 
-  override def removeManufacturer(id: Int): F[ApiResult[Unit]] =
+  override def removeManufacturer(id: Long): F[ApiResult[Unit]] =
     deleteManufacturer(id).attemptDelete.execute
 }
 

@@ -22,16 +22,16 @@ class CurrencyRepository[F[_]: Concurrent] private (
   override def getCurrenciesOnlyNames: F[ApiResult[List[String]]] =
     getNameList[CurrencyModel].execute
 
-  override def getCurrency(id: Int): F[ApiResult[CurrencyModel]] =
+  override def getCurrency(id: Long): F[ApiResult[CurrencyModel]] =
     featureNotImplemented[F, CurrencyModel]
 
-  override def createCurrency(currency: CurrencyModel): F[ApiResult[Int]] =
+  override def createCurrency(currency: CurrencyModel): F[ApiResult[Long]] =
     insertCurrency(currency).attemptInsert.execute
 
   override def updateCurrency(currency: CurrencyModel): F[ApiResult[CurrencyModel]] =
     featureNotImplemented[F, CurrencyModel]
 
-  override def removeCurrency(id: Int): F[ApiResult[Unit]] =
+  override def removeCurrency(id: Long): F[ApiResult[Unit]] =
     deleteCurrency(id).attemptDelete.execute
 }
 

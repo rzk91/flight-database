@@ -1,5 +1,6 @@
 package flightdatabase.repository.queries
 
+import doobie.Fragment
 import doobie.Query0
 import doobie.Update0
 import doobie.implicits._
@@ -7,7 +8,7 @@ import flightdatabase.domain.fleet_airplane.FleetAirplaneModel
 
 private[repository] object FleetAirplaneQueries {
 
-  def selectAllFleetAirplanes: Query0[FleetAirplaneModel] = selectAllQuery[FleetAirplaneModel]
+  def selectAllFleetAirplanes: Query0[FleetAirplaneModel] = selectAll.query[FleetAirplaneModel]
 
   def insertFleetAirplane(model: FleetAirplaneModel): Update0 =
     sql"""INSERT INTO fleet_airplane
@@ -18,5 +19,12 @@ private[repository] object FleetAirplaneQueries {
 	     |	)
          |""".stripMargin.update
 
-  def deleteFleetAirplane(id: Int): Update0 = deleteWhereId[FleetAirplaneModel](id)
+  def deleteFleetAirplane(id: Long): Update0 = deleteWhereId[FleetAirplaneModel](id)
+
+  private def selectAll: Fragment =
+    fr"""
+        | SELECT
+        |  id, fleet_id, airplane_id
+        | FROM fleet_airplane
+      """.stripMargin
 }

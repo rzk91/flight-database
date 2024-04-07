@@ -10,7 +10,7 @@ import io.circe.generic.extras._
   iso2: String,
   iso3: String,
   callSign: String,
-  @JsonKey("hub_airport_id") hubAt: Int
+  @JsonKey("hub_airport_id") hubAt: Long
 )
 
 object FleetModel {

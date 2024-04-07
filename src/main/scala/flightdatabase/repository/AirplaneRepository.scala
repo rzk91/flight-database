@@ -22,19 +22,19 @@ class AirplaneRepository[F[_]: Concurrent] private (
   override def getAirplanesOnlyNames: F[ApiResult[List[String]]] =
     getNameList[AirplaneModel].execute
 
-  override def getAirplane(id: Int): F[ApiResult[AirplaneModel]] =
+  override def getAirplane(id: Long): F[ApiResult[AirplaneModel]] =
     featureNotImplemented[F, AirplaneModel]
 
   override def getAirplanesByManufacturer(manufacturer: String): F[ApiResult[List[AirplaneModel]]] =
     selectAllAirplanesByManufacturer(manufacturer).asList.execute
 
-  override def createAirplane(airplane: AirplaneModel): F[ApiResult[Int]] =
+  override def createAirplane(airplane: AirplaneModel): F[ApiResult[Long]] =
     insertAirplane(airplane).attemptInsert.execute
 
   override def updateAirplane(airplane: AirplaneModel): F[ApiResult[AirplaneModel]] =
     featureNotImplemented[F, AirplaneModel]
 
-  override def removeAirplane(id: Int): F[ApiResult[Unit]] =
+  override def removeAirplane(id: Long): F[ApiResult[Unit]] =
     deleteAirplane(id).attemptDelete.execute
 }
 
