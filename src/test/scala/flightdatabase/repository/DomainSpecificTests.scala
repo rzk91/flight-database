@@ -35,19 +35,19 @@ final class DomainSpecificTests extends DbChecker {
   // Currency checks
   "All currency queries" should "work correctly" in {
     check(CurrencyQueries.selectAllCurrencies)
-    check(CurrencyQueries.deleteCurrency(10))
+    check(CurrencyQueries.deleteCurrency(1))
   }
 
   // Fleet checks
   "All fleet queries" should "work correctly" in {
     check(FleetQueries.selectAllFleets)
-    check(FleetQueries.deleteFleet(2))
+    check(FleetQueries.deleteFleet(1))
   }
 
   // FleetAirplane checks
   "All fleet airplane queries" should "work correctly" in {
     check(FleetAirplaneQueries.selectAllFleetAirplanes)
-    check(FleetAirplaneQueries.deleteFleetAirplane(20))
+    check(FleetAirplaneQueries.deleteFleetAirplane(1))
   }
 
   // FleetRoute checks

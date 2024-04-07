@@ -34,9 +34,10 @@ private[repository] object CountryQueries {
   private def selectAll: Fragment =
     fr"""
         |SELECT
-        |  id, name, iso2, iso3, country_code, domain_name,
-        |  main_language_id, secondary_language_id, tertiary_language_id,
-        |  currency_id, nationality
+        |  country.id, country.name, country.iso2, country.iso3,
+        |  country.country_code, country.domain_name,
+        |  country.main_language_id, country.secondary_language_id, country.tertiary_language_id,
+        |  country.currency_id, country.nationality
         |FROM country
       """.stripMargin
 }

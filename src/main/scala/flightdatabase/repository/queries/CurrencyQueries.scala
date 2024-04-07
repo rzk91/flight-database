@@ -16,5 +16,5 @@ private[repository] object CurrencyQueries {
   def deleteCurrency(id: Long): Update0 = deleteWhereId[CurrencyModel](id)
 
   private def selectAll: Fragment =
-    fr"SELECT id, name, iso, symbol FROM currency"
+    fr"SELECT currency.id, currency.name, currency.iso, currency.symbol FROM currency"
 }

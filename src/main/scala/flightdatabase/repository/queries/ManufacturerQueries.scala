@@ -19,5 +19,9 @@ private[repository] object ManufacturerQueries {
   def deleteManufacturer(id: Long): Update0 = deleteWhereId[ManufacturerModel](id)
 
   private def selectAll: Fragment =
-    fr"SELECT id, name, city_based_in FROM manufacturer"
+    fr"""
+        | SELECT
+        |   manufacturer.id, manufacturer.name, manufacturer.city_based_in
+        | FROM manufacturer
+      """.stripMargin
 }

@@ -33,9 +33,9 @@ private[repository] object AirportQueries {
   private def selectAll: Fragment =
     fr"""
         |SELECT
-        |  id, name, icao, iata, city_id,
-        |  number_of_runways, number_of_terminals, capacity,
-        |  international, junction
+        |  airport.id, airport.name, airport.icao, airport.iata, airport.city_id,
+        |  airport.number_of_runways, airport.number_of_terminals, airport.capacity,
+        |  airport.international, airport.junction
         |FROM airport
       """.stripMargin
 

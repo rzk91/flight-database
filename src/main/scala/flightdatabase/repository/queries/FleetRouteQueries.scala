@@ -26,7 +26,8 @@ private[repository] object FleetRouteQueries {
   private def selectAll: Fragment =
     fr"""
         | SELECT
-        |  id, fleet_airplane_id, route_number, start_airport_id, destination_airport_id
-        | FROM fleet_route
+        |  fr.id, fr.fleet_airplane_id, fr.route_number,
+        |  fr.start_airport_id, fr.destination_airport_id
+        | FROM fleet_route fr
       """.stripMargin
 }

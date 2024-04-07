@@ -26,7 +26,7 @@ private[repository] object FleetQueries {
   private def selectAll: Fragment =
     fr"""
         | SELECT
-        |  id, name, iso2, iso3, call_sign, hub_airport_id
+        |  fleet.id, fleet.name, fleet.iso2, fleet.iso3, fleet.call_sign, fleet.hub_airport_id
         | FROM fleet
       """.stripMargin
 }

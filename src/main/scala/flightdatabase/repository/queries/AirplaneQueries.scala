@@ -12,8 +12,8 @@ private[repository] object AirplaneQueries {
 
   def selectAllAirplanesByManufacturer(manufacturer: String): Query0[AirplaneModel] = {
     val innerJoinManufacturer =
-      fr"INNER JOIN manufacturer m ON a.manufacturer_id = m.id"
-    (selectAll ++ innerJoinManufacturer ++ whereFragment("m.name", manufacturer))
+      fr"INNER JOIN manufacturer ON airplane.manufacturer_id = manufacturer.id"
+    (selectAll ++ innerJoinManufacturer ++ whereFragment("manufacturer.name", manufacturer))
       .query[AirplaneModel]
   }
 
@@ -32,7 +32,7 @@ private[repository] object AirplaneQueries {
 
   private def selectAll: Fragment =
     fr"""
-         | SELECT a.id, a.name, a.manufacturer_id, a.capacity, a.max_range_in_km
-         | FROM airplane a
+         | SELECT airplane.id, airplane.name, airplane.manufacturer_id, airplane.capacity, airplane.max_range_in_km
+         | FROM airplane
        """.stripMargin
 }

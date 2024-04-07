@@ -9,6 +9,7 @@ val circeVersion = "0.14.3"
 val doobieVersion = "1.0.0-RC5"
 val http4sVersion = "0.23.26"
 val pureconfigVersion = "0.17.6"
+val flywayVersion = "10.11.0"
 
 val circeDependencies = Seq(
   "io.circe" %% "circe-core"           % circeVersion,
@@ -32,12 +33,13 @@ val http4sDependencies = Seq(
 )
 
 val otherDependencies = Seq(
-  "com.github.pureconfig"      %% "pureconfig"             % pureconfigVersion,
-  "com.github.pureconfig"      %% "pureconfig-cats-effect" % pureconfigVersion,
-  "org.slf4j"                  % "slf4j-log4j12"           % "2.0.9",
-  "com.typesafe.scala-logging" %% "scala-logging"          % "3.9.5",
-  "commons-io"                 % "commons-io"              % "2.15.1",
-  "org.flywaydb"               % "flyway-core"             % "9.22.3"
+  "com.github.pureconfig"      %% "pureconfig"                % pureconfigVersion,
+  "com.github.pureconfig"      %% "pureconfig-cats-effect"    % pureconfigVersion,
+  "org.slf4j"                  % "slf4j-log4j12"              % "2.0.9",
+  "com.typesafe.scala-logging" %% "scala-logging"             % "3.9.5",
+  "commons-io"                 % "commons-io"                 % "2.15.1",
+  "org.flywaydb"               % "flyway-core"                % flywayVersion,
+  "org.flywaydb"               % "flyway-database-postgresql" % flywayVersion
 )
 
 val testingDependencies = Seq(

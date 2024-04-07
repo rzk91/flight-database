@@ -19,5 +19,9 @@ private[repository] object LanguageQueries {
   def deleteLanguage(id: Long): Update0 = deleteWhereId[LanguageModel](id)
 
   private def selectAll: Fragment =
-    fr"SELECT id, name, iso2, iso3, original_name FROM language"
+    fr"""
+       | SELECT
+       |  language.id, language.name, language.iso2, language.iso3, language.original_name
+       | FROM language
+       """.stripMargin
 }
