@@ -30,6 +30,11 @@ object TestDb extends IOApp.Simple with LazyLogging {
         FieldValue("name", "India")
       ).transact(xa)
       _ <- IO(logger.info(s"Cities in India: $indianCities"))
+      brazilianCities <- getFieldList[CityModel, String, CountryModel, String](
+        "name",
+        FieldValue("name", "Brazil")
+      ).transact(xa)
+      _ <- IO(logger.info(s"Cities in Brazil: $brazilianCities"))
     } yield ()
   }.useEval
 }
