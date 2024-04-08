@@ -20,7 +20,7 @@ class CurrencyRepository[F[_]: Concurrent] private (
     selectAllCurrencies.asList.execute
 
   override def getCurrenciesOnlyNames: F[ApiResult[List[String]]] =
-    getNameList[CurrencyModel].execute
+    getFieldList[CurrencyModel, String]("name").execute
 
   override def getCurrency(id: Long): F[ApiResult[CurrencyModel]] =
     featureNotImplemented[F, CurrencyModel]
@@ -32,7 +32,7 @@ class CurrencyRepository[F[_]: Concurrent] private (
     featureNotImplemented[F, CurrencyModel]
 
   override def removeCurrency(id: Long): F[ApiResult[Unit]] =
-    deleteCurrency(id).attemptDelete.execute
+    deleteCurrency(id).attemptDelete(id).execute
 }
 
 object CurrencyRepository {

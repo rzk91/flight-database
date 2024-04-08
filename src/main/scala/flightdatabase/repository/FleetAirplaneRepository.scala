@@ -38,7 +38,7 @@ class FleetAirplaneRepository[F[_]: Concurrent] private (
   ): F[ApiResult[FleetAirplaneModel]] = featureNotImplemented[F, FleetAirplaneModel]
 
   override def removeFleetAirplane(id: Long): F[ApiResult[Unit]] =
-    deleteFleetAirplane(id).attemptDelete.execute
+    deleteFleetAirplane(id).attemptDelete(id).execute
 }
 
 object FleetAirplaneRepository {

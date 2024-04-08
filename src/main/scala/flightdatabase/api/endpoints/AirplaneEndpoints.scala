@@ -25,24 +25,24 @@ class AirplaneEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airp
         algebra.getAirplanes.flatMap(toResponse(_))
       }
 
-    // GET /airplanes/name/{name} OR
-    // GET /airplanes/id/{id} OR
-    // GET /airplanes/manufacturer/{manufacturer_name} OR
-    // GET /airplanes/manufacturer/{manufacturer_id}
     case GET -> Root / field / fieldValue if allowedFields(field) =>
       field match {
+        // GET /airplanes/id/{id}
         case "id" =>
           fieldValue.asLong.fold {
             BadRequest(EntryInvalidFormat.error)
           }(id => algebra.getAirplane(id).flatMap(toResponse(_)))
 
+        // GET /airplanes/name/{name}
         case "name" =>
           algebra.getAirplanes(field, fieldValue).flatMap(toResponse(_))
 
+        // GET /airplanes/manufacturer/{manufacturer_name} OR
+        // GET /airplanes/manufacturer/{manufacturer_id}
         case "manufacturer" =>
           fieldValue.asLong.fold[F[Response[F]]] {
             algebra.getAirplanesByManufacturer(fieldValue).flatMap(toResponse(_))
-          }(id => algebra.getAirplanes("manufacturer_id", id).flatMap(toResponse(_)))
+          }(algebra.getAirplanes("manufacturer_id", _).flatMap(toResponse(_)))
       }
   }
 

@@ -20,7 +20,7 @@ class CountryRepository[F[_]: Concurrent] private (
     selectAllCountries.asList.execute
 
   override def getCountriesOnlyNames: F[ApiResult[List[String]]] =
-    getNameList[CountryModel].execute
+    getFieldList[CountryModel, String]("name").execute
 
   override def getCountry(id: Long): F[ApiResult[CountryModel]] =
     featureNotImplemented[F, CountryModel]
@@ -32,7 +32,7 @@ class CountryRepository[F[_]: Concurrent] private (
     featureNotImplemented[F, CountryModel]
 
   override def removeCountry(id: Long): F[ApiResult[Unit]] =
-    deleteCountry(id).attemptDelete.execute
+    deleteCountry(id).attemptDelete(id).execute
 }
 
 object CountryRepository {

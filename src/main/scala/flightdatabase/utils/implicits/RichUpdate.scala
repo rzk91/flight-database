@@ -18,10 +18,10 @@ class RichUpdate(private val update: Update0) extends AnyVal {
       .attemptSqlState
       .map(_.foldMap(sqlStateToApiError, CreatedValue(_)))
 
-  def attemptDelete: ConnectionIO[ApiResult[Unit]] =
+  def attemptDelete[E](entry: E): ConnectionIO[ApiResult[Unit]] =
     update.run.map {
       case 1 => liftToApiResult(())
-      case _ => liftErrorToApiResult(EntryNotFound)
+      case _ => liftErrorToApiResult(EntryNotFound(entry.toString))
     }
 
 }

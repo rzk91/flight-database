@@ -16,7 +16,8 @@ class FleetRepository[F[_]: Concurrent] private (
 
   override def getFleets: F[ApiResult[List[FleetModel]]] = selectAllFleets.asList.execute
 
-  override def getFleetsOnlyNames: F[ApiResult[List[String]]] = getNameList[FleetModel].execute
+  override def getFleetsOnlyNames: F[ApiResult[List[String]]] =
+    getFieldList[FleetModel, String]("name").execute
 
   override def getFleet(id: Long): F[ApiResult[FleetModel]] =
     featureNotImplemented[F, FleetModel]
@@ -33,7 +34,8 @@ class FleetRepository[F[_]: Concurrent] private (
   override def updateFleet(fleet: FleetModel): F[ApiResult[FleetModel]] =
     featureNotImplemented[F, FleetModel]
 
-  override def removeFleet(id: Long): F[ApiResult[Unit]] = deleteFleet(id).attemptDelete.execute
+  override def removeFleet(id: Long): F[ApiResult[Unit]] =
+    deleteFleet(id).attemptDelete(id).execute
 }
 
 object FleetRepository {

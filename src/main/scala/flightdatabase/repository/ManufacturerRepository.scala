@@ -18,7 +18,7 @@ class ManufacturerRepository[F[_]: Concurrent] private (
     selectAllManufacturers.asList.execute
 
   override def getManufacturerOnlyNames: F[ApiResult[List[String]]] =
-    getNameList[ManufacturerModel].execute
+    getFieldList[ManufacturerModel, String]("name").execute
 
   override def getManufacturer(id: Long): F[ApiResult[ManufacturerModel]] =
     featureNotImplemented[F, ManufacturerModel]
@@ -37,7 +37,7 @@ class ManufacturerRepository[F[_]: Concurrent] private (
   ): F[ApiResult[ManufacturerModel]] = featureNotImplemented[F, ManufacturerModel]
 
   override def removeManufacturer(id: Long): F[ApiResult[Unit]] =
-    deleteManufacturer(id).attemptDelete.execute
+    deleteManufacturer(id).attemptDelete(id).execute
 }
 
 object ManufacturerRepository {

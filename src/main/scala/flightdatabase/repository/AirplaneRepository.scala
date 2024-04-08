@@ -25,7 +25,7 @@ class AirplaneRepository[F[_]: Concurrent] private (
     getFieldList[AirplaneModel, String]("name").execute
 
   override def getAirplane(id: Long): F[ApiResult[AirplaneModel]] =
-    selectAirplanesBy("id", id).asSingle.execute
+    selectAirplanesBy("id", id).asSingle(id).execute
 
   override def getAirplanes[V: Put](field: String, value: V): F[ApiResult[List[AirplaneModel]]] =
     selectAirplanesBy(field, value).asList.execute
@@ -40,7 +40,7 @@ class AirplaneRepository[F[_]: Concurrent] private (
     featureNotImplemented[F, AirplaneModel]
 
   override def removeAirplane(id: Long): F[ApiResult[Unit]] =
-    deleteAirplane(id).attemptDelete.execute
+    deleteAirplane(id).attemptDelete(id).execute
 }
 
 object AirplaneRepository {

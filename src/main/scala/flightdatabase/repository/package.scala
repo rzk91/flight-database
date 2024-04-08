@@ -7,38 +7,34 @@ import doobie.implicits._
 import doobie.postgres._
 import flightdatabase.domain._
 import flightdatabase.repository.queries._
-import flightdatabase.utils.TableValue
+import flightdatabase.utils.FieldValue
 import flightdatabase.utils.implicits.enrichQuery
 
 package object repository {
 
   // Helper methods to access DB
-  def getNameList[S: TableBase]: ConnectionIO[ApiResult[List[String]]] =
-    selectFragment[S]("name").query[String].asList
-
   def getFieldList[S: TableBase, V: Read](field: String): ConnectionIO[ApiResult[List[V]]] =
     selectFragment[S](field).query[V].asList
 
-  def getNameList[S: TableBase, WT: TableBase, WV: Put](
-    whereTableValue: Option[TableValue[WT, WV]] = None
-  ): ConnectionIO[ApiResult[List[String]]] =
-    whereTableValue match {
-      case Some(tv @ TableValue(whereValue)) =>
-        // Get only names based on given value
-        val whereTable = tv.asString
-        for {
-          id <- selectWhereQuery[WT, Long, WV]("id", "name", whereValue).option
-          names <- id match {
-            case Some(i) =>
-              selectWhereQuery[S, String, Long]("name", s"${whereTable}_id", i).asList
-            case None => liftErrorToApiResult[List[String]](EntryNotFound).pure[ConnectionIO]
-          }
-        } yield names
-
-      case None =>
-        // Get all names in DB
-        getNameList[S]
-    }
+  def getFieldList[ST: TableBase, SV: Read, WT: TableBase, WV: Put](
+    selectField: String,
+    whereFieldValue: FieldValue[WT, WV],
+    maybeIdField: Option[String] = None
+  ): ConnectionIO[ApiResult[List[SV]]] = {
+    val selectTable = implicitly[TableBase[ST]].asString
+    val whereTable = whereFieldValue.table
+    val idField = maybeIdField.getOrElse(s"${whereTable}_id")
+    for {
+      index <- selectWhereQuery[WT, Long, WV]("id", whereFieldValue.field, whereFieldValue.value).option.attempt
+      values <- index match {
+        case Right(Some(id)) => selectWhereQuery[ST, SV, Long](selectField, idField, id).asList
+        case Right(None) =>
+          liftErrorToApiResult[List[SV]](EntryNotFound(whereFieldValue.toString)).pure[ConnectionIO]
+        case Left(error) =>
+          liftErrorToApiResult[List[SV]](UnknownError(error.getMessage)).pure[ConnectionIO]
+      }
+    } yield values
+  }
 
   def featureNotImplemented[F[_]: Applicative, A]: F[ApiResult[A]] =
     liftErrorToApiResult[A](FeatureNotImplemented).pure[F]
@@ -48,7 +44,7 @@ package object repository {
     case sqlstate.class23.CHECK_VIOLATION    => EntryCheckFailed
     case sqlstate.class23.NOT_NULL_VIOLATION => EntryNullCheckFailed
     case sqlstate.class23.UNIQUE_VIOLATION   => EntryAlreadyExists
-    case _                                   => UnknownError
+    case _                                   => UnknownError(state.value)
   }
 
   // Lift to API Result

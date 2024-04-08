@@ -45,7 +45,7 @@ class FleetRouteRepository[F[_]: Concurrent] private (
     featureNotImplemented[F, FleetRouteModel]
 
   override def removeFleetRoute(id: Long): F[ApiResult[Unit]] =
-    deleteFleetRoute(id).attemptDelete.execute
+    deleteFleetRoute(id).attemptDelete(id).execute
 }
 
 object FleetRouteRepository {

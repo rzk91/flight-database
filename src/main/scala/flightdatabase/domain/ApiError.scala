@@ -8,9 +8,7 @@ object ApiError {
   val badRequests: Set[ApiError] =
     Set(EntryCheckFailed, EntryNullCheckFailed, EntryInvalidFormat)
   val conflicts: Set[ApiError] = Set(EntryAlreadyExists)
-  val notFound: Set[ApiError] = Set(EntryNotFound)
   val notImplemented: Set[ApiError] = Set(FeatureNotImplemented)
-  val others: Set[ApiError] = Set(UnknownError)
   val noItems: Set[ApiError] = Set(EntryListEmpty)
 }
 
@@ -36,15 +34,12 @@ case object EntryListEmpty extends ApiError {
   override def error: String = "No items found"
 }
 
-// TODO: Add more specific error messages for each case of missing entry
-case object EntryNotFound extends ApiError {
-  override def error: String = s"Error: Entry not found"
+case class EntryNotFound(entry: String) extends ApiError {
+  override def error: String = s"Error: Entry $entry not found"
 }
 
 case object FeatureNotImplemented extends ApiError {
   override def error: String = s"Error: Feature still under development..."
 }
 
-case object UnknownError extends ApiError {
-  override def error: String = s"Error: Something went wrong..."
-}
+case class UnknownError(error: String) extends ApiError

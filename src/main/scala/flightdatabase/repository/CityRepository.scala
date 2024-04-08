@@ -16,7 +16,8 @@ class CityRepository[F[_]: Concurrent] private (
 
   override def getCities: F[ApiResult[List[CityModel]]] = selectAllCities.asList.execute
 
-  override def getCitiesOnlyNames: F[ApiResult[List[String]]] = getNameList[CityModel].execute
+  override def getCitiesOnlyNames: F[ApiResult[List[String]]] =
+    getFieldList[CityModel, String]("name").execute
 
   override def getCity(id: Long): F[ApiResult[CityModel]] = featureNotImplemented[F, CityModel]
 
@@ -30,7 +31,7 @@ class CityRepository[F[_]: Concurrent] private (
     featureNotImplemented[F, CityModel]
 
   override def removeCity(id: Long): F[ApiResult[Unit]] =
-    deleteCity(id).attemptDelete.execute
+    deleteCity(id).attemptDelete(id).execute
 }
 
 object CityRepository {

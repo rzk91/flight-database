@@ -20,7 +20,7 @@ class LanguageRepository[F[_]: Concurrent] private (
     selectAllLanguages.asList.execute
 
   override def getLanguagesOnlyNames: F[ApiResult[List[String]]] =
-    getNameList[LanguageModel].execute
+    getFieldList[LanguageModel, String]("name").execute
 
   override def getLanguage(id: Long): F[ApiResult[LanguageModel]] =
     featureNotImplemented[F, LanguageModel]
@@ -32,7 +32,7 @@ class LanguageRepository[F[_]: Concurrent] private (
     featureNotImplemented[F, LanguageModel]
 
   override def removeLanguage(id: Long): F[ApiResult[Unit]] =
-    deleteLanguage(id).attemptDelete.execute
+    deleteLanguage(id).attemptDelete(id).execute
 }
 
 object LanguageRepository {

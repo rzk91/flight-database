@@ -7,7 +7,7 @@ import flightdatabase.config.Configuration
 import flightdatabase.domain.city.CityModel
 import flightdatabase.domain.country.CountryModel
 import flightdatabase.repository._
-import flightdatabase.utils.TableValue
+import flightdatabase.utils.FieldValue
 
 object TestDb extends IOApp.Simple with LazyLogging {
 
@@ -18,13 +18,17 @@ object TestDb extends IOApp.Simple with LazyLogging {
       _    <- db.initialise()
       xa   <- db.hikariTransactor
     } yield for {
-      countries <- getNameList[CountryModel].transact(xa)
+      countries <- getFieldList[CountryModel, String]("name").transact(xa)
       _         <- IO(logger.info(s"Countries: $countries"))
-      germanCities <- getNameList[CityModel, CountryModel, String](Some(TableValue("Germany")))
-        .transact(xa)
+      germanCities <- getFieldList[CityModel, String, CountryModel, String](
+        "name",
+        FieldValue("name", "Germany")
+      ).transact(xa)
       _ <- IO(logger.info(s"Cities in Germany: $germanCities"))
-      indianCities <- getNameList[CityModel, CountryModel, String](Some(TableValue("India")))
-        .transact(xa)
+      indianCities <- getFieldList[CityModel, String, CountryModel, String](
+        "name",
+        FieldValue("name", "India")
+      ).transact(xa)
       _ <- IO(logger.info(s"Cities in India: $indianCities"))
     } yield ()
   }.useEval

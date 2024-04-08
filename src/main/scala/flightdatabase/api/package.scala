@@ -17,9 +17,9 @@ package object api {
       case Right(created: CreatedValue[A])                         => Created(created.value)
       case Left(value: ApiError) if ApiError.badRequests(value)    => BadRequest(value.error)
       case Left(value: ApiError) if ApiError.conflicts(value)      => Conflict(value.error)
-      case Left(value: ApiError) if ApiError.notFound(value)       => NotFound(value.error)
       case Left(value: ApiError) if ApiError.notImplemented(value) => NotImplemented(value.error)
-      case Left(value: ApiError) if ApiError.others(value)         => UnprocessableEntity(value.error)
+      case Left(value: EntryNotFound)                              => NotFound(value.error)
+      case Left(value: UnknownError)                               => UnprocessableEntity(value.error)
       // Special case error `noItems` to return 200 OK
       case Left(value: ApiError) if ApiError.noItems(value) => Ok(value.error)
       case Left(_)                                          => InternalServerError()
