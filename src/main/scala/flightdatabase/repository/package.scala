@@ -16,6 +16,9 @@ package object repository {
   def getNameList[S: TableBase]: ConnectionIO[ApiResult[List[String]]] =
     selectFragment[S]("name").query[String].asList
 
+  def getFieldList[S: TableBase, V: Read](field: String): ConnectionIO[ApiResult[List[V]]] =
+    selectFragment[S](field).query[V].asList
+
   def getNameList[S: TableBase, WT: TableBase, WV: Put](
     whereTableValue: Option[TableValue[WT, WV]] = None
   ): ConnectionIO[ApiResult[List[String]]] =
@@ -24,10 +27,10 @@ package object repository {
         // Get only names based on given value
         val whereTable = tv.asString
         for {
-          id <- selectWhereQuery[WT, Int, WV]("id", "name", whereValue).option
+          id <- selectWhereQuery[WT, Long, WV]("id", "name", whereValue).option
           names <- id match {
             case Some(i) =>
-              selectWhereQuery[S, String, Int]("name", s"${whereTable}_id", i).asList
+              selectWhereQuery[S, String, Long]("name", s"${whereTable}_id", i).asList
             case None => liftErrorToApiResult[List[String]](EntryNotFound).pure[ConnectionIO]
           }
         } yield names
@@ -53,7 +56,7 @@ package object repository {
     GotValue[A](value).asRight[ApiError]
 
   def liftListToApiResult[A](list: List[A]): ApiResult[List[A]] =
-    if (list.isEmpty) liftErrorToApiResult(EntryNotFound) else liftToApiResult(list)
+    if (list.isEmpty) liftErrorToApiResult(EntryListEmpty) else liftToApiResult(list)
 
   def liftErrorToApiResult[A](error: ApiError): ApiResult[A] =
     error.asLeft[ApiOutput[A]]

@@ -11,6 +11,7 @@ object ApiError {
   val notFound: Set[ApiError] = Set(EntryNotFound)
   val notImplemented: Set[ApiError] = Set(FeatureNotImplemented)
   val others: Set[ApiError] = Set(UnknownError)
+  val noItems: Set[ApiError] = Set(EntryListEmpty)
 }
 
 case object EntryAlreadyExists extends ApiError {
@@ -29,6 +30,10 @@ case object EntryNullCheckFailed extends ApiError {
 
 case object EntryInvalidFormat extends ApiError {
   override def error: String = s"Error: Entry has invalid format"
+}
+
+case object EntryListEmpty extends ApiError {
+  override def error: String = "No items found"
 }
 
 // TODO: Add more specific error messages for each case of missing entry

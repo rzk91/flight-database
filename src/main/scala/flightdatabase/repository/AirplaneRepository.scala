@@ -3,6 +3,7 @@ package flightdatabase.repository
 import cats.effect.Concurrent
 import cats.effect.Resource
 import cats.implicits._
+import doobie.Put
 import doobie.hikari.HikariTransactor
 import flightdatabase.domain.ApiResult
 import flightdatabase.domain.airplane.AirplaneAlgebra
@@ -21,10 +22,13 @@ class AirplaneRepository[F[_]: Concurrent] private (
     selectAllAirplanes.asList.execute
 
   override def getAirplanesOnlyNames: F[ApiResult[List[String]]] =
-    getNameList[AirplaneModel].execute
+    getFieldList[AirplaneModel, String]("name").execute
 
   override def getAirplane(id: Long): F[ApiResult[AirplaneModel]] =
-    selectAirplaneBy("id", id).asSingle.execute
+    selectAirplanesBy("id", id).asSingle.execute
+
+  override def getAirplanes[V: Put](field: String, value: V): F[ApiResult[List[AirplaneModel]]] =
+    selectAirplanesBy(field, value).asList.execute
 
   override def getAirplanesByManufacturer(manufacturer: String): F[ApiResult[List[AirplaneModel]]] =
     selectAllAirplanesByExternal[ManufacturerModel, String]("name", manufacturer).asList.execute

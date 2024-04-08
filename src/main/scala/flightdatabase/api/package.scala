@@ -20,7 +20,9 @@ package object api {
       case Left(value: ApiError) if ApiError.notFound(value)       => NotFound(value.error)
       case Left(value: ApiError) if ApiError.notImplemented(value) => NotImplemented(value.error)
       case Left(value: ApiError) if ApiError.others(value)         => UnprocessableEntity(value.error)
-      case Left(_)                                                 => InternalServerError()
+      // Special case error `noItems` to return 200 OK
+      case Left(value: ApiError) if ApiError.noItems(value) => Ok(value.error)
+      case Left(_)                                          => InternalServerError()
     }
   }
 

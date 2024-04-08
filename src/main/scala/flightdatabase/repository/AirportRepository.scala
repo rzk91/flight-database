@@ -3,12 +3,15 @@ package flightdatabase.repository
 import cats.effect.Concurrent
 import cats.effect.Resource
 import cats.implicits._
+import doobie.ConnectionIO
 import doobie.hikari.HikariTransactor
 import flightdatabase.domain.ApiResult
 import flightdatabase.domain.airport.AirportAlgebra
 import flightdatabase.domain.airport.AirportModel
 import flightdatabase.domain.city.CityModel
+import flightdatabase.domain.country.CountryModel
 import flightdatabase.repository.queries.AirportQueries._
+import flightdatabase.utils.TableValue
 import flightdatabase.utils.implicits._
 
 class AirportRepository[F[_]: Concurrent] private (
@@ -30,15 +33,17 @@ class AirportRepository[F[_]: Concurrent] private (
   override def getAirportByIcao(icao: String): F[ApiResult[AirportModel]] =
     selectAirportBy("icao", icao).asSingle.execute
 
-  override def getAirportByCity(city: String): F[ApiResult[List[AirportModel]]] =
+  override def getAirportsByCity(city: String): F[ApiResult[List[AirportModel]]] =
     selectAllAirportsByExternal[CityModel, String]("name", city).asList.execute
 
-  override def getAirportByCountry(country: String): F[ApiResult[List[AirportModel]]] =
-    // TODO: Nested query structure
-    //  - Get name of all cities in the country --> getNameList[CityModel, CountryModel, String]?
-    //  - Get all airports in the cities
-    //  - Return the list of airports
-    featureNotImplemented[F, List[AirportModel]]
+  override def getAirportsByCountry(country: String): F[ApiResult[List[AirportModel]]] =
+    getNameList[CityModel, CountryModel, String](Some(TableValue(country))).flatMap {
+      case Left(error) => liftErrorToApiResult[List[AirportModel]](error).pure[ConnectionIO]
+      case Right(cityNames) =>
+        cityNames.value
+          .flatTraverse(selectAllAirportsByExternal[CityModel, String]("name", _).to[List])
+          .map(liftListToApiResult)
+    }.execute
 
   override def createAirport(airport: AirportModel): F[ApiResult[Long]] =
     insertAirport(airport).attemptInsert.execute
