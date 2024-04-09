@@ -5,7 +5,7 @@ import flightdatabase.domain.country.CountryModel
 import flightdatabase.repository.queries._
 import flightdatabase.testutils.DbChecker
 
-final class GenericQueryTests extends DbChecker {
+final class GenericQueryIT extends DbChecker {
 
   "A simple get query" should "not fail" in {
     check(selectFragment[CityModel]("name").query[String])

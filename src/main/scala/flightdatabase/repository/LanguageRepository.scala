@@ -3,7 +3,7 @@ package flightdatabase.repository
 import cats.effect.Concurrent
 import cats.effect.Resource
 import cats.syntax.all._
-import doobie.hikari.HikariTransactor
+import doobie.Transactor
 import flightdatabase.domain.ApiResult
 import flightdatabase.domain.language.LanguageAlgebra
 import flightdatabase.domain.language.LanguageModel
@@ -13,7 +13,7 @@ import flightdatabase.repository.queries.LanguageQueries.selectAllLanguages
 import flightdatabase.utils.implicits._
 
 class LanguageRepository[F[_]: Concurrent] private (
-  implicit transactor: Resource[F, HikariTransactor[F]]
+  implicit transactor: Transactor[F]
 ) extends LanguageAlgebra[F] {
 
   override def getLanguages: F[ApiResult[List[LanguageModel]]] =
@@ -38,12 +38,12 @@ class LanguageRepository[F[_]: Concurrent] private (
 object LanguageRepository {
 
   def make[F[_]: Concurrent](
-    implicit transactor: Resource[F, HikariTransactor[F]]
+    implicit transactor: Transactor[F]
   ): F[LanguageRepository[F]] =
     new LanguageRepository[F].pure[F]
 
   def resource[F[_]: Concurrent](
-    implicit transactor: Resource[F, HikariTransactor[F]]
+    implicit transactor: Transactor[F]
   ): Resource[F, LanguageRepository[F]] =
     Resource.pure(new LanguageRepository[F])
 }

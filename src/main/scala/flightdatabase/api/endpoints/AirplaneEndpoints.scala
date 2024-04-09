@@ -2,7 +2,6 @@ package flightdatabase.api.endpoints
 
 import cats.effect._
 import cats.implicits._
-import doobie.hikari.HikariTransactor
 import flightdatabase.api._
 import flightdatabase.domain.EntryInvalidFormat
 import flightdatabase.domain.airplane.AirplaneAlgebra
@@ -10,9 +9,8 @@ import flightdatabase.utils.implicits.enrichString
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
 
-class AirplaneEndpoints[F[_]: Concurrent] private (prefix: String, algebra: AirplaneAlgebra[F])(
-  implicit transactor: Resource[F, HikariTransactor[F]]
-) extends Endpoints[F](prefix) {
+class AirplaneEndpoints[F[_]: Concurrent] private (prefix: String, algebra: AirplaneAlgebra[F])
+    extends Endpoints[F](prefix) {
 
   override val allowedFields: Set[String] = Set("id", "name", "manufacturer")
 
@@ -53,6 +51,6 @@ object AirplaneEndpoints {
   def apply[F[_]: Concurrent](
     prefix: String,
     algebra: AirplaneAlgebra[F]
-  )(implicit transactor: Resource[F, HikariTransactor[F]]): Endpoints[F] =
+  ): Endpoints[F] =
     new AirplaneEndpoints(prefix, algebra)
 }

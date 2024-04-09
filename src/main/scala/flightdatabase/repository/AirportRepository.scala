@@ -4,7 +4,7 @@ import cats.effect.Concurrent
 import cats.effect.Resource
 import cats.implicits._
 import doobie.ConnectionIO
-import doobie.hikari.HikariTransactor
+import doobie.Transactor
 import flightdatabase.domain.ApiResult
 import flightdatabase.domain.airport.AirportAlgebra
 import flightdatabase.domain.airport.AirportModel
@@ -15,7 +15,7 @@ import flightdatabase.utils.FieldValue
 import flightdatabase.utils.implicits._
 
 class AirportRepository[F[_]: Concurrent] private (
-  implicit transactor: Resource[F, HikariTransactor[F]]
+  implicit transactor: Transactor[F]
 ) extends AirportAlgebra[F] {
 
   override def getAirports: F[ApiResult[List[AirportModel]]] =
@@ -58,12 +58,12 @@ class AirportRepository[F[_]: Concurrent] private (
 object AirportRepository {
 
   def make[F[_]: Concurrent](
-    implicit transactor: Resource[F, HikariTransactor[F]]
+    implicit transactor: Transactor[F]
   ): F[AirportRepository[F]] =
     new AirportRepository[F].pure[F]
 
   def resource[F[_]: Concurrent](
-    implicit transactor: Resource[F, HikariTransactor[F]]
+    implicit transactor: Transactor[F]
   ): Resource[F, AirportRepository[F]] =
     Resource.pure(new AirportRepository[F])
 }

@@ -3,7 +3,7 @@ package flightdatabase.repository
 import cats.effect.Concurrent
 import cats.effect.Resource
 import cats.implicits._
-import doobie.hikari.HikariTransactor
+import doobie.Transactor
 import flightdatabase.domain.ApiResult
 import flightdatabase.domain.city.CityAlgebra
 import flightdatabase.domain.city.CityModel
@@ -11,7 +11,7 @@ import flightdatabase.repository.queries.CityQueries._
 import flightdatabase.utils.implicits._
 
 class CityRepository[F[_]: Concurrent] private (
-  implicit transactor: Resource[F, HikariTransactor[F]]
+  implicit transactor: Transactor[F]
 ) extends CityAlgebra[F] {
 
   override def getCities: F[ApiResult[List[CityModel]]] = selectAllCities.asList.execute
@@ -37,10 +37,10 @@ class CityRepository[F[_]: Concurrent] private (
 object CityRepository {
 
   def make[F[_]: Concurrent](
-    implicit transactor: Resource[F, HikariTransactor[F]]
+    implicit transactor: Transactor[F]
   ): F[CityRepository[F]] = new CityRepository[F].pure[F]
 
   def resource[F[_]: Concurrent](
-    implicit transactor: Resource[F, HikariTransactor[F]]
+    implicit transactor: Transactor[F]
   ): Resource[F, CityRepository[F]] = Resource.pure(new CityRepository[F])
 }

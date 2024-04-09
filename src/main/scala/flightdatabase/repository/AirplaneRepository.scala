@@ -4,7 +4,7 @@ import cats.effect.Concurrent
 import cats.effect.Resource
 import cats.implicits._
 import doobie.Put
-import doobie.hikari.HikariTransactor
+import doobie.Transactor
 import flightdatabase.domain.ApiResult
 import flightdatabase.domain.airplane.AirplaneAlgebra
 import flightdatabase.domain.airplane.AirplaneModel
@@ -12,10 +12,8 @@ import flightdatabase.domain.manufacturer.ManufacturerModel
 import flightdatabase.repository.queries.AirplaneQueries._
 import flightdatabase.utils.implicits._
 
-// TODO: Perhaps replace the resource with a simple instance of `Transactor[F]`
-// Question: how does it then work with pooling then?
 class AirplaneRepository[F[_]: Concurrent] private (
-  implicit transactor: Resource[F, HikariTransactor[F]]
+  implicit transactor: Transactor[F]
 ) extends AirplaneAlgebra[F] {
 
   override def getAirplanes: F[ApiResult[List[AirplaneModel]]] =
@@ -46,12 +44,12 @@ class AirplaneRepository[F[_]: Concurrent] private (
 object AirplaneRepository {
 
   def make[F[_]: Concurrent](
-    implicit transactor: Resource[F, HikariTransactor[F]]
+    implicit transactor: Transactor[F]
   ): F[AirplaneRepository[F]] =
     new AirplaneRepository[F].pure[F]
 
   def resource[F[_]: Concurrent](
-    implicit transactor: Resource[F, HikariTransactor[F]]
+    implicit transactor: Transactor[F]
   ): Resource[F, AirplaneRepository[F]] =
     Resource.pure(new AirplaneRepository[F])
 }

@@ -3,7 +3,7 @@ package flightdatabase.repository
 import cats.effect.Concurrent
 import cats.effect.Resource
 import cats.implicits._
-import doobie.hikari.HikariTransactor
+import doobie.Transactor
 import flightdatabase.domain.ApiResult
 import flightdatabase.domain.country.CountryAlgebra
 import flightdatabase.domain.country.CountryModel
@@ -13,7 +13,7 @@ import flightdatabase.repository.queries.CountryQueries.selectAllCountries
 import flightdatabase.utils.implicits._
 
 class CountryRepository[F[_]: Concurrent] private (
-  implicit transactor: Resource[F, HikariTransactor[F]]
+  implicit transactor: Transactor[F]
 ) extends CountryAlgebra[F] {
 
   override def getCountries: F[ApiResult[List[CountryModel]]] =
@@ -38,12 +38,12 @@ class CountryRepository[F[_]: Concurrent] private (
 object CountryRepository {
 
   def make[F[_]: Concurrent](
-    implicit transactor: Resource[F, HikariTransactor[F]]
+    implicit transactor: Transactor[F]
   ): F[CountryRepository[F]] =
     new CountryRepository[F].pure[F]
 
   def resource[F[_]: Concurrent](
-    implicit transactor: Resource[F, HikariTransactor[F]]
+    implicit transactor: Transactor[F]
   ): Resource[F, CountryRepository[F]] =
     Resource.pure(new CountryRepository[F])
 }

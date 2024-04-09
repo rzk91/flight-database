@@ -75,7 +75,8 @@ lazy val root = (project in file("."))
   .settings(
     commonSettings,
     Defaults.itSettings,
-    libraryDependencies ++= circeDependencies ++ doobieDependencies ++ http4sDependencies ++ otherDependencies ++ testingDependencies ++ itDependencies,
+    scalafixConfigSettings(IntegrationTest),
+    libraryDependencies ++= circeDependencies ++ doobieDependencies ++ http4sDependencies ++ otherDependencies ++ testingDependencies ++ itDependencies
   )
 
 addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")

@@ -3,7 +3,7 @@ package flightdatabase.repository
 import cats.effect.Concurrent
 import cats.effect.Resource
 import cats.implicits._
-import doobie.hikari.HikariTransactor
+import doobie.Transactor
 import flightdatabase.domain.ApiResult
 import flightdatabase.domain.currency.CurrencyAlgebra
 import flightdatabase.domain.currency.CurrencyModel
@@ -13,7 +13,7 @@ import flightdatabase.repository.queries.CurrencyQueries.selectAllCurrencies
 import flightdatabase.utils.implicits._
 
 class CurrencyRepository[F[_]: Concurrent] private (
-  implicit transactor: Resource[F, HikariTransactor[F]]
+  implicit transactor: Transactor[F]
 ) extends CurrencyAlgebra[F] {
 
   override def getCurrencies: F[ApiResult[List[CurrencyModel]]] =
@@ -38,12 +38,12 @@ class CurrencyRepository[F[_]: Concurrent] private (
 object CurrencyRepository {
 
   def make[F[_]: Concurrent](
-    implicit transactor: Resource[F, HikariTransactor[F]]
+    implicit transactor: Transactor[F]
   ): F[CurrencyRepository[F]] =
     new CurrencyRepository[F].pure[F]
 
   def resource[F[_]: Concurrent](
-    implicit transactor: Resource[F, HikariTransactor[F]]
+    implicit transactor: Transactor[F]
   ): Resource[F, CurrencyRepository[F]] =
     Resource.pure(new CurrencyRepository[F])
 }

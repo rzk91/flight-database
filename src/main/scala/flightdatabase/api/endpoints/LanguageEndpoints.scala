@@ -3,7 +3,6 @@ package flightdatabase.api.endpoints
 import cats._
 import cats.effect._
 import cats.implicits._
-import doobie.hikari.HikariTransactor
 import flightdatabase.api._
 import flightdatabase.domain.ApiResult
 import flightdatabase.domain.EntryInvalidFormat
@@ -12,9 +11,8 @@ import flightdatabase.domain.language.LanguageModel
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
 
-class LanguageEndpoints[F[_]: Concurrent] private (prefix: String, algebra: LanguageAlgebra[F])(
-  implicit transactor: Resource[F, HikariTransactor[F]]
-) extends Endpoints[F](prefix) {
+class LanguageEndpoints[F[_]: Concurrent] private (prefix: String, algebra: LanguageAlgebra[F])
+    extends Endpoints[F](prefix) {
 
   override def endpoints: HttpRoutes[F] = HttpRoutes.of {
     case GET -> Root :? OnlyNamesFlagMatcher(onlyNames) =>
@@ -38,7 +36,6 @@ class LanguageEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Lang
 
 object LanguageEndpoints {
 
-  def apply[F[_]: Concurrent](prefix: String, algebra: LanguageAlgebra[F])(
-    implicit transactor: Resource[F, HikariTransactor[F]]
-  ): Endpoints[F] = new LanguageEndpoints(prefix, algebra)
+  def apply[F[_]: Concurrent](prefix: String, algebra: LanguageAlgebra[F]): Endpoints[F] =
+    new LanguageEndpoints(prefix, algebra)
 }

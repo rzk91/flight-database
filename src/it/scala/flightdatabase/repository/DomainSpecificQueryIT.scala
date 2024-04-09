@@ -6,7 +6,7 @@ import flightdatabase.repository.queries._
 import flightdatabase.testutils.DbChecker
 
 // TODO: Checks are incomplete (e.g. insert, update, failure checks, etc. are missing)
-final class DomainSpecificQueryTests extends DbChecker {
+final class DomainSpecificQueryIT extends DbChecker {
 
   // Airplane checks
   "All airplane queries" should "work correctly" in {

@@ -3,7 +3,7 @@ package flightdatabase.repository
 import cats.effect.Concurrent
 import cats.effect.Resource
 import cats.implicits._
-import doobie.hikari.HikariTransactor
+import doobie.Transactor
 import flightdatabase.domain.ApiResult
 import flightdatabase.domain.fleet.FleetAlgebra
 import flightdatabase.domain.fleet.FleetModel
@@ -11,7 +11,7 @@ import flightdatabase.repository.queries.FleetQueries._
 import flightdatabase.utils.implicits._
 
 class FleetRepository[F[_]: Concurrent] private (
-  implicit transactor: Resource[F, HikariTransactor[F]]
+  implicit transactor: Transactor[F]
 ) extends FleetAlgebra[F] {
 
   override def getFleets: F[ApiResult[List[FleetModel]]] = selectAllFleets.asList.execute
@@ -41,12 +41,12 @@ class FleetRepository[F[_]: Concurrent] private (
 object FleetRepository {
 
   def make[F[_]: Concurrent](
-    implicit transactor: Resource[F, HikariTransactor[F]]
+    implicit transactor: Transactor[F]
   ): F[FleetRepository[F]] =
     new FleetRepository[F].pure[F]
 
   def resource[F[_]: Concurrent](
-    implicit transactor: Resource[F, HikariTransactor[F]]
+    implicit transactor: Transactor[F]
   ): Resource[F, FleetRepository[F]] =
     Resource.pure(new FleetRepository[F])
 }

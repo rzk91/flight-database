@@ -1,7 +1,7 @@
 package flightdatabase
 
 import cats.effect._
-import doobie.hikari.HikariTransactor
+import doobie.Transactor
 import flightdatabase.api.FlightDbApi
 import flightdatabase.config.Configuration
 import flightdatabase.db.Database
@@ -11,29 +11,14 @@ object FlightDbMain extends IOApp.Simple {
 
   override def run: IO[Unit] = {
     for {
-      conf <- Configuration.configAsResource[IO]
-      db   <- Database.resource[IO](conf.dbConfig, conf.cleanDatabase)
-      _    <- db.initialise()
-      // Implicit resource-based HikariTransactor for better connection pooling
-      implicit0(xa: Resource[IO, HikariTransactor[IO]]) = db.hikariTransactor
-      port <- Resource.eval(IO.fromEither(conf.apiConfig.portNumber))
-      // TODO: Think of a better way to pass these repositories to `httpApp`
-      airplaneRepo <- AirplaneRepository.resource[IO]
-      cityRepo     <- CityRepository.resource[IO]
-      countryRepo  <- CountryRepository.resource[IO]
-      currencyRepo <- CurrencyRepository.resource[IO]
-      languageRepo <- LanguageRepository.resource[IO]
-      httpApp <- Resource.eval(
-        FlightDbApi[IO](
-          conf.apiConfig,
-          airplaneRepo,
-          cityRepo,
-          countryRepo,
-          currencyRepo,
-          languageRepo
-        ).flightDbApp()
-      )
-      _ <- Server.start(conf.apiConfig.hostName, port, httpApp)
+      conf                          <- Configuration.configAsResource[IO]
+      db                            <- Database.resource[IO](conf.dbConfig, conf.cleanDatabase)
+      _                             <- db.initialise()
+      implicit0(xa: Transactor[IO]) <- db.hikariTransactor
+      port                          <- Resource.eval(IO.fromEither(conf.apiConfig.portNumber))
+      repos                         <- RepositoryContainer.resource[IO]
+      httpApp                       <- Resource.eval(FlightDbApi[IO](conf.apiConfig, repos).flightDbApp())
+      _                             <- Server.start(conf.apiConfig.hostName, port, httpApp)
     } yield ()
   }.useForever
 }
