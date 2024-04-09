@@ -40,13 +40,16 @@ object Configuration extends LazyLogging {
 
   case class DatabaseConfig(
     driver: String,
-    url: String,
+    private val baseUrl: String,
+    dbName: String,
     access: Access,
     baseline: String,
     threadPoolSize: Int,
     cleanDatabase: Boolean,
     loggingActive: Boolean
-  )
+  ) {
+    lazy val url: String = s"$baseUrl/$dbName"
+  }
 
   case class ApiLogging(active: Boolean, withHeaders: Boolean, withBody: Boolean)
 

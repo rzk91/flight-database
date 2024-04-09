@@ -1,15 +1,33 @@
 val scalaV = "2.13.13"
 
-scalaVersion := scalaV
-name         := "flight-database"
-organization := "rzk.scala"
-version      := "1.0"
+lazy val commonSettings = Seq(
+  name         := "flight-database",
+  organization := "rzk.scala",
+  version      := "1.0-SNAPSHOT",
+  scalaVersion := scalaV,
+  scalacOptions ++= Seq(
+    "-encoding",
+    "utf8",
+    "-Xfatal-warnings",
+    "-deprecation",
+    "-unchecked",
+    "-explaintypes",
+    "-Ymacro-annotations",
+    "-language:implicitConversions",
+    "-language:higherKinds",
+    "-language:existentials",
+    "-language:postfixOps",
+    "-Wunused:imports"
+  )
+)
 
 val circeVersion = "0.14.3"
 val doobieVersion = "1.0.0-RC5"
 val http4sVersion = "0.23.26"
 val pureconfigVersion = "0.17.6"
 val flywayVersion = "10.11.0"
+val scalaTestVersion = "3.2.17"
+val testcontainersVersion = "0.41.3"
 
 val circeDependencies = Seq(
   "io.circe" %% "circe-core"           % circeVersion,
@@ -37,19 +55,33 @@ val otherDependencies = Seq(
   "com.github.pureconfig"      %% "pureconfig-cats-effect"    % pureconfigVersion,
   "org.slf4j"                  % "slf4j-log4j12"              % "2.0.9",
   "com.typesafe.scala-logging" %% "scala-logging"             % "3.9.5",
-  "commons-io"                 % "commons-io"                 % "2.15.1",
+  "commons-io"                 % "commons-io"                 % "2.16.1",
   "org.flywaydb"               % "flyway-core"                % flywayVersion,
   "org.flywaydb"               % "flyway-database-postgresql" % flywayVersion
 )
 
 val testingDependencies = Seq(
-  "org.scalactic" %% "scalactic" % "3.2.17",
-  "org.scalatest" %% "scalatest" % "3.2.17" % "test"
+  "org.scalactic" %% "scalactic" % scalaTestVersion,
+  "org.scalatest" %% "scalatest" % scalaTestVersion % "it,test"
 )
 
-libraryDependencies ++= circeDependencies ++ doobieDependencies ++ http4sDependencies ++ otherDependencies ++ testingDependencies
+val itDependencies = Seq(
+  "com.dimafeng" %% "testcontainers-scala-scalatest"  % testcontainersVersion % "it",
+  "com.dimafeng" %% "testcontainers-scala-postgresql" % testcontainersVersion % "it"
+)
+
+lazy val root = (project in file("."))
+  .configs(IntegrationTest)
+  .settings(
+    commonSettings,
+    Defaults.itSettings,
+    libraryDependencies ++= circeDependencies ++ doobieDependencies ++ http4sDependencies ++ otherDependencies ++ testingDependencies ++ itDependencies,
+  )
 
 addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
+
+// Run integration tests in a separate JVM from sbt
+IntegrationTest / fork := true
 
 // For scalafix
 inThisBuild(
@@ -61,18 +93,3 @@ inThisBuild(
 )
 
 scalafixScalaBinaryVersion := scalaV.split('.').take(2).mkString(".")
-
-scalacOptions ++= Seq(
-  "-encoding",
-  "utf8",
-  "-Xfatal-warnings",
-  "-deprecation",
-  "-unchecked",
-  "-explaintypes",
-  "-Ymacro-annotations",
-  "-language:implicitConversions",
-  "-language:higherKinds",
-  "-language:existentials",
-  "-language:postfixOps",
-  "-Wunused:imports"
-)
