@@ -1,8 +1,7 @@
-package flightdatabase.repository
+package flightdatabase.repository.queries
 
 import flightdatabase.domain.city.CityModel
 import flightdatabase.domain.manufacturer.ManufacturerModel
-import flightdatabase.repository.queries._
 import flightdatabase.testutils.DbChecker
 
 // TODO: Checks are incomplete (e.g. insert, update, failure checks, etc. are missing)

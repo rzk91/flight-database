@@ -33,9 +33,8 @@ package object queries {
     val mainTable = implicitly[TableBase[MT]].asString
     val externalTable = implicitly[TableBase[ET]].asString
     fr"INNER JOIN" ++ Fragment.const(externalTable) ++ fr"ON" ++
-    Fragment.const(s"$mainTable.${externalTable}_id") ++ fr"=" ++ Fragment.const(
-      s"$externalTable.id"
-    ) ++
+    Fragment.const(s"$mainTable.${externalTable}_id") ++
+    fr"=" ++ Fragment.const(s"$externalTable.id") ++
     whereFragment(s"$externalTable.$externalField", externalValue)
   }
 }
