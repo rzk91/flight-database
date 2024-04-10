@@ -3,31 +3,22 @@ package flightdatabase.domain
 // API errors
 sealed trait ApiError { def error: String }
 
-object ApiError {
-
-  val badRequests: Set[ApiError] =
-    Set(EntryCheckFailed, EntryNullCheckFailed, EntryInvalidFormat)
-  val conflicts: Set[ApiError] = Set(EntryAlreadyExists)
-  val notImplemented: Set[ApiError] = Set(FeatureNotImplemented)
-  val noItems: Set[ApiError] = Set(EntryListEmpty)
-}
-
 case object EntryAlreadyExists extends ApiError {
-  override def error: String = s"Error: Entry or a unique field therein already exists"
+  override def error: String = "Error: Entry or a unique field therein already exists"
 }
 
 case object EntryCheckFailed extends ApiError {
 
   override def error: String =
-    s"Error: Entry contains fields that cannot be blank or non-positive"
+    "Error: Entry contains fields that cannot be blank or non-positive"
 }
 
 case object EntryNullCheckFailed extends ApiError {
-  override def error: String = s"Error: Entry contains fields that cannot be null"
+  override def error: String = "Error: Entry contains fields that cannot be null"
 }
 
 case object EntryInvalidFormat extends ApiError {
-  override def error: String = s"Error: Entry has invalid format"
+  override def error: String = "Error: Entry has invalid format"
 }
 
 case object EntryListEmpty extends ApiError {
@@ -39,7 +30,7 @@ case class EntryNotFound(entry: String) extends ApiError {
 }
 
 case object FeatureNotImplemented extends ApiError {
-  override def error: String = s"Error: Feature still under development..."
+  override def error: String = "Error: Feature still under development..."
 }
 
 case class UnknownError(error: String) extends ApiError
