@@ -30,7 +30,7 @@ target/
 *.swp
 *.txt
 null/
-src/main/resources/local*.conf
+src/**/resources/local.conf
 
 #general
 *.class

@@ -17,5 +17,6 @@ package object config {
   private[config] val source: ConfigObjectSource = ConfigSource
     .resources("local.conf")
     .optional
-    .withFallback(ConfigSource.resources("application.conf"))
+    .withFallback(ConfigSource.resources("application.conf").optional)
+    .withFallback(ConfigSource.resources("reference.conf"))
 }

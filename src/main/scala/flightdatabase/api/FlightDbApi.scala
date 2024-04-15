@@ -1,36 +1,42 @@
 package flightdatabase.api
 
-import cats.effect._
+import cats.effect.Async
+import cats.effect.Sync
 import cats.implicits._
-import doobie.hikari.HikariTransactor
-import flightdatabase.api.services._
+import doobie.Transactor
+import flightdatabase.api.endpoints._
 import flightdatabase.config.Configuration.ApiConfig
+import flightdatabase.repository._
 import org.http4s.HttpApp
 import org.http4s.HttpRoutes
 import org.http4s.server.Router
 import org.http4s.server.middleware.Logger
 
-class FlightDbApi[F[_]: Async](apiConfig: ApiConfig)(
-  implicit transactor: Resource[F, HikariTransactor[F]]
-) {
+class FlightDbApi[F[_]: Async] private (
+  apiConfig: ApiConfig,
+  repos: RepositoryContainer[F]
+)(implicit transactor: Transactor[F]) {
 
-  private val languageService = LanguageService[F]
-  private val currencyService = CurrencyService[F]
-  private val cityService = CityService[F]
-  private val countryService = CountryService[F]
-  private val airplaneService = AirplaneService[F]
-
-  private val helloWorldService = HelloWorldService[F](apiConfig.flightDbBaseUri)
+  private val helloWorldEndpoints = HelloWorldEndpoints[F]("/hello", apiConfig.flightDbBaseUri)
+  private val airplaneEndpoints = AirplaneEndpoints[F]("/airplanes", repos.airplaneRepository)
+  private val cityEndpoints = CityEndpoints[F]("/cities", repos.cityRepository)
+  private val countryEndpoints = CountryEndpoints[F]("/countries", repos.countryRepository)
+  private val currencyEndpoints = CurrencyEndpoints[F]("/currencies", repos.currencyRepository)
+  private val languageEndpoints = LanguageEndpoints[F]("/languages", repos.languageRepository)
 
   // TODO: List is incomplete...
   val flightDbServices: HttpRoutes[F] =
-    List(languageService, currencyService, cityService, countryService, airplaneService).reduceLeft(
-      _ <+> _
-    )
+    List(
+      helloWorldEndpoints,
+      airplaneEndpoints,
+      cityEndpoints,
+      countryEndpoints,
+      currencyEndpoints,
+      languageEndpoints
+    ).foldLeft(HttpRoutes.empty[F])(_ <+> _.routes)
 
   def flightDbApp(): F[HttpApp[F]] = {
-    val app =
-      Router("/hello" -> helloWorldService, s"/${apiConfig.entryPoint}" -> flightDbServices).orNotFound
+    val app = Router(apiConfig.entryPoint -> flightDbServices).orNotFound
     val logging = apiConfig.logging
     Sync[F].delay(
       if (logging.active) Logger.httpApp(logging.withHeaders, logging.withBody)(app) else app
@@ -40,7 +46,9 @@ class FlightDbApi[F[_]: Async](apiConfig: ApiConfig)(
 
 object FlightDbApi {
 
-  def apply[F[_]: Async](apiConfig: ApiConfig)(
-    implicit transactor: Resource[F, HikariTransactor[F]]
-  ): FlightDbApi[F] = new FlightDbApi(apiConfig)
+  def apply[F[_]: Async](
+    apiConfig: ApiConfig,
+    repositoryContainer: RepositoryContainer[F]
+  )(implicit transactor: Transactor[F]): FlightDbApi[F] =
+    new FlightDbApi(apiConfig, repositoryContainer)
 }
