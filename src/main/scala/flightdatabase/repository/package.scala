@@ -41,15 +41,16 @@ package object repository {
 
   // SQL state to ApiError conversion
   def sqlStateToApiError(state: SqlState): ApiError = state match {
-    case sqlstate.class23.CHECK_VIOLATION    => EntryCheckFailed
-    case sqlstate.class23.NOT_NULL_VIOLATION => EntryNullCheckFailed
-    case sqlstate.class23.UNIQUE_VIOLATION   => EntryAlreadyExists
-    case _                                   => UnknownError(state.value)
+    case sqlstate.class23.CHECK_VIOLATION       => EntryCheckFailed
+    case sqlstate.class23.NOT_NULL_VIOLATION    => EntryNullCheckFailed
+    case sqlstate.class23.UNIQUE_VIOLATION      => EntryAlreadyExists
+    case sqlstate.class23.FOREIGN_KEY_VIOLATION => EntryHasInvalidForeignKey
+    case _                                      => UnknownError(state.value)
   }
 
   // Lift to API Result
   def liftToApiResult[A](value: A): ApiResult[A] =
-    GotValue[A](value).asRight[ApiError]
+    Got[A](value).asRight[ApiError]
 
   def liftListToApiResult[A](list: List[A]): ApiResult[List[A]] =
     if (list.isEmpty) liftErrorToApiResult(EntryListEmpty) else liftToApiResult(list)

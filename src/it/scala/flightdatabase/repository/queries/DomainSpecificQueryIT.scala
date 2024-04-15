@@ -1,5 +1,6 @@
 package flightdatabase.repository.queries
 
+import flightdatabase.domain.airplane.AirplaneCreate
 import flightdatabase.domain.city.CityModel
 import flightdatabase.domain.manufacturer.ManufacturerModel
 import flightdatabase.testutils.DbChecker
@@ -9,9 +10,11 @@ final class DomainSpecificQueryIT extends DbChecker {
 
   // Airplane checks
   "All airplane queries" should "work correctly" in {
+    check(AirplaneQueries.airplaneExists(1))
     check(AirplaneQueries.selectAllAirplanes)
     check(AirplaneQueries.selectAirplanesBy("id", 1L))
     check(AirplaneQueries.selectAllAirplanesByExternal[ManufacturerModel, String]("name", "Airbus"))
+    check(AirplaneQueries.insertAirplane(AirplaneCreate(None, "Boeing 747", 2, 416, 13400)))
     check(AirplaneQueries.deleteAirplane(1))
   }
 

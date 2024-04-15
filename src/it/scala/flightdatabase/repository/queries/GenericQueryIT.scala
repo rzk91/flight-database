@@ -1,7 +1,7 @@
 package flightdatabase.repository.queries
 
 import doobie.implicits._
-import flightdatabase.domain.airplane.AirplaneModel
+import flightdatabase.domain.airplane.Airplane
 import flightdatabase.domain.city.CityModel
 import flightdatabase.domain.country.CountryModel
 import flightdatabase.domain.manufacturer.ManufacturerModel
@@ -27,10 +27,10 @@ final class GenericQueryIT extends DbChecker {
        | FROM airplane
      """.stripMargin
     check(
-      (allAirplanes ++ innerJoinWhereFragment[AirplaneModel, ManufacturerModel, String](
+      (allAirplanes ++ innerJoinWhereFragment[Airplane, ManufacturerModel, String](
         "name",
         "Airbus"
-      )).query[AirplaneModel]
+      )).query[Airplane]
     )
   }
 

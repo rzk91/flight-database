@@ -6,26 +6,29 @@ import doobie.Query0
 import doobie.Update0
 import doobie.implicits._
 import flightdatabase.domain.TableBase
-import flightdatabase.domain.airport.AirportModel
+import flightdatabase.domain.airport.Airport
+import flightdatabase.domain.airport.AirportCreate
 
 private[repository] object AirportQueries {
 
-  def selectAllAirports: Query0[AirportModel] = selectAll.query[AirportModel]
+  def airportExists(id: Long): Query0[Boolean] = idExistsQuery[Airport](id)
 
-  def selectAirportBy[V: Put](field: String, value: V): Query0[AirportModel] =
-    (selectAll ++ whereFragment(s"airport.$field", value)).query[AirportModel]
+  def selectAllAirports: Query0[Airport] = selectAll.query[Airport]
+
+  def selectAirportBy[V: Put](field: String, value: V): Query0[Airport] =
+    (selectAll ++ whereFragment(s"airport.$field", value)).query[Airport]
 
   def selectAllAirportsByExternal[ET: TableBase, EV: Put](
     externalField: String,
     externalValue: EV
-  ): Query0[AirportModel] = {
-    selectAll ++ innerJoinWhereFragment[AirportModel, ET, EV](
+  ): Query0[Airport] = {
+    selectAll ++ innerJoinWhereFragment[Airport, ET, EV](
       externalField,
       externalValue
     )
-  }.query[AirportModel]
+  }.query[Airport]
 
-  def insertAirport(model: AirportModel): Update0 =
+  def insertAirport(model: AirportCreate): Update0 =
     sql"""INSERT INTO airport
          |       (name, icao, iata, city_id,
          |       number_of_runways, number_of_terminals, capacity,
@@ -43,7 +46,23 @@ private[repository] object AirportQueries {
          |   )
          | """.stripMargin.update
 
-  def deleteAirport(id: Long): Update0 = deleteWhereId[AirportModel](id)
+  def modifyAirport(model: Airport): Update0 =
+    sql"""
+         | UPDATE airport
+         | SET
+         |  name = ${model.name},
+         |  icao = ${model.icao},
+         |  iata = ${model.iata},
+         |  city_id = ${model.cityId},
+         |  number_of_runways = ${model.numRunways},
+         |  number_of_terminals = ${model.numTerminals},
+         |  capacity = ${model.capacity},
+         |  international = ${model.international},
+         |  junction = ${model.junction}
+         | WHERE id = ${model.id}
+       """.stripMargin.update
+
+  def deleteAirport(id: Long): Update0 = deleteWhereId[Airport](id)
 
   private def selectAll: Fragment =
     fr"""

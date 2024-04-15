@@ -11,7 +11,4 @@ abstract class Endpoints[F[_]: Monad](prefix: String) extends Http4sDsl[F] {
   implicit val dsl: Http4sDsl[F] with RequestDslBinCompat = Http4sDsl.apply[F]
   lazy val routes: HttpRoutes[F] = Router(prefix -> endpoints)
   def endpoints: HttpRoutes[F]
-
-  def allowedFields: Set[String] =
-    Set.empty // TODO: Remove default once it's implemented in all endpoints
 }

@@ -7,6 +7,12 @@ import flightdatabase.domain.TableBase
 package object queries {
 
   // Helper methods for queries
+  def idExistsQuery[T](id: Long)(implicit T: TableBase[T]): Query0[Boolean] = {
+    fr"SELECT EXISTS(" ++
+    fr"SELECT 1 FROM" ++ Fragment.const(T.asString) ++ whereFragment("id", id) ++
+    fr")"
+  }.query[Boolean]
+
   def selectWhereQuery[ST: TableBase, SV: Read, W: Put](
     selectField: String,
     whereField: String,

@@ -22,7 +22,6 @@ class LanguageEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Lang
         algebra.getLanguages.flatMap(toResponse(_))
       }
 
-    // TODO: Refactor (move actual logic to `LanguageRepository`)
     case req @ POST -> Root =>
       req
         .attemptAs[LanguageModel]
