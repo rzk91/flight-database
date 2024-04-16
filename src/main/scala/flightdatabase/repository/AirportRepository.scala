@@ -11,7 +11,7 @@ import flightdatabase.domain.airport.Airport
 import flightdatabase.domain.airport.AirportAlgebra
 import flightdatabase.domain.airport.AirportCreate
 import flightdatabase.domain.airport.AirportPatch
-import flightdatabase.domain.city.CityModel
+import flightdatabase.domain.city.City
 import flightdatabase.domain.country.CountryModel
 import flightdatabase.repository.queries.AirportQueries._
 import flightdatabase.utils.FieldValue
@@ -37,14 +37,14 @@ class AirportRepository[F[_]: Concurrent] private (
     selectAirportBy("icao", icao).asSingle(icao).execute
 
   override def getAirportsByCity(city: String): F[ApiResult[List[Airport]]] =
-    selectAllAirportsByExternal[CityModel, String]("name", city).asList.execute
+    selectAllAirportsByExternal[City, String]("name", city).asList.execute
 
   override def getAirportsByCountry(country: String): F[ApiResult[List[Airport]]] =
-    getFieldList[CityModel, String, CountryModel, String]("name", FieldValue("name", country)).flatMap {
+    getFieldList[City, String, CountryModel, String]("name", FieldValue("name", country)).flatMap {
       case Left(error) => liftErrorToApiResult[List[Airport]](error).pure[ConnectionIO]
       case Right(cityNames) =>
         cityNames.value
-          .flatTraverse(selectAllAirportsByExternal[CityModel, String]("name", _).to[List])
+          .flatTraverse(selectAllAirportsByExternal[City, String]("name", _).to[List])
           .map(liftListToApiResult)
     }.execute
 

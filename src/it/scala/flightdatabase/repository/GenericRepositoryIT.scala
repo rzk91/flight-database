@@ -3,7 +3,7 @@ package flightdatabase.repository
 import cats.effect.unsafe.implicits.global
 import doobie.implicits._
 import flightdatabase.domain.EntryNotFound
-import flightdatabase.domain.city.CityModel
+import flightdatabase.domain.city.City
 import flightdatabase.domain.country.CountryModel
 import flightdatabase.testutils.RepositoryCheck
 import flightdatabase.utils.FieldValue
@@ -27,7 +27,7 @@ final class GenericRepositoryIT extends RepositoryCheck {
 
   "Selecting all city names in Germany" should "return a correct list" in {
     val cityNames =
-      getFieldList[CityModel, String, CountryModel, String]("name", FieldValue("name", "Germany")).execute
+      getFieldList[City, String, CountryModel, String]("name", FieldValue("name", "Germany")).execute
         .unsafeRunSync()
         .value
         .value
@@ -38,7 +38,7 @@ final class GenericRepositoryIT extends RepositoryCheck {
 
   "Selecting all city names in Brazil" should "return an empty list" in {
     val cityNames =
-      getFieldList[CityModel, String, CountryModel, String]("name", FieldValue("name", "Brazil")).execute
+      getFieldList[City, String, CountryModel, String]("name", FieldValue("name", "Brazil")).execute
         .unsafeRunSync()
         .left
         .value

@@ -32,7 +32,7 @@ class AirplaneRepository[F[_]: Concurrent] private (
     selectAirplanesBy(field, value).asList.execute
 
   override def getAirplanesByManufacturer(manufacturer: String): F[ApiResult[List[Airplane]]] =
-    selectAllAirplanesByExternal[ManufacturerModel, String]("name", manufacturer).asList.execute
+    selectAirplanesByExternal[ManufacturerModel, String]("name", manufacturer).asList.execute
 
   override def createAirplane(airplane: AirplaneCreate): F[ApiResult[Long]] =
     insertAirplane(airplane).attemptInsert.execute
