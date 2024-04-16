@@ -19,6 +19,8 @@ class AirplaneRepository[F[_]: Concurrent] private (
   implicit transactor: Transactor[F]
 ) extends AirplaneAlgebra[F] {
 
+  override def doesAirplaneExist(id: Long): F[Boolean] = airplaneExists(id).unique.execute
+
   override def getAirplanes: F[ApiResult[List[Airplane]]] =
     selectAllAirplanes.asList.execute
 

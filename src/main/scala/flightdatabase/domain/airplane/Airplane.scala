@@ -28,13 +28,7 @@ object Airplane {
     }
 
   def fromCreateUnsafe(model: AirplaneCreate): Airplane =
-    Airplane(
-      model.id.get,
-      model.name,
-      model.manufacturerId,
-      model.capacity,
-      model.maxRangeInKm
-    )
+    fromCreate(model).get
 
   def fromPatch(id: Long, patch: AirplanePatch, original: Airplane): Airplane =
     Airplane(

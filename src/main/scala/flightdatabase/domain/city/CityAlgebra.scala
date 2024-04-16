@@ -4,6 +4,8 @@ import doobie.Put
 import flightdatabase.domain.ApiResult
 
 trait CityAlgebra[F[_]] {
+
+  def doesCityExist(id: Long): F[Boolean]
   def getCities: F[ApiResult[List[City]]]
   def getCitiesOnlyNames: F[ApiResult[List[String]]]
   def getCity(id: Long): F[ApiResult[City]]

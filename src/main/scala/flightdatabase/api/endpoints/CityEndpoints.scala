@@ -19,6 +19,14 @@ class CityEndpoints[F[_]: Concurrent] private (prefix: String, algebra: CityAlge
     extends Endpoints[F](prefix) {
 
   override def endpoints: HttpRoutes[F] = HttpRoutes.of {
+
+    // HEAD /cities/{id}
+    case HEAD -> Root / LongVar(id) =>
+      algebra.doesCityExist(id).flatMap {
+        case true  => Ok()
+        case false => NotFound()
+      }
+
     // GET /cities?only-names
     case GET -> Root :? OnlyNamesFlagMatcher(onlyNames) =>
       if (onlyNames) {

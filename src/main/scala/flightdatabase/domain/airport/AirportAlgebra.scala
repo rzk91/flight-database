@@ -3,6 +3,7 @@ package flightdatabase.domain.airport
 import flightdatabase.domain.ApiResult
 
 trait AirportAlgebra[F[_]] {
+  def doesAirportExist(id: Long): F[Boolean]
   def getAirports: F[ApiResult[List[Airport]]]
   def getAirportsOnlyNames: F[ApiResult[List[String]]]
   def getAirport(id: Long): F[ApiResult[Airport]]

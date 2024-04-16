@@ -1,16 +1,34 @@
 package flightdatabase.repository.queries
 
 import doobie.Fragment
+import doobie.Put
 import doobie.Query0
 import doobie.Update0
 import doobie.implicits.toSqlInterpolator
-import flightdatabase.domain.country.CountryModel
+import flightdatabase.domain.TableBase
+import flightdatabase.domain.country.Country
+import flightdatabase.domain.country.CountryCreate
 
 private[repository] object CountryQueries {
 
-  def selectAllCountries: Query0[CountryModel] = selectAll.query[CountryModel]
+  def countryExists(id: Long): Query0[Boolean] = idExistsQuery[Country](id)
 
-  def insertCountry(model: CountryModel): Update0 =
+  def selectAllCountries: Query0[Country] = selectAll.query[Country]
+
+  def selectCountriesBy[V: Put](field: String, value: V): Query0[Country] =
+    (selectAll ++ whereFragment(s"country.$field", value)).query[Country]
+
+  def selectCountriesByExternal[ET: TableBase, EV: Put](
+    externalField: String,
+    externalValue: EV
+  ): Query0[Country] = {
+    selectAll ++ innerJoinWhereFragment[Country, ET, EV](
+      externalField,
+      externalValue
+    )
+  }.query[Country]
+
+  def insertCountry(model: CountryCreate): Update0 =
     sql"""INSERT INTO country 
          |       (name, iso2, iso3, country_code, domain_name, 
          |       main_language_id, secondary_language_id, tertiary_language_id, 
@@ -29,7 +47,24 @@ private[repository] object CountryQueries {
          |   );
          | """.stripMargin.update
 
-  def deleteCountry(id: Long): Update0 = deleteWhereId[CountryModel](id)
+  def modifyCountry(model: Country): Update0 =
+    sql"""
+         | UPDATE country
+         | SET
+         |  name = ${model.name},
+         |  iso2 = ${model.iso2},
+         |  iso3 = ${model.iso3},
+         |  country_code = ${model.countryCode},
+         |  domain_name = ${model.domainName},
+         |  main_language_id = ${model.mainLanguageId},
+         |  secondary_language_id = ${model.secondaryLanguageId},
+         |  tertiary_language_id = ${model.tertiaryLanguageId},
+         |  currency_id = ${model.currencyId},
+         |  nationality = ${model.nationality}
+         | WHERE id = ${model.id}
+         | """.stripMargin.update
+
+  def deleteCountry(id: Long): Update0 = deleteWhereId[Country](id)
 
   private def selectAll: Fragment =
     fr"""

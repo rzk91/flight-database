@@ -19,6 +19,13 @@ class AirplaneEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airp
     extends Endpoints[F](prefix) {
 
   override def endpoints: HttpRoutes[F] = HttpRoutes.of {
+    // HEAD /airplanes/{id}
+    case HEAD -> Root / LongVar(id) =>
+      algebra.doesAirplaneExist(id).flatMap {
+        case true  => Ok()
+        case false => NotFound()
+      }
+
     // GET /airplanes?only-names
     case GET -> Root :? OnlyNamesFlagMatcher(onlyNames) =>
       if (onlyNames) {

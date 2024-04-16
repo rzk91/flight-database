@@ -33,16 +33,7 @@ object City {
     }
 
   def fromCreateUnsafe(model: CityCreate): City =
-    City(
-      model.id.get,
-      model.name,
-      model.countryId,
-      model.capital,
-      model.population,
-      model.latitude,
-      model.longitude,
-      model.timezone
-    )
+    fromCreate(model).get
 
   def fromPatch(id: Long, patch: CityPatch, original: City): City =
     City(

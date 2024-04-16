@@ -12,7 +12,7 @@ import flightdatabase.domain.airport.AirportAlgebra
 import flightdatabase.domain.airport.AirportCreate
 import flightdatabase.domain.airport.AirportPatch
 import flightdatabase.domain.city.City
-import flightdatabase.domain.country.CountryModel
+import flightdatabase.domain.country.Country
 import flightdatabase.repository.queries.AirportQueries._
 import flightdatabase.utils.FieldValue
 import flightdatabase.utils.implicits._
@@ -20,6 +20,8 @@ import flightdatabase.utils.implicits._
 class AirportRepository[F[_]: Concurrent] private (
   implicit transactor: Transactor[F]
 ) extends AirportAlgebra[F] {
+
+  override def doesAirportExist(id: Long): F[Boolean] = airportExists(id).unique.execute
 
   override def getAirports: F[ApiResult[List[Airport]]] =
     selectAllAirports.asList.execute
@@ -40,7 +42,7 @@ class AirportRepository[F[_]: Concurrent] private (
     selectAllAirportsByExternal[City, String]("name", city).asList.execute
 
   override def getAirportsByCountry(country: String): F[ApiResult[List[Airport]]] =
-    getFieldList[City, String, CountryModel, String]("name", FieldValue("name", country)).flatMap {
+    getFieldList[City, String, Country, String]("name", FieldValue("name", country)).flatMap {
       case Left(error) => liftErrorToApiResult[List[Airport]](error).pure[ConnectionIO]
       case Right(cityNames) =>
         cityNames.value

@@ -2,7 +2,7 @@ package flightdatabase.repository.queries
 
 import flightdatabase.domain.airplane.AirplaneCreate
 import flightdatabase.domain.city.City
-import flightdatabase.domain.country.CountryModel
+import flightdatabase.domain.country.Country
 import flightdatabase.domain.manufacturer.ManufacturerModel
 import flightdatabase.testutils.DbChecker
 
@@ -29,7 +29,7 @@ final class DomainSpecificQueryIT extends DbChecker {
   // City checks
   "All city queries" should "work correctly" in {
     check(CityQueries.selectAllCities)
-    check(CityQueries.selectCitiesByExternal[CountryModel, String]("name", "Germany"))
+    check(CityQueries.selectCitiesByExternal[Country, String]("name", "Germany"))
     check(CityQueries.deleteCity(1))
   }
 

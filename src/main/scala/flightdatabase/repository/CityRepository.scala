@@ -11,13 +11,15 @@ import flightdatabase.domain.city.City
 import flightdatabase.domain.city.CityAlgebra
 import flightdatabase.domain.city.CityCreate
 import flightdatabase.domain.city.CityPatch
-import flightdatabase.domain.country.CountryModel
+import flightdatabase.domain.country.Country
 import flightdatabase.repository.queries.CityQueries._
 import flightdatabase.utils.implicits._
 
 class CityRepository[F[_]: Concurrent] private (
   implicit transactor: Transactor[F]
 ) extends CityAlgebra[F] {
+
+  override def doesCityExist(id: Long): F[Boolean] = cityExists(id).unique.execute
 
   override def getCities: F[ApiResult[List[City]]] = selectAllCities.asList.execute
 
@@ -30,7 +32,7 @@ class CityRepository[F[_]: Concurrent] private (
     selectCitiesBy(field, value).asList.execute
 
   override def getCitiesByCountry(country: String): F[ApiResult[List[City]]] =
-    selectCitiesByExternal[CountryModel, String]("name", country).asList.execute
+    selectCitiesByExternal[Country, String]("name", country).asList.execute
 
   override def createCity(city: CityCreate): F[ApiResult[Long]] =
     insertCity(city).attemptInsert.execute

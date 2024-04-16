@@ -4,6 +4,7 @@ import doobie.Put
 import flightdatabase.domain.ApiResult
 
 trait AirplaneAlgebra[F[_]] {
+  def doesAirplaneExist(id: Long): F[Boolean]
   def getAirplanes: F[ApiResult[List[Airplane]]]
   def getAirplanesOnlyNames: F[ApiResult[List[String]]]
   def getAirplane(id: Long): F[ApiResult[Airplane]]
