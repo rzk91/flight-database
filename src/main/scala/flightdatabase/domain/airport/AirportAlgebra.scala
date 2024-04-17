@@ -1,5 +1,6 @@
 package flightdatabase.domain.airport
 
+import doobie.Put
 import flightdatabase.domain.ApiResult
 
 trait AirportAlgebra[F[_]] {
@@ -7,8 +8,7 @@ trait AirportAlgebra[F[_]] {
   def getAirports: F[ApiResult[List[Airport]]]
   def getAirportsOnlyNames: F[ApiResult[List[String]]]
   def getAirport(id: Long): F[ApiResult[Airport]]
-  def getAirportByIata(iata: String): F[ApiResult[Airport]]
-  def getAirportByIcao(icao: String): F[ApiResult[Airport]]
+  def getAirportsBy[V: Put](field: String, value: V): F[ApiResult[List[Airport]]]
   def getAirportsByCity(city: String): F[ApiResult[List[Airport]]]
   def getAirportsByCountry(country: String): F[ApiResult[List[Airport]]]
   def createAirport(airport: AirportCreate): F[ApiResult[Long]]

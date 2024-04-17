@@ -19,6 +19,7 @@ class FlightDbApi[F[_]: Async] private (
 
   private val helloWorldEndpoints = HelloWorldEndpoints[F]("/hello", apiConfig.flightDbBaseUri)
   private val airplaneEndpoints = AirplaneEndpoints[F]("/airplanes", repos.airplaneRepository)
+  private val airportEndpoints = AirportEndpoints[F]("/airports", repos.airportRepository)
   private val cityEndpoints = CityEndpoints[F]("/cities", repos.cityRepository)
   private val countryEndpoints = CountryEndpoints[F]("/countries", repos.countryRepository)
   private val currencyEndpoints = CurrencyEndpoints[F]("/currencies", repos.currencyRepository)
@@ -32,6 +33,7 @@ class FlightDbApi[F[_]: Async] private (
     List(
       helloWorldEndpoints,
       airplaneEndpoints,
+      airportEndpoints,
       cityEndpoints,
       countryEndpoints,
       currencyEndpoints,

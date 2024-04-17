@@ -15,7 +15,7 @@ private[repository] object AirportQueries {
 
   def selectAllAirports: Query0[Airport] = selectAll.query[Airport]
 
-  def selectAirportBy[V: Put](field: String, value: V): Query0[Airport] =
+  def selectAirportsBy[V: Put](field: String, value: V): Query0[Airport] =
     (selectAll ++ whereFragment(s"airport.$field", value)).query[Airport]
 
   def selectAllAirportsByExternal[ET: TableBase, EV: Put](
