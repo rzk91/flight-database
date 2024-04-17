@@ -1,9 +1,13 @@
 package flightdatabase.api.endpoints
 
 import cats.Applicative
+import cats.data.EitherT
 import cats.effect.Concurrent
+import cats.implicits.catsSyntaxApplicativeId
+import cats.implicits.catsSyntaxEitherId
 import cats.implicits.toFlatMapOps
 import flightdatabase.api.toResponse
+import flightdatabase.domain.ApiError
 import flightdatabase.domain.ApiResult
 import flightdatabase.domain.EntryInvalidFormat
 import flightdatabase.domain.InconsistentIds
@@ -48,17 +52,19 @@ class FleetEndpoints[F[_]: Concurrent] private (prefix: String, algebra: FleetAl
     case GET -> Root / "iso2" / iso2 =>
       algebra.getFleets("iso2", iso2).flatMap(toResponse(_))
 
-    // GET /fleets/hub-airport/{hubAirportId}
-    case GET -> Root / "hub-airport" / LongVar(hubAirportId) =>
-      algebra.getFleets("hub_airport_id", hubAirportId).flatMap(toResponse(_))
-
-    // GET /fleets/hub-airport-iata/{hubAirportIata}
-    case GET -> Root / "hub-airport-iata" / hubAirportIata =>
-      algebra.getFleetByHubAirportIata(hubAirportIata).flatMap(toResponse(_))
-
-    // GET /fleets/hub-airport-icao/{hubAirportIcao}
-    case GET -> Root / "hub-airport-icao" / hubAirportIcao =>
-      algebra.getFleetByHubAirportIcao(hubAirportIcao).flatMap(toResponse(_))
+    // GET /fleets/hub/{airport_id} OR
+    // GET /fleets/hub/{iata} OR
+    // GET /fleets/hub/{icao}
+    case GET -> Root / "hub" / hub =>
+      hub.asLong.fold {
+        EitherT(algebra.getFleetByHubAirportIata(hub))
+          .flatMapF { fleetsOutput =>
+            if (fleetsOutput.value.isEmpty) algebra.getFleetByHubAirportIcao(hub)
+            else fleetsOutput.asRight[ApiError].pure[F]
+          }
+          .value
+          .flatMap(toResponse(_))
+      }(hubAirportId => algebra.getFleets("hub_airport_id", hubAirportId).flatMap(toResponse(_)))
 
     // POST /fleets
     case req @ POST -> Root =>
