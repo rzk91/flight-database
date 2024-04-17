@@ -34,12 +34,14 @@ package object queries {
 
   def innerJoinWhereFragment[MT: TableBase, ET: TableBase, EV: Put](
     externalField: String,
-    externalValue: EV
+    externalValue: EV,
+    overrideExternalIdField: Option[String] = None
   ): Fragment = {
     val mainTable = implicitly[TableBase[MT]].asString
     val externalTable = implicitly[TableBase[ET]].asString
+    val externalIdField = overrideExternalIdField.getOrElse(s"${externalTable}_id")
     fr"INNER JOIN" ++ Fragment.const(externalTable) ++ fr"ON" ++
-    Fragment.const(s"$mainTable.${externalTable}_id") ++
+    Fragment.const(s"$mainTable.$externalIdField") ++
     fr"=" ++ Fragment.const(s"$externalTable.id") ++
     whereFragment(s"$externalTable.$externalField", externalValue)
   }

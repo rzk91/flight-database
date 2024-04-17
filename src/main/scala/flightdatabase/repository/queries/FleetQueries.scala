@@ -5,7 +5,7 @@ import doobie.Put
 import doobie.Query0
 import doobie.Update0
 import doobie.implicits._
-import flightdatabase.domain.TableBase
+import flightdatabase.domain.airport.Airport
 import flightdatabase.domain.fleet.Fleet
 import flightdatabase.domain.fleet.FleetCreate
 
@@ -18,13 +18,14 @@ private[repository] object FleetQueries {
   def selectFleetsBy[V: Put](field: String, value: V): Query0[Fleet] =
     (selectAll ++ whereFragment(s"fleet.$field", value)).query[Fleet]
 
-  def selectFleetByExternal[ET: TableBase, EV: Put](
+  def selectFleetByAirport[EV: Put](
     externalField: String,
     externalValue: EV
   ): Query0[Fleet] = {
-    selectAll ++ innerJoinWhereFragment[Fleet, ET, EV](
+    selectAll ++ innerJoinWhereFragment[Fleet, Airport, EV](
       externalField,
-      externalValue
+      externalValue,
+      Some("hub_airport_id")
     )
   }.query[Fleet]
 

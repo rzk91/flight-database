@@ -7,7 +7,6 @@ import cats.implicits._
 import doobie.Put
 import doobie.Transactor
 import flightdatabase.domain.ApiResult
-import flightdatabase.domain.airport.Airport
 import flightdatabase.domain.fleet.Fleet
 import flightdatabase.domain.fleet.FleetAlgebra
 import flightdatabase.domain.fleet.FleetCreate
@@ -33,10 +32,10 @@ class FleetRepository[F[_]: Concurrent] private (
     selectFleetsBy(field, value).asList.execute
 
   override def getFleetByHubAirportIata(hubAirportIata: String): F[ApiResult[List[Fleet]]] =
-    selectFleetByExternal[Airport, String]("iata", hubAirportIata).asList.execute
+    selectFleetByAirport[String]("iata", hubAirportIata).asList.execute
 
   override def getFleetByHubAirportIcao(hubAirportIcao: String): F[ApiResult[List[Fleet]]] =
-    selectFleetByExternal[Airport, String]("icao", hubAirportIcao).asList.execute
+    selectFleetByAirport[String]("icao", hubAirportIcao).asList.execute
 
   override def createFleet(fleet: FleetCreate): F[ApiResult[Long]] =
     insertFleet(fleet).attemptInsert.execute

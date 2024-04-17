@@ -14,11 +14,11 @@ class RichUpdate(private val update: Update0) extends AnyVal {
     update
       .withUniqueGeneratedKeys[Long]("id")
       .attemptSqlState
-      .map(_.foldMap(sqlStateToApiError, Created(_)))
+      .map(_.bimap(sqlStateToApiError, Created(_)))
 
   def attemptUpdate[A](updated: A)(implicit T: TableBase[A]): ConnectionIO[ApiResult[A]] =
     update.run.attemptSqlState
-      .map(_.foldMap(sqlStateToApiError, _ => Updated(updated)))
+      .map(_.bimap(sqlStateToApiError, _ => Updated(updated)))
 
   def attemptDelete[E](entry: E): ConnectionIO[ApiResult[Unit]] =
     update.run.map {
