@@ -1,12 +1,17 @@
 package flightdatabase.repository
 
+import cats.data.EitherT
 import cats.effect.Concurrent
 import cats.effect.Resource
 import cats.implicits._
+import doobie.Put
 import doobie.Transactor
 import flightdatabase.domain.ApiResult
+import flightdatabase.domain.airport.Airport
+import flightdatabase.domain.fleet.Fleet
 import flightdatabase.domain.fleet.FleetAlgebra
-import flightdatabase.domain.fleet.FleetModel
+import flightdatabase.domain.fleet.FleetCreate
+import flightdatabase.domain.fleet.FleetPatch
 import flightdatabase.repository.queries.FleetQueries._
 import flightdatabase.utils.implicits._
 
@@ -14,25 +19,36 @@ class FleetRepository[F[_]: Concurrent] private (
   implicit transactor: Transactor[F]
 ) extends FleetAlgebra[F] {
 
-  override def getFleets: F[ApiResult[List[FleetModel]]] = selectAllFleets.asList.execute
+  override def doesFleetExist(id: Long): F[Boolean] = fleetExists(id).unique.execute
+
+  override def getFleets: F[ApiResult[List[Fleet]]] = selectAllFleets.asList.execute
 
   override def getFleetsOnlyNames: F[ApiResult[List[String]]] =
-    getFieldList[FleetModel, String]("name").execute
+    getFieldList[Fleet, String]("name").execute
 
-  override def getFleet(id: Long): F[ApiResult[FleetModel]] =
-    featureNotImplemented[F, FleetModel]
+  override def getFleet(id: Long): F[ApiResult[Fleet]] =
+    selectFleetsBy("id", id).asSingle(id).execute
 
-  override def getFleetByName(name: String): F[ApiResult[FleetModel]] =
-    featureNotImplemented[F, FleetModel]
+  override def getFleets[V: Put](field: String, value: V): F[ApiResult[List[Fleet]]] =
+    selectFleetsBy(field, value).asList.execute
 
-  override def getFleetsByHub(hub: String): F[ApiResult[List[FleetModel]]] =
-    featureNotImplemented[F, List[FleetModel]]
+  override def getFleetByHubAirportIata(hubAirportIata: String): F[ApiResult[List[Fleet]]] =
+    selectFleetByExternal[Airport, String]("iata", hubAirportIata).asList.execute
 
-  override def createFleet(fleet: FleetModel): F[ApiResult[Long]] =
+  override def getFleetByHubAirportIcao(hubAirportIcao: String): F[ApiResult[List[Fleet]]] =
+    selectFleetByExternal[Airport, String]("icao", hubAirportIcao).asList.execute
+
+  override def createFleet(fleet: FleetCreate): F[ApiResult[Long]] =
     insertFleet(fleet).attemptInsert.execute
 
-  override def updateFleet(fleet: FleetModel): F[ApiResult[FleetModel]] =
-    featureNotImplemented[F, FleetModel]
+  override def updateFleet(fleet: Fleet): F[ApiResult[Fleet]] =
+    modifyFleet(fleet).attemptUpdate(fleet).execute
+
+  override def partiallyUpdateFleet(id: Long, patch: FleetPatch): F[ApiResult[Fleet]] =
+    EitherT(getFleet(id)).flatMapF { fleetOutput =>
+      val fleet = fleetOutput.value
+      updateFleet(Fleet.fromPatch(id, patch, fleet))
+    }.value
 
   override def removeFleet(id: Long): F[ApiResult[Unit]] =
     deleteFleet(id).attemptDelete(id).execute
