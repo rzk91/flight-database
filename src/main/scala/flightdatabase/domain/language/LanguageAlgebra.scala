@@ -1,14 +1,16 @@
 package flightdatabase.domain.language
 
+import doobie.Put
 import flightdatabase.domain.ApiResult
 
 trait LanguageAlgebra[F[_]] {
-  def getLanguages: F[ApiResult[List[LanguageModel]]]
+  def doesLanguageExist(id: Long): F[Boolean]
+  def getLanguages: F[ApiResult[List[Language]]]
   def getLanguagesOnlyNames: F[ApiResult[List[String]]]
-  def getLanguage(id: Long): F[ApiResult[LanguageModel]]
-  def createLanguage(language: LanguageModel): F[ApiResult[Long]]
-
-  // TODO: How do we want to handle updates? Patches or full updates?
-  def updateLanguage(language: LanguageModel): F[ApiResult[LanguageModel]]
+  def getLanguage(id: Long): F[ApiResult[Language]]
+  def getLanguages[V: Put](field: String, value: V): F[ApiResult[List[Language]]]
+  def createLanguage(language: LanguageCreate): F[ApiResult[Long]]
+  def updateLanguage(language: Language): F[ApiResult[Language]]
+  def partiallyUpdateLanguage(id: Long, patch: LanguagePatch): F[ApiResult[Language]]
   def removeLanguage(id: Long): F[ApiResult[Unit]]
 }

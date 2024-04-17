@@ -27,7 +27,7 @@ class CurrencyRepository[F[_]: Concurrent] private (
     getFieldList[Currency, String]("name").execute
 
   override def getCurrency(id: Long): F[ApiResult[Currency]] =
-    featureNotImplemented[F, Currency]
+    selectCurrencyBy("id", id).asSingle(id).execute
 
   override def getCurrencies[V: Put](field: String, value: V): F[ApiResult[List[Currency]]] =
     selectCurrencyBy(field, value).asList.execute
