@@ -1,11 +1,11 @@
 package flightdatabase.api.endpoints
 
-import cats.Applicative
 import cats.effect._
 import cats.implicits._
 import flightdatabase.api._
 import flightdatabase.domain.ApiResult
 import flightdatabase.domain.EntryInvalidFormat
+import flightdatabase.domain.InconsistentIds
 import flightdatabase.domain.currency.Currency
 import flightdatabase.domain.currency.CurrencyAlgebra
 import flightdatabase.domain.currency.CurrencyCreate
@@ -53,7 +53,7 @@ class CurrencyEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Curr
       req
         .attemptAs[CurrencyCreate]
         .foldF[ApiResult[Long]](
-          _ => Applicative[F].pure(Left(EntryInvalidFormat)),
+          _ => EntryInvalidFormat.elevate[F, Long],
           algebra.createCurrency
         )
         .flatMap(toResponse(_))
@@ -66,10 +66,10 @@ class CurrencyEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Curr
         req
           .attemptAs[Currency]
           .foldF[ApiResult[Currency]](
-            _ => Applicative[F].pure(Left(EntryInvalidFormat)),
+            _ => EntryInvalidFormat.elevate[F, Currency],
             currency =>
               if (id != currency.id) {
-                Applicative[F].pure(Left(EntryInvalidFormat))
+                InconsistentIds(id, currency.id).elevate[F, Currency]
               } else {
                 algebra.updateCurrency(currency)
               }
@@ -85,7 +85,7 @@ class CurrencyEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Curr
         req
           .attemptAs[CurrencyPatch]
           .foldF[ApiResult[Currency]](
-            _ => Applicative[F].pure(Left(EntryInvalidFormat)),
+            _ => EntryInvalidFormat.elevate[F, Currency],
             algebra.partiallyUpdateCurrency(id, _)
           )
           .flatMap(toResponse(_))

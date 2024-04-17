@@ -1,6 +1,5 @@
 package flightdatabase.api.endpoints
 
-import cats.Applicative
 import cats.effect._
 import cats.implicits._
 import flightdatabase.api._
@@ -57,7 +56,7 @@ class AirplaneEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airp
       req
         .attemptAs[AirplaneCreate]
         .foldF[ApiResult[Long]](
-          _ => Applicative[F].pure(Left(EntryInvalidFormat)),
+          _ => EntryInvalidFormat.elevate[F, Long],
           algebra.createAirplane
         )
         .flatMap(toResponse(_))
@@ -70,10 +69,10 @@ class AirplaneEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airp
         req
           .attemptAs[Airplane]
           .foldF[ApiResult[Airplane]](
-            _ => Applicative[F].pure(Left(EntryInvalidFormat)),
+            _ => EntryInvalidFormat.elevate[F, Airplane],
             airplane =>
               if (id != airplane.id) {
-                Applicative[F].pure(Left(InconsistentIds(id, airplane.id)))
+                InconsistentIds(id, airplane.id).elevate[F, Airplane]
               } else {
                 algebra.updateAirplane(airplane)
               }
@@ -89,7 +88,7 @@ class AirplaneEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airp
         req
           .attemptAs[AirplanePatch]
           .foldF[ApiResult[Airplane]](
-            _ => Applicative[F].pure(Left(EntryInvalidFormat)),
+            _ => EntryInvalidFormat.elevate[F, Airplane],
             algebra.partiallyUpdateAirplane(id, _)
           )
           .flatMap(toResponse(_))

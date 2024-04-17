@@ -1,6 +1,5 @@
 package flightdatabase.api.endpoints
 
-import cats.Applicative
 import cats.effect.Concurrent
 import cats.implicits.toFlatMapOps
 import flightdatabase.api.toResponse
@@ -65,7 +64,7 @@ class AirportEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airpo
       req
         .attemptAs[AirportCreate]
         .foldF[ApiResult[Long]](
-          _ => Applicative[F].pure(Left(EntryInvalidFormat)),
+          _ => EntryInvalidFormat.elevate[F, Long],
           algebra.createAirport
         )
         .flatMap(toResponse(_))
@@ -78,10 +77,10 @@ class AirportEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airpo
         req
           .attemptAs[Airport]
           .foldF[ApiResult[Airport]](
-            _ => Applicative[F].pure(Left(EntryInvalidFormat)),
+            _ => EntryInvalidFormat.elevate[F, Airport],
             airport =>
               if (id != airport.id) {
-                Applicative[F].pure(Left(InconsistentIds(id, airport.id)))
+                InconsistentIds(id, airport.id).elevate[F, Airport]
               } else {
                 algebra.updateAirport(airport)
               }
@@ -97,7 +96,7 @@ class AirportEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airpo
         req
           .attemptAs[AirportPatch]
           .foldF[ApiResult[Airport]](
-            _ => Applicative[F].pure(Left(EntryInvalidFormat)),
+            _ => EntryInvalidFormat.elevate[F, Airport],
             algebra.partiallyUpdateAirport(id, _)
           )
           .flatMap(toResponse(_))

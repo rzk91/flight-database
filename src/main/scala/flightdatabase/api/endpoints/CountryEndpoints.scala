@@ -1,11 +1,11 @@
 package flightdatabase.api.endpoints
 
-import cats.Applicative
 import cats.effect._
 import cats.implicits._
 import flightdatabase.api._
 import flightdatabase.domain.ApiResult
 import flightdatabase.domain.EntryInvalidFormat
+import flightdatabase.domain.InconsistentIds
 import flightdatabase.domain.country.Country
 import flightdatabase.domain.country.CountryAlgebra
 import flightdatabase.domain.country.CountryCreate
@@ -49,7 +49,7 @@ class CountryEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Count
       req
         .attemptAs[CountryCreate]
         .foldF[ApiResult[Long]](
-          _ => Applicative[F].pure(Left(EntryInvalidFormat)),
+          _ => EntryInvalidFormat.elevate[F, Long],
           algebra.createCountry
         )
         .flatMap(toResponse(_))
@@ -62,10 +62,10 @@ class CountryEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Count
         req
           .attemptAs[Country]
           .foldF[ApiResult[Country]](
-            _ => Applicative[F].pure(Left(EntryInvalidFormat)),
+            _ => EntryInvalidFormat.elevate[F, Country],
             country =>
               if (id != country.id) {
-                Applicative[F].pure(Left(EntryInvalidFormat))
+                InconsistentIds(id, country.id).elevate[F, Country]
               } else {
                 algebra.updateCountry(country)
               }
@@ -81,7 +81,7 @@ class CountryEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Count
         req
           .attemptAs[CountryPatch]
           .foldF[ApiResult[Country]](
-            _ => Applicative[F].pure(Left(EntryInvalidFormat)),
+            _ => EntryInvalidFormat.elevate[F, Country],
             algebra.partiallyUpdateCountry(id, _)
           )
           .flatMap(toResponse(_))

@@ -1,6 +1,5 @@
 package flightdatabase.api.endpoints
 
-import cats.Applicative
 import cats.effect._
 import cats.implicits._
 import flightdatabase.api._
@@ -58,7 +57,7 @@ class CityEndpoints[F[_]: Concurrent] private (prefix: String, algebra: CityAlge
       req
         .attemptAs[CityCreate]
         .foldF[ApiResult[Long]](
-          _ => Applicative[F].pure(Left(EntryInvalidFormat)),
+          _ => EntryInvalidFormat.elevate[F, Long],
           algebra.createCity
         )
         .flatMap(toResponse(_))
@@ -71,10 +70,10 @@ class CityEndpoints[F[_]: Concurrent] private (prefix: String, algebra: CityAlge
         req
           .attemptAs[City]
           .foldF[ApiResult[City]](
-            _ => Applicative[F].pure(Left(EntryInvalidFormat)),
+            _ => EntryInvalidFormat.elevate[F, City],
             city =>
               if (id != city.id) {
-                Applicative[F].pure(Left(InconsistentIds(id, city.id)))
+                InconsistentIds(id, city.id).elevate[F, City]
               } else {
                 algebra.updateCity(city)
               }
@@ -90,7 +89,7 @@ class CityEndpoints[F[_]: Concurrent] private (prefix: String, algebra: CityAlge
         req
           .attemptAs[CityPatch]
           .foldF[ApiResult[City]](
-            _ => Applicative[F].pure(Left(EntryInvalidFormat)),
+            _ => EntryInvalidFormat.elevate[F, City],
             algebra.partiallyUpdateCity(id, _)
           )
           .flatMap(toResponse(_))

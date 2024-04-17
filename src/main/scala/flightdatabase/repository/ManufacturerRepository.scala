@@ -9,6 +9,7 @@ import doobie.Transactor
 import flightdatabase.domain.ApiResult
 import flightdatabase.domain.city.City
 import flightdatabase.domain.country.Country
+import flightdatabase.domain.listToApiResult
 import flightdatabase.domain.manufacturer.Manufacturer
 import flightdatabase.domain.manufacturer.ManufacturerAlgebra
 import flightdatabase.domain.manufacturer.ManufacturerCreate
@@ -45,7 +46,7 @@ class ManufacturerRepository[F[_]: Concurrent] private (
     ).flatMapF {
         _.value
           .flatTraverse(selectManufacturersByExternal[City, String]("name", _).to[List])
-          .map(liftListToApiResult)
+          .map(listToApiResult)
       }
       .value
       .execute

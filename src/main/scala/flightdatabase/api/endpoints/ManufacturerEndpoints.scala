@@ -1,6 +1,5 @@
 package flightdatabase.api.endpoints
 
-import cats.Applicative
 import cats.effect.Concurrent
 import cats.implicits.toFlatMapOps
 import flightdatabase.api.toResponse
@@ -63,7 +62,7 @@ class ManufacturerEndpoints[F[_]: Concurrent] private (
       req
         .attemptAs[ManufacturerCreate]
         .foldF[ApiResult[Long]](
-          _ => Applicative[F].pure(Left(EntryInvalidFormat)),
+          _ => EntryInvalidFormat.elevate[F, Long],
           algebra.createManufacturer
         )
         .flatMap(toResponse(_))
@@ -76,10 +75,10 @@ class ManufacturerEndpoints[F[_]: Concurrent] private (
         req
           .attemptAs[Manufacturer]
           .foldF[ApiResult[Manufacturer]](
-            _ => Applicative[F].pure(Left(EntryInvalidFormat)),
+            _ => EntryInvalidFormat.elevate[F, Manufacturer],
             m =>
               if (id != m.id) {
-                Applicative[F].pure(Left(InconsistentIds(id, m.id)))
+                InconsistentIds(id, m.id).elevate[F, Manufacturer]
               } else {
                 algebra.updateManufacturer(m)
               }
@@ -88,18 +87,24 @@ class ManufacturerEndpoints[F[_]: Concurrent] private (
       }
 
     // PATCH /manufacturers/{id}
-    case req @ PATCH -> Root / LongVar(id) =>
-      req
-        .attemptAs[ManufacturerPatch]
-        .foldF[ApiResult[Manufacturer]](
-          _ => Applicative[F].pure(Left(EntryInvalidFormat)),
-          algebra.partiallyUpdateManufacturer(id, _)
-        )
-        .flatMap(toResponse(_))
+    case req @ PATCH -> Root / id =>
+      id.asLong.fold {
+        BadRequest(EntryInvalidFormat.error)
+      } { id =>
+        req
+          .attemptAs[ManufacturerPatch]
+          .foldF[ApiResult[Manufacturer]](
+            _ => EntryInvalidFormat.elevate[F, Manufacturer],
+            algebra.partiallyUpdateManufacturer(id, _)
+          )
+          .flatMap(toResponse(_))
+      }
 
     // DELETE /manufacturers/{id}
-    case DELETE -> Root / LongVar(id) =>
-      algebra.removeManufacturer(id).flatMap(toResponse(_))
+    case DELETE -> Root / id =>
+      id.asLong.fold {
+        BadRequest(EntryInvalidFormat.error)
+      }(id => algebra.removeManufacturer(id).flatMap(toResponse(_)))
   }
 }
 

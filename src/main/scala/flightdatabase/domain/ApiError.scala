@@ -1,7 +1,14 @@
 package flightdatabase.domain
 
+import cats.Applicative
+import cats.syntax.either._
+
 // API errors
-sealed trait ApiError { def error: String }
+sealed trait ApiError {
+  def error: String
+  def asResult[A]: ApiResult[A] = this.asLeft[ApiOutput[A]]
+  def elevate[F[_]: Applicative, A]: F[ApiResult[A]] = Applicative[F].pure(asResult)
+}
 
 case object EntryAlreadyExists extends ApiError {
   override val error: String = "Error: Entry or a unique field therein already exists"

@@ -13,6 +13,7 @@ import flightdatabase.domain.airport.AirportCreate
 import flightdatabase.domain.airport.AirportPatch
 import flightdatabase.domain.city.City
 import flightdatabase.domain.country.Country
+import flightdatabase.domain.listToApiResult
 import flightdatabase.repository.queries.AirportQueries._
 import flightdatabase.utils.FieldValue
 import flightdatabase.utils.implicits._
@@ -43,7 +44,7 @@ class AirportRepository[F[_]: Concurrent] private (
       .flatMapF {
         _.value
           .flatTraverse(selectAllAirportsByExternal[City, String]("name", _).to[List])
-          .map(liftListToApiResult)
+          .map(listToApiResult)
       }
       .value
       .execute

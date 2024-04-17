@@ -1,16 +1,9 @@
 package flightdatabase.api.endpoints
 
-import cats.Applicative
-import cats.data.EitherT
 import cats.effect.Concurrent
-import cats.implicits.catsSyntaxApplicativeId
-import cats.implicits.catsSyntaxEitherId
-import cats.implicits.toFlatMapOps
+import cats.implicits._
 import flightdatabase.api.toResponse
-import flightdatabase.domain.ApiError
-import flightdatabase.domain.ApiResult
-import flightdatabase.domain.EntryInvalidFormat
-import flightdatabase.domain.InconsistentIds
+import flightdatabase.domain._
 import flightdatabase.domain.fleet.Fleet
 import flightdatabase.domain.fleet.FleetAlgebra
 import flightdatabase.domain.fleet.FleetCreate
@@ -56,22 +49,22 @@ class FleetEndpoints[F[_]: Concurrent] private (prefix: String, algebra: FleetAl
     // GET /fleets/hub/{iata} OR
     // GET /fleets/hub/{icao}
     case GET -> Root / "hub" / hub =>
-      hub.asLong.fold {
-        EitherT(algebra.getFleetByHubAirportIata(hub))
-          .flatMapF { fleetsOutput =>
-            if (fleetsOutput.value.isEmpty) algebra.getFleetByHubAirportIcao(hub)
-            else fleetsOutput.asRight[ApiError].pure[F]
+      {
+        hub.asLong.fold {
+          algebra.getFleetByHubAirportIata(hub).flatMap {
+            case Left(EntryListEmpty) => algebra.getFleetByHubAirportIcao(hub)
+            case Left(error)          => error.elevate[F, List[Fleet]]
+            case Right(list)          => list.elevate[F]
           }
-          .value
-          .flatMap(toResponse(_))
-      }(hubAirportId => algebra.getFleets("hub_airport_id", hubAirportId).flatMap(toResponse(_)))
+        }(hubAirportId => algebra.getFleets("hub_airport_id", hubAirportId))
+      }.flatMap(toResponse(_))
 
     // POST /fleets
     case req @ POST -> Root =>
       req
         .attemptAs[FleetCreate]
         .foldF[ApiResult[Long]](
-          _ => Applicative[F].pure(Left(EntryInvalidFormat)),
+          _ => EntryInvalidFormat.elevate[F, Long],
           algebra.createFleet
         )
         .flatMap(toResponse(_))
@@ -84,10 +77,10 @@ class FleetEndpoints[F[_]: Concurrent] private (prefix: String, algebra: FleetAl
         req
           .attemptAs[Fleet]
           .foldF[ApiResult[Fleet]](
-            _ => Applicative[F].pure(Left(EntryInvalidFormat)),
+            _ => EntryInvalidFormat.elevate[F, Fleet],
             fleet =>
               if (id != fleet.id) {
-                Applicative[F].pure(Left(InconsistentIds(id, fleet.id)))
+                InconsistentIds(id, fleet.id).elevate[F, Fleet]
               } else {
                 algebra.updateFleet(fleet)
               }
@@ -103,7 +96,7 @@ class FleetEndpoints[F[_]: Concurrent] private (prefix: String, algebra: FleetAl
         req
           .attemptAs[FleetPatch]
           .foldF[ApiResult[Fleet]](
-            _ => Applicative[F].pure(Left(EntryInvalidFormat)),
+            _ => EntryInvalidFormat.elevate[F, Fleet],
             algebra.partiallyUpdateFleet(id, _)
           )
           .flatMap(toResponse(_))

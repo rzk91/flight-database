@@ -1,6 +1,5 @@
 package flightdatabase.api.endpoints
 
-import cats._
 import cats.effect._
 import cats.implicits._
 import flightdatabase.api._
@@ -26,7 +25,7 @@ class LanguageEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Lang
       req
         .attemptAs[LanguageModel]
         .foldF[ApiResult[Long]](
-          _ => Applicative[F].pure(Left(EntryInvalidFormat)),
+          _ => EntryInvalidFormat.elevate[F, Long],
           algebra.createLanguage
         )
         .flatMap(toResponse(_))
