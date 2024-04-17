@@ -27,12 +27,14 @@ class FlightDbApi[F[_]: Async] private (
 
   private val fleetAirplaneEndpoints =
     FleetAirplaneEndpoints[F]("/fleet-airplanes", repos.fleetAirplaneRepository)
+
+  private val fleetRouteEndpoints =
+    FleetRouteEndpoints[F]("/fleet-routes", repos.fleetRouteRepository)
   private val languageEndpoints = LanguageEndpoints[F]("/languages", repos.languageRepository)
 
   private val manufacturerEndpoints =
     ManufacturerEndpoints[F]("/manufacturers", repos.manufacturerRepository)
 
-  // TODO: List is incomplete...
   val flightDbServices: HttpRoutes[F] =
     List(
       helloWorldEndpoints,
@@ -43,6 +45,7 @@ class FlightDbApi[F[_]: Async] private (
       currencyEndpoints,
       fleetEndpoints,
       fleetAirplaneEndpoints,
+      fleetRouteEndpoints,
       languageEndpoints,
       manufacturerEndpoints
     ).foldLeft(HttpRoutes.empty[F])(_ <+> _.routes)
