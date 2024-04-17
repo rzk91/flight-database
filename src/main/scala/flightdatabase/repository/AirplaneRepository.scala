@@ -11,7 +11,7 @@ import flightdatabase.domain.airplane.Airplane
 import flightdatabase.domain.airplane.AirplaneAlgebra
 import flightdatabase.domain.airplane.AirplaneCreate
 import flightdatabase.domain.airplane.AirplanePatch
-import flightdatabase.domain.manufacturer.ManufacturerModel
+import flightdatabase.domain.manufacturer.Manufacturer
 import flightdatabase.repository.queries.AirplaneQueries._
 import flightdatabase.utils.implicits._
 
@@ -34,7 +34,7 @@ class AirplaneRepository[F[_]: Concurrent] private (
     selectAirplanesBy(field, value).asList.execute
 
   override def getAirplanesByManufacturer(manufacturer: String): F[ApiResult[List[Airplane]]] =
-    selectAirplanesByExternal[ManufacturerModel, String]("name", manufacturer).asList.execute
+    selectAirplanesByExternal[Manufacturer, String]("name", manufacturer).asList.execute
 
   override def createAirplane(airplane: AirplaneCreate): F[ApiResult[Long]] =
     insertAirplane(airplane).attemptInsert.execute

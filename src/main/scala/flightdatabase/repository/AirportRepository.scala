@@ -4,7 +4,6 @@ import cats.data.EitherT
 import cats.effect.Concurrent
 import cats.effect.Resource
 import cats.implicits._
-import doobie.ConnectionIO
 import doobie.Transactor
 import flightdatabase.domain.ApiResult
 import flightdatabase.domain.airport.Airport
@@ -42,13 +41,14 @@ class AirportRepository[F[_]: Concurrent] private (
     selectAllAirportsByExternal[City, String]("name", city).asList.execute
 
   override def getAirportsByCountry(country: String): F[ApiResult[List[Airport]]] =
-    getFieldList[City, String, Country, String]("name", FieldValue("name", country)).flatMap {
-      case Left(error) => liftErrorToApiResult[List[Airport]](error).pure[ConnectionIO]
-      case Right(cityNames) =>
-        cityNames.value
+    EitherT(getFieldList[City, String, Country, String]("name", FieldValue("name", country)))
+      .flatMapF {
+        _.value
           .flatTraverse(selectAllAirportsByExternal[City, String]("name", _).to[List])
           .map(liftListToApiResult)
-    }.execute
+      }
+      .value
+      .execute
 
   override def createAirport(airport: AirportCreate): F[ApiResult[Long]] =
     insertAirport(airport).attemptInsert.execute
