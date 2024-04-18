@@ -104,11 +104,11 @@ class FleetRouteEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Fl
       } { id =>
         req
           .attemptAs[FleetRoute]
-          .foldF[ApiResult[FleetRoute]](
-            _ => EntryInvalidFormat.elevate[F, FleetRoute],
+          .foldF[ApiResult[Long]](
+            _ => EntryInvalidFormat.elevate[F, Long],
             fleetRoute =>
               if (id != fleetRoute.id) {
-                InconsistentIds(id, fleetRoute.id).elevate[F, FleetRoute]
+                InconsistentIds(id, fleetRoute.id).elevate[F, Long]
               } else {
                 algebra.updateFleetRoute(fleetRoute)
               }

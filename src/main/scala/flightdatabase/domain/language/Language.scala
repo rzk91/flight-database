@@ -15,19 +15,14 @@ import io.circe.generic.extras.ConfiguredJsonCodec
 object Language {
   implicit val languageTableBase: TableBase[Language] = TableBase.instance(LANGUAGE)
 
-  def fromCreate(model: LanguageCreate): Option[Language] =
-    model.id.map { id =>
-      Language(
-        id,
-        model.name,
-        model.iso2,
-        model.iso3,
-        model.originalName
-      )
-    }
-
-  def fromCreateUnsafe(model: LanguageCreate): Language =
-    fromCreate(model).get
+  def fromCreate(id: Long, model: LanguageCreate): Language =
+    Language(
+      id,
+      model.name,
+      model.iso2,
+      model.iso3,
+      model.originalName
+    )
 
   def fromPatch(id: Long, patch: LanguagePatch, original: Language): Language =
     Language(

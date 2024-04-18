@@ -36,8 +36,8 @@ class CountryRepository[F[_]: Concurrent] private (
   override def createCountry(country: CountryCreate): F[ApiResult[Long]] =
     insertCountry(country).attemptInsert.execute
 
-  override def updateCountry(country: Country): F[ApiResult[Country]] =
-    modifyCountry(country).attemptUpdate(country).execute
+  override def updateCountry(country: Country): F[ApiResult[Long]] =
+    modifyCountry(country).attemptUpdate(country.id).execute
 
   override def partiallyUpdateCountry(
     id: Long,
@@ -45,7 +45,8 @@ class CountryRepository[F[_]: Concurrent] private (
   ): F[ApiResult[Country]] =
     EitherT(getCountry(id)).flatMapF { countryOutput =>
       val country = countryOutput.value
-      updateCountry(Country.fromPatch(id, patch, country))
+      val patched = Country.fromPatch(id, patch, country)
+      modifyCountry(patched).attemptUpdate(patched).execute
     }.value
 
   override def removeCountry(id: Long): F[ApiResult[Unit]] =

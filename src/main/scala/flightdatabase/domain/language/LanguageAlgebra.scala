@@ -10,7 +10,7 @@ trait LanguageAlgebra[F[_]] {
   def getLanguage(id: Long): F[ApiResult[Language]]
   def getLanguages[V: Put](field: String, value: V): F[ApiResult[List[Language]]]
   def createLanguage(language: LanguageCreate): F[ApiResult[Long]]
-  def updateLanguage(language: Language): F[ApiResult[Language]]
+  def updateLanguage(language: Language): F[ApiResult[Long]]
   def partiallyUpdateLanguage(id: Long, patch: LanguagePatch): F[ApiResult[Language]]
   def removeLanguage(id: Long): F[ApiResult[Unit]]
 }

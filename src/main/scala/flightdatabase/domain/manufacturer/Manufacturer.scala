@@ -14,17 +14,12 @@ import io.circe.generic.extras.JsonKey
 object Manufacturer {
   implicit val manufacturerTableBase: TableBase[Manufacturer] = TableBase.instance(MANUFACTURER)
 
-  def fromCreate(model: ManufacturerCreate): Option[Manufacturer] =
-    model.id.map { id =>
-      Manufacturer(
-        id,
-        model.name,
-        model.basedIn
-      )
-    }
-
-  def fromCreateUnsafe(model: ManufacturerCreate): Manufacturer =
-    fromCreate(model).get
+  def fromCreate(id: Long, model: ManufacturerCreate): Manufacturer =
+    Manufacturer(
+      id,
+      model.name,
+      model.basedIn
+    )
 
   def fromPatch(id: Long, patch: ManufacturerPatch, original: Manufacturer): Manufacturer =
     Manufacturer(

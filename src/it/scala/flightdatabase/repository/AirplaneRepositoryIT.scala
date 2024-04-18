@@ -17,7 +17,7 @@ final class AirplaneRepositoryIT extends RepositoryCheck {
 
   lazy val repo: AirplaneRepository[IO] = AirplaneRepository.make[IO].unsafeRunSync()
 
-  val originalExpectedAirplanes: List[Airplane] = List(
+  val originalAirplanes: List[Airplane] = List(
     Airplane(1, "A380", 1, 853, 14800),
     Airplane(2, "747-8", 2, 410, 14310),
     Airplane(3, "A320neo", 1, 194, 6300),
@@ -25,13 +25,13 @@ final class AirplaneRepositoryIT extends RepositoryCheck {
   )
   val manufacturerToIdMap: Map[String, Long] = Map("Airbus" -> 1, "Boeing" -> 2)
   val idNotPresent: Long = 10
+  val valueNotPresent: String = "Not present"
   val veryLongIdNotPresent: Long = 1039495454540034858L
 
   val newAirplane: AirplaneCreate = AirplaneCreate("A350", 1, 325, 13900)
 
   "Checking if an airplane exists" should "return a valid result" in {
-    def airplaneExists(id: Long): Boolean =
-      repo.doesAirplaneExist(id).unsafeRunSync()
+    def airplaneExists(id: Long): Boolean = repo.doesAirplaneExist(id).unsafeRunSync()
     airplaneExists(1) shouldBe true
     airplaneExists(idNotPresent) shouldBe false
     airplaneExists(veryLongIdNotPresent) shouldBe false
@@ -41,19 +41,19 @@ final class AirplaneRepositoryIT extends RepositoryCheck {
     val airplanes = repo.getAirplanes.unsafeRunSync().value.value
 
     airplanes should not be empty
-    airplanes should contain only (originalExpectedAirplanes: _*)
+    airplanes should contain only (originalAirplanes: _*)
   }
 
   it should "return only names if so required" in {
     val airplanesOnlyNames = repo.getAirplanesOnlyNames.unsafeRunSync().value.value
     airplanesOnlyNames should not be empty
-    airplanesOnlyNames should contain only (originalExpectedAirplanes.map(_.name): _*)
+    airplanesOnlyNames should contain only (originalAirplanes.map(_.name): _*)
   }
 
   "Selecting an airplane by id" should "return the correct entry" in {
     def airplaneById(id: Long): ApiResult[Airplane] = repo.getAirplane(id).unsafeRunSync()
 
-    originalExpectedAirplanes.foreach { airplane =>
+    originalAirplanes.foreach { airplane =>
       airplaneById(airplane.id).value.value shouldBe airplane
     }
     airplaneById(idNotPresent).left.value shouldBe EntryNotFound(idNotPresent)
@@ -66,18 +66,18 @@ final class AirplaneRepositoryIT extends RepositoryCheck {
     def airplaneByManufacturerId(id: Long): ApiResult[List[Airplane]] =
       repo.getAirplanes("manufacturer_id", id).unsafeRunSync()
 
-    val distinctManufacturerIds = originalExpectedAirplanes.map(_.manufacturerId).distinct
+    val distinctManufacturerIds = originalAirplanes.map(_.manufacturerId).distinct
 
-    originalExpectedAirplanes.foreach { airplane =>
+    originalAirplanes.foreach { airplane =>
       airplaneByName(airplane.name).value.value should contain only airplane
     }
 
     distinctManufacturerIds.foreach { id =>
-      val expectedAirplanes = originalExpectedAirplanes.filter(_.manufacturerId == id)
+      val expectedAirplanes = originalAirplanes.filter(_.manufacturerId == id)
       airplaneByManufacturerId(id).value.value should contain only (expectedAirplanes: _*)
     }
 
-    airplaneByName("Not present").left.value shouldBe EntryListEmpty
+    airplaneByName(valueNotPresent).left.value shouldBe EntryListEmpty
     airplaneByManufacturerId(idNotPresent).left.value shouldBe EntryListEmpty
     airplaneByManufacturerId(veryLongIdNotPresent).left.value shouldBe EntryListEmpty
   }
@@ -89,23 +89,32 @@ final class AirplaneRepositoryIT extends RepositoryCheck {
     manufacturerToIdMap.foreach {
       case (manufacturer, id) =>
         airplaneByManufacturer(manufacturer).value.value should contain only (
-          originalExpectedAirplanes.filter(_.manufacturerId == id): _*
+          originalAirplanes.filter(_.manufacturerId == id): _*
         )
     }
 
-    airplaneByManufacturer("Not present").left.value shouldBe EntryListEmpty
+    airplaneByManufacturer(valueNotPresent).left.value shouldBe EntryListEmpty
   }
 
   "Creating an airplane" should "work and return the new ID" in {
     val newId = repo.createAirplane(newAirplane).unsafeRunSync().value.value
     val updatedAirplanes = repo.getAirplanes.unsafeRunSync().value.value
 
-    newId shouldBe originalExpectedAirplanes.length + 1
+    newId shouldBe originalAirplanes.length + 1
     updatedAirplanes should contain(Airplane.fromCreate(newId, newAirplane))
   }
 
   it should "throw a conflict error if we try to create the same airplane again" in {
     repo.createAirplane(newAirplane).unsafeRunSync().left.value shouldBe EntryAlreadyExists
+  }
+
+  it should "not allow creating a city with an empty name" in {
+    val newAirplaneWithEmptyName = newAirplane.copy(name = "")
+    repo
+      .createAirplane(newAirplaneWithEmptyName)
+      .unsafeRunSync()
+      .left
+      .value shouldBe EntryCheckFailed
   }
 
   it should "throw a foreign key error if the manufacturer does not exist" in {
@@ -135,14 +144,14 @@ final class AirplaneRepositoryIT extends RepositoryCheck {
   }
 
   "Updating an airplane" should "work and return the updated airplane ID" in {
-    val original = Airplane.fromCreate(originalExpectedAirplanes.length + 1, newAirplane)
+    val original = Airplane.fromCreate(originalAirplanes.length + 1, newAirplane)
     val updated = original.copy(capacity = original.capacity + 100)
     val returned = repo.updateAirplane(updated).unsafeRunSync().value.value
     returned shouldBe updated.id
   }
 
   it should "also allow changing the name field" in {
-    val original = Airplane.fromCreate(originalExpectedAirplanes.length + 1, newAirplane)
+    val original = Airplane.fromCreate(originalAirplanes.length + 1, newAirplane)
     val updated = original.copy(name = s"${original.name}_updated")
     val returned = repo.updateAirplane(updated).unsafeRunSync().value.value
     returned shouldBe updated.id
@@ -154,7 +163,7 @@ final class AirplaneRepositoryIT extends RepositoryCheck {
   }
 
   it should "throw a foreign key error if the manufacturer does not exist" in {
-    val updated = Airplane.fromCreate(originalExpectedAirplanes.length + 1, newAirplane)
+    val updated = Airplane.fromCreate(originalAirplanes.length + 1, newAirplane)
     val updatedWithNonExistingManufacturerId = updated.copy(manufacturerId = idNotPresent)
     repo
       .updateAirplane(updatedWithNonExistingManufacturerId)
@@ -164,15 +173,15 @@ final class AirplaneRepositoryIT extends RepositoryCheck {
   }
 
   "Patching an airplane" should "work and return the patched airplane" in {
-    val original = Airplane.fromCreate(originalExpectedAirplanes.length + 1, newAirplane)
-    val patch = AirplanePatch(name = Some(s"${original.name}_patched"), None, None, None)
+    val original = Airplane.fromCreate(originalAirplanes.length + 1, newAirplane)
+    val patch = AirplanePatch(name = Some(s"${original.name}_patched"))
     val patched = Airplane.fromPatch(original.id, patch, original)
     val returned = repo.partiallyUpdateAirplane(original.id, patch).unsafeRunSync().value.value
     returned shouldBe patched
   }
 
   it should "throw an error if we patch a non-existing airplane" in {
-    val patch = AirplanePatch(name = Some("Something"), None, None, None)
+    val patch = AirplanePatch(name = Some("Something"))
     repo
       .partiallyUpdateAirplane(idNotPresent, patch)
       .unsafeRunSync()
@@ -181,8 +190,8 @@ final class AirplaneRepositoryIT extends RepositoryCheck {
   }
 
   it should "throw a foreign key error if the manufacturer does not exist" in {
-    val original = Airplane.fromCreate(originalExpectedAirplanes.length + 1, newAirplane)
-    val patch = AirplanePatch(None, manufacturerId = Some(idNotPresent), None, None)
+    val original = Airplane.fromCreate(originalAirplanes.length + 1, newAirplane)
+    val patch = AirplanePatch(manufacturerId = Some(idNotPresent))
     repo
       .partiallyUpdateAirplane(original.id, patch)
       .unsafeRunSync()
@@ -191,7 +200,7 @@ final class AirplaneRepositoryIT extends RepositoryCheck {
   }
 
   "Removing an airplane" should "work correctly" in {
-    val id = originalExpectedAirplanes.length + 1
+    val id = originalAirplanes.length + 1
     repo.removeAirplane(id).unsafeRunSync().value.value shouldBe ()
     repo.doesAirplaneExist(id).unsafeRunSync() shouldBe false
   }
@@ -201,5 +210,4 @@ final class AirplaneRepositoryIT extends RepositoryCheck {
       idNotPresent
     )
   }
-
 }

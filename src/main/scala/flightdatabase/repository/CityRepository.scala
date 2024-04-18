@@ -37,13 +37,14 @@ class CityRepository[F[_]: Concurrent] private (
   override def createCity(city: CityCreate): F[ApiResult[Long]] =
     insertCity(city).attemptInsert.execute
 
-  override def updateCity(city: City): F[ApiResult[City]] =
-    modifyCity(city).attemptUpdate(city).execute
+  override def updateCity(city: City): F[ApiResult[Long]] =
+    modifyCity(city).attemptUpdate(city.id).execute
 
   override def partiallyUpdateCity(id: Long, patch: CityPatch): F[ApiResult[City]] =
     EitherT(getCity(id)).flatMapF { cityOutput =>
       val city = cityOutput.value
-      updateCity(City.fromPatch(id, patch, city))
+      val patched = City.fromPatch(id, patch, city)
+      modifyCity(patched).attemptUpdate(patched).execute
     }.value
 
   override def removeCity(id: Long): F[ApiResult[Unit]] =

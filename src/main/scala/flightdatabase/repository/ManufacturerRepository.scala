@@ -54,8 +54,8 @@ class ManufacturerRepository[F[_]: Concurrent] private (
   override def createManufacturer(manufacturer: ManufacturerCreate): F[ApiResult[Long]] =
     insertManufacturer(manufacturer).attemptInsert.execute
 
-  override def updateManufacturer(manufacturer: Manufacturer): F[ApiResult[Manufacturer]] =
-    modifyManufacturer(manufacturer).attemptUpdate(manufacturer).execute
+  override def updateManufacturer(manufacturer: Manufacturer): F[ApiResult[Long]] =
+    modifyManufacturer(manufacturer).attemptUpdate(manufacturer.id).execute
 
   override def partiallyUpdateManufacturer(
     id: Long,
@@ -63,7 +63,8 @@ class ManufacturerRepository[F[_]: Concurrent] private (
   ): F[ApiResult[Manufacturer]] =
     EitherT(getManufacturer(id)).flatMapF { manufacturerOutput =>
       val manufacturer = manufacturerOutput.value
-      updateManufacturer(Manufacturer.fromPatch(id, patch, manufacturer))
+      val patched = Manufacturer.fromPatch(id, patch, manufacturer)
+      modifyManufacturer(patched).attemptUpdate(patched).execute
     }.value
 
   override def removeManufacturer(id: Long): F[ApiResult[Unit]] =

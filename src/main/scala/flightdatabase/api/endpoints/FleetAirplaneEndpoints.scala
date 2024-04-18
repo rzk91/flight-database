@@ -80,11 +80,11 @@ class FleetAirplaneEndpoints[F[_]: Concurrent] private (
       } { id =>
         req
           .attemptAs[FleetAirplane]
-          .foldF[ApiResult[FleetAirplane]](
-            _ => EntryInvalidFormat.elevate[F, FleetAirplane],
+          .foldF[ApiResult[Long]](
+            _ => EntryInvalidFormat.elevate[F, Long],
             fa =>
               if (id != fa.id) {
-                InconsistentIds(id, fa.id).elevate[F, FleetAirplane]
+                InconsistentIds(id, fa.id).elevate[F, Long]
               } else {
                 algebra.updateFleetAirplane(fa)
               }

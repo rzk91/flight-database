@@ -61,11 +61,11 @@ class CountryEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Count
       } { id =>
         req
           .attemptAs[Country]
-          .foldF[ApiResult[Country]](
-            _ => EntryInvalidFormat.elevate[F, Country],
+          .foldF[ApiResult[Long]](
+            _ => EntryInvalidFormat.elevate[F, Long],
             country =>
               if (id != country.id) {
-                InconsistentIds(id, country.id).elevate[F, Country]
+                InconsistentIds(id, country.id).elevate[F, Long]
               } else {
                 algebra.updateCountry(country)
               }

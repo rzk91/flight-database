@@ -5,13 +5,13 @@ import io.circe.generic.extras.ConfiguredJsonCodec
 import io.circe.generic.extras.JsonKey
 
 @ConfiguredJsonCodec final case class AirportPatch(
-  name: Option[String],
-  icao: Option[String],
-  iata: Option[String],
-  cityId: Option[Long],
-  @JsonKey("number_of_runways") numRunways: Option[Int],
-  @JsonKey("number_of_terminals") numTerminals: Option[Int],
-  capacity: Option[Long],
-  international: Option[Boolean],
-  junction: Option[Boolean]
+  name: Option[String] = None,
+  icao: Option[String] = None,
+  iata: Option[String] = None,
+  cityId: Option[Long] = None,
+  @JsonKey("number_of_runways") numRunways: Option[Int] = None,
+  @JsonKey("number_of_terminals") numTerminals: Option[Int] = None,
+  capacity: Option[Long] = None,
+  international: Option[Boolean] = None,
+  junction: Option[Boolean] = None
 )

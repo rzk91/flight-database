@@ -56,8 +56,8 @@ class FleetAirplaneRepository[F[_]: Concurrent] private (
 
   override def updateFleetAirplane(
     fleetAirplane: FleetAirplane
-  ): F[ApiResult[FleetAirplane]] =
-    modifyFleetAirplane(fleetAirplane).attemptUpdate(fleetAirplane).execute
+  ): F[ApiResult[Long]] =
+    modifyFleetAirplane(fleetAirplane).attemptUpdate(fleetAirplane.id).execute
 
   override def partiallyUpdateFleetAirplane(
     id: Long,
@@ -65,7 +65,8 @@ class FleetAirplaneRepository[F[_]: Concurrent] private (
   ): F[ApiResult[FleetAirplane]] =
     EitherT(getFleetAirplane(id)).flatMapF { fleetAirplaneOutput =>
       val fleetAirplane = fleetAirplaneOutput.value
-      updateFleetAirplane(FleetAirplane.fromPatch(id, patch, fleetAirplane))
+      val patched = FleetAirplane.fromPatch(id, patch, fleetAirplane)
+      modifyFleetAirplane(patched).attemptUpdate(patched).execute
     }.value
 
   override def removeFleetAirplane(id: Long): F[ApiResult[Unit]] =

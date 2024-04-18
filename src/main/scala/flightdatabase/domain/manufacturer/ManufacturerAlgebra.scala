@@ -12,7 +12,7 @@ trait ManufacturerAlgebra[F[_]] {
   def getManufacturersByCity(city: String): F[ApiResult[List[Manufacturer]]]
   def getManufacturersByCountry(country: String): F[ApiResult[List[Manufacturer]]]
   def createManufacturer(manufacturer: ManufacturerCreate): F[ApiResult[Long]]
-  def updateManufacturer(manufacturer: Manufacturer): F[ApiResult[Manufacturer]]
+  def updateManufacturer(manufacturer: Manufacturer): F[ApiResult[Long]]
   def partiallyUpdateManufacturer(id: Long, patch: ManufacturerPatch): F[ApiResult[Manufacturer]]
   def removeManufacturer(id: Long): F[ApiResult[Unit]]
 }

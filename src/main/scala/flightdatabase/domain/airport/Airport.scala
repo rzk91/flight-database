@@ -22,24 +22,19 @@ object Airport {
 
   implicit val airportTableBase: TableBase[Airport] = TableBase.instance(AIRPORT)
 
-  def fromCreate(model: AirportCreate): Option[Airport] =
-    model.id.map { id =>
-      Airport(
-        id,
-        model.name,
-        model.icao,
-        model.iata,
-        model.cityId,
-        model.numRunways,
-        model.numTerminals,
-        model.capacity,
-        model.international,
-        model.junction
-      )
-    }
-
-  def fromCreateUnsafe(model: AirportCreate): Airport =
-    fromCreate(model).get
+  def fromCreate(id: Long, model: AirportCreate): Airport =
+    Airport(
+      id,
+      model.name,
+      model.icao,
+      model.iata,
+      model.cityId,
+      model.numRunways,
+      model.numTerminals,
+      model.capacity,
+      model.international,
+      model.junction
+    )
 
   def fromPatch(id: Long, patch: AirportPatch, airport: Airport): Airport =
     Airport(

@@ -8,3 +8,16 @@ import io.circe.generic.extras._
   name: String,
   @JsonKey("city_based_in") basedIn: Long
 )
+
+object ManufacturerCreate {
+
+  def apply(
+    name: String,
+    basedIn: Long
+  ): ManufacturerCreate =
+    new ManufacturerCreate(
+      None,
+      name,
+      basedIn
+    )
+}

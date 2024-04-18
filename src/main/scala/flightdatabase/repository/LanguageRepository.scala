@@ -40,13 +40,14 @@ class LanguageRepository[F[_]: Concurrent] private (
   override def createLanguage(language: LanguageCreate): F[ApiResult[Long]] =
     insertLanguage(language).attemptInsert.execute
 
-  override def updateLanguage(language: Language): F[ApiResult[Language]] =
-    modifyLanguage(language).attemptUpdate(language).execute
+  override def updateLanguage(language: Language): F[ApiResult[Long]] =
+    modifyLanguage(language).attemptUpdate(language.id).execute
 
   override def partiallyUpdateLanguage(id: Long, patch: LanguagePatch): F[ApiResult[Language]] =
     EitherT(getLanguage(id)).flatMapF { languageOutput =>
       val language = languageOutput.value
-      updateLanguage(Language.fromPatch(id, patch, language))
+      val patched = Language.fromPatch(id, patch, language)
+      modifyLanguage(patched).attemptUpdate(patched).execute
     }.value
 
   override def removeLanguage(id: Long): F[ApiResult[Unit]] =

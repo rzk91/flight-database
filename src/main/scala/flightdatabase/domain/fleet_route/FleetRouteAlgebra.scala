@@ -18,7 +18,7 @@ trait FleetRouteAlgebra[F[_]] {
     inbound: Option[Boolean]
   ): F[ApiResult[List[FleetRoute]]]
   def createFleetRoute(fleetRoute: FleetRouteCreate): F[ApiResult[Long]]
-  def updateFleetRoute(fleetRoute: FleetRoute): F[ApiResult[FleetRoute]]
+  def updateFleetRoute(fleetRoute: FleetRoute): F[ApiResult[Long]]
   def partiallyUpdateFleetRoute(id: Long, patch: FleetRoutePatch): F[ApiResult[FleetRoute]]
   def removeFleetRoute(id: Long): F[ApiResult[Unit]]
 }

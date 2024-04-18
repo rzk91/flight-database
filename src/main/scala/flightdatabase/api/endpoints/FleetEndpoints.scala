@@ -76,11 +76,11 @@ class FleetEndpoints[F[_]: Concurrent] private (prefix: String, algebra: FleetAl
       } { id =>
         req
           .attemptAs[Fleet]
-          .foldF[ApiResult[Fleet]](
-            _ => EntryInvalidFormat.elevate[F, Fleet],
+          .foldF[ApiResult[Long]](
+            _ => EntryInvalidFormat.elevate[F, Long],
             fleet =>
               if (id != fleet.id) {
-                InconsistentIds(id, fleet.id).elevate[F, Fleet]
+                InconsistentIds(id, fleet.id).elevate[F, Long]
               } else {
                 algebra.updateFleet(fleet)
               }

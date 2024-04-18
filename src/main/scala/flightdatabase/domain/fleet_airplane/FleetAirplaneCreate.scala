@@ -8,3 +8,16 @@ import io.circe.generic.extras.ConfiguredJsonCodec
   fleetId: Long,
   airplaneId: Long
 )
+
+object FleetAirplaneCreate {
+
+  def apply(
+    fleetId: Long,
+    airplaneId: Long
+  ): FleetAirplaneCreate =
+    new FleetAirplaneCreate(
+      None,
+      fleetId,
+      airplaneId
+    )
+}

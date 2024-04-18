@@ -13,17 +13,12 @@ import io.circe.generic.extras.ConfiguredJsonCodec
 object FleetAirplane {
   implicit val fleetAirplaneTableBase: TableBase[FleetAirplane] = TableBase.instance(FLEET_AIRPLANE)
 
-  def fromCreate(model: FleetAirplaneCreate): Option[FleetAirplane] =
-    model.id.map { id =>
-      FleetAirplane(
-        id,
-        model.fleetId,
-        model.airplaneId
-      )
-    }
-
-  def fromCreateUnsafe(model: FleetAirplaneCreate): FleetAirplane =
-    fromCreate(model).get
+  def fromCreate(id: Long, model: FleetAirplaneCreate): FleetAirplane =
+    FleetAirplane(
+      id,
+      model.fleetId,
+      model.airplaneId
+    )
 
   def fromPatch(id: Long, patch: FleetAirplanePatch, original: FleetAirplane): FleetAirplane =
     FleetAirplane(

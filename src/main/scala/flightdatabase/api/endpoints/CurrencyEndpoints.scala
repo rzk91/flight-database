@@ -65,11 +65,11 @@ class CurrencyEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Curr
       } { id =>
         req
           .attemptAs[Currency]
-          .foldF[ApiResult[Currency]](
-            _ => EntryInvalidFormat.elevate[F, Currency],
+          .foldF[ApiResult[Long]](
+            _ => EntryInvalidFormat.elevate[F, Long],
             currency =>
               if (id != currency.id) {
-                InconsistentIds(id, currency.id).elevate[F, Currency]
+                InconsistentIds(id, currency.id).elevate[F, Long]
               } else {
                 algebra.updateCurrency(currency)
               }
