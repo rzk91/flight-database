@@ -23,6 +23,7 @@ final class AirplaneRepositoryIT extends RepositoryCheck {
     Airplane(3, "A320neo", 1, 194, 6300),
     Airplane(4, "787-8", 2, 248, 13530)
   )
+  val manufacturerToIdMap: Map[String, Long] = Map("Airbus" -> 1, "Boeing" -> 2)
   val idNotPresent: Long = 10
   val veryLongIdNotPresent: Long = 1039495454540034858L
 
@@ -85,12 +86,13 @@ final class AirplaneRepositoryIT extends RepositoryCheck {
     def airplaneByManufacturer(name: String): ApiResult[List[Airplane]] =
       repo.getAirplanesByManufacturer(name).unsafeRunSync()
 
-    airplaneByManufacturer("Airbus").value.value should contain only (
-      originalExpectedAirplanes.filter(_.manufacturerId == 1): _*
-    )
-    airplaneByManufacturer("Boeing").value.value should contain only (
-      originalExpectedAirplanes.filter(_.manufacturerId == 2): _*
-    )
+    manufacturerToIdMap.foreach {
+      case (manufacturer, id) =>
+        airplaneByManufacturer(manufacturer).value.value should contain only (
+          originalExpectedAirplanes.filter(_.manufacturerId == id): _*
+        )
+    }
+
     airplaneByManufacturer("Not present").left.value shouldBe EntryListEmpty
   }
 
@@ -195,7 +197,9 @@ final class AirplaneRepositoryIT extends RepositoryCheck {
   }
 
   it should "throw an error if we try to remove a non-existing airplane" in {
-    repo.removeAirplane(idNotPresent).unsafeRunSync().left.value shouldBe EntryNotFound(idNotPresent)
+    repo.removeAirplane(idNotPresent).unsafeRunSync().left.value shouldBe EntryNotFound(
+      idNotPresent
+    )
   }
 
 }
