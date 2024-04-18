@@ -68,11 +68,11 @@ class AirplaneEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airp
       } { id =>
         req
           .attemptAs[Airplane]
-          .foldF[ApiResult[Airplane]](
-            _ => EntryInvalidFormat.elevate[F, Airplane],
+          .foldF[ApiResult[Long]](
+            _ => EntryInvalidFormat.elevate[F, Long],
             airplane =>
               if (id != airplane.id) {
-                InconsistentIds(id, airplane.id).elevate[F, Airplane]
+                InconsistentIds(id, airplane.id).elevate[F, Long]
               } else {
                 algebra.updateAirplane(airplane)
               }

@@ -23,7 +23,7 @@ class RichQuery[A](private val q: Query0[A]) extends AnyVal {
   def asSingle[E](entry: E): ConnectionIO[ApiResult[A]] =
     q.option.attempt.map {
       case Right(Some(a)) => toApiResult(a)
-      case Right(None)    => EntryNotFound(entry.toString).asResult[A]
+      case Right(None)    => EntryNotFound(entry).asResult[A]
       case Left(error)    => UnknownError(error.getMessage).asResult[A]
     }
 
