@@ -37,13 +37,11 @@ final class GenericRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting all city names in Brazil" should "return an empty list" in {
-    val cityNames =
-      getFieldList[City, String, Country, String]("name", FieldValue("name", "Brazil")).execute
-        .unsafeRunSync()
-        .left
-        .value
-
-    cityNames shouldBe EntryNotFound("country.name = Brazil")
+    val fieldValueBrazil = FieldValue[Country, String]("name", "Brazil")
+    getFieldList[City, String, Country, String]("name", fieldValueBrazil).execute
+      .unsafeRunSync()
+      .left
+      .value shouldBe EntryNotFound(fieldValueBrazil)
   }
 
 }
