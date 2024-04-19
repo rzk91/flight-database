@@ -11,15 +11,16 @@ The codebase also includes a comprehensive list of entries in the database.
 - doobie
 - circe
 - flyway
+- testcontainers
 
 ## Requirements (at the moment)
-- sbt 1.9.9
-- JDK 21
+- sbt 1.8.3
+- JDK 17
 - PostgreSQL 16
 
 ## Future plans
+- Codebase for a visualization frontend using ScalaJS
 - Include a Kafka-based queue of current flight status
 - An FS2/Kafka-Streams based analysis of flight status
   - with stateful operations
   - and persistence for safe recovery upon failure
-- Codebase for a visualization frontend
