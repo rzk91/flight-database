@@ -1,7 +1,9 @@
 package flightdatabase.repository.queries
 
-import flightdatabase.domain.city.CityModel
-import flightdatabase.domain.manufacturer.ManufacturerModel
+import flightdatabase.domain.airplane.AirplaneCreate
+import flightdatabase.domain.city.City
+import flightdatabase.domain.country.Country
+import flightdatabase.domain.manufacturer.Manufacturer
 import flightdatabase.testutils.DbChecker
 
 // TODO: Checks are incomplete (e.g. insert, update, failure checks, etc. are missing)
@@ -9,23 +11,25 @@ final class DomainSpecificQueryIT extends DbChecker {
 
   // Airplane checks
   "All airplane queries" should "work correctly" in {
+    check(AirplaneQueries.airplaneExists(1))
     check(AirplaneQueries.selectAllAirplanes)
     check(AirplaneQueries.selectAirplanesBy("id", 1L))
-    check(AirplaneQueries.selectAllAirplanesByExternal[ManufacturerModel, String]("name", "Airbus"))
+    check(AirplaneQueries.selectAirplanesByExternal[Manufacturer, String]("name", "Airbus"))
+    check(AirplaneQueries.insertAirplane(AirplaneCreate(None, "Boeing 747", 2, 416, 13400)))
     check(AirplaneQueries.deleteAirplane(1))
   }
 
   // Airport checks
   "All airport queries" should "work correctly" in {
     check(AirportQueries.selectAllAirports)
-    check(AirportQueries.selectAllAirportsByExternal[CityModel, String]("name", "Bangalore"))
+    check(AirportQueries.selectAllAirportsByExternal[City, String]("name", "Bangalore"))
     check(AirportQueries.deleteAirport(1))
   }
 
   // City checks
   "All city queries" should "work correctly" in {
     check(CityQueries.selectAllCities)
-    check(CityQueries.selectAllCitiesByCountry("Germany"))
+    check(CityQueries.selectCitiesByExternal[Country, String]("name", "Germany"))
     check(CityQueries.deleteCity(1))
   }
 

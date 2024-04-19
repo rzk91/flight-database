@@ -1,7 +1,7 @@
 package flightdatabase
 
 import cats.Applicative
-import cats.implicits._
+import cats.syntax.applicativeError._
 import doobie._
 import doobie.implicits._
 import doobie.postgres._
@@ -28,32 +28,21 @@ package object repository {
       index <- selectWhereQuery[WT, Long, WV]("id", whereFieldValue.field, whereFieldValue.value).option.attempt
       values <- index match {
         case Right(Some(id)) => selectWhereQuery[ST, SV, Long](selectField, idField, id).asList
-        case Right(None) =>
-          liftErrorToApiResult[List[SV]](EntryNotFound(whereFieldValue.toString)).pure[ConnectionIO]
-        case Left(error) =>
-          liftErrorToApiResult[List[SV]](UnknownError(error.getMessage)).pure[ConnectionIO]
+        case Right(None)     => EntryNotFound(whereFieldValue.toString).elevate[ConnectionIO, List[SV]]
+        case Left(error)     => UnknownError(error.getMessage).elevate[ConnectionIO, List[SV]]
       }
     } yield values
   }
 
   def featureNotImplemented[F[_]: Applicative, A]: F[ApiResult[A]] =
-    liftErrorToApiResult[A](FeatureNotImplemented).pure[F]
+    FeatureNotImplemented.elevate[F, A]
 
   // SQL state to ApiError conversion
   def sqlStateToApiError(state: SqlState): ApiError = state match {
-    case sqlstate.class23.CHECK_VIOLATION    => EntryCheckFailed
-    case sqlstate.class23.NOT_NULL_VIOLATION => EntryNullCheckFailed
-    case sqlstate.class23.UNIQUE_VIOLATION   => EntryAlreadyExists
-    case _                                   => UnknownError(state.value)
+    case sqlstate.class23.CHECK_VIOLATION       => EntryCheckFailed
+    case sqlstate.class23.NOT_NULL_VIOLATION    => EntryNullCheckFailed
+    case sqlstate.class23.UNIQUE_VIOLATION      => EntryAlreadyExists
+    case sqlstate.class23.FOREIGN_KEY_VIOLATION => EntryHasInvalidForeignKey
+    case _                                      => UnknownError(state.value)
   }
-
-  // Lift to API Result
-  def liftToApiResult[A](value: A): ApiResult[A] =
-    GotValue[A](value).asRight[ApiError]
-
-  def liftListToApiResult[A](list: List[A]): ApiResult[List[A]] =
-    if (list.isEmpty) liftErrorToApiResult(EntryListEmpty) else liftToApiResult(list)
-
-  def liftErrorToApiResult[A](error: ApiError): ApiResult[A] =
-    error.asLeft[ApiOutput[A]]
 }

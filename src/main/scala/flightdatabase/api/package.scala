@@ -13,16 +13,20 @@ package object api {
     import dsl._
 
     res match {
-      case Right(result: GotValue[A])          => Ok(result.value)
-      case Right(created: CreatedValue[A])     => Created(created.value)
-      case Left(value @ EntryListEmpty)        => Ok(value.error) // Not really an error
-      case Left(value @ EntryCheckFailed)      => BadRequest(value.error)
-      case Left(value @ EntryNullCheckFailed)  => BadRequest(value.error)
-      case Left(value @ EntryInvalidFormat)    => BadRequest(value.error)
-      case Left(value @ EntryAlreadyExists)    => Conflict(value.error)
-      case Left(value @ FeatureNotImplemented) => NotImplemented(value.error)
-      case Left(value: EntryNotFound)          => NotFound(value.error)
-      case Left(value: UnknownError)           => UnprocessableEntity(value.error)
+      case Right(result: Got[A])                   => Ok(result.value)
+      case Right(created: Created[A])              => Created(created.value)
+      case Right(updated: Updated[A])              => Ok(updated.value)
+      case Right(Deleted)                          => NoContent()
+      case Left(value @ EntryListEmpty)            => Ok(value.error) // Not really an error
+      case Left(value @ EntryCheckFailed)          => BadRequest(value.error)
+      case Left(value @ EntryNullCheckFailed)      => BadRequest(value.error)
+      case Left(value @ EntryInvalidFormat)        => BadRequest(value.error)
+      case Left(value @ EntryHasInvalidForeignKey) => BadRequest(value.error)
+      case Left(value: InconsistentIds)            => BadRequest(value.error)
+      case Left(value @ EntryAlreadyExists)        => Conflict(value.error)
+      case Left(value @ FeatureNotImplemented)     => NotImplemented(value.error)
+      case Left(value: EntryNotFound)              => NotFound(value.error)
+      case Left(value: UnknownError)               => UnprocessableEntity(value.error)
     }
   }
 }

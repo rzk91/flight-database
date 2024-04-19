@@ -1,10 +1,9 @@
 package flightdatabase.domain.country
 
-import flightdatabase.domain.FlightDbTable.COUNTRY
 import flightdatabase.domain._
 import io.circe.generic.extras.ConfiguredJsonCodec
 
-@ConfiguredJsonCodec final case class CountryModel(
+@ConfiguredJsonCodec final case class CountryCreate(
   id: Option[Long],
   name: String,
   iso2: String,
@@ -17,7 +16,3 @@ import io.circe.generic.extras.ConfiguredJsonCodec
   currencyId: Long,
   nationality: String
 )
-
-object CountryModel {
-  implicit val countryModelTable: TableBase[CountryModel] = TableBase.instance(COUNTRY)
-}

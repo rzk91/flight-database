@@ -1,10 +1,9 @@
 package flightdatabase.domain.airport
 
-import flightdatabase.domain.FlightDbTable.AIRPORT
 import flightdatabase.domain._
 import io.circe.generic.extras._
 
-@ConfiguredJsonCodec final case class AirportModel(
+@ConfiguredJsonCodec final case class AirportCreate(
   id: Option[Long],
   name: String,
   icao: String,
@@ -16,7 +15,3 @@ import io.circe.generic.extras._
   international: Boolean,
   junction: Boolean
 )
-
-object AirportModel {
-  implicit val airportModelTable: TableBase[AirportModel] = TableBase.instance(AIRPORT)
-}
