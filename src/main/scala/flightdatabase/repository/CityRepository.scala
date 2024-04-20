@@ -34,6 +34,9 @@ class CityRepository[F[_]: Concurrent] private (
   override def getCitiesByCountry(country: String): F[ApiResult[List[City]]] =
     selectCitiesByExternal[Country, String]("name", country).asList.execute
 
+  // TODO: Add checks for latitude/longitude <-> country matching
+  //  and for timezone validity
+  //  and for timezone <-> country matching
   override def createCity(city: CityCreate): F[ApiResult[Long]] =
     insertCity(city).attemptInsert.execute
 

@@ -3,6 +3,10 @@ package flightdatabase.repository
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 import flightdatabase.domain.ApiResult
+import flightdatabase.domain.EntryAlreadyExists
+import flightdatabase.domain.EntryCheckFailed
+import flightdatabase.domain.EntryHasInvalidForeignKey
+import flightdatabase.domain.EntryListEmpty
 import flightdatabase.domain.EntryNotFound
 import flightdatabase.domain.city.City
 import flightdatabase.domain.city.CityCreate
@@ -76,11 +80,11 @@ class CityRepositoryIT extends RepositoryCheck {
   )
 
   val countryToIdMap: Map[String, Long] = Map(
-    "India"                -> 1,
-    "Germany"              -> 2,
-    "United Arab Emirates" -> 4,
-    "Netherlands"          -> 5,
-    "United States"        -> 6
+    "India"                    -> 1,
+    "Germany"                  -> 2,
+    "United Arab Emirates"     -> 4,
+    "Netherlands"              -> 5,
+    "United States of America" -> 6
   )
 
   val idNotPresent: Long = 10
@@ -95,6 +99,16 @@ class CityRepositoryIT extends RepositoryCheck {
     BigDecimal("48.137222"),
     BigDecimal("11.575556"),
     "Europe/Berlin"
+  )
+
+  val newBerlinInUSA: CityCreate = CityCreate(
+    "Berlin",
+    6,
+    capital = false,
+    8901000,
+    BigDecimal("41.85003"),
+    BigDecimal("-87.65005"),
+    "America/Chicago"
   )
 
   "Checking if a city exists" should "return a valid result" in {
@@ -123,5 +137,78 @@ class CityRepositoryIT extends RepositoryCheck {
     originalCities.foreach(city => cityById(city.id).value.value shouldBe city)
     cityById(idNotPresent).left.value shouldBe EntryNotFound(idNotPresent)
     cityById(veryLongIdNotPresent).left.value shouldBe EntryNotFound(veryLongIdNotPresent)
+  }
+
+  "Selecting a city by other fields" should "return the corresponding entries" in {
+    def cityByName(name: String): ApiResult[List[City]] =
+      repo.getCities("name", name).unsafeRunSync()
+
+    def cityByCountryId(id: Long): ApiResult[List[City]] =
+      repo.getCities("country_id", id).unsafeRunSync()
+
+    val distinctCountryIds = originalCities.map(_.countryId).distinct
+
+    originalCities.foreach(city => cityByName(city.name).value.value should contain only city)
+
+    distinctCountryIds.foreach { id =>
+      val expectedCities = originalCities.filter(_.countryId == id)
+      cityByCountryId(id).value.value should contain only (expectedCities: _*)
+    }
+
+    cityByName(valueNotPresent).left.value shouldBe EntryListEmpty
+    cityByCountryId(idNotPresent).left.value shouldBe EntryListEmpty
+    cityByCountryId(veryLongIdNotPresent).left.value shouldBe EntryListEmpty
+  }
+
+  "Selecting a city by country name" should "return the corresponding entries" in {
+    def cityByCountry(name: String): ApiResult[List[City]] =
+      repo.getCitiesByCountry(name).unsafeRunSync()
+
+    countryToIdMap.foreach {
+      case (country, id) =>
+        cityByCountry(country).value.value should contain only (
+          originalCities.filter(_.countryId == id): _*
+        )
+    }
+
+    cityByCountry(valueNotPresent).left.value shouldBe EntryListEmpty
+  }
+
+  "Creating a new city" should "not take place if fields don't satisfy their criteria" in {
+    val invalidCity = newCity.copy(name = "")
+    repo.createCity(invalidCity).unsafeRunSync().left.value shouldBe EntryCheckFailed
+
+    val invalidTimezone = newCity.copy(timezone = "")
+    repo.createCity(invalidTimezone).unsafeRunSync().left.value shouldBe EntryCheckFailed
+
+    val invalidPopulation = newCity.copy(population = -1)
+    repo.createCity(invalidPopulation).unsafeRunSync().left.value shouldBe EntryCheckFailed
+  }
+
+  it should "not take place for a city with existing name in the same country" in {
+    val existingCountryId = originalCities.head.countryId
+    val existingCityName = originalCities.head.name
+    val cityWithExistingName = newCity.copy(name = existingCityName, countryId = existingCountryId)
+    repo.createCity(cityWithExistingName).unsafeRunSync().left.value shouldBe EntryAlreadyExists
+  }
+
+  it should "throw a foreign key constraint violation for a city with a non-existing country" in {
+    val cityWithNonExistingCountry = newCity.copy(countryId = idNotPresent)
+    repo
+      .createCity(cityWithNonExistingCountry)
+      .unsafeRunSync()
+      .left
+      .value shouldBe EntryHasInvalidForeignKey
+  }
+
+  it should "create a new city if all criteria are satisfied" in {
+    val newCityId = repo.createCity(newCity).unsafeRunSync().value.value
+    val newCityFromDb = repo.getCity(newCityId).unsafeRunSync().value.value
+
+    newCityFromDb shouldBe City.fromCreate(newCityId, newCity)
+  }
+
+  it should "throw a conflict error if we create the same city again" in {
+    repo.createCity(newCity).unsafeRunSync().left.value shouldBe EntryAlreadyExists
   }
 }
