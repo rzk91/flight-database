@@ -20,11 +20,13 @@ private[repository] object CountryQueries {
 
   def selectCountriesByExternal[ET: TableBase, EV: Put](
     externalField: String,
-    externalValue: EV
+    externalValue: EV,
+    overrideExternalIdField: Option[String] = None
   ): Query0[Country] = {
     selectAll ++ innerJoinWhereFragment[Country, ET, EV](
       externalField,
-      externalValue
+      externalValue,
+      overrideExternalIdField
     )
   }.query[Country]
 

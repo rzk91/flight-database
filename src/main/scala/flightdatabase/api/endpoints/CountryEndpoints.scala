@@ -17,6 +17,8 @@ import org.http4s.circe.CirceEntityCodec._
 class CountryEndpoints[F[_]: Concurrent] private (prefix: String, algebra: CountryAlgebra[F])
     extends Endpoints[F](prefix) {
 
+  private object FieldMatcher extends QueryParamDecoderMatcherWithDefault[String]("field", "name")
+
   override def endpoints: HttpRoutes[F] = HttpRoutes.of {
 
     // HEAD /countries/{id}
@@ -43,6 +45,22 @@ class CountryEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Count
     // GET /countries/name/{name}
     case GET -> Root / "name" / name =>
       algebra.getCountries("name", name).flatMap(toResponse(_))
+
+    // GET /countries/language/{value}?field={iso2, default: name}
+    case GET -> Root / "language" / value :? FieldMatcher(field) =>
+      value.asLong
+        .fold(algebra.getCountriesByLanguage(field, value)) { long =>
+          algebra.getCountriesByLanguage("id", long)
+        }
+        .flatMap(toResponse(_))
+
+    // GET /countries/currency/{value}?field={iso, default: name}
+    case GET -> Root / "currency" / value :? FieldMatcher(field) =>
+      value.asLong
+        .fold(algebra.getCountriesByCurrency(field, value)) { long =>
+          algebra.getCountriesByCurrency("id", long)
+        }
+        .flatMap(toResponse(_))
 
     // POST /countries
     case req @ POST -> Root =>

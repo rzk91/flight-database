@@ -7,6 +7,7 @@ ALTER TABLE currency ADD UNIQUE (iso);
 ALTER TABLE currency ADD UNIQUE NULLS NOT DISTINCT (symbol);
 
 -- Unique indices on country
+ALTER TABLE country ADD UNIQUE (name);
 ALTER TABLE country ADD UNIQUE (iso2);
 ALTER TABLE country ADD UNIQUE (iso3);
 ALTER TABLE country ADD UNIQUE (country_code);
