@@ -8,6 +8,7 @@ import flightdatabase.domain.EntryCheckFailed
 import flightdatabase.domain.EntryHasInvalidForeignKey
 import flightdatabase.domain.EntryListEmpty
 import flightdatabase.domain.EntryNotFound
+import flightdatabase.domain.InvalidTimezone
 import flightdatabase.domain.city.City
 import flightdatabase.domain.city.CityCreate
 import flightdatabase.testutils.RepositoryCheck
@@ -174,12 +175,12 @@ class CityRepositoryIT extends RepositoryCheck {
     cityByCountry(valueNotPresent).left.value shouldBe EntryListEmpty
   }
 
-  "Creating a new city" should "not take place if fields don't satisfy their criteria" in {
+  "Creating a new city" should "not take place if fields do not satisfy their criteria" in {
     val invalidCity = newCity.copy(name = "")
     repo.createCity(invalidCity).unsafeRunSync().left.value shouldBe EntryCheckFailed
 
     val invalidTimezone = newCity.copy(timezone = "")
-    repo.createCity(invalidTimezone).unsafeRunSync().left.value shouldBe EntryCheckFailed
+    repo.createCity(invalidTimezone).unsafeRunSync().left.value shouldBe InvalidTimezone("")
 
     val invalidPopulation = newCity.copy(population = -1)
     repo.createCity(invalidPopulation).unsafeRunSync().left.value shouldBe EntryCheckFailed
@@ -188,7 +189,12 @@ class CityRepositoryIT extends RepositoryCheck {
   it should "not take place for a city with existing name in the same country" in {
     val existingCountryId = originalCities.head.countryId
     val existingCityName = originalCities.head.name
-    val cityWithExistingName = newCity.copy(name = existingCityName, countryId = existingCountryId)
+    val existingCityTz = originalCities.head.timezone
+    val cityWithExistingName = newCity.copy(
+      name = existingCityName,
+      countryId = existingCountryId,
+      timezone = existingCityTz
+    )
     repo.createCity(cityWithExistingName).unsafeRunSync().left.value shouldBe EntryAlreadyExists
   }
 
@@ -199,6 +205,23 @@ class CityRepositoryIT extends RepositoryCheck {
       .unsafeRunSync()
       .left
       .value shouldBe EntryHasInvalidForeignKey
+  }
+
+  it should "throw an invalid timezone error for a city with a non-existing timezone" in {
+    val invalidTimezone = "Invalid/Timezone"
+    val cityWithInvalidTimezone = newCity.copy(timezone = invalidTimezone)
+    repo.createCity(cityWithInvalidTimezone).unsafeRunSync().left.value shouldBe InvalidTimezone(
+      invalidTimezone
+    )
+  }
+
+  it should "also throw an invalid timezone error if the city's timezone does not match the corresponding country's timezone" in {
+    val invalidTimezone = "America/Chicago"
+    val cityWithInvalidTimezone =
+      newCity.copy(countryId = countryToIdMap("Germany"), timezone = invalidTimezone)
+    repo.createCity(cityWithInvalidTimezone).unsafeRunSync().left.value shouldBe InvalidTimezone(
+      invalidTimezone
+    )
   }
 
   it should "create a new city if all criteria are satisfied" in {

@@ -48,4 +48,8 @@ case object FeatureNotImplemented extends ApiError {
   override val error: String = "Error: Feature still under development..."
 }
 
+case class InvalidTimezone(timezone: String) extends ApiError {
+  override val error: String = s"Error: Invalid timezone $timezone"
+}
+
 case class UnknownError(error: String) extends ApiError

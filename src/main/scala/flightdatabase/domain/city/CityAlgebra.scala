@@ -15,4 +15,6 @@ trait CityAlgebra[F[_]] {
   def updateCity(city: City): F[ApiResult[Long]]
   def partiallyUpdateCity(id: Long, patch: CityPatch): F[ApiResult[City]]
   def removeCity(id: Long): F[ApiResult[Unit]]
+
+  protected def validateTimezone(timezone: String, countryId: Long): F[ApiResult[Unit]]
 }
