@@ -78,6 +78,9 @@ class AirportRepositoryIT extends RepositoryCheck {
     junction = false
   )
 
+  val updatedName: String = "Chhatrapati Shivaji Maharaj International Airport Updated"
+  val patchedName: String = "Chhatrapati Shivaji Maharaj International Airport Patched"
+
   "Checking if an airport exists" should "return a valid result" in {
     def airportExists(id: Long): Boolean = repo.doesAirportExist(id).unsafeRunSync()
     airportExists(1) shouldBe true
@@ -259,7 +262,7 @@ class AirportRepositoryIT extends RepositoryCheck {
 
   it should "also allow changing the name field to a new non-empty value" in {
     val original = repo.getAirports("name", newAirport.name).unsafeRunSync().value.value.head
-    val updated = original.copy(name = s"${original.name}_updated")
+    val updated = original.copy(name = updatedName)
     repo.updateAirport(updated).unsafeRunSync().value.value shouldBe updated.id
 
     repo
@@ -283,10 +286,9 @@ class AirportRepositoryIT extends RepositoryCheck {
       .value shouldBe EntryHasInvalidForeignKey
   }
 
-  "Patching an airport" should "work and return the updated airport ID" in {
-    val original =
-      repo.getAirports("name", s"${newAirport.name}_updated").unsafeRunSync().value.value.head
-    val patch = AirportPatch(name = Some(s"${newAirport.name}_patched"))
+  "Patching an airport" should "work and return the updated airport" in {
+    val original = repo.getAirports("name", updatedName).unsafeRunSync().value.value.head
+    val patch = AirportPatch(name = Some(patchedName))
     val patched = Airport.fromPatch(original.id, patch, original)
     repo.partiallyUpdateAirport(original.id, patch).unsafeRunSync().value.value shouldBe patched
   }
@@ -301,8 +303,7 @@ class AirportRepositoryIT extends RepositoryCheck {
   }
 
   it should "throw a foreign key error if the city does not exist" in {
-    val original =
-      repo.getAirports("name", s"${newAirport.name}_patched").unsafeRunSync().value.value.head
+    val original = repo.getAirports("name", patchedName).unsafeRunSync().value.value.head
     val patch = AirportPatch(cityId = Some(idNotPresent))
     repo
       .partiallyUpdateAirport(original.id, patch)
@@ -312,8 +313,7 @@ class AirportRepositoryIT extends RepositoryCheck {
   }
 
   "Removing an airplane" should "work correctly" in {
-    val original =
-      repo.getAirports("name", s"${newAirport.name}_patched").unsafeRunSync().value.value.head
+    val original = repo.getAirports("name", patchedName).unsafeRunSync().value.value.head
     repo.removeAirport(original.id).unsafeRunSync().value.value shouldBe ()
     repo.doesAirportExist(original.id).unsafeRunSync() shouldBe false
   }
