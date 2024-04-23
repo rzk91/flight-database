@@ -18,6 +18,8 @@ TODO list
 - ~~Write tests for all specific doobie queries.~~ DONE!
 - ~~Implement all endpoints using algebras.~~ DONE!
 - Write integration tests for all algebras.
+- All `endpoints` should return URI of the created resource in the `Location` header.
+- Add a URI to all foreign key fields in the response (maybe use something similar to `TableBase`).
 - Write unit tests for all endpoints.
 - Update the `README.md` to reflect the changes in the project structure and the new features.
 - Expand API endpoint list to include more complex operations as indicated in `endpoints.md`.
