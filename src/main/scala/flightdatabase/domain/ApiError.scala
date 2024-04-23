@@ -56,4 +56,4 @@ case class InvalidField(field: String) extends ApiError {
   override val error: String = s"Error: Invalid field $field"
 }
 
-case class UnknownError(error: String) extends ApiError
+case class UnknownDbError(error: String) extends ApiError

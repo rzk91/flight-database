@@ -254,6 +254,23 @@ class CountryRepositoryIT extends RepositoryCheck {
     }
   }
 
+  it should "throw an error if we update a country with an existing country-unique field" in {
+    val existingCountry = originalCountries.head
+
+    val duplicateCountries = List(
+      existingCountry.copy(name = newCountry.name),
+      existingCountry.copy(iso2 = newCountry.iso2),
+      existingCountry.copy(iso3 = newCountry.iso3),
+      existingCountry.copy(countryCode = newCountry.countryCode),
+      existingCountry.copy(domainName = newCountry.domainName),
+      existingCountry.copy(nationality = newCountry.nationality)
+    )
+
+    forAll(duplicateCountries) { c =>
+      repo.updateCountry(c).unsafeRunSync().left.value shouldBe EntryAlreadyExists
+    }
+  }
+
   it should "throw an error if we update a non-existing country" in {
     val updated = Country.fromCreate(idNotPresent, newCountry)
     repo.updateCountry(updated).unsafeRunSync().left.value shouldBe EntryNotFound(idNotPresent)
@@ -314,6 +331,27 @@ class CountryRepositoryIT extends RepositoryCheck {
       .unsafeRunSync()
       .left
       .value shouldBe EntryNotFound(idNotPresent)
+  }
+
+  it should "not take place for a country with an existing country-unique field" in {
+    val existingCountry = originalCountries.head
+
+    val duplicatePatches = List(
+      CountryPatch(name = Some(newCountry.name)),
+      CountryPatch(iso2 = Some(newCountry.iso2)),
+      CountryPatch(iso3 = Some(newCountry.iso3)),
+      CountryPatch(countryCode = Some(newCountry.countryCode)),
+      CountryPatch(domainName = newCountry.domainName),
+      CountryPatch(nationality = Some(newCountry.nationality))
+    )
+
+    forAll(duplicatePatches) { p =>
+      repo
+        .partiallyUpdateCountry(existingCountry.id, p)
+        .unsafeRunSync()
+        .left
+        .value shouldBe EntryAlreadyExists
+    }
   }
 
   it should "throw an error if a language/currency does not exist" in {
