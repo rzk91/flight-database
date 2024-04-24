@@ -14,7 +14,7 @@ import flightdatabase.domain.country.CountryPatch
 import flightdatabase.testutils.RepositoryCheck
 import org.scalatest.Inspectors.forAll
 
-class CountryRepositoryIT extends RepositoryCheck {
+final class CountryRepositoryIT extends RepositoryCheck {
 
   lazy val repo: CountryRepository[IO] = CountryRepository.make[IO].unsafeRunSync()
 

@@ -5,7 +5,7 @@ import cats.effect.unsafe.implicits.global
 import flightdatabase.domain.fleet_airplane.FleetAirplane
 import flightdatabase.testutils.RepositoryCheck
 
-class FleetAirplaneRepositoryIT extends RepositoryCheck {
+final class FleetAirplaneRepositoryIT extends RepositoryCheck {
 
   "Selecting all fleet airplanes" should "return the correct detailed list" in {
     val fleetAirplanes = {

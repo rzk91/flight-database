@@ -16,7 +16,7 @@ import flightdatabase.testutils.RepositoryCheck
 import flightdatabase.utils.FieldValue
 import org.scalatest.Inspectors.forAll
 
-class AirportRepositoryIT extends RepositoryCheck {
+final class AirportRepositoryIT extends RepositoryCheck {
 
   lazy val repo: AirportRepository[IO] = AirportRepository.make[IO].unsafeRunSync()
 

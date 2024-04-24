@@ -5,7 +5,7 @@ import cats.effect.unsafe.implicits.global
 import flightdatabase.domain.manufacturer.Manufacturer
 import flightdatabase.testutils.RepositoryCheck
 
-class ManufacturerRepositoryIT extends RepositoryCheck {
+final class ManufacturerRepositoryIT extends RepositoryCheck {
 
   "Selecting all manufacturers" should "return the correct detailed list" in {
     val manufacturers = {

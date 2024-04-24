@@ -5,7 +5,7 @@ import cats.effect.unsafe.implicits.global
 import flightdatabase.domain.language.Language
 import flightdatabase.testutils.RepositoryCheck
 
-class LanguageRepositoryIT extends RepositoryCheck {
+final class LanguageRepositoryIT extends RepositoryCheck {
 
   "Selecting all languages" should "return the correct detailed list" in {
     val languages = {

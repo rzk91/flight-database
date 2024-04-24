@@ -15,7 +15,7 @@ import flightdatabase.domain.city.CityPatch
 import flightdatabase.testutils.RepositoryCheck
 import org.scalatest.Inspectors.forAll
 
-class CityRepositoryIT extends RepositoryCheck {
+final class CityRepositoryIT extends RepositoryCheck {
 
   lazy val repo: CityRepository[IO] = CityRepository.make[IO].unsafeRunSync()
 
