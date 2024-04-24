@@ -226,8 +226,7 @@ final class CurrencyRepositoryIT extends RepositoryCheck {
       .partiallyUpdateCurrency(existingCurrency.id, patched)
       .unsafeRunSync()
       .value
-      .value
-      .name shouldBe patchedName
+      .value shouldBe existingCurrency.copy(name = patchedName)
 
     val patchedCurrencyFromDb = repo.getCurrency(existingCurrency.id).unsafeRunSync().value.value
     patchedCurrencyFromDb.name shouldBe patchedName
