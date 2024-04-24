@@ -14,6 +14,7 @@ import flightdatabase.domain.airport.AirportPatch
 import flightdatabase.domain.country.Country
 import flightdatabase.testutils.RepositoryCheck
 import flightdatabase.utils.FieldValue
+import org.scalatest.Inspectors.forAll
 
 class AirportRepositoryIT extends RepositoryCheck {
 
@@ -104,7 +105,7 @@ class AirportRepositoryIT extends RepositoryCheck {
   "Selecting an airport by id" should "return the correct entry" in {
     def airportById(id: Long): ApiResult[Airport] = repo.getAirport(id).unsafeRunSync()
 
-    originalAirports.foreach(airport => airportById(airport.id).value.value shouldBe airport)
+    forAll(originalAirports)(airport => airportById(airport.id).value.value shouldBe airport)
     airportById(idNotPresent).left.value shouldBe EntryNotFound(idNotPresent)
     airportById(veryLongIdNotPresent).left.value shouldBe EntryNotFound(veryLongIdNotPresent)
   }
@@ -121,13 +122,13 @@ class AirportRepositoryIT extends RepositoryCheck {
 
     val distinctCityIds = originalAirports.map(_.cityId).distinct
 
-    originalAirports.foreach { airport =>
+    forAll(originalAirports) { airport =>
       airportByName(airport.name).value.value should contain only airport
       airportByIata(airport.iata).value.value should contain only airport
       airportByIcao(airport.icao).value.value should contain only airport
     }
 
-    distinctCityIds.foreach { id =>
+    forAll(distinctCityIds) { id =>
       val expectedAirports = originalAirports.filter(_.cityId == id)
       airportByCityId(id).value.value should contain only (expectedAirports: _*)
     }
@@ -143,7 +144,7 @@ class AirportRepositoryIT extends RepositoryCheck {
     def airportByCity(city: String): ApiResult[List[Airport]] =
       repo.getAirportsByCity(city).unsafeRunSync()
 
-    cityToIdMap.foreach {
+    forAll(cityToIdMap) {
       case (city, id) =>
         airportByCity(city).value.value should contain only (
           originalAirports.filter(_.cityId == id): _*
@@ -157,7 +158,7 @@ class AirportRepositoryIT extends RepositoryCheck {
     def airportByCountry(country: String): ApiResult[List[Airport]] =
       repo.getAirportsByCountry(country).unsafeRunSync()
 
-    countryToCityIdMap.foreach {
+    forAll(countryToCityIdMap) {
       case (country, cityId) =>
         airportByCountry(country).value.value should contain only (
           originalAirports.filter(_.cityId == cityId): _*
@@ -168,41 +169,30 @@ class AirportRepositoryIT extends RepositoryCheck {
     airportByCountry(valueNotPresent).left.value shouldBe EntryNotFound(fv)
   }
 
-  "Creating a new airport" should "not take place for an airport with empty important fields" in {
-    val newAirportWithEmptyName = newAirport.copy(name = "")
-    repo
-      .createAirport(newAirportWithEmptyName)
-      .unsafeRunSync()
-      .left
-      .value shouldBe EntryCheckFailed
+  "Creating a new airport" should "not take place if the fields do not satisfy their criteria" in {
+    val invalidAirports = List(
+      newAirport.copy(name = ""),
+      newAirport.copy(icao = ""),
+      newAirport.copy(iata = ""),
+      newAirport.copy(capacity = -1),
+      newAirport.copy(numRunways = -1),
+      newAirport.copy(numTerminals = -1)
+    )
 
-    val newAirportWithEmptyIcao = newAirport.copy(icao = "")
-    repo
-      .createAirport(newAirportWithEmptyIcao)
-      .unsafeRunSync()
-      .left
-      .value shouldBe EntryCheckFailed
-
-    val newAirportWithEmptyIata = newAirport.copy(iata = "")
-    repo
-      .createAirport(newAirportWithEmptyIata)
-      .unsafeRunSync()
-      .left
-      .value shouldBe EntryCheckFailed
+    forAll(invalidAirports) { invalid =>
+      repo.createAirport(invalid).unsafeRunSync().left.value shouldBe EntryCheckFailed
+    }
   }
 
   it should "not take place for an airport with an existing IATA/ICAO code" in {
-    repo
-      .createAirport(newAirport.copy(iata = originalAirports.head.iata))
-      .unsafeRunSync()
-      .left
-      .value shouldBe EntryAlreadyExists
+    val duplicateAirports = List(
+      newAirport.copy(iata = originalAirports.head.iata),
+      newAirport.copy(icao = originalAirports.head.icao)
+    )
 
-    repo
-      .createAirport(newAirport.copy(icao = originalAirports.head.icao))
-      .unsafeRunSync()
-      .left
-      .value shouldBe EntryAlreadyExists
+    forAll(duplicateAirports) { duplicate =>
+      repo.createAirport(duplicate).unsafeRunSync().left.value shouldBe EntryAlreadyExists
+    }
   }
 
   it should "not take place for an airport with an existing name in the same city" in {
@@ -221,26 +211,6 @@ class AirportRepositoryIT extends RepositoryCheck {
       .unsafeRunSync()
       .left
       .value shouldBe EntryHasInvalidForeignKey
-  }
-
-  it should "throw a check error if we pass negative values" in {
-    repo
-      .createAirport(newAirport.copy(capacity = -1))
-      .unsafeRunSync()
-      .left
-      .value shouldBe EntryCheckFailed
-
-    repo
-      .createAirport(newAirport.copy(numRunways = -1))
-      .unsafeRunSync()
-      .left
-      .value shouldBe EntryCheckFailed
-
-    repo
-      .createAirport(newAirport.copy(numTerminals = -1))
-      .unsafeRunSync()
-      .left
-      .value shouldBe EntryCheckFailed
   }
 
   it should "otherwise return the correct id" in {

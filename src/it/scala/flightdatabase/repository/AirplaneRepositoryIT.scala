@@ -12,6 +12,7 @@ import flightdatabase.domain.airplane.Airplane
 import flightdatabase.domain.airplane.AirplaneCreate
 import flightdatabase.domain.airplane.AirplanePatch
 import flightdatabase.testutils.RepositoryCheck
+import org.scalatest.Inspectors.forAll
 
 final class AirplaneRepositoryIT extends RepositoryCheck {
 
@@ -29,6 +30,8 @@ final class AirplaneRepositoryIT extends RepositoryCheck {
   val veryLongIdNotPresent: Long = 1039495454540034858L
 
   val newAirplane: AirplaneCreate = AirplaneCreate("A350", 1, 325, 13900)
+  val updatedName: String = "A350_updated"
+  val patchedName: String = "A350_patched"
 
   "Checking if an airplane exists" should "return a valid result" in {
     def airplaneExists(id: Long): Boolean = repo.doesAirplaneExist(id).unsafeRunSync()
@@ -53,7 +56,7 @@ final class AirplaneRepositoryIT extends RepositoryCheck {
   "Selecting an airplane by id" should "return the correct entry" in {
     def airplaneById(id: Long): ApiResult[Airplane] = repo.getAirplane(id).unsafeRunSync()
 
-    originalAirplanes.foreach { airplane =>
+    forAll(originalAirplanes) { airplane =>
       airplaneById(airplane.id).value.value shouldBe airplane
     }
     airplaneById(idNotPresent).left.value shouldBe EntryNotFound(idNotPresent)
@@ -68,11 +71,11 @@ final class AirplaneRepositoryIT extends RepositoryCheck {
 
     val distinctManufacturerIds = originalAirplanes.map(_.manufacturerId).distinct
 
-    originalAirplanes.foreach { airplane =>
+    forAll(originalAirplanes) { airplane =>
       airplaneByName(airplane.name).value.value should contain only airplane
     }
 
-    distinctManufacturerIds.foreach { id =>
+    forAll(distinctManufacturerIds) { id =>
       val expectedAirplanes = originalAirplanes.filter(_.manufacturerId == id)
       airplaneByManufacturerId(id).value.value should contain only (expectedAirplanes: _*)
     }
@@ -86,7 +89,7 @@ final class AirplaneRepositoryIT extends RepositoryCheck {
     def airplaneByManufacturer(name: String): ApiResult[List[Airplane]] =
       repo.getAirplanesByManufacturer(name).unsafeRunSync()
 
-    manufacturerToIdMap.foreach {
+    forAll(manufacturerToIdMap) {
       case (manufacturer, id) =>
         airplaneByManufacturer(manufacturer).value.value should contain only (
           originalAirplanes.filter(_.manufacturerId == id): _*
@@ -98,10 +101,10 @@ final class AirplaneRepositoryIT extends RepositoryCheck {
 
   "Creating an airplane" should "work and return the new ID" in {
     val newId = repo.createAirplane(newAirplane).unsafeRunSync().value.value
-    val updatedAirplanes = repo.getAirplanes.unsafeRunSync().value.value
+    val updatedAirplane = repo.getAirplane(newId).unsafeRunSync().value.value
 
     newId shouldBe originalAirplanes.length + 1
-    updatedAirplanes should contain(Airplane.fromCreate(newId, newAirplane))
+    updatedAirplane shouldBe Airplane.fromCreate(newId, newAirplane)
   }
 
   it should "throw a conflict error if we try to create the same airplane again" in {

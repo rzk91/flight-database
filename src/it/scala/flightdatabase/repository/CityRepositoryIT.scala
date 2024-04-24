@@ -13,6 +13,7 @@ import flightdatabase.domain.city.City
 import flightdatabase.domain.city.CityCreate
 import flightdatabase.domain.city.CityPatch
 import flightdatabase.testutils.RepositoryCheck
+import org.scalatest.Inspectors.forAll
 
 class CityRepositoryIT extends RepositoryCheck {
 
@@ -139,7 +140,7 @@ class CityRepositoryIT extends RepositoryCheck {
   "Selecting a city by id" should "return the correct entry" in {
     def cityById(id: Long): ApiResult[City] = repo.getCity(id).unsafeRunSync()
 
-    originalCities.foreach(city => cityById(city.id).value.value shouldBe city)
+    forAll(originalCities)(city => cityById(city.id).value.value shouldBe city)
     cityById(idNotPresent).left.value shouldBe EntryNotFound(idNotPresent)
     cityById(veryLongIdNotPresent).left.value shouldBe EntryNotFound(veryLongIdNotPresent)
   }
@@ -153,9 +154,9 @@ class CityRepositoryIT extends RepositoryCheck {
 
     val distinctCountryIds = originalCities.map(_.countryId).distinct
 
-    originalCities.foreach(city => cityByName(city.name).value.value should contain only city)
+    forAll(originalCities)(city => cityByName(city.name).value.value should contain only city)
 
-    distinctCountryIds.foreach { id =>
+    forAll(distinctCountryIds) { id =>
       val expectedCities = originalCities.filter(_.countryId == id)
       cityByCountryId(id).value.value should contain only (expectedCities: _*)
     }
@@ -169,7 +170,7 @@ class CityRepositoryIT extends RepositoryCheck {
     def cityByCountry(name: String): ApiResult[List[City]] =
       repo.getCitiesByCountry(name).unsafeRunSync()
 
-    countryToIdMap.foreach {
+    forAll(countryToIdMap) {
       case (country, id) =>
         cityByCountry(country).value.value should contain only (
           originalCities.filter(_.countryId == id): _*
@@ -180,14 +181,17 @@ class CityRepositoryIT extends RepositoryCheck {
   }
 
   "Creating a new city" should "not take place if fields do not satisfy their criteria" in {
-    val invalidCity = newCity.copy(name = "")
-    repo.createCity(invalidCity).unsafeRunSync().left.value shouldBe EntryCheckFailed
+    val invalidCities = List(
+      newCity.copy(name = ""),
+      newCity.copy(population = -1)
+    )
 
-    val invalidTimezone = newCity.copy(timezone = "")
-    repo.createCity(invalidTimezone).unsafeRunSync().left.value shouldBe InvalidTimezone("")
+    forAll(invalidCities) { city =>
+      repo.createCity(city).unsafeRunSync().left.value shouldBe EntryCheckFailed
+    }
 
-    val invalidPopulation = newCity.copy(population = -1)
-    repo.createCity(invalidPopulation).unsafeRunSync().left.value shouldBe EntryCheckFailed
+    val cityWithInvalidTimezone = newCity.copy(timezone = "")
+    repo.createCity(cityWithInvalidTimezone).unsafeRunSync().left.value shouldBe InvalidTimezone("")
   }
 
   it should "not take place for a city with existing name in the same country" in {
@@ -223,9 +227,12 @@ class CityRepositoryIT extends RepositoryCheck {
     val invalidTimezone = "America/Chicago"
     val cityWithInvalidTimezone =
       newCity.copy(countryId = countryToIdMap("Germany"), timezone = invalidTimezone)
-    repo.createCity(cityWithInvalidTimezone).unsafeRunSync().left.value shouldBe InvalidTimezone(
-      invalidTimezone
-    )
+
+    repo
+      .createCity(cityWithInvalidTimezone)
+      .unsafeRunSync()
+      .left
+      .value shouldBe InvalidTimezone(invalidTimezone)
   }
 
   it should "create a new city if all criteria are satisfied" in {

@@ -337,7 +337,7 @@ class CountryRepositoryIT extends RepositoryCheck {
     val existingCountry = originalCountries.head
 
     val duplicatePatches = List(
-      CountryPatch(name = Some(newCountry.name)),
+      CountryPatch(name = Some(updatedName)),
       CountryPatch(iso2 = Some(newCountry.iso2)),
       CountryPatch(iso3 = Some(newCountry.iso3)),
       CountryPatch(countryCode = Some(newCountry.countryCode)),
@@ -355,8 +355,7 @@ class CountryRepositoryIT extends RepositoryCheck {
   }
 
   it should "throw an error if a language/currency does not exist" in {
-    val existingCountry =
-      repo.getCountries("name", updatedName).unsafeRunSync().value.value.head
+    val existingCountry = originalCountries.head
 
     val invalidPatches = List(
       CountryPatch(mainLanguageId = Some(idNotPresent)),
