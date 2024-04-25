@@ -13,6 +13,7 @@ import flightdatabase.domain.city.City
 import flightdatabase.domain.city.CityCreate
 import flightdatabase.domain.city.CityPatch
 import flightdatabase.testutils.RepositoryCheck
+import flightdatabase.testutils.implicits.enrichIOOperation
 import org.scalatest.Inspectors.forAll
 
 final class CityRepositoryIT extends RepositoryCheck {
@@ -125,59 +126,53 @@ final class CityRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting all cities" should "return the correct detailed list" in {
-    val cities = repo.getCities.unsafeRunSync().value.value
+    val cities = repo.getCities.value
 
     cities should not be empty
     cities should contain only (originalCities: _*)
   }
 
   it should "return only names if so required" in {
-    val citiesOnlyNames = repo.getCitiesOnlyNames.unsafeRunSync().value.value
+    val citiesOnlyNames = repo.getCitiesOnlyNames.value
     citiesOnlyNames should not be empty
     citiesOnlyNames should contain only (originalCities.map(_.name): _*)
   }
 
   "Selecting a city by id" should "return the correct entry" in {
-    def cityById(id: Long): ApiResult[City] = repo.getCity(id).unsafeRunSync()
-
-    forAll(originalCities)(city => cityById(city.id).value.value shouldBe city)
-    cityById(idNotPresent).left.value shouldBe EntryNotFound(idNotPresent)
-    cityById(veryLongIdNotPresent).left.value shouldBe EntryNotFound(veryLongIdNotPresent)
+    forAll(originalCities)(city => repo.getCity(city.id).value shouldBe city)
+    repo.getCity(idNotPresent).error shouldBe EntryNotFound(idNotPresent)
+    repo.getCity(veryLongIdNotPresent).error shouldBe EntryNotFound(veryLongIdNotPresent)
   }
 
   "Selecting a city by other fields" should "return the corresponding entries" in {
-    def cityByName(name: String): ApiResult[List[City]] =
-      repo.getCities("name", name).unsafeRunSync()
-
-    def cityByCountryId(id: Long): ApiResult[List[City]] =
-      repo.getCities("country_id", id).unsafeRunSync()
+    def cityByName(name: String): IO[ApiResult[List[City]]] = repo.getCities("name", name)
+    def cityByCountryId(id: Long): IO[ApiResult[List[City]]] = repo.getCities("country_id", id)
 
     val distinctCountryIds = originalCities.map(_.countryId).distinct
 
-    forAll(originalCities)(city => cityByName(city.name).value.value should contain only city)
+    forAll(originalCities)(city => cityByName(city.name).value should contain only city)
 
     forAll(distinctCountryIds) { id =>
       val expectedCities = originalCities.filter(_.countryId == id)
-      cityByCountryId(id).value.value should contain only (expectedCities: _*)
+      cityByCountryId(id).value should contain only (expectedCities: _*)
     }
 
-    cityByName(valueNotPresent).left.value shouldBe EntryListEmpty
-    cityByCountryId(idNotPresent).left.value shouldBe EntryListEmpty
-    cityByCountryId(veryLongIdNotPresent).left.value shouldBe EntryListEmpty
+    cityByName(valueNotPresent).error shouldBe EntryListEmpty
+    cityByCountryId(idNotPresent).error shouldBe EntryListEmpty
+    cityByCountryId(veryLongIdNotPresent).error shouldBe EntryListEmpty
   }
 
   "Selecting a city by country name" should "return the corresponding entries" in {
-    def cityByCountry(name: String): ApiResult[List[City]] =
-      repo.getCitiesByCountry(name).unsafeRunSync()
+    def cityByCountry(name: String): IO[ApiResult[List[City]]] = repo.getCitiesByCountry(name)
 
     forAll(countryToIdMap) {
       case (country, id) =>
-        cityByCountry(country).value.value should contain only (
+        cityByCountry(country).value should contain only (
           originalCities.filter(_.countryId == id): _*
         )
     }
 
-    cityByCountry(valueNotPresent).left.value shouldBe EntryListEmpty
+    cityByCountry(valueNotPresent).error shouldBe EntryListEmpty
   }
 
   "Creating a new city" should "not take place if fields do not satisfy their criteria" in {
@@ -186,12 +181,10 @@ final class CityRepositoryIT extends RepositoryCheck {
       newCity.copy(population = -1)
     )
 
-    forAll(invalidCities) { city =>
-      repo.createCity(city).unsafeRunSync().left.value shouldBe EntryCheckFailed
-    }
+    forAll(invalidCities)(city => repo.createCity(city).error shouldBe EntryCheckFailed)
 
     val cityWithInvalidTimezone = newCity.copy(timezone = "")
-    repo.createCity(cityWithInvalidTimezone).unsafeRunSync().left.value shouldBe InvalidTimezone("")
+    repo.createCity(cityWithInvalidTimezone).error shouldBe InvalidTimezone("")
   }
 
   it should "not take place for a city with existing name in the same country" in {
@@ -203,24 +196,18 @@ final class CityRepositoryIT extends RepositoryCheck {
       countryId = existingCountryId,
       timezone = existingCityTz
     )
-    repo.createCity(cityWithExistingName).unsafeRunSync().left.value shouldBe EntryAlreadyExists
+    repo.createCity(cityWithExistingName).error shouldBe EntryAlreadyExists
   }
 
   it should "throw a foreign key constraint violation for a city with a non-existing country" in {
     val cityWithNonExistingCountry = newCity.copy(countryId = idNotPresent)
-    repo
-      .createCity(cityWithNonExistingCountry)
-      .unsafeRunSync()
-      .left
-      .value shouldBe EntryHasInvalidForeignKey
+    repo.createCity(cityWithNonExistingCountry).error shouldBe EntryHasInvalidForeignKey
   }
 
   it should "throw an invalid timezone error for a city with a non-existing timezone" in {
     val invalidTimezone = "Invalid/Timezone"
     val cityWithInvalidTimezone = newCity.copy(timezone = invalidTimezone)
-    repo.createCity(cityWithInvalidTimezone).unsafeRunSync().left.value shouldBe InvalidTimezone(
-      invalidTimezone
-    )
+    repo.createCity(cityWithInvalidTimezone).error shouldBe InvalidTimezone(invalidTimezone)
   }
 
   it should "also throw an invalid timezone error if the city's timezone does not match the corresponding country's timezone" in {
@@ -228,121 +215,97 @@ final class CityRepositoryIT extends RepositoryCheck {
     val cityWithInvalidTimezone =
       newCity.copy(countryId = countryToIdMap("Germany"), timezone = invalidTimezone)
 
-    repo
-      .createCity(cityWithInvalidTimezone)
-      .unsafeRunSync()
-      .left
-      .value shouldBe InvalidTimezone(invalidTimezone)
+    repo.createCity(cityWithInvalidTimezone).error shouldBe InvalidTimezone(invalidTimezone)
   }
 
   it should "create a new city if all criteria are satisfied" in {
-    val newCityId = repo.createCity(newCity).unsafeRunSync().value.value
-    val newCityFromDb = repo.getCity(newCityId).unsafeRunSync().value.value
+    val newCityId = repo.createCity(newCity).value
+    val newCityFromDb = repo.getCity(newCityId).value
 
     newCityFromDb shouldBe City.fromCreate(newCityId, newCity)
   }
 
   it should "throw a conflict error if we create the same city again" in {
-    repo.createCity(newCity).unsafeRunSync().left.value shouldBe EntryAlreadyExists
+    repo.createCity(newCity).error shouldBe EntryAlreadyExists
   }
 
   it should "not throw a conflict error if we create a city with the same name in a different country" in {
-    val newCityId = repo.createCity(newBerlinInUSA).unsafeRunSync().value.value
-    val newCityFromDb = repo.getCity(newCityId).unsafeRunSync().value.value
+    val newCityId = repo.createCity(newBerlinInUSA).value
+    val newCityFromDb = repo.getCity(newCityId).value
 
     newCityFromDb shouldBe City.fromCreate(newCityId, newBerlinInUSA)
   }
 
   "Updating a city" should "work and return the updated city ID" in {
-    val original = repo.getCities("name", newCity.name).unsafeRunSync().value.value.head
+    val original = repo.getCities("name", newCity.name).value.head
     val updatedCity = original.copy(population = original.population + 100000)
-    repo.updateCity(updatedCity).unsafeRunSync().value.value shouldBe updatedCity.id
+    repo.updateCity(updatedCity).value shouldBe updatedCity.id
   }
 
   it should "also allow changing the city's name to a non-empty value" in {
-    val original = repo.getCities("name", newCity.name).unsafeRunSync().value.value.head
+    val original = repo.getCities("name", newCity.name).value.head
     val updatedCity = original.copy(name = updatedName)
-    repo.updateCity(updatedCity).unsafeRunSync().value.value shouldBe updatedCity.id
+    repo.updateCity(updatedCity).value shouldBe updatedCity.id
 
-    repo
-      .updateCity(updatedCity.copy(name = ""))
-      .unsafeRunSync()
-      .left
-      .value shouldBe EntryCheckFailed
+    repo.updateCity(updatedCity.copy(name = "")).error shouldBe EntryCheckFailed
   }
 
   it should "throw an error if we update a non-existing city" in {
     val updated = City.fromCreate(idNotPresent, newCity)
-    repo.updateCity(updated).unsafeRunSync().left.value shouldBe EntryNotFound(idNotPresent)
+    repo.updateCity(updated).error shouldBe EntryNotFound(idNotPresent)
   }
 
   it should "throw an error if we update the timezone to an invalid value" in {
-    val original = repo.getCities("name", updatedName).unsafeRunSync().value.value.head
+    val original = repo.getCities("name", updatedName).value.head
     val updatedCity = original.copy(timezone = "")
-    repo.updateCity(updatedCity).unsafeRunSync().left.value shouldBe InvalidTimezone("")
+    repo.updateCity(updatedCity).error shouldBe InvalidTimezone("")
 
     val invalidTimezone = "Europe/Munich"
     val updatedCity2 = original.copy(timezone = invalidTimezone)
-    repo.updateCity(updatedCity2).unsafeRunSync().left.value shouldBe InvalidTimezone(
-      invalidTimezone
-    )
+    repo.updateCity(updatedCity2).error shouldBe InvalidTimezone(invalidTimezone)
   }
 
   it should "throw a foreign key error if the country does not exist" in {
-    val original = repo.getCities("name", updatedName).unsafeRunSync().value.value.head
+    val original = repo.getCities("name", updatedName).value.head
     val updatedCity = original.copy(countryId = idNotPresent)
-    repo.updateCity(updatedCity).unsafeRunSync().left.value shouldBe EntryHasInvalidForeignKey
+    repo.updateCity(updatedCity).error shouldBe EntryHasInvalidForeignKey
   }
 
   "Patching a city" should "work and return the updated city ID" in {
-    val original = repo.getCities("name", updatedName).unsafeRunSync().value.value.head
+    val original = repo.getCities("name", updatedName).value.head
     val patch = CityPatch(name = Some(patchedName))
     val patched = City.fromPatch(original.id, patch, original)
-    repo.partiallyUpdateCity(original.id, patch).unsafeRunSync().value.value shouldBe patched
+    repo.partiallyUpdateCity(original.id, patch).value shouldBe patched
   }
 
   it should "throw an error if we patch a non-existing city" in {
     val patch = CityPatch(name = Some("Some name"))
-    repo.partiallyUpdateCity(idNotPresent, patch).unsafeRunSync().left.value shouldBe EntryNotFound(
-      idNotPresent
-    )
+    repo.partiallyUpdateCity(idNotPresent, patch).error shouldBe EntryNotFound(idNotPresent)
   }
 
   it should "throw an error if we patch a city with an invalid timezone" in {
-    val original = repo.getCities("name", patchedName).unsafeRunSync().value.value.head
+    val original = repo.getCities("name", patchedName).value.head
     val patch = CityPatch(timezone = Some(""))
-    repo
-      .partiallyUpdateCity(original.id, patch)
-      .unsafeRunSync()
-      .left
-      .value shouldBe InvalidTimezone("")
+    repo.partiallyUpdateCity(original.id, patch).error shouldBe InvalidTimezone("")
 
     val invalidTimezone = "Europe/Munich"
     val patch2 = CityPatch(timezone = Some(invalidTimezone))
-    repo
-      .partiallyUpdateCity(original.id, patch2)
-      .unsafeRunSync()
-      .left
-      .value shouldBe InvalidTimezone(invalidTimezone)
+    repo.partiallyUpdateCity(original.id, patch2).error shouldBe InvalidTimezone(invalidTimezone)
   }
 
   it should "throw a foreign key error if the country does not exist" in {
-    val original = repo.getCities("name", patchedName).unsafeRunSync().value.value.head
+    val original = repo.getCities("name", patchedName).value.head
     val patch = CityPatch(countryId = Some(idNotPresent))
-    repo
-      .partiallyUpdateCity(original.id, patch)
-      .unsafeRunSync()
-      .left
-      .value shouldBe EntryHasInvalidForeignKey
+    repo.partiallyUpdateCity(original.id, patch).error shouldBe EntryHasInvalidForeignKey
   }
 
   "Removing a city" should "work correctly" in {
-    val cityToRemove = repo.getCities("name", patchedName).unsafeRunSync().value.value.head
-    repo.removeCity(cityToRemove.id).unsafeRunSync().value.value shouldBe ()
+    val cityToRemove = repo.getCities("name", patchedName).value.head
+    repo.removeCity(cityToRemove.id).value shouldBe ()
     repo.doesCityExist(cityToRemove.id).unsafeRunSync() shouldBe false
   }
 
   it should "throw an error if we try to remove a non-existing city" in {
-    repo.removeCity(idNotPresent).unsafeRunSync().left.value shouldBe EntryNotFound(idNotPresent)
+    repo.removeCity(idNotPresent).error shouldBe EntryNotFound(idNotPresent)
   }
 }
