@@ -82,7 +82,7 @@ final class CountryRepositoryIT extends RepositoryCheck {
 
   "Checking if a country exists" should "return a valid result" in {
     def countryExists(id: Long): Boolean = repo.doesCountryExist(id).unsafeRunSync()
-    countryExists(1) shouldBe true
+    forAll(originalCountries)(c => countryExists(c.id) shouldBe true)
     countryExists(idNotPresent) shouldBe false
     countryExists(veryLongIdNotPresent) shouldBe false
   }

@@ -38,14 +38,14 @@ class ManufacturerRepository[F[_]: Concurrent] private (
     selectManufacturersBy(field, value).asList.execute
 
   override def getManufacturersByCity(city: String): F[ApiResult[List[Manufacturer]]] =
-    selectManufacturersByExternal[City, String]("name", city).asList.execute
+    selectManufacturersByCity[City, String]("name", city).asList.execute
 
   override def getManufacturersByCountry(country: String): F[ApiResult[List[Manufacturer]]] =
     EitherT(
       getFieldList[City, String, Country, String]("name", FieldValue("name", country))
     ).flatMapF {
         _.value
-          .flatTraverse(selectManufacturersByExternal[City, String]("name", _).to[List])
+          .flatTraverse(selectManufacturersByCity[City, String]("name", _).to[List])
           .map(listToApiResult)
       }
       .value
