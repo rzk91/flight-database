@@ -12,6 +12,7 @@ import flightdatabase.domain.country.Country
 import flightdatabase.domain.country.CountryCreate
 import flightdatabase.domain.country.CountryPatch
 import flightdatabase.testutils.RepositoryCheck
+import flightdatabase.testutils.implicits.enrichIOOperation
 import org.scalatest.Inspectors.forAll
 
 final class CountryRepositoryIT extends RepositoryCheck {
@@ -87,96 +88,94 @@ final class CountryRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting all countries" should "return the correct detailed list" in {
-    val countries = repo.getCountries.unsafeRunSync().value.value
+    val countries = repo.getCountries.value
 
     countries should not be empty
     countries should contain only (originalCountries: _*)
   }
 
   it should "return only names if so required" in {
-    val countries = repo.getCountriesOnlyNames.unsafeRunSync().value.value
+    val countries = repo.getCountriesOnlyNames.value
 
     countries should not be empty
     countries should contain only (originalCountries.map(_.name): _*)
   }
 
   "Selecting a country by ID" should "return the correct country" in {
-    def countryById(id: Long): ApiResult[Country] = repo.getCountry(id).unsafeRunSync()
-
-    forAll(originalCountries)(c => countryById(c.id).value.value shouldBe c)
-    countryById(idNotPresent).left.value shouldBe EntryNotFound(idNotPresent)
-    countryById(veryLongIdNotPresent).left.value shouldBe EntryNotFound(veryLongIdNotPresent)
+    forAll(originalCountries)(c => repo.getCountry(c.id).value shouldBe c)
+    repo.getCountry(idNotPresent).error shouldBe EntryNotFound(idNotPresent)
+    repo.getCountry(veryLongIdNotPresent).error shouldBe EntryNotFound(veryLongIdNotPresent)
   }
 
   "Selecting a country by other fields" should "return the corresponding entries" in {
-    def countryByName(name: String): ApiResult[List[Country]] =
-      repo.getCountries("name", name).unsafeRunSync()
+    def countryByName(name: String): IO[ApiResult[List[Country]]] =
+      repo.getCountries("name", name)
 
-    def countryByIso2(iso2: String): ApiResult[List[Country]] =
-      repo.getCountries("iso2", iso2).unsafeRunSync()
+    def countryByIso2(iso2: String): IO[ApiResult[List[Country]]] =
+      repo.getCountries("iso2", iso2)
 
-    def countryByNationality(nationality: String): ApiResult[List[Country]] =
-      repo.getCountries("nationality", nationality).unsafeRunSync()
+    def countryByNationality(nationality: String): IO[ApiResult[List[Country]]] =
+      repo.getCountries("nationality", nationality)
 
-    def countryByLanguage(id: Long): ApiResult[List[Country]] =
-      repo.getCountriesByLanguage("id", id).unsafeRunSync()
+    def countryByLanguage(id: Long): IO[ApiResult[List[Country]]] =
+      repo.getCountriesByLanguage("id", id)
 
-    def countryByCurrency(id: Long): ApiResult[List[Country]] =
-      repo.getCountriesByCurrency("id", id).unsafeRunSync()
+    def countryByCurrency(id: Long): IO[ApiResult[List[Country]]] =
+      repo.getCountriesByCurrency("id", id)
 
     val distinctLanguageIds = originalCountries.flatMap(allLanguageIds).distinct
 
     val distinctCurrencyIds = originalCountries.map(_.currencyId).distinct
 
     forAll(originalCountries) { c =>
-      countryByName(c.name).value.value should contain only c
-      countryByIso2(c.iso2).value.value should contain only c
-      countryByNationality(c.nationality).value.value should contain only c
+      countryByName(c.name).value should contain only c
+      countryByIso2(c.iso2).value should contain only c
+      countryByNationality(c.nationality).value should contain only c
     }
 
     forAll(distinctLanguageIds) { id =>
       val expectedCountries = originalCountries.filter(allLanguageIds(_).contains(id))
-      countryByLanguage(id).value.value should contain only (expectedCountries: _*)
+      countryByLanguage(id).value should contain only (expectedCountries: _*)
     }
 
     forAll(distinctCurrencyIds) { id =>
       val expectedCountries = originalCountries.filter(_.currencyId == id)
-      countryByCurrency(id).value.value should contain only (expectedCountries: _*)
+      countryByCurrency(id).value should contain only (expectedCountries: _*)
     }
 
-    countryByName(valueNotPresent).left.value shouldBe EntryListEmpty
-    countryByIso2(valueNotPresent).left.value shouldBe EntryListEmpty
-    countryByNationality(valueNotPresent).left.value shouldBe EntryListEmpty
-    countryByLanguage(idNotPresent).left.value shouldBe EntryListEmpty
-    countryByCurrency(idNotPresent).left.value shouldBe EntryListEmpty
+    countryByName(valueNotPresent).error shouldBe EntryListEmpty
+    countryByIso2(valueNotPresent).error shouldBe EntryListEmpty
+    countryByNationality(valueNotPresent).error shouldBe EntryListEmpty
+    countryByLanguage(idNotPresent).error shouldBe EntryListEmpty
+    countryByCurrency(idNotPresent).error shouldBe EntryListEmpty
   }
 
   "Selecting a country by external fields" should "return the corresponding entries" in {
-    def countriesByLanguageIso2(iso2: String): ApiResult[List[Country]] =
-      repo.getCountriesByLanguage("iso2", iso2).unsafeRunSync()
+    def countriesByLanguageIso2(iso2: String): IO[ApiResult[List[Country]]] =
+      repo.getCountriesByLanguage("iso2", iso2)
 
-    def countriesByLanguageName(name: String): ApiResult[List[Country]] =
-      repo.getCountriesByLanguage("name", name).unsafeRunSync()
+    def countriesByLanguageName(name: String): IO[ApiResult[List[Country]]] =
+      repo.getCountriesByLanguage("name", name)
 
-    def countriesByCurrencyIso(iso: String): ApiResult[List[Country]] =
-      repo.getCountriesByCurrency("iso", iso).unsafeRunSync()
+    def countriesByCurrencyIso(iso: String): IO[ApiResult[List[Country]]] =
+      repo.getCountriesByCurrency("iso", iso)
 
-    def countriesByCurrencyName(name: String): ApiResult[List[Country]] =
-      repo.getCountriesByCurrency("name", name).unsafeRunSync()
+    def countriesByCurrencyName(name: String): IO[ApiResult[List[Country]]] =
+      repo.getCountriesByCurrency("name", name)
 
     forAll(languageIdMap) {
       case (id, (iso2, name)) =>
         val expectedCountries = originalCountries.filter(allLanguageIds(_).contains(id))
-        countriesByLanguageIso2(iso2).value.value should contain only (expectedCountries: _*)
-        countriesByLanguageName(name).value.value should contain only (expectedCountries: _*)
+        countriesByLanguageIso2(iso2).value should contain only (expectedCountries: _*)
+        countriesByLanguageName(name).value should contain only (expectedCountries: _*)
     }
 
     forAll(currencyIdMap) {
       case (id, (iso, name)) =>
-        countriesByCurrencyIso(iso).value.value should contain only (
+        countriesByCurrencyIso(iso).value should contain only (
           originalCountries.filter(_.currencyId == id): _*
         )
-        countriesByCurrencyName(name).value.value should contain only (
+        countriesByCurrencyName(name).value should contain only (
           originalCountries.filter(_.currencyId == id): _*
         )
     }
@@ -191,9 +190,7 @@ final class CountryRepositoryIT extends RepositoryCheck {
       newCountry.copy(nationality = "")
     )
 
-    forAll(invalidCountries) { c =>
-      repo.createCountry(c).unsafeRunSync().left.value shouldBe EntryCheckFailed
-    }
+    forAll(invalidCountries)(c => repo.createCountry(c).error shouldBe EntryCheckFailed)
   }
 
   it should "not take place for a country with an existing country-unique fields" in {
@@ -208,9 +205,7 @@ final class CountryRepositoryIT extends RepositoryCheck {
       newCountry.copy(nationality = existingCountry.nationality)
     )
 
-    forAll(duplicateCountries) { c =>
-      repo.createCountry(c).unsafeRunSync().left.value shouldBe EntryAlreadyExists
-    }
+    forAll(duplicateCountries)(c => repo.createCountry(c).error shouldBe EntryAlreadyExists)
   }
 
   it should "throw a foreign key constraint violation if a language/currency does not exist" in {
@@ -221,25 +216,22 @@ final class CountryRepositoryIT extends RepositoryCheck {
       newCountry.copy(currencyId = idNotPresent)
     )
 
-    forAll(invalidCountries) { c =>
-      repo.createCountry(c).unsafeRunSync().left.value shouldBe EntryHasInvalidForeignKey
-    }
+    forAll(invalidCountries)(c => repo.createCountry(c).error shouldBe EntryHasInvalidForeignKey)
   }
 
   it should "create a new country if all criteria are satisfied" in {
-    val newCountryId = repo.createCountry(newCountry).unsafeRunSync().value.value
-    val newCountryFromDb = repo.getCountry(newCountryId).unsafeRunSync().value.value
+    val newCountryId = repo.createCountry(newCountry).value
+    val newCountryFromDb = repo.getCountry(newCountryId).value
 
     newCountryFromDb shouldBe Country.fromCreate(newCountryId, newCountry)
   }
 
   it should "throw a conflict error if we create the same country again" in {
-    repo.createCountry(newCountry).unsafeRunSync().left.value shouldBe EntryAlreadyExists
+    repo.createCountry(newCountry).error shouldBe EntryAlreadyExists
   }
 
   "Updating a country" should "not take place if fields do not satisfy their criteria" in {
-    val existingCountry =
-      repo.getCountries("name", newCountry.name).unsafeRunSync().value.value.head
+    val existingCountry = repo.getCountries("name", newCountry.name).value.head
 
     val invalidCountries = List(
       existingCountry.copy(name = ""),
@@ -249,9 +241,7 @@ final class CountryRepositoryIT extends RepositoryCheck {
       existingCountry.copy(nationality = "")
     )
 
-    forAll(invalidCountries) { c =>
-      repo.updateCountry(c).unsafeRunSync().left.value shouldBe EntryCheckFailed
-    }
+    forAll(invalidCountries)(c => repo.updateCountry(c).error shouldBe EntryCheckFailed)
   }
 
   it should "throw an error if we update a country with an existing country-unique field" in {
@@ -266,19 +256,16 @@ final class CountryRepositoryIT extends RepositoryCheck {
       existingCountry.copy(nationality = newCountry.nationality)
     )
 
-    forAll(duplicateCountries) { c =>
-      repo.updateCountry(c).unsafeRunSync().left.value shouldBe EntryAlreadyExists
-    }
+    forAll(duplicateCountries)(c => repo.updateCountry(c).error shouldBe EntryAlreadyExists)
   }
 
   it should "throw an error if we update a non-existing country" in {
     val updated = Country.fromCreate(idNotPresent, newCountry)
-    repo.updateCountry(updated).unsafeRunSync().left.value shouldBe EntryNotFound(idNotPresent)
+    repo.updateCountry(updated).error shouldBe EntryNotFound(idNotPresent)
   }
 
   it should "throw an error if a language/currency does not exist" in {
-    val existingCountry =
-      repo.getCountries("name", newCountry.name).unsafeRunSync().value.value.head
+    val existingCountry = repo.getCountries("name", newCountry.name).value.head
 
     val invalidCountries = List(
       existingCountry.copy(mainLanguageId = idNotPresent),
@@ -287,25 +274,21 @@ final class CountryRepositoryIT extends RepositoryCheck {
       existingCountry.copy(currencyId = idNotPresent)
     )
 
-    forAll(invalidCountries) { c =>
-      repo.updateCountry(c).unsafeRunSync().left.value shouldBe EntryHasInvalidForeignKey
-    }
+    forAll(invalidCountries)(c => repo.updateCountry(c).error shouldBe EntryHasInvalidForeignKey)
   }
 
   it should "update a country if all criteria are satisfied" in {
-    val existingCountry =
-      repo.getCountries("name", newCountry.name).unsafeRunSync().value.value.head
+    val existingCountry = repo.getCountries("name", newCountry.name).value.head
 
     val updated = existingCountry.copy(name = updatedName)
-    repo.updateCountry(updated).unsafeRunSync().value.value shouldBe existingCountry.id
+    repo.updateCountry(updated).value shouldBe existingCountry.id
 
-    val updatedCountry = repo.getCountry(existingCountry.id).unsafeRunSync().value.value
+    val updatedCountry = repo.getCountry(existingCountry.id).value
     updatedCountry shouldBe updated
   }
 
   "Patching a country" should "not take place if fields do not satisfy their criteria" in {
-    val existingCountry =
-      repo.getCountries("name", updatedName).unsafeRunSync().value.value.head
+    val existingCountry = repo.getCountries("name", updatedName).value.head
 
     val invalidPatches = List(
       CountryPatch(name = Some("")),
@@ -318,9 +301,7 @@ final class CountryRepositoryIT extends RepositoryCheck {
     forAll(invalidPatches) { p =>
       repo
         .partiallyUpdateCountry(existingCountry.id, p)
-        .unsafeRunSync()
-        .left
-        .value shouldBe EntryCheckFailed
+        .error shouldBe EntryCheckFailed
     }
   }
 
@@ -328,9 +309,7 @@ final class CountryRepositoryIT extends RepositoryCheck {
     val patched = CountryPatch(name = Some(patchedName))
     repo
       .partiallyUpdateCountry(idNotPresent, patched)
-      .unsafeRunSync()
-      .left
-      .value shouldBe EntryNotFound(idNotPresent)
+      .error shouldBe EntryNotFound(idNotPresent)
   }
 
   it should "not take place for a country with an existing country-unique field" in {
@@ -348,9 +327,7 @@ final class CountryRepositoryIT extends RepositoryCheck {
     forAll(duplicatePatches) { p =>
       repo
         .partiallyUpdateCountry(existingCountry.id, p)
-        .unsafeRunSync()
-        .left
-        .value shouldBe EntryAlreadyExists
+        .error shouldBe EntryAlreadyExists
     }
   }
 
@@ -367,41 +344,33 @@ final class CountryRepositoryIT extends RepositoryCheck {
     forAll(invalidPatches) { p =>
       repo
         .partiallyUpdateCountry(existingCountry.id, p)
-        .unsafeRunSync()
-        .left
-        .value shouldBe EntryHasInvalidForeignKey
+        .error shouldBe EntryHasInvalidForeignKey
     }
   }
 
   it should "patch a country if all criteria are satisfied" in {
-    val existingCountry =
-      repo.getCountries("name", updatedName).unsafeRunSync().value.value.head
+    val existingCountry = repo.getCountries("name", updatedName).value.head
 
     val patched = CountryPatch(name = Some(patchedName))
     repo
       .partiallyUpdateCountry(existingCountry.id, patched)
-      .unsafeRunSync()
-      .value
       .value shouldBe existingCountry.copy(name = patchedName)
 
-    val patchedCountry = repo.getCountry(existingCountry.id).unsafeRunSync().value.value
+    val patchedCountry = repo.getCountry(existingCountry.id).value
     patchedCountry shouldBe existingCountry.copy(name = patchedName)
   }
 
   "Removing a country" should "work correctly" in {
-    val existingCountry =
-      repo.getCountries("name", patchedName).unsafeRunSync().value.value.head
+    val existingCountry = repo.getCountries("name", patchedName).value.head
 
-    repo.removeCountry(existingCountry.id).unsafeRunSync().value.value shouldBe ()
+    repo.removeCountry(existingCountry.id).value shouldBe ()
     repo
       .getCountry(existingCountry.id)
-      .unsafeRunSync()
-      .left
-      .value shouldBe EntryNotFound(existingCountry.id)
+      .error shouldBe EntryNotFound(existingCountry.id)
   }
 
   it should "throw an error if we remove a non-existing country" in {
-    repo.removeCountry(idNotPresent).unsafeRunSync().left.value shouldBe EntryNotFound(idNotPresent)
+    repo.removeCountry(idNotPresent).error shouldBe EntryNotFound(idNotPresent)
   }
 
   private def allLanguageIds: Country => List[Long] =

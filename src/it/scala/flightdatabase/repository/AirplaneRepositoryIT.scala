@@ -12,6 +12,7 @@ import flightdatabase.domain.airplane.Airplane
 import flightdatabase.domain.airplane.AirplaneCreate
 import flightdatabase.domain.airplane.AirplanePatch
 import flightdatabase.testutils.RepositoryCheck
+import flightdatabase.testutils.implicits.enrichIOOperation
 import org.scalatest.Inspectors.forAll
 
 final class AirplaneRepositoryIT extends RepositoryCheck {
@@ -41,83 +42,77 @@ final class AirplaneRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting all airplanes" should "return the correct detailed list" in {
-    val airplanes = repo.getAirplanes.unsafeRunSync().value.value
+    val airplanes = repo.getAirplanes.value
 
     airplanes should not be empty
     airplanes should contain only (originalAirplanes: _*)
   }
 
   it should "return only names if so required" in {
-    val airplanesOnlyNames = repo.getAirplanesOnlyNames.unsafeRunSync().value.value
+    val airplanesOnlyNames = repo.getAirplanesOnlyNames.value
     airplanesOnlyNames should not be empty
     airplanesOnlyNames should contain only (originalAirplanes.map(_.name): _*)
   }
 
   "Selecting an airplane by id" should "return the correct entry" in {
-    def airplaneById(id: Long): ApiResult[Airplane] = repo.getAirplane(id).unsafeRunSync()
-
-    forAll(originalAirplanes) { airplane =>
-      airplaneById(airplane.id).value.value shouldBe airplane
-    }
-    airplaneById(idNotPresent).left.value shouldBe EntryNotFound(idNotPresent)
-    airplaneById(veryLongIdNotPresent).left.value shouldBe EntryNotFound(veryLongIdNotPresent)
+    forAll(originalAirplanes)(airplane => repo.getAirplane(airplane.id).value shouldBe airplane)
+    repo.getAirplane(idNotPresent).error shouldBe EntryNotFound(idNotPresent)
+    repo.getAirplane(veryLongIdNotPresent).error shouldBe EntryNotFound(veryLongIdNotPresent)
   }
 
   "Selecting an airplane by other fields" should "return the corresponding entries" in {
-    def airplaneByName(name: String): ApiResult[List[Airplane]] =
-      repo.getAirplanes("name", name).unsafeRunSync()
-    def airplaneByManufacturerId(id: Long): ApiResult[List[Airplane]] =
-      repo.getAirplanes("manufacturer_id", id).unsafeRunSync()
+    def airplaneByName(name: String): IO[ApiResult[List[Airplane]]] =
+      repo.getAirplanes("name", name)
+    def airplaneByManufacturerId(id: Long): IO[ApiResult[List[Airplane]]] =
+      repo.getAirplanes("manufacturer_id", id)
 
     val distinctManufacturerIds = originalAirplanes.map(_.manufacturerId).distinct
 
     forAll(originalAirplanes) { airplane =>
-      airplaneByName(airplane.name).value.value should contain only airplane
+      airplaneByName(airplane.name).value should contain only airplane
     }
 
     forAll(distinctManufacturerIds) { id =>
       val expectedAirplanes = originalAirplanes.filter(_.manufacturerId == id)
-      airplaneByManufacturerId(id).value.value should contain only (expectedAirplanes: _*)
+      airplaneByManufacturerId(id).value should contain only (expectedAirplanes: _*)
     }
 
-    airplaneByName(valueNotPresent).left.value shouldBe EntryListEmpty
-    airplaneByManufacturerId(idNotPresent).left.value shouldBe EntryListEmpty
-    airplaneByManufacturerId(veryLongIdNotPresent).left.value shouldBe EntryListEmpty
+    airplaneByName(valueNotPresent).error shouldBe EntryListEmpty
+    airplaneByManufacturerId(idNotPresent).error shouldBe EntryListEmpty
+    airplaneByManufacturerId(veryLongIdNotPresent).error shouldBe EntryListEmpty
   }
 
   "Selecting an airplane by manufacturer name" should "return the corresponding entries" in {
-    def airplaneByManufacturer(name: String): ApiResult[List[Airplane]] =
-      repo.getAirplanesByManufacturer(name).unsafeRunSync()
+    def airplaneByManufacturer(name: String): IO[ApiResult[List[Airplane]]] =
+      repo.getAirplanesByManufacturer(name)
 
     forAll(manufacturerToIdMap) {
       case (manufacturer, id) =>
-        airplaneByManufacturer(manufacturer).value.value should contain only (
+        airplaneByManufacturer(manufacturer).value should contain only (
           originalAirplanes.filter(_.manufacturerId == id): _*
         )
     }
 
-    airplaneByManufacturer(valueNotPresent).left.value shouldBe EntryListEmpty
+    airplaneByManufacturer(valueNotPresent).error shouldBe EntryListEmpty
   }
 
   "Creating an airplane" should "work and return the new ID" in {
-    val newId = repo.createAirplane(newAirplane).unsafeRunSync().value.value
-    val updatedAirplane = repo.getAirplane(newId).unsafeRunSync().value.value
+    val newId = repo.createAirplane(newAirplane).value
+    val updatedAirplane = repo.getAirplane(newId).value
 
     newId shouldBe originalAirplanes.length + 1
     updatedAirplane shouldBe Airplane.fromCreate(newId, newAirplane)
   }
 
   it should "throw a conflict error if we try to create the same airplane again" in {
-    repo.createAirplane(newAirplane).unsafeRunSync().left.value shouldBe EntryAlreadyExists
+    repo.createAirplane(newAirplane).error shouldBe EntryAlreadyExists
   }
 
   it should "not allow creating a city with an empty name" in {
     val newAirplaneWithEmptyName = newAirplane.copy(name = "")
     repo
       .createAirplane(newAirplaneWithEmptyName)
-      .unsafeRunSync()
-      .left
-      .value shouldBe EntryCheckFailed
+      .error shouldBe EntryCheckFailed
   }
 
   it should "throw a foreign key error if the manufacturer does not exist" in {
@@ -125,44 +120,38 @@ final class AirplaneRepositoryIT extends RepositoryCheck {
       newAirplane.copy(name = "Something", manufacturerId = idNotPresent)
     repo
       .createAirplane(newAirplaneWithNonExistingManufacturerId)
-      .unsafeRunSync()
-      .left
-      .value shouldBe EntryHasInvalidForeignKey
+      .error shouldBe EntryHasInvalidForeignKey
   }
 
   it should "throw a check error if we pass negative values for capacity or maxRangeInKm" in {
     val newAirplaneWithNegativeCapacity = newAirplane.copy(capacity = -1)
     repo
       .createAirplane(newAirplaneWithNegativeCapacity)
-      .unsafeRunSync()
-      .left
-      .value shouldBe EntryCheckFailed
+      .error shouldBe EntryCheckFailed
 
     val newAirplaneWithNegativeMaxRange = newAirplane.copy(maxRangeInKm = -1)
     repo
       .createAirplane(newAirplaneWithNegativeMaxRange)
-      .unsafeRunSync()
-      .left
-      .value shouldBe EntryCheckFailed
+      .error shouldBe EntryCheckFailed
   }
 
   "Updating an airplane" should "work and return the updated airplane ID" in {
     val original = Airplane.fromCreate(originalAirplanes.length + 1, newAirplane)
     val updated = original.copy(capacity = original.capacity + 100)
-    val returned = repo.updateAirplane(updated).unsafeRunSync().value.value
+    val returned = repo.updateAirplane(updated).value
     returned shouldBe updated.id
   }
 
   it should "also allow changing the name field" in {
     val original = Airplane.fromCreate(originalAirplanes.length + 1, newAirplane)
     val updated = original.copy(name = s"${original.name}_updated")
-    val returned = repo.updateAirplane(updated).unsafeRunSync().value.value
+    val returned = repo.updateAirplane(updated).value
     returned shouldBe updated.id
   }
 
   it should "throw an error if we update a non-existing airplane" in {
     val updated = Airplane.fromCreate(idNotPresent, newAirplane)
-    repo.updateAirplane(updated).unsafeRunSync().left.value shouldBe EntryNotFound(idNotPresent)
+    repo.updateAirplane(updated).error shouldBe EntryNotFound(idNotPresent)
   }
 
   it should "throw a foreign key error if the manufacturer does not exist" in {
@@ -170,16 +159,14 @@ final class AirplaneRepositoryIT extends RepositoryCheck {
     val updatedWithNonExistingManufacturerId = updated.copy(manufacturerId = idNotPresent)
     repo
       .updateAirplane(updatedWithNonExistingManufacturerId)
-      .unsafeRunSync()
-      .left
-      .value shouldBe EntryHasInvalidForeignKey
+      .error shouldBe EntryHasInvalidForeignKey
   }
 
   "Patching an airplane" should "work and return the patched airplane" in {
     val original = Airplane.fromCreate(originalAirplanes.length + 1, newAirplane)
     val patch = AirplanePatch(name = Some(s"${original.name}_patched"))
     val patched = Airplane.fromPatch(original.id, patch, original)
-    val returned = repo.partiallyUpdateAirplane(original.id, patch).unsafeRunSync().value.value
+    val returned = repo.partiallyUpdateAirplane(original.id, patch).value
     returned shouldBe patched
   }
 
@@ -187,9 +174,7 @@ final class AirplaneRepositoryIT extends RepositoryCheck {
     val patch = AirplanePatch(name = Some("Something"))
     repo
       .partiallyUpdateAirplane(idNotPresent, patch)
-      .unsafeRunSync()
-      .left
-      .value shouldBe EntryNotFound(idNotPresent)
+      .error shouldBe EntryNotFound(idNotPresent)
   }
 
   it should "throw a foreign key error if the manufacturer does not exist" in {
@@ -197,20 +182,16 @@ final class AirplaneRepositoryIT extends RepositoryCheck {
     val patch = AirplanePatch(manufacturerId = Some(idNotPresent))
     repo
       .partiallyUpdateAirplane(original.id, patch)
-      .unsafeRunSync()
-      .left
-      .value shouldBe EntryHasInvalidForeignKey
+      .error shouldBe EntryHasInvalidForeignKey
   }
 
   "Removing an airplane" should "work correctly" in {
     val id = originalAirplanes.length + 1
-    repo.removeAirplane(id).unsafeRunSync().value.value shouldBe ()
+    repo.removeAirplane(id).value shouldBe ()
     repo.doesAirplaneExist(id).unsafeRunSync() shouldBe false
   }
 
   it should "throw an error if we try to remove a non-existing airplane" in {
-    repo.removeAirplane(idNotPresent).unsafeRunSync().left.value shouldBe EntryNotFound(
-      idNotPresent
-    )
+    repo.removeAirplane(idNotPresent).error shouldBe EntryNotFound(idNotPresent)
   }
 }

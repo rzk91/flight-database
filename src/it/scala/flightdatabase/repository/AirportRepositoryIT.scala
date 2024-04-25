@@ -13,6 +13,7 @@ import flightdatabase.domain.airport.AirportCreate
 import flightdatabase.domain.airport.AirportPatch
 import flightdatabase.domain.country.Country
 import flightdatabase.testutils.RepositoryCheck
+import flightdatabase.testutils.implicits.enrichIOOperation
 import flightdatabase.utils.FieldValue
 import org.scalatest.Inspectors.forAll
 
@@ -90,83 +91,81 @@ final class AirportRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting all airports" should "return the correct detailed list" in {
-    val airports = repo.getAirports.unsafeRunSync().value.value
+    val airports = repo.getAirports.value
 
     airports should not be empty
     airports should contain only (originalAirports: _*)
   }
 
   it should "return only names if so required" in {
-    val airportsOnlyNames = repo.getAirportsOnlyNames.unsafeRunSync().value.value
+    val airportsOnlyNames = repo.getAirportsOnlyNames.value
     airportsOnlyNames should not be empty
     airportsOnlyNames should contain only (originalAirports.map(_.name): _*)
   }
 
   "Selecting an airport by id" should "return the correct entry" in {
-    def airportById(id: Long): ApiResult[Airport] = repo.getAirport(id).unsafeRunSync()
-
-    forAll(originalAirports)(airport => airportById(airport.id).value.value shouldBe airport)
-    airportById(idNotPresent).left.value shouldBe EntryNotFound(idNotPresent)
-    airportById(veryLongIdNotPresent).left.value shouldBe EntryNotFound(veryLongIdNotPresent)
+    forAll(originalAirports)(airport => repo.getAirport(airport.id).value shouldBe airport)
+    repo.getAirport(idNotPresent).error shouldBe EntryNotFound(idNotPresent)
+    repo.getAirport(veryLongIdNotPresent).error shouldBe EntryNotFound(veryLongIdNotPresent)
   }
 
   "Selecting airports by other fields" should "return the corresponding entries" in {
-    def airportByName(name: String): ApiResult[List[Airport]] =
-      repo.getAirports("name", name).unsafeRunSync()
-    def airportByIcao(icao: String): ApiResult[List[Airport]] =
-      repo.getAirports("icao", icao).unsafeRunSync()
-    def airportByIata(iata: String): ApiResult[List[Airport]] =
-      repo.getAirports("iata", iata).unsafeRunSync()
-    def airportByCityId(id: Long): ApiResult[List[Airport]] =
-      repo.getAirports("city_id", id).unsafeRunSync()
+    def airportByName(name: String): IO[ApiResult[List[Airport]]] =
+      repo.getAirports("name", name)
+    def airportByIcao(icao: String): IO[ApiResult[List[Airport]]] =
+      repo.getAirports("icao", icao)
+    def airportByIata(iata: String): IO[ApiResult[List[Airport]]] =
+      repo.getAirports("iata", iata)
+    def airportByCityId(id: Long): IO[ApiResult[List[Airport]]] =
+      repo.getAirports("city_id", id)
 
     val distinctCityIds = originalAirports.map(_.cityId).distinct
 
     forAll(originalAirports) { airport =>
-      airportByName(airport.name).value.value should contain only airport
-      airportByIata(airport.iata).value.value should contain only airport
-      airportByIcao(airport.icao).value.value should contain only airport
+      airportByName(airport.name).value should contain only airport
+      airportByIata(airport.iata).value should contain only airport
+      airportByIcao(airport.icao).value should contain only airport
     }
 
     forAll(distinctCityIds) { id =>
       val expectedAirports = originalAirports.filter(_.cityId == id)
-      airportByCityId(id).value.value should contain only (expectedAirports: _*)
+      airportByCityId(id).value should contain only (expectedAirports: _*)
     }
 
-    airportByName(valueNotPresent).left.value shouldBe EntryListEmpty
-    airportByIata(valueNotPresent).left.value shouldBe EntryListEmpty
-    airportByIcao(valueNotPresent).left.value shouldBe EntryListEmpty
-    airportByCityId(idNotPresent).left.value shouldBe EntryListEmpty
-    airportByCityId(veryLongIdNotPresent).left.value shouldBe EntryListEmpty
+    airportByName(valueNotPresent).error shouldBe EntryListEmpty
+    airportByIata(valueNotPresent).error shouldBe EntryListEmpty
+    airportByIcao(valueNotPresent).error shouldBe EntryListEmpty
+    airportByCityId(idNotPresent).error shouldBe EntryListEmpty
+    airportByCityId(veryLongIdNotPresent).error shouldBe EntryListEmpty
   }
 
   "Selecting airports by city name" should "return the corresponding entries" in {
-    def airportByCity(city: String): ApiResult[List[Airport]] =
-      repo.getAirportsByCity(city).unsafeRunSync()
+    def airportByCity(city: String): IO[ApiResult[List[Airport]]] =
+      repo.getAirportsByCity(city)
 
     forAll(cityToIdMap) {
       case (city, id) =>
-        airportByCity(city).value.value should contain only (
+        airportByCity(city).value should contain only (
           originalAirports.filter(_.cityId == id): _*
         )
     }
 
-    airportByCity(valueNotPresent).left.value shouldBe EntryListEmpty
+    airportByCity(valueNotPresent).error shouldBe EntryListEmpty
   }
 
   "Selecting airport by country" should "also return the corresponding entries" in {
-    def airportByCountry(country: String): ApiResult[List[Airport]] =
-      repo.getAirportsByCountry(country).unsafeRunSync()
+    def airportByCountry(country: String): IO[ApiResult[List[Airport]]] =
+      repo.getAirportsByCountry(country)
 
     forAll(countryToCityIdMap) {
       case (country, cityId) =>
-        airportByCountry(country).value.value should contain only (
+        airportByCountry(country).value should contain only (
           originalAirports.filter(_.cityId == cityId): _*
         )
     }
 
     val fv = FieldValue[Country, String]("name", valueNotPresent)
-    airportByCountry(valueNotPresent).left.value shouldBe EntryNotFound(fv)
+    airportByCountry(valueNotPresent).error shouldBe EntryNotFound(fv)
   }
 
   "Creating a new airport" should "not take place if the fields do not satisfy their criteria" in {
@@ -180,7 +179,7 @@ final class AirportRepositoryIT extends RepositoryCheck {
     )
 
     forAll(invalidAirports) { invalid =>
-      repo.createAirport(invalid).unsafeRunSync().left.value shouldBe EntryCheckFailed
+      repo.createAirport(invalid).error shouldBe EntryCheckFailed
     }
   }
 
@@ -191,7 +190,7 @@ final class AirportRepositoryIT extends RepositoryCheck {
     )
 
     forAll(duplicateAirports) { duplicate =>
-      repo.createAirport(duplicate).unsafeRunSync().left.value shouldBe EntryAlreadyExists
+      repo.createAirport(duplicate).error shouldBe EntryAlreadyExists
     }
   }
 
@@ -200,95 +199,83 @@ final class AirportRepositoryIT extends RepositoryCheck {
     val existingName = originalAirports.head.name
     repo
       .createAirport(newAirport.copy(cityId = existingCityId, name = existingName))
-      .unsafeRunSync()
-      .left
-      .value shouldBe EntryAlreadyExists
+      .error shouldBe EntryAlreadyExists
   }
 
   it should "throw a foreign key error if the city does not exist" in {
     repo
       .createAirport(newAirport.copy(cityId = idNotPresent))
-      .unsafeRunSync()
-      .left
-      .value shouldBe EntryHasInvalidForeignKey
+      .error shouldBe EntryHasInvalidForeignKey
   }
 
   it should "otherwise return the correct id" in {
-    val newId = repo.createAirport(newAirport).unsafeRunSync().value.value
-    val airports = repo.getAirports.unsafeRunSync().value.value
+    val newId = repo.createAirport(newAirport).value
+    val airports = repo.getAirports.value
 
     airports should contain(Airport.fromCreate(newId, newAirport))
   }
 
   it should "throw a conflict error if we try to create the same airport again" in {
-    repo.createAirport(newAirport).unsafeRunSync().left.value shouldBe EntryAlreadyExists
+    repo.createAirport(newAirport).error shouldBe EntryAlreadyExists
   }
 
   "Updating an airport" should "work and return the updated airport ID" in {
-    val original = repo.getAirports("name", newAirport.name).unsafeRunSync().value.value.head
+    val original = repo.getAirports("name", newAirport.name).value.head
     val updated = original.copy(capacity = original.capacity + 100)
-    repo.updateAirport(updated).unsafeRunSync().value.value shouldBe updated.id
+    repo.updateAirport(updated).value shouldBe updated.id
   }
 
   it should "also allow changing the name field to a new non-empty value" in {
-    val original = repo.getAirports("name", newAirport.name).unsafeRunSync().value.value.head
+    val original = repo.getAirports("name", newAirport.name).value.head
     val updated = original.copy(name = updatedName)
-    repo.updateAirport(updated).unsafeRunSync().value.value shouldBe updated.id
+    repo.updateAirport(updated).value shouldBe updated.id
 
     repo
       .updateAirport(updated.copy(name = ""))
-      .unsafeRunSync()
-      .left
-      .value shouldBe EntryCheckFailed
+      .error shouldBe EntryCheckFailed
   }
 
   it should "throw an error if we update a non-existing airport" in {
     val updated = Airport.fromCreate(idNotPresent, newAirport)
-    repo.updateAirport(updated).unsafeRunSync().left.value shouldBe EntryNotFound(idNotPresent)
+    repo.updateAirport(updated).error shouldBe EntryNotFound(idNotPresent)
   }
 
   it should "throw a foreign key error if the city does not exist" in {
     val updated = Airport.fromCreate(originalAirports.head.id, newAirport)
     repo
       .updateAirport(updated.copy(icao = "XXXX", iata = "XXX", cityId = idNotPresent))
-      .unsafeRunSync()
-      .left
-      .value shouldBe EntryHasInvalidForeignKey
+      .error shouldBe EntryHasInvalidForeignKey
   }
 
   "Patching an airport" should "work and return the updated airport" in {
-    val original = repo.getAirports("name", updatedName).unsafeRunSync().value.value.head
+    val original = repo.getAirports("name", updatedName).value.head
     val patch = AirportPatch(name = Some(patchedName))
     val patched = Airport.fromPatch(original.id, patch, original)
-    repo.partiallyUpdateAirport(original.id, patch).unsafeRunSync().value.value shouldBe patched
+    repo.partiallyUpdateAirport(original.id, patch).value shouldBe patched
   }
 
   it should "throw an error if we patch a non-existing airport" in {
     val patch = AirportPatch(name = Some("Something"))
     repo
       .partiallyUpdateAirport(idNotPresent, patch)
-      .unsafeRunSync()
-      .left
-      .value shouldBe EntryNotFound(idNotPresent)
+      .error shouldBe EntryNotFound(idNotPresent)
   }
 
   it should "throw a foreign key error if the city does not exist" in {
-    val original = repo.getAirports("name", patchedName).unsafeRunSync().value.value.head
+    val original = repo.getAirports("name", patchedName).value.head
     val patch = AirportPatch(cityId = Some(idNotPresent))
     repo
       .partiallyUpdateAirport(original.id, patch)
-      .unsafeRunSync()
-      .left
-      .value shouldBe EntryHasInvalidForeignKey
+      .error shouldBe EntryHasInvalidForeignKey
   }
 
   "Removing an airplane" should "work correctly" in {
-    val original = repo.getAirports("name", patchedName).unsafeRunSync().value.value.head
-    repo.removeAirport(original.id).unsafeRunSync().value.value shouldBe ()
+    val original = repo.getAirports("name", patchedName).value.head
+    repo.removeAirport(original.id).value shouldBe ()
     repo.doesAirportExist(original.id).unsafeRunSync() shouldBe false
   }
 
   it should "throw an error if we try to remove a non-existing airport" in {
-    repo.removeAirport(idNotPresent).unsafeRunSync().left.value shouldBe EntryNotFound(idNotPresent)
+    repo.removeAirport(idNotPresent).error shouldBe EntryNotFound(idNotPresent)
   }
 }
