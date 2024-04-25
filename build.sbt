@@ -57,7 +57,8 @@ val otherDependencies = Seq(
   "com.typesafe.scala-logging" %% "scala-logging"             % "3.9.5",
   "commons-io"                 % "commons-io"                 % "2.16.1",
   "org.flywaydb"               % "flyway-core"                % flywayVersion,
-  "org.flywaydb"               % "flyway-database-postgresql" % flywayVersion
+  "org.flywaydb"               % "flyway-database-postgresql" % flywayVersion,
+  "com.ibm.icu"                % "icu4j"                      % "75.1"
 )
 
 val testingDependencies = Seq(

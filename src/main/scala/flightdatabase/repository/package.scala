@@ -28,8 +28,8 @@ package object repository {
       index <- selectWhereQuery[WT, Long, WV]("id", whereFieldValue.field, whereFieldValue.value).option.attempt
       values <- index match {
         case Right(Some(id)) => selectWhereQuery[ST, SV, Long](selectField, idField, id).asList
-        case Right(None)     => EntryNotFound(whereFieldValue.toString).elevate[ConnectionIO, List[SV]]
-        case Left(error)     => UnknownError(error.getMessage).elevate[ConnectionIO, List[SV]]
+        case Right(None)     => EntryNotFound(whereFieldValue).elevate[ConnectionIO, List[SV]]
+        case Left(error)     => UnknownDbError(error.getMessage).elevate[ConnectionIO, List[SV]]
       }
     } yield values
   }
@@ -43,6 +43,6 @@ package object repository {
     case sqlstate.class23.NOT_NULL_VIOLATION    => EntryNullCheckFailed
     case sqlstate.class23.UNIQUE_VIOLATION      => EntryAlreadyExists
     case sqlstate.class23.FOREIGN_KEY_VIOLATION => EntryHasInvalidForeignKey
-    case _                                      => UnknownError(state.value)
+    case _                                      => UnknownDbError(state.value)
   }
 }

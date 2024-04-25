@@ -1,6 +1,7 @@
 TODO list
 ----------
 
+- ~~Perhaps consider using `fly4s` instead of the original Java implementation of `Flyway`.~~ Not needed for now.
 - ~~Rename `services` to `endpoints` and accordingly all file names, e.g., `AirplaneService` to `AirplaneEndpoint`.~~ DONE!
 - ~~Refactor the project structure to introduce a domain package that will contain separate sub-packages for each database object. Each of these sub-packages will include two files:~~ DONE!
 	- ~~A {dbObject}Model.scala file that defines the case class for the database object.~~ DONE!
@@ -13,9 +14,16 @@ TODO list
 - ~~Upgrade all dependencies, especially doobie and http4s since they have some major changes.~~ DONE!
 - ~~Add logging for doobie queries.~~ DONE!
 - ~~Write tests for all generic doobie queries.~~ DONE!
-- Implement all doobie queries.
-- Write tests for all specific doobie queries.
-- Implement all endpoints using algebras.
-- Write tests for all endpoints and algebras.
+- ~~Implement all doobie queries.~~ DONE for now... more will be added as needed.
+- ~~Write tests for all specific doobie queries.~~ DONE!
+- ~~Implement all endpoints using algebras.~~ DONE!
+- Write integration tests for all algebras.
+- All `endpoints` should return URI of the created resource in the `Location` header.
+- Add a URI to all foreign key fields in the response (maybe use something similar to `TableBase`).
+- Write unit tests for all endpoints.
+- Update the `README.md` to reflect the changes in the project structure and the new features.
 - Expand API endpoint list to include more complex operations as indicated in `endpoints.md`.
-- Perhaps consider using `fly4s` instead of the original Java implementation of `Flyway`.
+- Move domain to a separate module and rename `src` to `core`. 
+- Upgrade to sbt 1.9.9 and restructure build.sbt to account for multiple modules.
+- Add a `Dockerfile` and `docker-compose.yml` to run the application in a container.
+- Start working on the frontend using ScalaJS!

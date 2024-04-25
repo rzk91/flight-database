@@ -10,8 +10,10 @@ trait CountryAlgebra[F[_]] {
   def getCountriesOnlyNames: F[ApiResult[List[String]]]
   def getCountry(id: Long): F[ApiResult[Country]]
   def getCountries[V: Put](field: String, value: V): F[ApiResult[List[Country]]]
+  def getCountriesByLanguage[V: Put](field: String, value: V): F[ApiResult[List[Country]]]
+  def getCountriesByCurrency[V: Put](field: String, value: V): F[ApiResult[List[Country]]]
   def createCountry(country: CountryCreate): F[ApiResult[Long]]
-  def updateCountry(country: Country): F[ApiResult[Country]]
+  def updateCountry(country: Country): F[ApiResult[Long]]
   def partiallyUpdateCountry(id: Long, patch: CountryPatch): F[ApiResult[Country]]
   def removeCountry(id: Long): F[ApiResult[Unit]]
 }

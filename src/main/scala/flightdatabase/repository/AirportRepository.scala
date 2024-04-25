@@ -33,7 +33,7 @@ class AirportRepository[F[_]: Concurrent] private (
   override def getAirport(id: Long): F[ApiResult[Airport]] =
     selectAirportsBy("id", id).asSingle(id).execute
 
-  override def getAirportsBy[V: Put](field: String, value: V): F[ApiResult[List[Airport]]] =
+  override def getAirports[V: Put](field: String, value: V): F[ApiResult[List[Airport]]] =
     selectAirportsBy(field, value).asList.execute
 
   override def getAirportsByCity(city: String): F[ApiResult[List[Airport]]] =
@@ -52,13 +52,14 @@ class AirportRepository[F[_]: Concurrent] private (
   override def createAirport(airport: AirportCreate): F[ApiResult[Long]] =
     insertAirport(airport).attemptInsert.execute
 
-  override def updateAirport(airport: Airport): F[ApiResult[Airport]] =
-    modifyAirport(airport).attemptUpdate(airport).execute
+  override def updateAirport(airport: Airport): F[ApiResult[Long]] =
+    modifyAirport(airport).attemptUpdate(airport.id).execute
 
   override def partiallyUpdateAirport(id: Long, patch: AirportPatch): F[ApiResult[Airport]] =
     EitherT(getAirport(id)).flatMapF { airportOutput =>
       val airport = airportOutput.value
-      updateAirport(Airport.fromPatch(id, patch, airport))
+      val patched = Airport.fromPatch(id, patch, airport)
+      modifyAirport(patched).attemptUpdate(patched).execute
     }.value
 
   override def removeAirport(id: Long): F[ApiResult[Unit]] =

@@ -40,7 +40,7 @@ case object EntryHasInvalidForeignKey extends ApiError {
   override val error: String = "Error: Entry has an invalid/non-existing foreign key"
 }
 
-case class EntryNotFound(entry: String) extends ApiError {
+case class EntryNotFound[A](entry: A) extends ApiError {
   override val error: String = s"Error: Entry $entry not found"
 }
 
@@ -48,4 +48,12 @@ case object FeatureNotImplemented extends ApiError {
   override val error: String = "Error: Feature still under development..."
 }
 
-case class UnknownError(error: String) extends ApiError
+case class InvalidTimezone(timezone: String) extends ApiError {
+  override val error: String = s"Error: Invalid timezone $timezone"
+}
+
+case class InvalidField(field: String) extends ApiError {
+  override val error: String = s"Error: Invalid field $field"
+}
+
+case class UnknownDbError(error: String) extends ApiError

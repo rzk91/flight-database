@@ -4,7 +4,7 @@ import flightdatabase.domain._
 import io.circe.generic.extras.ConfiguredJsonCodec
 
 @ConfiguredJsonCodec final case class CurrencyPatch(
-  name: Option[String],
-  iso: Option[String],
-  symbol: Option[String]
+  name: Option[String] = None,
+  iso: Option[String] = None,
+  symbol: Option[String] = None
 )

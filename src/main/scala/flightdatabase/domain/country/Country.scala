@@ -21,25 +21,20 @@ import io.circe.generic.extras.ConfiguredJsonCodec
 object Country {
   implicit val countryTableBase: TableBase[Country] = TableBase.instance(COUNTRY)
 
-  def fromCreate(model: CountryCreate): Option[Country] =
-    model.id.map { id =>
-      Country(
-        id = id,
-        name = model.name,
-        iso2 = model.iso2,
-        iso3 = model.iso3,
-        countryCode = model.countryCode,
-        domainName = model.domainName,
-        mainLanguageId = model.mainLanguageId,
-        secondaryLanguageId = model.secondaryLanguageId,
-        tertiaryLanguageId = model.tertiaryLanguageId,
-        currencyId = model.currencyId,
-        nationality = model.nationality
-      )
-    }
-
-  def fromCreateUnsafe(model: CountryCreate): Country =
-    fromCreate(model).get
+  def fromCreate(id: Long, model: CountryCreate): Country =
+    Country(
+      id = id,
+      name = model.name,
+      iso2 = model.iso2,
+      iso3 = model.iso3,
+      countryCode = model.countryCode,
+      domainName = model.domainName,
+      mainLanguageId = model.mainLanguageId,
+      secondaryLanguageId = model.secondaryLanguageId,
+      tertiaryLanguageId = model.tertiaryLanguageId,
+      currencyId = model.currencyId,
+      nationality = model.nationality
+    )
 
   def fromPatch(id: Long, patch: CountryPatch, original: Country): Country =
     Country(

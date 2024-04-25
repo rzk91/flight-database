@@ -41,11 +41,11 @@ class AirportEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airpo
 
     // GET /airports/iata/{iata}
     case GET -> Root / "iata" / iata =>
-      algebra.getAirportsBy("iata", iata).flatMap(toResponse(_))
+      algebra.getAirports("iata", iata).flatMap(toResponse(_))
 
     // GET /airports/icao/{icao}
     case GET -> Root / "icao" / icao =>
-      algebra.getAirportsBy("icao", icao).flatMap(toResponse(_))
+      algebra.getAirports("icao", icao).flatMap(toResponse(_))
 
     // GET /airports/city/{city_name} OR
     // GET /airports/city/{city_id}
@@ -53,7 +53,7 @@ class AirportEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airpo
       city.asLong.fold[F[Response[F]]] {
         // Treat city as name
         algebra.getAirportsByCity(city).flatMap(toResponse(_))
-      }(algebra.getAirportsBy("city_id", _).flatMap(toResponse(_)))
+      }(algebra.getAirports("city_id", _).flatMap(toResponse(_)))
 
     // GET /airports/country/{country}
     case GET -> Root / "country" / country =>
@@ -76,11 +76,11 @@ class AirportEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airpo
       } { id =>
         req
           .attemptAs[Airport]
-          .foldF[ApiResult[Airport]](
-            _ => EntryInvalidFormat.elevate[F, Airport],
+          .foldF[ApiResult[Long]](
+            _ => EntryInvalidFormat.elevate[F, Long],
             airport =>
               if (id != airport.id) {
-                InconsistentIds(id, airport.id).elevate[F, Airport]
+                InconsistentIds(id, airport.id).elevate[F, Long]
               } else {
                 algebra.updateAirport(airport)
               }

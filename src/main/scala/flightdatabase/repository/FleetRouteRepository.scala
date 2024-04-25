@@ -60,8 +60,8 @@ class FleetRouteRepository[F[_]: Concurrent] private (
   override def createFleetRoute(fleetRoute: FleetRouteCreate): F[ApiResult[Long]] =
     insertFleetRoute(fleetRoute).attemptInsert.execute
 
-  override def updateFleetRoute(fleetRoute: FleetRoute): F[ApiResult[FleetRoute]] =
-    modifyFleetRoute(fleetRoute).attemptUpdate(fleetRoute).execute
+  override def updateFleetRoute(fleetRoute: FleetRoute): F[ApiResult[Long]] =
+    modifyFleetRoute(fleetRoute).attemptUpdate(fleetRoute.id).execute
 
   override def partiallyUpdateFleetRoute(
     id: Long,
@@ -69,7 +69,8 @@ class FleetRouteRepository[F[_]: Concurrent] private (
   ): F[ApiResult[FleetRoute]] =
     EitherT(getFleetRoute(id)).flatMapF { fleetRouteOutput =>
       val fleetRoute = fleetRouteOutput.value
-      updateFleetRoute(FleetRoute.fromPatch(id, patch, fleetRoute))
+      val patched = FleetRoute.fromPatch(id, patch, fleetRoute)
+      modifyFleetRoute(patched).attemptUpdate(patched).execute
     }.value
 
   override def removeFleetRoute(id: Long): F[ApiResult[Unit]] =

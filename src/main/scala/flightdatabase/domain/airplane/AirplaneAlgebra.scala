@@ -11,7 +11,7 @@ trait AirplaneAlgebra[F[_]] {
   def getAirplanes[V: Put](field: String, value: V): F[ApiResult[List[Airplane]]]
   def getAirplanesByManufacturer(manufacturer: String): F[ApiResult[List[Airplane]]]
   def createAirplane(airplane: AirplaneCreate): F[ApiResult[Long]]
-  def updateAirplane(airplane: Airplane): F[ApiResult[Airplane]]
+  def updateAirplane(airplane: Airplane): F[ApiResult[Long]]
   def partiallyUpdateAirplane(id: Long, patch: AirplanePatch): F[ApiResult[Airplane]]
   def removeAirplane(id: Long): F[ApiResult[Unit]]
 }

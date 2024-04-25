@@ -16,19 +16,14 @@ object Airplane {
 
   implicit val airplaneTableBase: TableBase[Airplane] = TableBase.instance(AIRPLANE)
 
-  def fromCreate(model: AirplaneCreate): Option[Airplane] =
-    model.id.map { id =>
-      Airplane(
-        id,
-        model.name,
-        model.manufacturerId,
-        model.capacity,
-        model.maxRangeInKm
-      )
-    }
-
-  def fromCreateUnsafe(model: AirplaneCreate): Airplane =
-    fromCreate(model).get
+  def fromCreate(id: Long, model: AirplaneCreate): Airplane =
+    Airplane(
+      id,
+      model.name,
+      model.manufacturerId,
+      model.capacity,
+      model.maxRangeInKm
+    )
 
   def fromPatch(id: Long, patch: AirplanePatch, original: Airplane): Airplane =
     Airplane(

@@ -39,6 +39,15 @@ class FleetAirplaneEndpoints[F[_]: Concurrent] private (
         BadRequest(EntryInvalidFormat.error)
       }(id => algebra.getFleetAirplane(id).flatMap(toResponse(_)))
 
+    // GET /fleet-airplanes/fleet/{fleet_id}/airplane/{airplane_id}
+    case GET -> Root / "fleet" / fleetId / "airplane" / airplaneId =>
+      (fleetId.asLong, airplaneId.asLong).tupled.fold {
+        BadRequest(EntryInvalidFormat.error)
+      } {
+        case (fId, aId) =>
+          algebra.getFleetAirplane(fId, aId).flatMap(toResponse(_))
+      }
+
     // GET /fleet-airplanes/airplane/{airplane_id} OR
     // GET /fleet-airplanes/airplane/{airplane_name}
     case GET -> Root / "airplane" / airplane => {
@@ -80,11 +89,11 @@ class FleetAirplaneEndpoints[F[_]: Concurrent] private (
       } { id =>
         req
           .attemptAs[FleetAirplane]
-          .foldF[ApiResult[FleetAirplane]](
-            _ => EntryInvalidFormat.elevate[F, FleetAirplane],
+          .foldF[ApiResult[Long]](
+            _ => EntryInvalidFormat.elevate[F, Long],
             fa =>
               if (id != fa.id) {
-                InconsistentIds(id, fa.id).elevate[F, FleetAirplane]
+                InconsistentIds(id, fa.id).elevate[F, Long]
               } else {
                 algebra.updateFleetAirplane(fa)
               }

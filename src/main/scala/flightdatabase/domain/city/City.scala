@@ -18,22 +18,17 @@ import io.circe.generic.extras.ConfiguredJsonCodec
 object City {
   implicit val cityTableBase: TableBase[City] = TableBase.instance(CITY)
 
-  def fromCreate(model: CityCreate): Option[City] =
-    model.id.map { id =>
-      City(
-        id,
-        model.name,
-        model.countryId,
-        model.capital,
-        model.population,
-        model.latitude,
-        model.longitude,
-        model.timezone
-      )
-    }
-
-  def fromCreateUnsafe(model: CityCreate): City =
-    fromCreate(model).get
+  def fromCreate(id: Long, model: CityCreate): City =
+    City(
+      id,
+      model.name,
+      model.countryId,
+      model.capital,
+      model.population,
+      model.latitude,
+      model.longitude,
+      model.timezone
+    )
 
   def fromPatch(id: Long, patch: CityPatch, original: City): City =
     City(

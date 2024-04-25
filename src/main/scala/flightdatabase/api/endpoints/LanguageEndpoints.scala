@@ -73,11 +73,11 @@ class LanguageEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Lang
       } { id =>
         req
           .attemptAs[Language]
-          .foldF[ApiResult[Language]](
-            _ => EntryInvalidFormat.elevate[F, Language],
+          .foldF[ApiResult[Long]](
+            _ => EntryInvalidFormat.elevate[F, Long],
             lang =>
               if (id != lang.id) {
-                InconsistentIds(id, lang.id).elevate[F, Language]
+                InconsistentIds(id, lang.id).elevate[F, Long]
               } else {
                 algebra.updateLanguage(lang)
               }

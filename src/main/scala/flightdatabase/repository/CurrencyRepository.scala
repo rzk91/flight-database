@@ -35,13 +35,14 @@ class CurrencyRepository[F[_]: Concurrent] private (
   override def createCurrency(currency: CurrencyCreate): F[ApiResult[Long]] =
     insertCurrency(currency).attemptInsert.execute
 
-  override def updateCurrency(currency: Currency): F[ApiResult[Currency]] =
-    modifyCurrency(currency).attemptUpdate(currency).execute
+  override def updateCurrency(currency: Currency): F[ApiResult[Long]] =
+    modifyCurrency(currency).attemptUpdate(currency.id).execute
 
   override def partiallyUpdateCurrency(id: Long, patch: CurrencyPatch): F[ApiResult[Currency]] =
     EitherT(getCurrency(id)).flatMapF { currencyOutput =>
       val currency = currencyOutput.value
-      updateCurrency(Currency.fromPatch(id, patch, currency))
+      val patched = Currency.fromPatch(id, patch, currency)
+      modifyCurrency(patched).attemptUpdate(patched).execute
     }.value
 
   override def removeCurrency(id: Long): F[ApiResult[Unit]] =

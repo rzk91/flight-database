@@ -40,13 +40,14 @@ class FleetRepository[F[_]: Concurrent] private (
   override def createFleet(fleet: FleetCreate): F[ApiResult[Long]] =
     insertFleet(fleet).attemptInsert.execute
 
-  override def updateFleet(fleet: Fleet): F[ApiResult[Fleet]] =
-    modifyFleet(fleet).attemptUpdate(fleet).execute
+  override def updateFleet(fleet: Fleet): F[ApiResult[Long]] =
+    modifyFleet(fleet).attemptUpdate(fleet.id).execute
 
   override def partiallyUpdateFleet(id: Long, patch: FleetPatch): F[ApiResult[Fleet]] =
     EitherT(getFleet(id)).flatMapF { fleetOutput =>
       val fleet = fleetOutput.value
-      updateFleet(Fleet.fromPatch(id, patch, fleet))
+      val patched = Fleet.fromPatch(id, patch, fleet)
+      modifyFleet(patched).attemptUpdate(patched).execute
     }.value
 
   override def removeFleet(id: Long): F[ApiResult[Unit]] =

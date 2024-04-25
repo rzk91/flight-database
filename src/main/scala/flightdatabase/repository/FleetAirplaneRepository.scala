@@ -6,8 +6,7 @@ import cats.effect.Resource
 import cats.implicits._
 import doobie.Put
 import doobie.Transactor
-import flightdatabase.domain.ApiResult
-import flightdatabase.domain.TableBase
+import flightdatabase.domain._
 import flightdatabase.domain.airplane.Airplane
 import flightdatabase.domain.fleet.Fleet
 import flightdatabase.domain.fleet_airplane.FleetAirplane
@@ -28,6 +27,18 @@ class FleetAirplaneRepository[F[_]: Concurrent] private (
 
   override def getFleetAirplane(id: Long): F[ApiResult[FleetAirplane]] =
     selectFleetAirplanesBy("id", id).asSingle(id).execute
+
+  override def getFleetAirplane(fleetId: Long, airplaneId: Long): F[ApiResult[FleetAirplane]] =
+    EitherT(selectFleetAirplanesBy("fleet_id", fleetId).asList)
+      .subflatMap[ApiError, ApiOutput[FleetAirplane]] { output =>
+        val fleetAirplanes = output.value
+        fleetAirplanes.find(_.airplaneId == airplaneId) match {
+          case Some(fleetAirplane) => Right(Got(fleetAirplane))
+          case None                => Left(EntryListEmpty)
+        }
+      }
+      .value
+      .execute
 
   override def getFleetAirplanes[V: Put](
     field: String,
@@ -56,8 +67,8 @@ class FleetAirplaneRepository[F[_]: Concurrent] private (
 
   override def updateFleetAirplane(
     fleetAirplane: FleetAirplane
-  ): F[ApiResult[FleetAirplane]] =
-    modifyFleetAirplane(fleetAirplane).attemptUpdate(fleetAirplane).execute
+  ): F[ApiResult[Long]] =
+    modifyFleetAirplane(fleetAirplane).attemptUpdate(fleetAirplane.id).execute
 
   override def partiallyUpdateFleetAirplane(
     id: Long,
@@ -65,7 +76,8 @@ class FleetAirplaneRepository[F[_]: Concurrent] private (
   ): F[ApiResult[FleetAirplane]] =
     EitherT(getFleetAirplane(id)).flatMapF { fleetAirplaneOutput =>
       val fleetAirplane = fleetAirplaneOutput.value
-      updateFleetAirplane(FleetAirplane.fromPatch(id, patch, fleetAirplane))
+      val patched = FleetAirplane.fromPatch(id, patch, fleetAirplane)
+      modifyFleetAirplane(patched).attemptUpdate(patched).execute
     }.value
 
   override def removeFleetAirplane(id: Long): F[ApiResult[Unit]] =

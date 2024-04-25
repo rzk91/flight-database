@@ -10,3 +10,9 @@ import io.circe.generic.extras._
   capacity: Int,
   maxRangeInKm: Int
 )
+
+object AirplaneCreate {
+
+  def apply(name: String, manufacturerId: Long, capacity: Int, maxRangeInKm: Int): AirplaneCreate =
+    new AirplaneCreate(None, name, manufacturerId, capacity, maxRangeInKm)
+}

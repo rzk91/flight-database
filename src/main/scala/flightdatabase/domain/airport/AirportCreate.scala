@@ -15,3 +15,30 @@ import io.circe.generic.extras._
   international: Boolean,
   junction: Boolean
 )
+
+object AirportCreate {
+
+  def apply(
+    name: String,
+    icao: String,
+    iata: String,
+    cityId: Long,
+    numRunways: Int,
+    numTerminals: Int,
+    capacity: Long,
+    international: Boolean,
+    junction: Boolean
+  ): AirportCreate =
+    new AirportCreate(
+      None,
+      name,
+      icao,
+      iata,
+      cityId,
+      numRunways,
+      numTerminals,
+      capacity,
+      international,
+      junction
+    )
+}

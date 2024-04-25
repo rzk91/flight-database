@@ -74,11 +74,11 @@ class ManufacturerEndpoints[F[_]: Concurrent] private (
       } { id =>
         req
           .attemptAs[Manufacturer]
-          .foldF[ApiResult[Manufacturer]](
-            _ => EntryInvalidFormat.elevate[F, Manufacturer],
+          .foldF[ApiResult[Long]](
+            _ => EntryInvalidFormat.elevate[F, Long],
             m =>
               if (id != m.id) {
-                InconsistentIds(id, m.id).elevate[F, Manufacturer]
+                InconsistentIds(id, m.id).elevate[F, Long]
               } else {
                 algebra.updateManufacturer(m)
               }

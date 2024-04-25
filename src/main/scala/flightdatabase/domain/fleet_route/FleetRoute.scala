@@ -15,19 +15,14 @@ import io.circe.generic.extras._
 object FleetRoute {
   implicit val fleetRouteTableBase: TableBase[FleetRoute] = TableBase.instance(FLEET_ROUTE)
 
-  def fromCreate(model: FleetRouteCreate): Option[FleetRoute] =
-    model.id.map { id =>
-      FleetRoute(
-        id,
-        model.fleetAirplaneId,
-        model.route,
-        model.start,
-        model.destination
-      )
-    }
-
-  def fromCreateUnsafe(model: FleetRouteCreate): FleetRoute =
-    fromCreate(model).get
+  def fromCreate(id: Long, model: FleetRouteCreate): FleetRoute =
+    FleetRoute(
+      id,
+      model.fleetAirplaneId,
+      model.route,
+      model.start,
+      model.destination
+    )
 
   def fromPatch(id: Long, patch: FleetRoutePatch, original: FleetRoute): FleetRoute =
     FleetRoute(

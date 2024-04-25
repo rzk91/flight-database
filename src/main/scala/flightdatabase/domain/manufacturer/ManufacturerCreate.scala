@@ -1,10 +1,23 @@
 package flightdatabase.domain.manufacturer
 
 import flightdatabase.domain._
-import io.circe.generic.extras._
+import io.circe.generic.extras.ConfiguredJsonCodec
 
 @ConfiguredJsonCodec final case class ManufacturerCreate(
   id: Option[Long],
   name: String,
-  @JsonKey("city_based_in") basedIn: Long
+  cityBasedIn: Long
 )
+
+object ManufacturerCreate {
+
+  def apply(
+    name: String,
+    cityBasedIn: Long
+  ): ManufacturerCreate =
+    new ManufacturerCreate(
+      None,
+      name,
+      cityBasedIn
+    )
+}

@@ -23,10 +23,12 @@ package object api {
       case Left(value @ EntryInvalidFormat)        => BadRequest(value.error)
       case Left(value @ EntryHasInvalidForeignKey) => BadRequest(value.error)
       case Left(value: InconsistentIds)            => BadRequest(value.error)
+      case Left(value: InvalidTimezone)            => BadRequest(value.error)
+      case Left(value: InvalidField)               => BadRequest(value.error)
       case Left(value @ EntryAlreadyExists)        => Conflict(value.error)
       case Left(value @ FeatureNotImplemented)     => NotImplemented(value.error)
-      case Left(value: EntryNotFound)              => NotFound(value.error)
-      case Left(value: UnknownError)               => UnprocessableEntity(value.error)
+      case Left(value: EntryNotFound[_])           => NotFound(value.error)
+      case Left(value: UnknownDbError)             => UnprocessableEntity(value.error)
     }
   }
 }

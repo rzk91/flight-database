@@ -16,20 +16,15 @@ import io.circe.generic.extras._
 object Fleet {
   implicit val fleetTableBase: TableBase[Fleet] = TableBase.instance(FLEET)
 
-  def fromCreate(model: FleetCreate): Option[Fleet] =
-    model.id.map { id =>
-      Fleet(
-        id,
-        model.name,
-        model.iso2,
-        model.iso3,
-        model.callSign,
-        model.hubAt
-      )
-    }
-
-  def fromCreateUnsafe(model: FleetCreate): Fleet =
-    fromCreate(model).get
+  def fromCreate(id: Long, model: FleetCreate): Fleet =
+    Fleet(
+      id,
+      model.name,
+      model.iso2,
+      model.iso3,
+      model.callSign,
+      model.hubAt
+    )
 
   def fromPatch(id: Long, patch: FleetPatch, original: Fleet): Fleet =
     Fleet(

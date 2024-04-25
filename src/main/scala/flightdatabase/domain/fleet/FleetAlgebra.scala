@@ -12,7 +12,7 @@ trait FleetAlgebra[F[_]] {
   def getFleetByHubAirportIata(hubAirportIata: String): F[ApiResult[List[Fleet]]]
   def getFleetByHubAirportIcao(hubAirportIcao: String): F[ApiResult[List[Fleet]]]
   def createFleet(fleet: FleetCreate): F[ApiResult[Long]]
-  def updateFleet(fleet: Fleet): F[ApiResult[Fleet]]
+  def updateFleet(fleet: Fleet): F[ApiResult[Long]]
   def partiallyUpdateFleet(id: Long, patch: FleetPatch): F[ApiResult[Fleet]]
   def removeFleet(id: Long): F[ApiResult[Unit]]
 }

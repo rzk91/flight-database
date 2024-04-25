@@ -69,11 +69,11 @@ class CityEndpoints[F[_]: Concurrent] private (prefix: String, algebra: CityAlge
       } { id =>
         req
           .attemptAs[City]
-          .foldF[ApiResult[City]](
-            _ => EntryInvalidFormat.elevate[F, City],
+          .foldF[ApiResult[Long]](
+            _ => EntryInvalidFormat.elevate[F, Long],
             city =>
               if (id != city.id) {
-                InconsistentIds(id, city.id).elevate[F, City]
+                InconsistentIds(id, city.id).elevate[F, Long]
               } else {
                 algebra.updateCity(city)
               }

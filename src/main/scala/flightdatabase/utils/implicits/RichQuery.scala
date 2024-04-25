@@ -6,7 +6,7 @@ import doobie.Query0
 import doobie.implicits._
 import flightdatabase.domain.ApiResult
 import flightdatabase.domain.EntryNotFound
-import flightdatabase.domain.UnknownError
+import flightdatabase.domain.UnknownDbError
 import flightdatabase.domain.listToApiResult
 import flightdatabase.domain.toApiResult
 import flightdatabase.repository.sqlStateToApiError
@@ -23,8 +23,8 @@ class RichQuery[A](private val q: Query0[A]) extends AnyVal {
   def asSingle[E](entry: E): ConnectionIO[ApiResult[A]] =
     q.option.attempt.map {
       case Right(Some(a)) => toApiResult(a)
-      case Right(None)    => EntryNotFound(entry.toString).asResult[A]
-      case Left(error)    => UnknownError(error.getMessage).asResult[A]
+      case Right(None)    => EntryNotFound(entry).asResult[A]
+      case Left(error)    => UnknownDbError(error.getMessage).asResult[A]
     }
 
   def asStream: Stream[ConnectionIO, ApiResult[A]] = q.stream.map(toApiResult)

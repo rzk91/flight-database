@@ -39,8 +39,8 @@ class AirplaneRepository[F[_]: Concurrent] private (
   override def createAirplane(airplane: AirplaneCreate): F[ApiResult[Long]] =
     insertAirplane(airplane).attemptInsert.execute
 
-  override def updateAirplane(airplane: Airplane): F[ApiResult[Airplane]] =
-    modifyAirplane(airplane).attemptUpdate(airplane).execute
+  override def updateAirplane(airplane: Airplane): F[ApiResult[Long]] =
+    modifyAirplane(airplane).attemptUpdate(airplane.id).execute
 
   override def partiallyUpdateAirplane(
     id: Long,
@@ -48,7 +48,8 @@ class AirplaneRepository[F[_]: Concurrent] private (
   ): F[ApiResult[Airplane]] =
     EitherT(getAirplane(id)).flatMapF { airplaneOutput =>
       val airplane = airplaneOutput.value
-      updateAirplane(Airplane.fromPatch(id, patch, airplane))
+      val patched = Airplane.fromPatch(id, patch, airplane)
+      modifyAirplane(patched).attemptUpdate(patched).execute
     }.value
 
   override def removeAirplane(id: Long): F[ApiResult[Unit]] =
