@@ -8,6 +8,7 @@ trait FleetAirplaneAlgebra[F[_]] {
   def doesFleetAirplaneExist(id: Long): F[Boolean]
   def getFleetAirplanes: F[ApiResult[List[FleetAirplane]]]
   def getFleetAirplane(id: Long): F[ApiResult[FleetAirplane]]
+  def getFleetAirplane(fleetId: Long, airplaneId: Long): F[ApiResult[FleetAirplane]]
   def getFleetAirplanes[V: Put](field: String, value: V): F[ApiResult[List[FleetAirplane]]]
 
   def getFleetAirplanesByExternal[ET: TableBase, EV: Put](
