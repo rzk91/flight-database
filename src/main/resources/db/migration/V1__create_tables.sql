@@ -1,9 +1,6 @@
 -- Create flight database (this is done manually)
 -- CREATE DATABASE <db-name>;
 
-DROP TABLE IF EXISTS fleet_route;
-DROP TABLE IF EXISTS fleet_airplane;
-DROP TABLE IF EXISTS fleet;
 DROP TABLE IF EXISTS airline_route;
 DROP TABLE IF EXISTS airline_city;
 DROP TABLE IF EXISTS airline_airplane;
