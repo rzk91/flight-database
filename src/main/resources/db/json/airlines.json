@@ -1,0 +1,16 @@
+[
+    {
+        "name": "Lufthansa",
+        "iata": "LH",
+        "icao": "DLH",
+        "call_sign": "Lufthansa",
+        "country_id": "DE"
+    },
+    {
+        "name": "Emirates",
+        "iata": "EK",
+        "icao": "UAE",
+        "call_sign": "Emirates",
+        "country_id": "AE"
+    }
+]

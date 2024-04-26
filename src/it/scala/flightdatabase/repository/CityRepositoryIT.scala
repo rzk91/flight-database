@@ -120,7 +120,7 @@ final class CityRepositoryIT extends RepositoryCheck {
 
   "Checking if a city exists" should "return a valid result" in {
     def cityExists(id: Long): Boolean = repo.doesCityExist(id).unsafeRunSync()
-    cityExists(1) shouldBe true
+    forAll(originalCities.map(_.id))(id => cityExists(id) shouldBe true)
     cityExists(idNotPresent) shouldBe false
     cityExists(veryLongIdNotPresent) shouldBe false
   }

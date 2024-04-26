@@ -45,22 +45,22 @@ final class DomainSpecificQueryIT extends DbChecker {
     check(CurrencyQueries.deleteCurrency(1))
   }
 
-  // Fleet checks
-  "All fleet queries" should "work correctly" in {
-    check(FleetQueries.selectAllFleets)
-    check(FleetQueries.deleteFleet(1))
+  // Airline checks
+  "All airline queries" should "work correctly" in {
+    check(AirlineQueries.selectAllAirlines)
+    check(AirlineQueries.deleteAirline(1))
   }
 
-  // FleetAirplane checks
-  "All fleet airplane queries" should "work correctly" in {
-    check(FleetAirplaneQueries.selectAllFleetAirplanes)
-    check(FleetAirplaneQueries.deleteFleetAirplane(1))
+  // AirlineAirplane checks
+  "All airline airplane queries" should "work correctly" in {
+    check(AirlineAirplaneQueries.selectAllAirlineAirplanes)
+    check(AirlineAirplaneQueries.deleteAirlineAirplane(1))
   }
 
-  // FleetRoute checks
-  "All fleet route queries" should "work correctly" in {
-    check(FleetRouteQueries.selectAllFleetRoutes)
-    check(FleetRouteQueries.deleteFleetRoute(1))
+  // AirlineRoute checks
+  "All airline route queries" should "work correctly" in {
+    check(AirlineRouteQueries.selectAllAirlineRoutes)
+    check(AirlineRouteQueries.deleteAirlineRoute(1))
   }
 
   // Language checks

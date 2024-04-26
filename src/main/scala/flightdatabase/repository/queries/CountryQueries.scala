@@ -37,8 +37,8 @@ private[repository] object CountryQueries {
          |       currency_id, nationality)
          |   VALUES (
          |       ${model.name}, 
-         |       ${model.iso2}, 
-         |       ${model.iso3}, 
+         |       ${model.iso2.toUpperCase},
+         |       ${model.iso3.toUpperCase},
          |       ${model.countryCode},
          |       ${model.domainName},
          |       ${model.mainLanguageId},
@@ -54,8 +54,8 @@ private[repository] object CountryQueries {
          | UPDATE country
          | SET
          |  name = ${model.name},
-         |  iso2 = ${model.iso2},
-         |  iso3 = ${model.iso3},
+         |  iso2 = ${model.iso2.toUpperCase},
+         |  iso3 = ${model.iso3.toUpperCase},
          |  country_code = ${model.countryCode},
          |  domain_name = ${model.domainName},
          |  main_language_id = ${model.mainLanguageId},

@@ -23,13 +23,16 @@ class FlightDbApi[F[_]: Async] private (
   private val cityEndpoints = CityEndpoints[F]("/cities", repos.cityRepository)
   private val countryEndpoints = CountryEndpoints[F]("/countries", repos.countryRepository)
   private val currencyEndpoints = CurrencyEndpoints[F]("/currencies", repos.currencyRepository)
-  private val fleetEndpoints = FleetEndpoints[F]("/fleets", repos.fleetRepository)
+  private val airlineEndpoints = AirlineEndpoints[F]("/airlines", repos.airlineRepository)
 
-  private val fleetAirplaneEndpoints =
-    FleetAirplaneEndpoints[F]("/fleet-airplanes", repos.fleetAirplaneRepository)
+  private val airlineAirplaneEndpoints =
+    AirlineAirplaneEndpoints[F]("/airline-airplanes", repos.airlineAirplaneRepository)
 
-  private val fleetRouteEndpoints =
-    FleetRouteEndpoints[F]("/fleet-routes", repos.fleetRouteRepository)
+  private val airlineCityEndpoints =
+    AirlineCityEndpoints[F]("/airline-cities", repos.airlineCityRepository)
+
+  private val airlineRouteEndpoints =
+    AirlineRouteEndpoints[F]("/airline-routes", repos.airlineRouteRepository)
   private val languageEndpoints = LanguageEndpoints[F]("/languages", repos.languageRepository)
 
   private val manufacturerEndpoints =
@@ -39,13 +42,14 @@ class FlightDbApi[F[_]: Async] private (
     List(
       helloWorldEndpoints,
       airplaneEndpoints,
+      airlineEndpoints,
+      airlineAirplaneEndpoints,
+      airlineCityEndpoints,
+      airlineRouteEndpoints,
       airportEndpoints,
       cityEndpoints,
       countryEndpoints,
       currencyEndpoints,
-      fleetEndpoints,
-      fleetAirplaneEndpoints,
-      fleetRouteEndpoints,
       languageEndpoints,
       manufacturerEndpoints
     ).foldLeft(HttpRoutes.empty[F])(_ <+> _.routes)

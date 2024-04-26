@@ -28,8 +28,8 @@ CREATE TRIGGER update_city_last_update_time
 BEFORE UPDATE ON city
 FOR EACH ROW EXECUTE PROCEDURE update_last_updated_column();
 
-CREATE TRIGGER update_fleet_last_update_time
-BEFORE UPDATE ON fleet
+CREATE TRIGGER update_airline_last_update_time
+BEFORE UPDATE ON airline
 FOR EACH ROW EXECUTE PROCEDURE update_last_updated_column();
 
 CREATE TRIGGER update_airport_last_update_time
@@ -44,10 +44,14 @@ CREATE TRIGGER update_airplane_last_update_time
 BEFORE UPDATE ON airplane
 FOR EACH ROW EXECUTE PROCEDURE update_last_updated_column();
 
-CREATE TRIGGER update_fleet_airplane_last_update_time
-BEFORE UPDATE ON fleet_airplane
+CREATE TRIGGER update_airline_city_last_update_time
+BEFORE UPDATE ON airline_city
 FOR EACH ROW EXECUTE PROCEDURE update_last_updated_column();
 
-CREATE TRIGGER update_fleet_route_last_update_time
-BEFORE UPDATE ON fleet_route
+CREATE TRIGGER update_airline_airplane_last_update_time
+BEFORE UPDATE ON airline_airplane
+FOR EACH ROW EXECUTE PROCEDURE update_last_updated_column();
+
+CREATE TRIGGER update_airline_route_last_update_time
+BEFORE UPDATE ON airline_route
 FOR EACH ROW EXECUTE PROCEDURE update_last_updated_column();
