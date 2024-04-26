@@ -8,14 +8,20 @@ import doobie.Put
 import doobie.Query0
 import doobie.Transactor
 import doobie.implicits._
+import flightdatabase.domain.ApiError
+import flightdatabase.domain.ApiOutput
 import flightdatabase.domain.ApiResult
+import flightdatabase.domain.Got
+import flightdatabase.domain.airline.Airline
 import flightdatabase.domain.airline_airplane.AirlineAirplane
 import flightdatabase.domain.airline_route.AirlineRoute
 import flightdatabase.domain.airline_route.AirlineRouteAlgebra
 import flightdatabase.domain.airline_route.AirlineRouteCreate
 import flightdatabase.domain.airline_route.AirlineRoutePatch
+import flightdatabase.domain.airplane.Airplane
 import flightdatabase.domain.airport.Airport
 import flightdatabase.repository.queries.AirlineRouteQueries._
+import flightdatabase.repository.queries.selectWhereQuery
 import flightdatabase.utils.implicits._
 
 class AirlineRouteRepository[F[_]: Concurrent] private (
@@ -40,8 +46,46 @@ class AirlineRouteRepository[F[_]: Concurrent] private (
   override def getAirlineRoutesByAirlineId(airlineId: Long): F[ApiResult[List[AirlineRoute]]] =
     selectAirlineRoutesByExternal[AirlineAirplane, Long]("airline_id", airlineId).asList.execute
 
+  override def getAirlineRoutesByAirline[V: Put](
+    field: String,
+    value: V
+  ): F[ApiResult[List[AirlineRoute]]] =
+    // Get airline IDs for given airline field values
+    EitherT(selectWhereQuery[Airline, Long, V]("id", field, value).asList.execute)
+      .flatMap[ApiError, ApiOutput[List[AirlineRoute]]] { airlineIdsOutput =>
+        // Accumulate all airline_routes for each airline_airplane_id based on each airline_id
+        val airlineIds = airlineIdsOutput.value
+        airlineIds
+          .foldLeft(EitherT.pure[F, ApiError](List.empty[AirlineRoute])) { (acc, id) =>
+            for {
+              accRoutes <- acc
+              routes    <- EitherT(getAirlineRoutesByAirlineId(id))
+            } yield accRoutes ++ routes.value
+          }
+          .map(Got(_)) // Convert to ApiOutput
+      }
+      .value
+
   override def getAirlineRoutesByAirplaneId(airplaneId: Long): F[ApiResult[List[AirlineRoute]]] =
     selectAirlineRoutesByExternal[AirlineAirplane, Long]("airplane_id", airplaneId).asList.execute
+
+  override def getAirlineRoutesByAirplane[V: Put](
+    field: String,
+    value: V
+  ): F[ApiResult[List[AirlineRoute]]] =
+    EitherT(selectWhereQuery[Airplane, Long, V]("id", field, value).asList.execute)
+      .flatMap[ApiError, ApiOutput[List[AirlineRoute]]] { airplaneIdsOutput =>
+        val airplaneIds = airplaneIdsOutput.value
+        airplaneIds
+          .foldLeft(EitherT.pure[F, ApiError](List.empty[AirlineRoute])) { (acc, id) =>
+            for {
+              accRoutes <- acc
+              routes    <- EitherT(getAirlineRoutesByAirplaneId(id))
+            } yield accRoutes ++ routes.value
+          }
+          .map(Got(_))
+      }
+      .value
 
   override def getAirlineRoutesByAirport[V: Put](
     field: String,

@@ -10,13 +10,25 @@ trait AirlineRouteAlgebra[F[_]] {
   def getAirlineRoute(id: Long): F[ApiResult[AirlineRoute]]
   def getAirlineRoutes[V: Put](field: String, value: V): F[ApiResult[List[AirlineRoute]]]
   def getAirlineRoutesByAirlineId(airlineId: Long): F[ApiResult[List[AirlineRoute]]]
+
+  def getAirlineRoutesByAirline[V: Put](
+    field: String,
+    value: V
+  ): F[ApiResult[List[AirlineRoute]]]
+
   def getAirlineRoutesByAirplaneId(airplaneId: Long): F[ApiResult[List[AirlineRoute]]]
+
+  def getAirlineRoutesByAirplane[V: Put](
+    field: String,
+    value: V
+  ): F[ApiResult[List[AirlineRoute]]]
 
   def getAirlineRoutesByAirport[V: Put](
     field: String,
     value: V,
     inbound: Option[Boolean]
   ): F[ApiResult[List[AirlineRoute]]]
+
   def createAirlineRoute(airlineRoute: AirlineRouteCreate): F[ApiResult[Long]]
   def updateAirlineRoute(airlineRoute: AirlineRoute): F[ApiResult[Long]]
   def partiallyUpdateAirlineRoute(id: Long, patch: AirlineRoutePatch): F[ApiResult[AirlineRoute]]
