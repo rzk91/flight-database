@@ -15,8 +15,6 @@ import org.http4s.circe.CirceEntityCodec._
 class AirlineEndpoints[F[_]: Concurrent] private (prefix: String, algebra: AirlineAlgebra[F])
     extends Endpoints[F](prefix) {
 
-  private object FieldMatcher extends QueryParamDecoderMatcherWithDefault[String]("field", "name")
-
   override def endpoints: HttpRoutes[F] = HttpRoutes.of {
     // HEAD /airlines/{id}
     case HEAD -> Root / LongVar(id) =>
@@ -34,14 +32,14 @@ class AirlineEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airli
       }
 
     // GET /airlines/{value}?field={id/name/iata/icao/call_sign, default: id/name}
-    case GET -> Root / value :? FieldMatcher(field) =>
+    case GET -> Root / value :? FieldMatcherWithDefaultName(field) =>
       value.asLong match {
         case Some(id) => algebra.getAirline(id).flatMap(toResponse(_))
         case None     => algebra.getAirlines(field, value).flatMap(toResponse(_))
       }
 
     // GET /airlines/country/{value}?field={id/name/iso2/iso3/country_code/domain_name, default: name}
-    case GET -> Root / "country" / value :? FieldMatcher(field) =>
+    case GET -> Root / "country" / value :? FieldMatcherWithDefaultName(field) =>
       (value.asLong match {
         case Some(countryId) => algebra.getAirlinesByCountry(field, countryId)
         case None            => algebra.getAirlinesByCountry(field, value)

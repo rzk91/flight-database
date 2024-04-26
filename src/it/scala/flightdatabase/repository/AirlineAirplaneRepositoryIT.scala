@@ -7,7 +7,6 @@ import flightdatabase.domain.EntryAlreadyExists
 import flightdatabase.domain.EntryHasInvalidForeignKey
 import flightdatabase.domain.EntryListEmpty
 import flightdatabase.domain.EntryNotFound
-import flightdatabase.domain.airline.Airline
 import flightdatabase.domain.airline_airplane.AirlineAirplane
 import flightdatabase.domain.airline_airplane.AirlineAirplaneCreate
 import flightdatabase.domain.airline_airplane.AirlineAirplanePatch
@@ -106,13 +105,13 @@ final class AirlineAirplaneRepositoryIT extends RepositoryCheck {
 
   "Selecting airline airplanes by external fields" should "return the corresponding entries" in {
     def airlineAirplanesByAirlineName(name: String): IO[ApiResult[List[AirlineAirplane]]] =
-      repo.getAirlineAirplanesByAirlineName(name)
+      repo.getAirlineAirplanesByAirline("name", name)
 
     def airlineAirplanesByAirplaneName(name: String): IO[ApiResult[List[AirlineAirplane]]] =
       repo.getAirlineAirplanesByAirplaneName(name)
 
     def airlineAirplanesByAirlineIata(iata: String): IO[ApiResult[List[AirlineAirplane]]] =
-      repo.getAirlineAirplanesByExternal[Airline, String]("iata", iata)
+      repo.getAirlineAirplanesByAirline("iata", iata)
 
     forAll(airlineIdMap) {
       case (id, (name, iso)) =>

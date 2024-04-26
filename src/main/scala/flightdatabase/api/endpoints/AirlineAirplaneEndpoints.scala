@@ -5,9 +5,7 @@ import cats.implicits._
 import flightdatabase.api._
 import flightdatabase.domain.ApiResult
 import flightdatabase.domain.EntryInvalidFormat
-import flightdatabase.domain.EntryListEmpty
 import flightdatabase.domain.InconsistentIds
-import flightdatabase.domain.airline.Airline
 import flightdatabase.domain.airline_airplane.AirlineAirplane
 import flightdatabase.domain.airline_airplane.AirlineAirplaneAlgebra
 import flightdatabase.domain.airline_airplane.AirlineAirplaneCreate
@@ -43,12 +41,8 @@ class AirlineAirplaneEndpoints[F[_]: Concurrent] private (
     case GET -> Root / "airline" / airlineId / "airplane" / airplaneId =>
       (airlineId.asLong, airplaneId.asLong).tupled.fold {
         BadRequest(EntryInvalidFormat.error)
-      } {
-        case (fId, aId) =>
-          algebra.getAirlineAirplane(fId, aId).flatMap(toResponse(_))
-      }
+      } { case (fId, aId) => algebra.getAirlineAirplane(fId, aId).flatMap(toResponse(_)) }
 
-    // TODO: Use query params instead of path params
     // GET /airline-airplanes/airplane/{airplane_id} OR
     // GET /airline-airplanes/airplane/{airplane_name}
     case GET -> Root / "airplane" / airplane => {
@@ -58,21 +52,12 @@ class AirlineAirplaneEndpoints[F[_]: Concurrent] private (
         }(algebra.getAirlineAirplanes("airplane_id", _))
       }.flatMap(toResponse(_))
 
-    // TODO: Use query params instead of path params
-    // GET /airline-airplanes/airline/{airline_id} OR
-    // GET /airline-airplanes/airline/{airline_name} OR
-    // GET /airline-airplanes/airline/{airline_iso2}
-    case GET -> Root / "airline" / airline => {
-        airline.asLong.fold {
-          // Treat airline as name
-          algebra.getAirlineAirplanesByAirlineName(airline).flatMap {
-            case Left(EntryListEmpty) =>
-              algebra.getAirlineAirplanesByExternal[Airline, String]("iso2", airline)
-            case Left(error) => error.elevate[F, List[AirlineAirplane]]
-            case Right(list) => list.elevate[F]
-          }
-        }(algebra.getAirlineAirplanes("airline_id", _))
-      }.flatMap(toResponse(_))
+    // GET /airline-airplanes/airline/{value}?field={id/name/iata/icao/call_sign; default: name}
+    case GET -> Root / "airline" / value :? FieldMatcherWithDefaultName(field) =>
+      (value.asLong match {
+        case Some(airlineId) => algebra.getAirlineAirplanesByAirline("id", airlineId)
+        case None            => algebra.getAirlineAirplanesByAirline(field, value)
+      }).flatMap(toResponse(_))
 
     // POST /airline-airplanes
     case req @ POST -> Root =>

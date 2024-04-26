@@ -16,7 +16,11 @@ trait AirlineAirplaneAlgebra[F[_]] {
     value: EV
   ): F[ApiResult[List[AirlineAirplane]]]
   def getAirlineAirplanesByAirplaneName(airplaneName: String): F[ApiResult[List[AirlineAirplane]]]
-  def getAirlineAirplanesByAirlineName(airlineName: String): F[ApiResult[List[AirlineAirplane]]]
+
+  def getAirlineAirplanesByAirline[V: Put](
+    field: String,
+    value: V
+  ): F[ApiResult[List[AirlineAirplane]]]
   def createAirlineAirplane(airlineAirplane: AirlineAirplaneCreate): F[ApiResult[Long]]
   def updateAirlineAirplane(airlineAirplane: AirlineAirplane): F[ApiResult[Long]]
 

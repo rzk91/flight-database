@@ -33,7 +33,7 @@ case class InconsistentIds(id1: Long, id2: Long) extends ApiError {
 }
 
 case object EntryListEmpty extends ApiError {
-  override val error: String = "No items found"
+  override val error: String = "No entries found"
 }
 
 case object EntryHasInvalidForeignKey extends ApiError {

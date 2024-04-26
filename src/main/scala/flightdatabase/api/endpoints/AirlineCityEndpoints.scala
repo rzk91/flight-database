@@ -19,8 +19,6 @@ class AirlineCityEndpoints[F[_]: Concurrent] private (
   algebra: AirlineCityAlgebra[F]
 ) extends Endpoints[F](prefix) {
 
-  private object FieldMatcher extends QueryParamDecoderMatcherWithDefault[String]("field", "name")
-
   override def endpoints: HttpRoutes[F] = HttpRoutes.of {
     // HEAD /airline-cities/{id}
     case HEAD -> Root / LongVar(id) =>
@@ -57,9 +55,9 @@ class AirlineCityEndpoints[F[_]: Concurrent] private (
       }.flatMap(toResponse(_))
 
     // GET /airline-cities/airline/{value}?field={id/name/iata/icao/call_sign, default: name}
-    case GET -> Root / "airline" / value :? FieldMatcher(field) =>
+    case GET -> Root / "airline" / value :? FieldMatcherWithDefaultName(field) =>
       (value.asLong match {
-        case Some(airlineId) => algebra.getAirlineCitiesByAirline(field, airlineId)
+        case Some(airlineId) => algebra.getAirlineCitiesByAirline("id", airlineId)
         case None            => algebra.getAirlineCitiesByAirline(field, value)
       }).flatMap(toResponse(_))
 
