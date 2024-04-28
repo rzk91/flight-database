@@ -41,4 +41,4 @@ ALTER TABLE airline_city ADD UNIQUE (airline_id, city_id);
 ALTER TABLE airline_airplane ADD UNIQUE (airline_id, airplane_id);
 
 -- Unique indices on airline_route
-ALTER TABLE airline_route ADD UNIQUE (route_number, start_airport_id, destination_airport_id);
+ALTER TABLE airline_route ADD UNIQUE (route_number);

@@ -90,7 +90,7 @@ class AirlineRouteRepository[F[_]: Concurrent] private (
   override def getAirlineRoutesByAirport[V: Put](
     field: String,
     value: V,
-    inbound: Option[Boolean]
+    inbound: Option[Boolean] // None for both inbound and outbound
   ): F[ApiResult[List[AirlineRoute]]] = {
     def q(f: String): Query0[AirlineRoute] =
       selectAirlineRoutesByExternal[Airport, V](field, value, Some(f))
@@ -98,7 +98,7 @@ class AirlineRouteRepository[F[_]: Concurrent] private (
       val startQuery = q("start_airport_id")
       val destinationQuery = q("destination_airport_id")
       (startQuery.toFragment ++ fr"UNION" ++ destinationQuery.toFragment).query[AirlineRoute]
-    }(in => q(if (in) "start_airport_id" else "destination_airport_id"))
+    }(in => q(if (in) "destination_airport_id" else "start_airport_id"))
   }.asList.execute
 
   override def createAirlineRoute(airlineRoute: AirlineRouteCreate): F[ApiResult[Long]] =

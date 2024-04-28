@@ -38,6 +38,7 @@ class AirlineRouteEndpoints[F[_]: Concurrent] private (
         algebra.getAirlineRoutes.flatMap(toResponse(_))
       }
 
+    // TODO: Rewrite the following routes based on recent changes in repository
     // GET /airline-routes/{id}
     case GET -> Root / id =>
       id.asLong.fold {
