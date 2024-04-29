@@ -1,0 +1,22 @@
+[
+    {
+        "airline_id": "Lufthansa",
+        "airplane_id": "747-8"
+    },
+    {
+        "airline_id": "Lufthansa",
+        "airplane_id": "A380"
+    },
+    {
+        "airline_id": "Lufthansa",
+        "airplane_id": "A320neo"
+    },
+    {
+        "airline_id": "Emirates",
+        "airplane_id": "A380"
+    },
+    {
+        "airline_id": "Emirates",
+        "airplane_id": "A320neo"
+    }
+]

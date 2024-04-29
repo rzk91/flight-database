@@ -4,7 +4,7 @@ INSERT INTO country
        currency_id, nationality)
    VALUES (
        'India', 'IN', 'IND', 91,
-       '.co.in',
+       '.in',
        (SELECT id FROM language WHERE name = 'Hindi'),
        (SELECT id FROM language WHERE name = 'English'),
        (SELECT id FROM language WHERE name = 'Tamil'),

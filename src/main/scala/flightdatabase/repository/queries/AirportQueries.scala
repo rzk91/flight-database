@@ -35,8 +35,8 @@ private[repository] object AirportQueries {
          |       international, junction)
          |   VALUES (
          |       ${model.name},
-         |       ${model.icao},
-         |       ${model.iata},
+         |       ${model.icao.toUpperCase},
+         |       ${model.iata.toUpperCase},
          |       ${model.cityId},
          |       ${model.numRunways},
          |       ${model.numTerminals},
@@ -51,8 +51,8 @@ private[repository] object AirportQueries {
          | UPDATE airport
          | SET
          |  name = ${model.name},
-         |  icao = ${model.icao},
-         |  iata = ${model.iata},
+         |  icao = ${model.icao.toUpperCase},
+         |  iata = ${model.iata.toUpperCase},
          |  city_id = ${model.cityId},
          |  number_of_runways = ${model.numRunways},
          |  number_of_terminals = ${model.numTerminals},

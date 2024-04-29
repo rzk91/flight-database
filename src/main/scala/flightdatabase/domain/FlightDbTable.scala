@@ -7,9 +7,10 @@ object FlightDbTable extends Enumeration {
   val CITY: Value = Value("city")
   val COUNTRY: Value = Value("country")
   val CURRENCY: Value = Value("currency")
-  val FLEET: Value = Value("fleet")
-  val FLEET_AIRPLANE: Value = Value("fleet_airplane")
-  val FLEET_ROUTE: Value = Value("fleet_route")
+  val AIRLINE: Value = Value("airline")
+  val AIRLINE_AIRPLANE: Value = Value("airline_airplane")
+  val AIRLINE_CITY: Value = Value("airline_city")
+  val AIRLINE_ROUTE: Value = Value("airline_route")
   val LANGUAGE: Value = Value("language")
   val MANUFACTURER: Value = Value("manufacturer")
 }

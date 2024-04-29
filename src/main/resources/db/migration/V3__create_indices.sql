@@ -25,17 +25,20 @@ ALTER TABLE airport ADD UNIQUE (iata);
 ALTER TABLE airport ADD UNIQUE (icao);
 ALTER TABLE airport ADD UNIQUE (name, city_id);
 
--- Unique indices on fleet
-ALTER TABLE fleet ADD UNIQUE (iso2);
-ALTER TABLE fleet ADD UNIQUE (iso3);
-ALTER TABLE fleet ADD UNIQUE (name, hub_airport_id);
-ALTER TABLE fleet ADD UNIQUE NULLS NOT DISTINCT (call_sign);
+-- Unique indices on airline
+ALTER TABLE airline ADD UNIQUE (iata);
+ALTER TABLE airline ADD UNIQUE (icao);
+ALTER TABLE airline ADD UNIQUE (name, country_id);
+ALTER TABLE airline ADD UNIQUE (call_sign);
 
 -- Unique indices on airplane
 ALTER TABLE airplane ADD UNIQUE (name);
 
--- Unique indices on fleet_airplane
-ALTER TABLE fleet_airplane ADD UNIQUE (fleet_id, airplane_id);
+-- Unique indices on airline_city
+ALTER TABLE airline_city ADD UNIQUE (airline_id, city_id);
 
--- Unique indices on fleet_route
-ALTER TABLE fleet_route ADD UNIQUE (route_number, start_airport_id, destination_airport_id);
+-- Unique indices on airline_airplane
+ALTER TABLE airline_airplane ADD UNIQUE (airline_id, airplane_id);
+
+-- Unique indices on airline_route
+ALTER TABLE airline_route ADD UNIQUE (route_number);

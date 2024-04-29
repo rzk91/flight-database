@@ -17,10 +17,14 @@ TODO list
 - ~~Implement all doobie queries.~~ DONE for now... more will be added as needed.
 - ~~Write tests for all specific doobie queries.~~ DONE!
 - ~~Implement all endpoints using algebras.~~ DONE!
-- Write integration tests for all algebras.
+- ~~Rename `Fleet` to `Airline` everywhere!~~ DONE!
+- ~~Introduce `AirlineCity` as a junction table to account for multiple hubs per airline.~~ DONE!
+- ~~Write integration tests for all algebras.~~ DONE!
+- Make all endpoints uniform.
 - All `endpoints` should return URI of the created resource in the `Location` header.
 - Add a URI to all foreign key fields in the response (maybe use something similar to `TableBase`).
-- Write unit tests for all endpoints.
+- Introduce fuzzy search? Or at least case-insensitive search?
+- Write unit/integration/both tests for all endpoints.
 - Update the `README.md` to reflect the changes in the project structure and the new features.
 - Expand API endpoint list to include more complex operations as indicated in `endpoints.md`.
 - Move domain to a separate module and rename `src` to `core`. 

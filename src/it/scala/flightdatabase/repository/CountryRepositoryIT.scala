@@ -20,7 +20,7 @@ final class CountryRepositoryIT extends RepositoryCheck {
   lazy val repo: CountryRepository[IO] = CountryRepository.make[IO].unsafeRunSync()
 
   val originalCountries: List[Country] = List(
-    Country(1, "India", "IN", "IND", 91, Some(".co.in"), 7, Some(1), Some(3), 1, "Indian"),
+    Country(1, "India", "IN", "IND", 91, Some(".in"), 7, Some(1), Some(3), 1, "Indian"),
     Country(2, "Germany", "DE", "DEU", 49, Some(".de"), 2, None, None, 2, "German"),
     Country(3, "Sweden", "SE", "SWE", 46, Some(".se"), 4, None, None, 3, "Swede"),
     Country(
