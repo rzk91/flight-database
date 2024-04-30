@@ -40,8 +40,14 @@ case object EntryHasInvalidForeignKey extends ApiError {
   override val error: String = "Error: Entry has an invalid/non-existing foreign key"
 }
 
+// TODO: Think of a better way to deal with this
 case class EntryNotFound[A](entry: A) extends ApiError {
-  override val error: String = s"Error: Entry $entry not found"
+
+  override val error: String = if (entry.toString.contains("-1")) {
+    s"Error: Entry not found"
+  } else {
+    s"Error: Entry with id '$entry' not found"
+  }
 }
 
 case object FeatureNotImplemented extends ApiError {
