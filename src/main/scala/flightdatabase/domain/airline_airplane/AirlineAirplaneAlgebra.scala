@@ -15,7 +15,11 @@ trait AirlineAirplaneAlgebra[F[_]] {
     field: String,
     value: EV
   ): F[ApiResult[List[AirlineAirplane]]]
-  def getAirlineAirplanesByAirplaneName(airplaneName: String): F[ApiResult[List[AirlineAirplane]]]
+
+  def getAirlineAirplanesByAirplane[V: Put](
+    field: String,
+    value: V
+  ): F[ApiResult[List[AirlineAirplane]]]
 
   def getAirlineAirplanesByAirline[V: Put](
     field: String,

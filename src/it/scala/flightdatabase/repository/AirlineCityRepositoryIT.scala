@@ -109,7 +109,7 @@ final class AirlineCityRepositoryIT extends RepositoryCheck {
       repo.getAirlineCitiesByAirline("icao", icao)
 
     def entryByCityName(name: String): IO[ApiResult[List[AirlineCity]]] =
-      repo.getAirlineCitiesByCityName(name)
+      repo.getAirlineCitiesByCity("name", name)
 
     forAll(airlineIdMap) {
       case (id, (name, iata, icao)) =>

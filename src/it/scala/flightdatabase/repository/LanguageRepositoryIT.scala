@@ -7,7 +7,7 @@ import flightdatabase.domain.EntryAlreadyExists
 import flightdatabase.domain.EntryCheckFailed
 import flightdatabase.domain.EntryListEmpty
 import flightdatabase.domain.EntryNotFound
-import flightdatabase.domain.UnknownDbError
+import flightdatabase.domain.SqlError
 import flightdatabase.domain.language.Language
 import flightdatabase.domain.language.LanguageCreate
 import flightdatabase.domain.language.LanguagePatch
@@ -110,7 +110,7 @@ final class LanguageRepositoryIT extends RepositoryCheck {
     )
 
     forAll(invalidLanguages2) { language =>
-      repo.createLanguage(language).error shouldBe UnknownDbError(stringTooLongSqlState)
+      repo.createLanguage(language).error shouldBe SqlError(stringTooLongSqlState)
     }
   }
 
@@ -158,7 +158,7 @@ final class LanguageRepositoryIT extends RepositoryCheck {
     )
 
     forAll(invalidLanguages2) { language =>
-      repo.updateLanguage(language).error shouldBe UnknownDbError(stringTooLongSqlState)
+      repo.updateLanguage(language).error shouldBe SqlError(stringTooLongSqlState)
     }
   }
 
@@ -211,7 +211,7 @@ final class LanguageRepositoryIT extends RepositoryCheck {
     forAll(invalidLanguages2) { language =>
       repo
         .partiallyUpdateLanguage(existingLanguage.id, language)
-        .error shouldBe UnknownDbError(stringTooLongSqlState)
+        .error shouldBe SqlError(stringTooLongSqlState)
     }
   }
 

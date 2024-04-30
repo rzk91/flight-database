@@ -31,19 +31,22 @@ class AirlineEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airli
         algebra.getAirlines.flatMap(toResponse(_))
       }
 
-    // GET /airlines/{value}?field={id/name/iata/icao/call_sign, default: id/name}
-    case GET -> Root / value :? FieldMatcherWithDefaultName(field) =>
-      value.asLong match {
-        case Some(id) => algebra.getAirline(id).flatMap(toResponse(_))
-        case None     => algebra.getAirlines(field, value).flatMap(toResponse(_))
+    // GET /airlines/{value}?field={airline_field, default: id}
+    case GET -> Root / value :? FieldMatcherIdDefault(field) =>
+      lazy val safeId = value.asLong.getOrElse(-1L)
+      field match {
+        case "id"         => algebra.getAirline(safeId).flatMap(toResponse(_))
+        case "country_id" => algebra.getAirlines("country_id", safeId).flatMap(toResponse(_))
+        case _            => algebra.getAirlines(field, value).flatMap(toResponse(_))
       }
 
-    // GET /airlines/country/{value}?field={id/name/iso2/iso3/country_code/domain_name, default: name}
-    case GET -> Root / "country" / value :? FieldMatcherWithDefaultName(field) =>
-      (value.asLong match {
-        case Some(countryId) => algebra.getAirlinesByCountry(field, countryId)
-        case None            => algebra.getAirlinesByCountry(field, value)
-      }).flatMap(toResponse(_))
+    // GET /airlines/country/{value}?field={country_field, default: name}
+    case GET -> Root / "country" / value :? FieldMatcherNameDefault(field) => {
+        field match {
+          case "id" => algebra.getAirlines("country_id", value)
+          case _    => algebra.getAirlines(field, value)
+        }
+      }.flatMap(toResponse(_))
 
     // POST /airlines
     case req @ POST -> Root =>

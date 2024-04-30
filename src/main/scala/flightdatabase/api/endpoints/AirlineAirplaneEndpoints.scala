@@ -43,21 +43,27 @@ class AirlineAirplaneEndpoints[F[_]: Concurrent] private (
         BadRequest(EntryInvalidFormat.error)
       } { case (fId, aId) => algebra.getAirlineAirplane(fId, aId).flatMap(toResponse(_)) }
 
-    // GET /airline-airplanes/airplane/{airplane_id} OR
-    // GET /airline-airplanes/airplane/{airplane_name}
-    case GET -> Root / "airplane" / airplane => {
-        airplane.asLong.fold {
-          // Treat airplane as name
-          algebra.getAirlineAirplanesByAirplaneName(airplane)
-        }(algebra.getAirlineAirplanes("airplane_id", _))
-      }.flatMap(toResponse(_))
+    // GET /airline-airplanes/airplane/{value}?field={airplane_field; default: name}
+    case GET -> Root / "airplane" / value :? FieldMatcherNameDefault(field) =>
+      field match {
+        case "id" | "manufacturer_id" =>
+          value.asLong.fold(BadRequest(EntryInvalidFormat.error)) { id =>
+            algebra.getAirlineAirplanesByAirplane(field, id).flatMap(toResponse(_))
+          }
 
-    // GET /airline-airplanes/airline/{value}?field={id/name/iata/icao/call_sign; default: name}
-    case GET -> Root / "airline" / value :? FieldMatcherWithDefaultName(field) =>
-      (value.asLong match {
-        case Some(airlineId) => algebra.getAirlineAirplanesByAirline("id", airlineId)
-        case None            => algebra.getAirlineAirplanesByAirline(field, value)
-      }).flatMap(toResponse(_))
+        case _ => algebra.getAirlineAirplanesByAirplane(field, value).flatMap(toResponse(_))
+      }
+
+    // GET /airline-airplanes/airline/{value}?field={airline_field; default: name}
+    case GET -> Root / "airline" / value :? FieldMatcherNameDefault(field) =>
+      field match {
+        case "id" | "country_id" =>
+          value.asLong.fold(BadRequest(EntryInvalidFormat.error)) { id =>
+            algebra.getAirlineAirplanesByAirline(field, id).flatMap(toResponse(_))
+          }
+
+        case _ => algebra.getAirlineAirplanesByAirline(field, value).flatMap(toResponse(_))
+      }
 
     // POST /airline-airplanes
     case req @ POST -> Root =>

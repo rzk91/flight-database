@@ -9,7 +9,6 @@ import flightdatabase.domain.airline_route.AirlineRouteAlgebra
 import flightdatabase.domain.airline_route.AirlineRouteCreate
 import flightdatabase.domain.airline_route.AirlineRoutePatch
 import flightdatabase.utils.implicits.enrichString
-import flightdatabase.utils.implicits.stringToRichIterable
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
 
@@ -19,6 +18,9 @@ class AirlineRouteEndpoints[F[_]: Concurrent] private (
 ) extends Endpoints[F](prefix) {
 
   private object OnlyNumbersFlagMatcher extends FlagQueryParamMatcher("only-routes")
+
+  private object FieldMatcherRouteNumberDefault
+      extends QueryParamDecoderMatcherWithDefault[String]("field", "route_number")
   private object InboundFlagMatcher extends FlagQueryParamMatcher("inbound")
   private object OutboundFlagMatcher extends FlagQueryParamMatcher("outbound")
 
@@ -38,55 +40,49 @@ class AirlineRouteEndpoints[F[_]: Concurrent] private (
         algebra.getAirlineRoutes.flatMap(toResponse(_))
       }
 
-    // TODO: Rewrite the following routes based on recent changes in repository
-    // GET /airline-routes/{id}
-    case GET -> Root / id =>
-      id.asLong.fold {
-        BadRequest(EntryInvalidFormat.error)
-      }(id => algebra.getAirlineRoute(id).flatMap(toResponse(_)))
+    // GET /airline-routes/{value}?field={airline-route-field; default: id}
+    case GET -> Root / value :? FieldMatcherRouteNumberDefault(field) =>
+      lazy val safeId = value.asLong.getOrElse(-1L)
+      field match {
+        case "id" => algebra.getAirlineRoute(safeId).flatMap(toResponse(_))
+        case "airline_airplane_id" | "start_airport_id" | "destination_airport_id" =>
+          algebra.getAirlineRoutes(field, safeId).flatMap(toResponse(_))
+        case _ => algebra.getAirlineRoutes(field, value).flatMap(toResponse(_))
+      }
 
-    // GET /airline-routes/route/{route_number}
-    case GET -> Root / "route" / routeNumber =>
-      algebra.getAirlineRoutes("route_number", routeNumber).flatMap(toResponse(_))
+    // GET /airline-routes/airline/{value}?field={airline_field; default: id}
+    case GET -> Root / "airline" / value :? FieldMatcherIdDefault(field) => {
+        lazy val safeId = value.asLong.getOrElse(-1L)
+        field match {
+          case "id"         => algebra.getAirlineRoutesByAirlineId(safeId)
+          case "country_id" => algebra.getAirlineRoutesByAirline(field, safeId)
+          case _            => algebra.getAirlineRoutesByAirline(field, value)
+        }
+      }.flatMap(toResponse(_))
 
-    // GET /airline-routes/airline/{airline_id}
-    case GET -> Root / "airline" / airlineId =>
-      airlineId.asLong.fold {
-        BadRequest(EntryInvalidFormat.error)
-      }(airlineId => algebra.getAirlineRoutesByAirlineId(airlineId).flatMap(toResponse(_)))
+    // GET /airline-routes/airplane/{value}?field={airplane_field; default: id}
+    case GET -> Root / "airplane" / value :? FieldMatcherIdDefault(field) => {
+        lazy val safeId = value.asLong.getOrElse(-1L)
+        field match {
+          case "id"              => algebra.getAirlineRoutesByAirplaneId(safeId)
+          case "manufacturer_id" => algebra.getAirlineRoutesByAirplane(field, safeId)
+          case _                 => algebra.getAirlineRoutesByAirplane(field, value)
+        }
+      }.flatMap(toResponse(_))
 
-    // GET /airline-routes/airplane/{airplane_id}
-    case GET -> Root / "airplane" / airplaneId =>
-      airplaneId.asLong.fold {
-        BadRequest(EntryInvalidFormat.error)
-      }(airplaneId => algebra.getAirlineRoutesByAirplaneId(airplaneId).flatMap(toResponse(_)))
-
-    // GET /airline-routes/airport/{airport_id_or_iata_or_icao}?inbound&outbound
-    case GET -> Root / "airport" / airportIdOrIataOrIcao :?
+    // GET /airline-routes/airport/{value}?field={airport_field; default: id}&inbound&outbound
+    case GET -> Root / "airport" / value :? FieldMatcherIdDefault(field) +&
           InboundFlagMatcher(inbound) +& OutboundFlagMatcher(outbound) => {
-        airportIdOrIataOrIcao.asLong match {
-          case Some(airportId) =>
-            algebra
-              .getAirlineRoutesByAirport(
-                "airport_id",
-                airportId,
-                (inbound, outbound) match {
-                  case (true, false) => Some(true)
-                  case (false, true) => Some(false)
-                  case _             => None
-                }
-              )
-          case None =>
-            algebra
-              .getAirlineRoutesByAirport(
-                if (airportIdOrIataOrIcao.lengthEquals(3)) "iata" else "icao",
-                airportIdOrIataOrIcao,
-                (inbound, outbound) match {
-                  case (true, false) => Some(true)
-                  case (false, true) => Some(false)
-                  case _             => None
-                }
-              )
+        lazy val safeId = value.asLong.getOrElse(-1L)
+        val direction = (inbound, outbound) match {
+          case (true, false) => Some(true)
+          case (false, true) => Some(false)
+          case _             => None
+        }
+
+        field match {
+          case "id" | "city_id" => algebra.getAirlineRoutesByAirport(field, safeId, direction)
+          case _                => algebra.getAirlineRoutesByAirport(field, value, direction)
         }
       }.flatMap(toResponse(_))
 

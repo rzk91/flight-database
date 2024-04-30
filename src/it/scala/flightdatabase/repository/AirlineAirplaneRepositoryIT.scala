@@ -108,7 +108,7 @@ final class AirlineAirplaneRepositoryIT extends RepositoryCheck {
       repo.getAirlineAirplanesByAirline("name", name)
 
     def airlineAirplanesByAirplaneName(name: String): IO[ApiResult[List[AirlineAirplane]]] =
-      repo.getAirlineAirplanesByAirplaneName(name)
+      repo.getAirlineAirplanesByAirplane("name", name)
 
     def airlineAirplanesByAirlineIata(iata: String): IO[ApiResult[List[AirlineAirplane]]] =
       repo.getAirlineAirplanesByAirline("iata", iata)

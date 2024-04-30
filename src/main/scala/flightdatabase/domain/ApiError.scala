@@ -56,4 +56,8 @@ case class InvalidField(field: String) extends ApiError {
   override val error: String = s"Error: Invalid field $field"
 }
 
+case class SqlError(sqlState: String) extends ApiError {
+  override val error: String = s"Encountered PostgreSQL error: $sqlState"
+}
+
 case class UnknownDbError(error: String) extends ApiError

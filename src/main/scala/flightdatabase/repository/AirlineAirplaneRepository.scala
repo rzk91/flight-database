@@ -53,10 +53,11 @@ class AirlineAirplaneRepository[F[_]: Concurrent] private (
   ): F[ApiResult[List[AirlineAirplane]]] =
     selectAirlineAirplaneByExternal[ET, EV](field, value).asList.execute
 
-  override def getAirlineAirplanesByAirplaneName(
-    airplaneName: String
+  override def getAirlineAirplanesByAirplane[V: Put](
+    field: String,
+    value: V
   ): F[ApiResult[List[AirlineAirplane]]] =
-    getAirlineAirplanesByExternal[Airplane, String]("name", airplaneName)
+    getAirlineAirplanesByExternal[Airplane, V](field, value)
 
   override def getAirlineAirplanesByAirline[V: Put](
     field: String,

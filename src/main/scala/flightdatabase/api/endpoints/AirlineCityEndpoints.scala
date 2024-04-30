@@ -46,20 +46,27 @@ class AirlineCityEndpoints[F[_]: Concurrent] private (
           algebra.getAirlineCity(aId, cId).flatMap(toResponse(_))
       }
 
-    // GET /airline-cities/city/{value}?field={id/name, default: name}
-    case GET -> Root / "city" / city => {
-        city.asLong.fold {
-          // Treat city as name
-          algebra.getAirlineCitiesByCityName(city)
-        }(algebra.getAirlineCities("city_id", _))
-      }.flatMap(toResponse(_))
+    // GET /airline-cities/city/{value}?field={city_field, default: name}
+    case GET -> Root / "city" / value :? FieldMatcherNameDefault(field) =>
+      field match {
+        case "id" | "country_id" =>
+          value.asLong.fold(BadRequest(EntryInvalidFormat.error)) { id =>
+            algebra.getAirlineCitiesByCity(field, id).flatMap(toResponse(_))
+          }
 
-    // GET /airline-cities/airline/{value}?field={id/name/iata/icao/call_sign, default: name}
-    case GET -> Root / "airline" / value :? FieldMatcherWithDefaultName(field) =>
-      (value.asLong match {
-        case Some(airlineId) => algebra.getAirlineCitiesByAirline("id", airlineId)
-        case None            => algebra.getAirlineCitiesByAirline(field, value)
-      }).flatMap(toResponse(_))
+        case _ => algebra.getAirlineCitiesByCity(field, value).flatMap(toResponse(_))
+      }
+
+    // GET /airline-cities/airline/{value}?field={airline_field, default: name}
+    case GET -> Root / "airline" / value :? FieldMatcherNameDefault(field) =>
+      field match {
+        case "id" | "country_id" =>
+          value.asLong.fold(BadRequest(EntryInvalidFormat.error)) { id =>
+            algebra.getAirlineCitiesByAirline(field, id).flatMap(toResponse(_))
+          }
+
+        case _ => algebra.getAirlineCitiesByAirline(field, value).flatMap(toResponse(_))
+      }
 
     // POST /airline-cities
     case req @ POST -> Root =>

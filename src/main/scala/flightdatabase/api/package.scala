@@ -28,7 +28,8 @@ package object api {
       case Left(value @ EntryAlreadyExists)        => Conflict(value.error)
       case Left(value @ FeatureNotImplemented)     => NotImplemented(value.error)
       case Left(value: EntryNotFound[_])           => NotFound(value.error)
-      case Left(value: UnknownDbError)             => UnprocessableEntity(value.error)
+      case Left(value: SqlError)                   => UnprocessableEntity(value.error)
+      case Left(value: UnknownDbError)             => InternalServerError(value.error)
     }
   }
 }

@@ -45,7 +45,7 @@ class CountryEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Count
       algebra.getCountries("name", name).flatMap(toResponse(_))
 
     // GET /countries/language/{value}?field={iso2, default: name}
-    case GET -> Root / "language" / value :? FieldMatcherWithDefaultName(field) =>
+    case GET -> Root / "language" / value :? FieldMatcherNameDefault(field) =>
       value.asLong
         .fold(algebra.getCountriesByLanguage(field, value)) { long =>
           algebra.getCountriesByLanguage("id", long)
@@ -53,7 +53,7 @@ class CountryEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Count
         .flatMap(toResponse(_))
 
     // GET /countries/currency/{value}?field={iso, default: name}
-    case GET -> Root / "currency" / value :? FieldMatcherWithDefaultName(field) =>
+    case GET -> Root / "currency" / value :? FieldMatcherNameDefault(field) =>
       value.asLong
         .fold(algebra.getCountriesByCurrency(field, value)) { long =>
           algebra.getCountriesByCurrency("id", long)

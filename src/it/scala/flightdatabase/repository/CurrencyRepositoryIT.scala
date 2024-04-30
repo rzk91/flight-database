@@ -7,7 +7,7 @@ import flightdatabase.domain.EntryAlreadyExists
 import flightdatabase.domain.EntryCheckFailed
 import flightdatabase.domain.EntryListEmpty
 import flightdatabase.domain.EntryNotFound
-import flightdatabase.domain.UnknownDbError
+import flightdatabase.domain.SqlError
 import flightdatabase.domain.currency.Currency
 import flightdatabase.domain.currency.CurrencyCreate
 import flightdatabase.domain.currency.CurrencyPatch
@@ -88,7 +88,7 @@ final class CurrencyRepositoryIT extends RepositoryCheck {
     }
 
     val invalidSymbol = newCurrency.copy(symbol = Some("Something too long"))
-    repo.createCurrency(invalidSymbol).error shouldBe UnknownDbError(stringTooLongSqlState)
+    repo.createCurrency(invalidSymbol).error shouldBe SqlError(stringTooLongSqlState)
   }
 
   it should "not take place for a currency with existing unique fields" in {
@@ -128,7 +128,7 @@ final class CurrencyRepositoryIT extends RepositoryCheck {
     }
 
     val invalidSymbol = existingCurrency.copy(symbol = Some("Something too long"))
-    repo.updateCurrency(invalidSymbol).error shouldBe UnknownDbError(stringTooLongSqlState)
+    repo.updateCurrency(invalidSymbol).error shouldBe SqlError(stringTooLongSqlState)
   }
 
   it should "not take place for a currency with existing unique fields" in {
@@ -174,7 +174,7 @@ final class CurrencyRepositoryIT extends RepositoryCheck {
     val invalidSymbol = CurrencyPatch(symbol = Some("Something too long"))
     repo
       .partiallyUpdateCurrency(existingCurrency.id, invalidSymbol)
-      .error shouldBe UnknownDbError(stringTooLongSqlState)
+      .error shouldBe SqlError(stringTooLongSqlState)
   }
 
   it should "not take place for a currency with existing unique fields" in {

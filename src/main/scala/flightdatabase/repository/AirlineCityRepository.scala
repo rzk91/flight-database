@@ -46,10 +46,11 @@ class AirlineCityRepository[F[_]: Concurrent] private (implicit transactor: Tran
   ): F[ApiResult[List[AirlineCity]]] =
     selectAirlineCityByExternal(field, value).asList.execute
 
-  override def getAirlineCitiesByCityName(
-    cityName: String
+  override def getAirlineCitiesByCity[V: Put](
+    field: String,
+    value: V
   ): F[ApiResult[List[AirlineCity]]] =
-    getAirlineCitiesByExternal[City, String]("name", cityName)
+    getAirlineCitiesByExternal[City, V](field, value)
 
   override def getAirlineCitiesByAirline[V: Put](
     field: String,

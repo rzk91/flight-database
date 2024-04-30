@@ -1,7 +1,7 @@
 package flightdatabase
 
 import cats.Applicative
-import cats.syntax.applicativeError._
+import cats.implicits.catsSyntaxApplicativeError
 import doobie._
 import doobie.implicits._
 import doobie.postgres._
@@ -9,6 +9,8 @@ import flightdatabase.domain._
 import flightdatabase.repository.queries._
 import flightdatabase.utils.FieldValue
 import flightdatabase.utils.implicits.enrichQuery
+
+import java.sql.SQLException
 
 package object repository {
 
@@ -29,7 +31,10 @@ package object repository {
       values <- index match {
         case Right(Some(id)) => selectWhereQuery[ST, SV, Long](selectField, idField, id).asList
         case Right(None)     => EntryNotFound(whereFieldValue).elevate[ConnectionIO, List[SV]]
-        case Left(error)     => UnknownDbError(error.getMessage).elevate[ConnectionIO, List[SV]]
+        case Left(error: SQLException) =>
+          SqlError(error.getSQLState).elevate[ConnectionIO, List[SV]]
+        case Left(error) =>
+          UnknownDbError(error.getLocalizedMessage).elevate[ConnectionIO, List[SV]]
       }
     } yield values
   }
@@ -43,6 +48,6 @@ package object repository {
     case sqlstate.class23.NOT_NULL_VIOLATION    => EntryNullCheckFailed
     case sqlstate.class23.UNIQUE_VIOLATION      => EntryAlreadyExists
     case sqlstate.class23.FOREIGN_KEY_VIOLATION => EntryHasInvalidForeignKey
-    case _                                      => UnknownDbError(state.value)
+    case _                                      => SqlError(state.value)
   }
 }
