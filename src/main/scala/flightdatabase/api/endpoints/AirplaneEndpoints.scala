@@ -17,7 +17,7 @@ import org.http4s.circe.CirceEntityCodec._
 class AirplaneEndpoints[F[_]: Concurrent] private (prefix: String, algebra: AirplaneAlgebra[F])
     extends Endpoints[F](prefix) {
 
-  override def endpoints: HttpRoutes[F] = HttpRoutes.of {
+  override val endpoints: HttpRoutes[F] = HttpRoutes.of {
     // HEAD /airplanes/{id}
     case HEAD -> Root / LongVar(id) =>
       algebra.doesAirplaneExist(id).flatMap {
@@ -33,23 +33,24 @@ class AirplaneEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airp
         algebra.getAirplanes.flatMap(toResponse(_))
       }
 
-    // GET /airplanes/{id}
-    case GET -> Root / id =>
-      id.asLong.fold {
-        BadRequest(EntryInvalidFormat.error)
-      }(id => algebra.getAirplane(id).flatMap(toResponse(_)))
+    // GET /airplanes/{value}?field={airplane_field; default: id}
+    case GET -> Root / value :? FieldMatcherIdDefault(field) =>
+      lazy val safeId = value.asLong.getOrElse(-1L)
+      field match {
+        case "id" => algebra.getAirplane(safeId).flatMap(toResponse(_))
+        case "manufacturer_id" =>
+          algebra.getAirplanes("manufacturer_id", safeId).flatMap(toResponse(_))
+        case _ => algebra.getAirplanes(field, value).flatMap(toResponse(_))
+      }
 
-    // GET /airplanes/name/{name}
-    case GET -> Root / "name" / name =>
-      algebra.getAirplanes("name", name).flatMap(toResponse(_))
-
-    // GET /airplanes/manufacturer/{manufacturer_name} OR
-    // GET /airplanes/manufacturer/{manufacturer_id}
-    case GET -> Root / "manufacturer" / manufacturer =>
-      manufacturer.asLong.fold[F[Response[F]]] {
-        // Treat manufacturer as name
-        algebra.getAirplanesByManufacturer(manufacturer).flatMap(toResponse(_))
-      }(algebra.getAirplanes("manufacturer_id", _).flatMap(toResponse(_)))
+    // GET /airplanes/manufacturer/{value}?field={manufacturer_field; default: id}
+    case GET -> Root / "manufacturer" / value :? FieldMatcherIdDefault(field) =>
+      lazy val safeId = value.asLong.getOrElse(-1L)
+      if (field.endsWith("id")) {
+        algebra.getAirplanesByManufacturer(field, safeId).flatMap(toResponse(_))
+      } else {
+        algebra.getAirplanesByManufacturer(field, value).flatMap(toResponse(_))
+      }
 
     // POST /airplanes
     case req @ POST -> Root =>

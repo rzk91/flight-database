@@ -141,7 +141,7 @@ final class AirportRepositoryIT extends RepositoryCheck {
 
   "Selecting airports by city name" should "return the corresponding entries" in {
     def airportByCity(city: String): IO[ApiResult[List[Airport]]] =
-      repo.getAirportsByCity(city)
+      repo.getAirportsByCity("name", city)
 
     forAll(cityToIdMap) {
       case (city, id) =>
@@ -155,7 +155,7 @@ final class AirportRepositoryIT extends RepositoryCheck {
 
   "Selecting airport by country" should "also return the corresponding entries" in {
     def airportByCountry(country: String): IO[ApiResult[List[Airport]]] =
-      repo.getAirportsByCountry(country)
+      repo.getAirportsByCountry("name", country)
 
     forAll(countryToCityIdMap) {
       case (country, cityId) =>

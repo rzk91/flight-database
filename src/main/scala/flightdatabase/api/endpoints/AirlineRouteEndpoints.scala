@@ -18,13 +18,10 @@ class AirlineRouteEndpoints[F[_]: Concurrent] private (
 ) extends Endpoints[F](prefix) {
 
   private object OnlyNumbersFlagMatcher extends FlagQueryParamMatcher("only-routes")
-
-  private object FieldMatcherRouteNumberDefault
-      extends QueryParamDecoderMatcherWithDefault[String]("field", "route_number")
   private object InboundFlagMatcher extends FlagQueryParamMatcher("inbound")
   private object OutboundFlagMatcher extends FlagQueryParamMatcher("outbound")
 
-  override def endpoints: HttpRoutes[F] = HttpRoutes.of {
+  override val endpoints: HttpRoutes[F] = HttpRoutes.of {
     // HEAD /airline-routes/{id}
     case HEAD -> Root / LongVar(id) =>
       algebra.doesAirlineRouteExist(id).flatMap {
@@ -41,11 +38,11 @@ class AirlineRouteEndpoints[F[_]: Concurrent] private (
       }
 
     // GET /airline-routes/{value}?field={airline-route-field; default: id}
-    case GET -> Root / value :? FieldMatcherRouteNumberDefault(field) =>
+    case GET -> Root / value :? FieldMatcherIdDefault(field) =>
       lazy val safeId = value.asLong.getOrElse(-1L)
       field match {
         case "id" => algebra.getAirlineRoute(safeId).flatMap(toResponse(_))
-        case "airline_airplane_id" | "start_airport_id" | "destination_airport_id" =>
+        case str if str.endsWith("id") =>
           algebra.getAirlineRoutes(field, safeId).flatMap(toResponse(_))
         case _ => algebra.getAirlineRoutes(field, value).flatMap(toResponse(_))
       }

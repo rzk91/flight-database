@@ -19,7 +19,7 @@ class ManufacturerEndpoints[F[_]: Concurrent] private (
   algebra: ManufacturerAlgebra[F]
 ) extends Endpoints[F](prefix) {
 
-  override def endpoints: HttpRoutes[F] = HttpRoutes.of {
+  override val endpoints: HttpRoutes[F] = HttpRoutes.of {
     // HEAD /manufacturers/{id}
     case HEAD -> Root / LongVar(id) =>
       algebra.doesManufacturerExist(id).flatMap {
@@ -35,27 +35,32 @@ class ManufacturerEndpoints[F[_]: Concurrent] private (
         algebra.getManufacturers.flatMap(toResponse(_))
       }
 
-    // GET /manufacturers/{id}
-    case GET -> Root / id =>
-      id.asLong.fold {
-        BadRequest(EntryInvalidFormat.error)
-      }(id => algebra.getManufacturer(id).flatMap(toResponse(_)))
+    // GET /manufacturers/{value}=field={manufacturer_field; default=id}
+    case GET -> Root / value :? FieldMatcherIdDefault(field) =>
+      lazy val safeId = value.asLong.getOrElse(-1L)
+      field match {
+        case "id"           => algebra.getManufacturer(safeId).flatMap(toResponse(_))
+        case "base_city_id" => algebra.getManufacturers(field, safeId).flatMap(toResponse(_))
+        case _              => algebra.getManufacturers(field, value).flatMap(toResponse(_))
+      }
 
-    // GET /manufacturers/name/{name}
-    case GET -> Root / "name" / name =>
-      algebra.getManufacturers("name", name).flatMap(toResponse(_))
+    // GET /manufacturers/city/{value}?field={city_field; default=id}
+    case GET -> Root / "city" / value :? FieldMatcherIdDefault(field) =>
+      if (field.endsWith("id")) {
+        val safeId = value.asLong.getOrElse(-1L)
+        algebra.getManufacturersByCity(field, safeId).flatMap(toResponse(_))
+      } else {
+        algebra.getManufacturersByCity(field, value).flatMap(toResponse(_))
+      }
 
-    // GET /manufacturers/city/{city_name} OR
-    // GET /manufacturers/city/{city_id}
-    case GET -> Root / "city" / city =>
-      city.asLong.fold[F[Response[F]]] {
-        // Treat city as name
-        algebra.getManufacturersByCity(city).flatMap(toResponse(_))
-      }(algebra.getManufacturers("city_id", _).flatMap(toResponse(_)))
-
-    // GET /manufacturers/country/{country_name}
-    case GET -> Root / "country" / country =>
-      algebra.getManufacturersByCountry(country).flatMap(toResponse(_))
+    // GET /manufacturers/country/{value}?field={country_field; default=id}
+    case GET -> Root / "country" / value :? FieldMatcherIdDefault(field) =>
+      if (field.endsWith("id")) {
+        val safeId = value.asLong.getOrElse(-1L)
+        algebra.getManufacturersByCountry(field, safeId).flatMap(toResponse(_))
+      } else {
+        algebra.getManufacturersByCountry(field, value).flatMap(toResponse(_))
+      }
 
     // POST /manufacturers
     case req @ POST -> Root =>

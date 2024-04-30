@@ -25,14 +25,14 @@ private[repository] object ManufacturerQueries {
     selectAll ++ innerJoinWhereFragment[Manufacturer, ET, EV](
       externalField,
       externalValue,
-      Some("city_based_in")
+      Some("base_city_id")
     )
   }.query[Manufacturer]
 
   def insertManufacturer(model: ManufacturerCreate): Update0 =
     sql"""
-         | INSERT INTO manufacturer (name, city_based_in) 
-         | VALUES (${model.name}, ${model.cityBasedIn})
+         | INSERT INTO manufacturer (name, base_city_id)
+         | VALUES (${model.name}, ${model.baseCityId})
        """.stripMargin.update
 
   def modifyManufacturer(model: Manufacturer): Update0 =
@@ -40,7 +40,7 @@ private[repository] object ManufacturerQueries {
          | UPDATE manufacturer
          | SET
          |  name = ${model.name},
-         |  city_based_in = ${model.cityBasedIn}
+         |  base_city_id = ${model.baseCityId}
          | WHERE id = ${model.id}
        """.stripMargin.update
 
@@ -49,7 +49,7 @@ private[repository] object ManufacturerQueries {
   private def selectAll: Fragment =
     fr"""
         | SELECT
-        |   manufacturer.id, manufacturer.name, manufacturer.city_based_in
+        |   manufacturer.id, manufacturer.name, manufacturer.base_city_id
         | FROM manufacturer
       """.stripMargin
 }

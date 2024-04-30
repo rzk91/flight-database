@@ -17,7 +17,7 @@ import org.http4s.circe.CirceEntityCodec._
 class CountryEndpoints[F[_]: Concurrent] private (prefix: String, algebra: CountryAlgebra[F])
     extends Endpoints[F](prefix) {
 
-  override def endpoints: HttpRoutes[F] = HttpRoutes.of {
+  override val endpoints: HttpRoutes[F] = HttpRoutes.of {
 
     // HEAD /countries/{id}
     case HEAD -> Root / LongVar(id) =>
@@ -34,31 +34,32 @@ class CountryEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Count
         algebra.getCountries.flatMap(toResponse(_))
       }
 
-    // GET /countries/{id}
-    case GET -> Root / id =>
-      id.asLong.fold {
-        BadRequest(EntryInvalidFormat.error)
-      }(id => algebra.getCountry(id).flatMap(toResponse(_)))
+    // GET /countries/{value}?field={country_field; default=id}
+    case GET -> Root / value :? FieldMatcherIdDefault(field) =>
+      lazy val safeId = value.asLong.getOrElse(-1L)
+      field match {
+        case "id"                      => algebra.getCountry(safeId).flatMap(toResponse(_))
+        case str if str.endsWith("id") => algebra.getCountries(field, safeId).flatMap(toResponse(_))
+        case _                         => algebra.getCountries(field, value).flatMap(toResponse(_))
+      }
 
-    // GET /countries/name/{name}
-    case GET -> Root / "name" / name =>
-      algebra.getCountries("name", name).flatMap(toResponse(_))
+    // GET /countries/language/{value}?field={language_field, default: id}
+    case GET -> Root / "language" / value :? FieldMatcherIdDefault(field) =>
+      field match {
+        case "id" =>
+          val safeId = value.asLong.getOrElse(-1L)
+          algebra.getCountriesByLanguage(field, safeId).flatMap(toResponse(_))
+        case _ => algebra.getCountriesByLanguage(field, value).flatMap(toResponse(_))
+      }
 
-    // GET /countries/language/{value}?field={iso2, default: name}
-    case GET -> Root / "language" / value :? FieldMatcherNameDefault(field) =>
-      value.asLong
-        .fold(algebra.getCountriesByLanguage(field, value)) { long =>
-          algebra.getCountriesByLanguage("id", long)
-        }
-        .flatMap(toResponse(_))
-
-    // GET /countries/currency/{value}?field={iso, default: name}
-    case GET -> Root / "currency" / value :? FieldMatcherNameDefault(field) =>
-      value.asLong
-        .fold(algebra.getCountriesByCurrency(field, value)) { long =>
-          algebra.getCountriesByCurrency("id", long)
-        }
-        .flatMap(toResponse(_))
+    // GET /countries/currency/{value}?field={currency_field, default: id}
+    case GET -> Root / "currency" / value :? FieldMatcherIdDefault(field) =>
+      field match {
+        case "id" =>
+          val safeId = value.asLong.getOrElse(-1L)
+          algebra.getCountriesByCurrency(field, safeId).flatMap(toResponse(_))
+        case _ => algebra.getCountriesByCurrency(field, value).flatMap(toResponse(_))
+      }
 
     // POST /countries
     case req @ POST -> Root =>

@@ -163,7 +163,8 @@ final class CityRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting a city by country name" should "return the corresponding entries" in {
-    def cityByCountry(name: String): IO[ApiResult[List[City]]] = repo.getCitiesByCountry(name)
+    def cityByCountry(name: String): IO[ApiResult[List[City]]] =
+      repo.getCitiesByCountry("name", name)
 
     forAll(countryToIdMap) {
       case (country, id) =>

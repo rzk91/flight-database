@@ -15,7 +15,7 @@ import org.http4s.circe.CirceEntityCodec._
 class AirlineEndpoints[F[_]: Concurrent] private (prefix: String, algebra: AirlineAlgebra[F])
     extends Endpoints[F](prefix) {
 
-  override def endpoints: HttpRoutes[F] = HttpRoutes.of {
+  override val endpoints: HttpRoutes[F] = HttpRoutes.of {
     // HEAD /airlines/{id}
     case HEAD -> Root / LongVar(id) =>
       algebra.doesAirlineExist(id).flatMap {
@@ -40,13 +40,14 @@ class AirlineEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airli
         case _            => algebra.getAirlines(field, value).flatMap(toResponse(_))
       }
 
-    // GET /airlines/country/{value}?field={country_field, default: name}
-    case GET -> Root / "country" / value :? FieldMatcherNameDefault(field) => {
-        field match {
-          case "id" => algebra.getAirlines("country_id", value)
-          case _    => algebra.getAirlines(field, value)
-        }
-      }.flatMap(toResponse(_))
+    // GET /airlines/country/{value}?field={country_field, default: id}
+    case GET -> Root / "country" / value :? FieldMatcherIdDefault(field) =>
+      lazy val safeId = value.asLong.getOrElse(-1L)
+      if (field.endsWith("id")) {
+        algebra.getAirlinesByCountry(field, safeId).flatMap(toResponse(_))
+      } else {
+        algebra.getAirlinesByCountry(field, value).flatMap(toResponse(_))
+      }
 
     // POST /airlines
     case req @ POST -> Root =>

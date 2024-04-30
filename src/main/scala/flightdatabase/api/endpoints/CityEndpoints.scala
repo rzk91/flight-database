@@ -17,7 +17,7 @@ import org.http4s.circe.CirceEntityCodec._
 class CityEndpoints[F[_]: Concurrent] private (prefix: String, algebra: CityAlgebra[F])
     extends Endpoints[F](prefix) {
 
-  override def endpoints: HttpRoutes[F] = HttpRoutes.of {
+  override val endpoints: HttpRoutes[F] = HttpRoutes.of {
 
     // HEAD /cities/{id}
     case HEAD -> Root / LongVar(id) =>
@@ -34,23 +34,23 @@ class CityEndpoints[F[_]: Concurrent] private (prefix: String, algebra: CityAlge
         algebra.getCities.flatMap(toResponse(_))
       }
 
-    // GET /cities/{id}
-    case GET -> Root / id =>
-      id.asLong.fold {
-        BadRequest(EntryInvalidFormat.error)
-      }(id => algebra.getCity(id).flatMap(toResponse(_)))
+    // GET /cities/{value}?field={city_field; default=id}
+    case GET -> Root / value :? FieldMatcherIdDefault(field) =>
+      lazy val safeId = value.asLong.getOrElse(-1L)
+      field match {
+        case "id"         => algebra.getCity(safeId).flatMap(toResponse(_))
+        case "country_id" => algebra.getCities(field, safeId).flatMap(toResponse(_))
+        case _            => algebra.getCities(field, value).flatMap(toResponse(_))
+      }
 
-    // GET /cities/name/{name}
-    case GET -> Root / "name" / name =>
-      algebra.getCities("name", name).flatMap(toResponse(_))
-
-    // GET /cities/country/{country_name} OR
-    // GET /cities/country/{country_id}
-    case GET -> Root / "country" / country =>
-      country.asLong.fold[F[Response[F]]] {
-        // Treat country as name
-        algebra.getCitiesByCountry(country).flatMap(toResponse(_))
-      }(algebra.getCities("country_id", _).flatMap(toResponse(_)))
+    // GET /cities/country/{value}?field={country_field; default=id}
+    case GET -> Root / "country" / value :? FieldMatcherIdDefault(field) =>
+      if (field.endsWith("id")) {
+        val safeId = value.asLong.getOrElse(-1L)
+        algebra.getCitiesByCountry(field, safeId).flatMap(toResponse(_))
+      } else {
+        algebra.getCitiesByCountry(field, value).flatMap(toResponse(_))
+      }
 
     // POST /cities
     case req @ POST -> Root =>

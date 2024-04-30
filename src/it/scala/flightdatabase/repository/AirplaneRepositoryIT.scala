@@ -84,7 +84,7 @@ final class AirplaneRepositoryIT extends RepositoryCheck {
 
   "Selecting an airplane by manufacturer name" should "return the corresponding entries" in {
     def airplaneByManufacturer(name: String): IO[ApiResult[List[Airplane]]] =
-      repo.getAirplanesByManufacturer(name)
+      repo.getAirplanesByManufacturer("name", name)
 
     forAll(manufacturerToIdMap) {
       case (manufacturer, id) =>

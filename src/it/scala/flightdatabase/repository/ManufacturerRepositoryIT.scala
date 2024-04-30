@@ -72,14 +72,14 @@ final class ManufacturerRepositoryIT extends RepositoryCheck {
       repo.getManufacturers("name", name)
 
     def manufacturerByCity(cityId: Long): IO[ApiResult[List[Manufacturer]]] =
-      repo.getManufacturers("city_based_in", cityId)
+      repo.getManufacturers("base_city_id", cityId)
 
-    val distinctCityIds = originalManufacturers.map(_.cityBasedIn).distinct
+    val distinctCityIds = originalManufacturers.map(_.baseCityId).distinct
 
     forAll(originalManufacturers)(m => manufacturerByName(m.name).value should contain only m)
     forAll(distinctCityIds) { cityId =>
       manufacturerByCity(cityId).value should contain only (
-        originalManufacturers.filter(_.cityBasedIn == cityId): _*
+        originalManufacturers.filter(_.baseCityId == cityId): _*
       )
     }
     manufacturerByName(valueNotPresent).error shouldBe EntryListEmpty
@@ -87,22 +87,22 @@ final class ManufacturerRepositoryIT extends RepositoryCheck {
 
   "Selecting a manufacturer by city/country name" should "return the correct list of manufacturers" in {
     def manufacturerByCity(city: String): IO[ApiResult[List[Manufacturer]]] =
-      repo.getManufacturersByCity(city)
+      repo.getManufacturersByCity("name", city)
 
     def manufacturerByCountry(country: String): IO[ApiResult[List[Manufacturer]]] =
-      repo.getManufacturersByCountry(country)
+      repo.getManufacturersByCountry("name", country)
 
     forAll(cityIdMap) {
       case (cityId, cityName) =>
         manufacturerByCity(cityName).value should contain only (
-          originalManufacturers.filter(_.cityBasedIn == cityId): _*
+          originalManufacturers.filter(_.baseCityId == cityId): _*
         )
     }
 
     forAll(cityIdCountryMap) {
       case (cityId, countryName) =>
         manufacturerByCountry(countryName).value should contain only (
-          originalManufacturers.filter(_.cityBasedIn == cityId): _*
+          originalManufacturers.filter(_.baseCityId == cityId): _*
         )
     }
 
@@ -119,7 +119,7 @@ final class ManufacturerRepositoryIT extends RepositoryCheck {
     val manufacturerWithNonUniqueName = newManufacturer.copy(name = originalManufacturers.head.name)
     repo.createManufacturer(manufacturerWithNonUniqueName).error shouldBe EntryAlreadyExists
 
-    val manufacturerWithNonExistingCity = newManufacturer.copy(cityBasedIn = idNotPresent)
+    val manufacturerWithNonExistingCity = newManufacturer.copy(baseCityId = idNotPresent)
     repo
       .createManufacturer(manufacturerWithNonExistingCity)
       .error shouldBe EntryHasInvalidForeignKey
@@ -144,7 +144,7 @@ final class ManufacturerRepositoryIT extends RepositoryCheck {
     val manufacturerWithNonUniqueName = existingManufacturer.copy(name = newManufacturer.name)
     repo.updateManufacturer(manufacturerWithNonUniqueName).error shouldBe EntryAlreadyExists
 
-    val manufacturerWithNonExistingCity = existingManufacturer.copy(cityBasedIn = idNotPresent)
+    val manufacturerWithNonExistingCity = existingManufacturer.copy(baseCityId = idNotPresent)
     repo
       .updateManufacturer(manufacturerWithNonExistingCity)
       .error shouldBe EntryHasInvalidForeignKey
@@ -176,7 +176,7 @@ final class ManufacturerRepositoryIT extends RepositoryCheck {
     val manufacturerWithNonUniqueName = ManufacturerPatch(name = Some(updatedName))
     patchManufacturer(manufacturerWithNonUniqueName) shouldBe EntryAlreadyExists
 
-    val manufacturerWithNonExistingCity = ManufacturerPatch(cityBasedIn = Some(idNotPresent))
+    val manufacturerWithNonExistingCity = ManufacturerPatch(baseCityId = Some(idNotPresent))
     patchManufacturer(manufacturerWithNonExistingCity) shouldBe EntryHasInvalidForeignKey
   }
 

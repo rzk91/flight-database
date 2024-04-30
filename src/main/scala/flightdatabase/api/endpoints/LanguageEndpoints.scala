@@ -5,7 +5,6 @@ import cats.implicits._
 import flightdatabase.api._
 import flightdatabase.domain.ApiResult
 import flightdatabase.domain.EntryInvalidFormat
-import flightdatabase.domain.EntryListEmpty
 import flightdatabase.domain.InconsistentIds
 import flightdatabase.domain.language.Language
 import flightdatabase.domain.language.LanguageAlgebra
@@ -18,7 +17,7 @@ import org.http4s.circe.CirceEntityCodec._
 class LanguageEndpoints[F[_]: Concurrent] private (prefix: String, algebra: LanguageAlgebra[F])
     extends Endpoints[F](prefix) {
 
-  override def endpoints: HttpRoutes[F] = HttpRoutes.of {
+  override val endpoints: HttpRoutes[F] = HttpRoutes.of {
     // HEAD /languages/{id}
     case HEAD -> Root / LongVar(id) =>
       algebra.doesLanguageExist(id).flatMap {
@@ -34,27 +33,14 @@ class LanguageEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Lang
         algebra.getLanguages.flatMap(toResponse(_))
       }
 
-    // GET /languages/{id}
-    case GET -> Root / id =>
-      id.asLong.fold {
-        BadRequest(EntryInvalidFormat.error)
-      }(id => algebra.getLanguage(id).flatMap(toResponse(_)))
-
-    // GET /languages/name/{name}
-    case GET -> Root / "name" / name =>
-      algebra.getLanguages("name", name).flatMap(toResponse(_))
-
-    // GET /languages/iso/{iso2} OR
-    // GET /languages/iso/{iso3}
-    case GET -> Root / "iso" / iso =>
-      algebra
-        .getLanguages("iso2", iso)
-        .flatMap {
-          case Left(EntryListEmpty) => algebra.getLanguages("iso3", iso)
-          case Left(error)          => error.elevate[F, List[Language]]
-          case Right(list)          => list.elevate[F]
-        }
-        .flatMap(toResponse(_))
+    // GET /languages/{value}?field={language_field; default=id}
+    case GET -> Root / value :? FieldMatcherIdDefault(field) =>
+      field match {
+        case "id" =>
+          val safeId = value.asLong.getOrElse(-1L)
+          algebra.getLanguage(safeId).flatMap(toResponse(_))
+        case _ => algebra.getLanguages(field, value).flatMap(toResponse(_))
+      }
 
     // POST /languages
     case req @ POST -> Root =>

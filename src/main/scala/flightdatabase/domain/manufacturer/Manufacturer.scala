@@ -7,7 +7,7 @@ import io.circe.generic.extras.ConfiguredJsonCodec
 @ConfiguredJsonCodec final case class Manufacturer(
   id: Long,
   name: String,
-  cityBasedIn: Long
+  baseCityId: Long
 )
 
 object Manufacturer {
@@ -17,13 +17,13 @@ object Manufacturer {
     Manufacturer(
       id,
       model.name,
-      model.cityBasedIn
+      model.baseCityId
     )
 
   def fromPatch(id: Long, patch: ManufacturerPatch, original: Manufacturer): Manufacturer =
     Manufacturer(
       id,
       patch.name.getOrElse(original.name),
-      patch.cityBasedIn.getOrElse(original.cityBasedIn)
+      patch.baseCityId.getOrElse(original.baseCityId)
     )
 }

@@ -17,7 +17,7 @@ import org.http4s.circe.CirceEntityCodec._
 class CurrencyEndpoints[F[_]: Concurrent] private (prefix: String, algebra: CurrencyAlgebra[F])
     extends Endpoints[F](prefix) {
 
-  override def endpoints: HttpRoutes[F] = HttpRoutes.of {
+  override val endpoints: HttpRoutes[F] = HttpRoutes.of {
 
     // HEAD /currencies/{id}
     case HEAD -> Root / LongVar(id) =>
@@ -34,19 +34,14 @@ class CurrencyEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Curr
         algebra.getCurrencies.flatMap(toResponse(_))
       }
 
-    // GET /currencies/{id}
-    case GET -> Root / id =>
-      id.asLong.fold {
-        BadRequest(EntryInvalidFormat.error)
-      }(id => algebra.getCurrency(id).flatMap(toResponse(_)))
-
-    // GET /currencies/name/{name}
-    case GET -> Root / "name" / name =>
-      algebra.getCurrencies("name", name).flatMap(toResponse(_))
-
-    // GET /currencies/iso/{iso}
-    case GET -> Root / "iso" / iso =>
-      algebra.getCurrencies("iso", iso).flatMap(toResponse(_))
+    // GET /currencies/{value}?field={currency_field; default=id}
+    case GET -> Root / value :? FieldMatcherIdDefault(field) =>
+      field match {
+        case "id" =>
+          val safeId = value.asLong.getOrElse(-1L)
+          algebra.getCurrency(safeId).flatMap(toResponse(_))
+        case _ => algebra.getCurrencies(field, value).flatMap(toResponse(_))
+      }
 
     // POST /currencies
     case req @ POST -> Root =>

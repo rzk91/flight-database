@@ -79,7 +79,7 @@ CREATE TABLE manufacturer
     id              bigserial         NOT NULL,
     PRIMARY KEY (id),
     name            character varying NOT NULL CHECK (btrim(name::text) <> ''::text),
-    city_based_in   bigint            NOT NULL REFERENCES city (id) ON DELETE CASCADE,
+    base_city_id    bigint            NOT NULL REFERENCES city (id) ON DELETE CASCADE,
     created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

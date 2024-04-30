@@ -17,7 +17,7 @@ import org.http4s.circe.CirceEntityCodec._
 class AirportEndpoints[F[_]: Concurrent] private (prefix: String, algebra: AirportAlgebra[F])
     extends Endpoints[F](prefix) {
 
-  override def endpoints: HttpRoutes[F] = HttpRoutes.of {
+  override val endpoints: HttpRoutes[F] = HttpRoutes.of {
     // HEAD /airports/{id}
     case HEAD -> Root / LongVar(id) =>
       algebra.doesAirportExist(id).flatMap {
@@ -33,31 +33,32 @@ class AirportEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airpo
         algebra.getAirports.flatMap(toResponse(_))
       }
 
-    // GET /airports/{id}
-    case GET -> Root / id =>
-      id.asLong.fold {
-        BadRequest(EntryInvalidFormat.error)
-      }(id => algebra.getAirport(id).flatMap(toResponse(_)))
+    // GET /airports/{valid}?field={airport_field; default: id}
+    case GET -> Root / value :? FieldMatcherIdDefault(field) =>
+      lazy val safeId = value.asLong.getOrElse(-1L)
+      field match {
+        case "id"      => algebra.getAirport(safeId).flatMap(toResponse(_))
+        case "city_id" => algebra.getAirports(field, safeId).flatMap(toResponse(_))
+        case _         => algebra.getAirports(field, value).flatMap(toResponse(_))
+      }
 
-    // GET /airports/iata/{iata}
-    case GET -> Root / "iata" / iata =>
-      algebra.getAirports("iata", iata).flatMap(toResponse(_))
+    // GET /airports/city/{value}?field={city_field; default: id}
+    case GET -> Root / "city" / value :? FieldMatcherIdDefault(field) =>
+      if (field.endsWith("id")) {
+        val safeId = value.asLong.getOrElse(-1L)
+        algebra.getAirportsByCity(field, safeId).flatMap(toResponse(_))
+      } else {
+        algebra.getAirportsByCity(field, value).flatMap(toResponse(_))
+      }
 
-    // GET /airports/icao/{icao}
-    case GET -> Root / "icao" / icao =>
-      algebra.getAirports("icao", icao).flatMap(toResponse(_))
-
-    // GET /airports/city/{city_name} OR
-    // GET /airports/city/{city_id}
-    case GET -> Root / "city" / city =>
-      city.asLong.fold[F[Response[F]]] {
-        // Treat city as name
-        algebra.getAirportsByCity(city).flatMap(toResponse(_))
-      }(algebra.getAirports("city_id", _).flatMap(toResponse(_)))
-
-    // GET /airports/country/{country}
-    case GET -> Root / "country" / country =>
-      algebra.getAirportsByCountry(country).flatMap(toResponse(_))
+    // GET /airports/country/{value}?field={country_field; default: id}
+    case GET -> Root / "country" / value :? FieldMatcherIdDefault(field) =>
+      if (field.endsWith("id")) {
+        val safeId = value.asLong.getOrElse(-1L)
+        algebra.getAirportsByCountry(field, safeId).flatMap(toResponse(_))
+      } else {
+        algebra.getAirportsByCountry(field, value).flatMap(toResponse(_))
+      }
 
     // POST /airports
     case req @ POST -> Root =>

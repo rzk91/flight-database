@@ -36,14 +36,14 @@ class AirportRepository[F[_]: Concurrent] private (
   override def getAirports[V: Put](field: String, value: V): F[ApiResult[List[Airport]]] =
     selectAirportsBy(field, value).asList.execute
 
-  override def getAirportsByCity(city: String): F[ApiResult[List[Airport]]] =
-    selectAllAirportsByExternal[City, String]("name", city).asList.execute
+  def getAirportsByCity[V: Put](field: String, value: V): F[ApiResult[List[Airport]]] =
+    selectAllAirportsByExternal[City, V](field, value).asList.execute
 
-  override def getAirportsByCountry(country: String): F[ApiResult[List[Airport]]] =
-    EitherT(getFieldList[City, String, Country, String]("name", FieldValue("name", country)))
+  def getAirportsByCountry[V: Put](field: String, value: V): F[ApiResult[List[Airport]]] =
+    EitherT(getFieldList[City, Long, Country, V]("id", FieldValue(field, value)))
       .flatMapF {
         _.value
-          .flatTraverse(selectAllAirportsByExternal[City, String]("name", _).to[List])
+          .flatTraverse(selectAllAirportsByExternal[City, Long]("id", _).to[List])
           .map(listToApiResult)
       }
       .value

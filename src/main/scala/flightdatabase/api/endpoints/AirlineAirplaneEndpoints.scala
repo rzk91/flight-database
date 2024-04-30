@@ -19,7 +19,7 @@ class AirlineAirplaneEndpoints[F[_]: Concurrent] private (
   algebra: AirlineAirplaneAlgebra[F]
 ) extends Endpoints[F](prefix) {
 
-  override def endpoints: HttpRoutes[F] = HttpRoutes.of {
+  override val endpoints: HttpRoutes[F] = HttpRoutes.of {
     // HEAD /airline-airplanes/{id}
     case HEAD -> Root / LongVar(id) =>
       algebra.doesAirlineAirplaneExist(id).flatMap {
@@ -33,36 +33,31 @@ class AirlineAirplaneEndpoints[F[_]: Concurrent] private (
 
     // GET /airline-airplanes/{id}
     case GET -> Root / id =>
-      id.asLong.fold {
-        BadRequest(EntryInvalidFormat.error)
-      }(id => algebra.getAirlineAirplane(id).flatMap(toResponse(_)))
+      lazy val safeId = id.asLong.getOrElse(-1L)
+      algebra.getAirlineAirplane(safeId).flatMap(toResponse(_))
 
     // GET /airline-airplanes/airline/{airline_id}/airplane/{airplane_id}
     case GET -> Root / "airline" / airlineId / "airplane" / airplaneId =>
-      (airlineId.asLong, airplaneId.asLong).tupled.fold {
-        BadRequest(EntryInvalidFormat.error)
-      } { case (fId, aId) => algebra.getAirlineAirplane(fId, aId).flatMap(toResponse(_)) }
+      lazy val safeAirlineId = airlineId.asLong.getOrElse(-1L)
+      lazy val safeAirplaneId = airplaneId.asLong.getOrElse(-1L)
+      algebra.getAirlineAirplane(safeAirlineId, safeAirplaneId).flatMap(toResponse(_))
 
-    // GET /airline-airplanes/airplane/{value}?field={airplane_field; default: name}
-    case GET -> Root / "airplane" / value :? FieldMatcherNameDefault(field) =>
-      field match {
-        case "id" | "manufacturer_id" =>
-          value.asLong.fold(BadRequest(EntryInvalidFormat.error)) { id =>
-            algebra.getAirlineAirplanesByAirplane(field, id).flatMap(toResponse(_))
-          }
-
-        case _ => algebra.getAirlineAirplanesByAirplane(field, value).flatMap(toResponse(_))
+    // GET /airline-airplanes/airline/{value}?field={airline_field; default: id}
+    case GET -> Root / "airline" / value :? FieldMatcherIdDefault(field) =>
+      lazy val safeId = value.asLong.getOrElse(-1L)
+      if (field.endsWith("id")) {
+        algebra.getAirlineAirplanesByAirline(field, safeId).flatMap(toResponse(_))
+      } else {
+        algebra.getAirlineAirplanesByAirline(field, value).flatMap(toResponse(_))
       }
 
-    // GET /airline-airplanes/airline/{value}?field={airline_field; default: name}
-    case GET -> Root / "airline" / value :? FieldMatcherNameDefault(field) =>
-      field match {
-        case "id" | "country_id" =>
-          value.asLong.fold(BadRequest(EntryInvalidFormat.error)) { id =>
-            algebra.getAirlineAirplanesByAirline(field, id).flatMap(toResponse(_))
-          }
-
-        case _ => algebra.getAirlineAirplanesByAirline(field, value).flatMap(toResponse(_))
+    // GET /airline-airplanes/airplane/{value}?field={airplane_field; default: id}
+    case GET -> Root / "airplane" / value :? FieldMatcherIdDefault(field) =>
+      lazy val safeId = value.asLong.getOrElse(-1L)
+      if (field.endsWith("id")) {
+        algebra.getAirlineAirplanesByAirplane(field, safeId).flatMap(toResponse(_))
+      } else {
+        algebra.getAirlineAirplanesByAirplane(field, value).flatMap(toResponse(_))
       }
 
     // POST /airline-airplanes

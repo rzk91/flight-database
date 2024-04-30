@@ -19,7 +19,7 @@ class AirlineCityEndpoints[F[_]: Concurrent] private (
   algebra: AirlineCityAlgebra[F]
 ) extends Endpoints[F](prefix) {
 
-  override def endpoints: HttpRoutes[F] = HttpRoutes.of {
+  override val endpoints: HttpRoutes[F] = HttpRoutes.of {
     // HEAD /airline-cities/{id}
     case HEAD -> Root / LongVar(id) =>
       algebra.doesAirlineCityExist(id).flatMap {
@@ -33,39 +33,31 @@ class AirlineCityEndpoints[F[_]: Concurrent] private (
 
     // GET /airline-cities/{id}
     case GET -> Root / id =>
-      id.asLong.fold {
-        BadRequest(EntryInvalidFormat.error)
-      }(id => algebra.getAirlineCity(id).flatMap(toResponse(_)))
+      lazy val safeId = id.asLong.getOrElse(-1L)
+      algebra.getAirlineCity(safeId).flatMap(toResponse(_))
 
     // GET /airline-cities/airline/{airline_id}/city/{city_id}
     case GET -> Root / "airline" / airlineId / "city" / cityId =>
-      (airlineId.asLong, cityId.asLong).tupled.fold {
-        BadRequest(EntryInvalidFormat.error)
-      } {
-        case (aId, cId) =>
-          algebra.getAirlineCity(aId, cId).flatMap(toResponse(_))
+      lazy val safeAirlineId = airlineId.asLong.getOrElse(-1L)
+      lazy val safeCityId = cityId.asLong.getOrElse(-1L)
+      algebra.getAirlineCity(safeAirlineId, safeCityId).flatMap(toResponse(_))
+
+    // GET /airline-cities/airline/{value}?field={airline_field, default: id}
+    case GET -> Root / "airline" / value :? FieldMatcherIdDefault(field) =>
+      lazy val safeId = value.asLong.getOrElse(-1L)
+      if (field.endsWith("id")) {
+        algebra.getAirlineCitiesByAirline(field, safeId).flatMap(toResponse(_))
+      } else {
+        algebra.getAirlineCitiesByAirline(field, value).flatMap(toResponse(_))
       }
 
-    // GET /airline-cities/city/{value}?field={city_field, default: name}
-    case GET -> Root / "city" / value :? FieldMatcherNameDefault(field) =>
-      field match {
-        case "id" | "country_id" =>
-          value.asLong.fold(BadRequest(EntryInvalidFormat.error)) { id =>
-            algebra.getAirlineCitiesByCity(field, id).flatMap(toResponse(_))
-          }
-
-        case _ => algebra.getAirlineCitiesByCity(field, value).flatMap(toResponse(_))
-      }
-
-    // GET /airline-cities/airline/{value}?field={airline_field, default: name}
-    case GET -> Root / "airline" / value :? FieldMatcherNameDefault(field) =>
-      field match {
-        case "id" | "country_id" =>
-          value.asLong.fold(BadRequest(EntryInvalidFormat.error)) { id =>
-            algebra.getAirlineCitiesByAirline(field, id).flatMap(toResponse(_))
-          }
-
-        case _ => algebra.getAirlineCitiesByAirline(field, value).flatMap(toResponse(_))
+    // GET /airline-cities/city/{value}?field={city_field, default: id}
+    case GET -> Root / "city" / value :? FieldMatcherIdDefault(field) =>
+      lazy val safeId = value.asLong.getOrElse(-1L)
+      if (field.endsWith("id")) {
+        algebra.getAirlineCitiesByCity(field, safeId).flatMap(toResponse(_))
+      } else {
+        algebra.getAirlineCitiesByCity(field, value).flatMap(toResponse(_))
       }
 
     // POST /airline-cities
