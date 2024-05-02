@@ -2,15 +2,9 @@ package flightdatabase.api.endpoints
 
 import cats.effect._
 import cats.implicits._
-import flightdatabase.api._
-import flightdatabase.domain.ApiResult
-import flightdatabase.domain.EntryInvalidFormat
 import flightdatabase.domain.InconsistentIds
 import flightdatabase.domain.currency.Currency
 import flightdatabase.domain.currency.CurrencyAlgebra
-import flightdatabase.domain.currency.CurrencyCreate
-import flightdatabase.domain.currency.CurrencyPatch
-import flightdatabase.utils.implicits.enrichString
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
 
@@ -37,60 +31,33 @@ class CurrencyEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Curr
     // GET /currencies/{value}?field={currency_field; default=id}
     case GET -> Root / value :? FieldMatcherIdDefault(field) =>
       field match {
-        case "id" =>
-          val safeId = value.asLong.getOrElse(-1L)
-          algebra.getCurrency(safeId).flatMap(toResponse(_))
-        case _ => algebra.getCurrencies(field, value).flatMap(toResponse(_))
+        case "id" => idToResponse(value)(algebra.getCurrency)
+        case _    => algebra.getCurrencies(field, value).flatMap(toResponse(_))
       }
 
     // POST /currencies
     case req @ POST -> Root =>
-      req
-        .attemptAs[CurrencyCreate]
-        .foldF[ApiResult[Long]](
-          _ => EntryInvalidFormat.elevate[F, Long],
-          algebra.createCurrency
-        )
-        .flatMap(toResponse(_))
+      processRequest(req)(algebra.createCurrency).flatMap(toResponse(_))
 
     // PUT /currencies/{id}
     case req @ PUT -> Root / id =>
-      id.asLong.fold {
-        BadRequest(EntryInvalidFormat.error)
-      } { id =>
-        req
-          .attemptAs[Currency]
-          .foldF[ApiResult[Long]](
-            _ => EntryInvalidFormat.elevate[F, Long],
-            currency =>
-              if (id != currency.id) {
-                InconsistentIds(id, currency.id).elevate[F, Long]
-              } else {
-                algebra.updateCurrency(currency)
-              }
-          )
-          .flatMap(toResponse(_))
+      idToResponse(id) { i =>
+        processRequest[Currency, Long](req) { currency =>
+          if (i != currency.id) {
+            InconsistentIds(i, currency.id).elevate[F, Long]
+          } else {
+            algebra.updateCurrency(currency)
+          }
+        }
       }
 
     // PATCH /currencies/{id}
     case req @ PATCH -> Root / id =>
-      id.asLong.fold {
-        BadRequest(EntryInvalidFormat.error)
-      } { id =>
-        req
-          .attemptAs[CurrencyPatch]
-          .foldF[ApiResult[Currency]](
-            _ => EntryInvalidFormat.elevate[F, Currency],
-            algebra.partiallyUpdateCurrency(id, _)
-          )
-          .flatMap(toResponse(_))
-      }
+      idToResponse(id)(i => processRequest(req)(algebra.partiallyUpdateCurrency(i, _)))
 
     // DELETE /currencies/{id}
     case DELETE -> Root / id =>
-      id.asLong.fold {
-        BadRequest(EntryInvalidFormat.error)
-      }(id => algebra.removeCurrency(id).flatMap(toResponse(_)))
+      idToResponse(id)(algebra.removeCurrency)
   }
 }
 

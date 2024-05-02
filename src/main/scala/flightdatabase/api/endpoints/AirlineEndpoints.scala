@@ -2,13 +2,9 @@ package flightdatabase.api.endpoints
 
 import cats.effect.Concurrent
 import cats.implicits._
-import flightdatabase.api.toResponse
 import flightdatabase.domain._
 import flightdatabase.domain.airline.Airline
 import flightdatabase.domain.airline.AirlineAlgebra
-import flightdatabase.domain.airline.AirlineCreate
-import flightdatabase.domain.airline.AirlinePatch
-import flightdatabase.utils.implicits.enrichString
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
 
@@ -33,70 +29,44 @@ class AirlineEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airli
 
     // GET /airlines/{value}?field={airline_field, default: id}
     case GET -> Root / value :? FieldMatcherIdDefault(field) =>
-      lazy val safeId = value.asLong.getOrElse(-1L)
       field match {
-        case "id"         => algebra.getAirline(safeId).flatMap(toResponse(_))
-        case "country_id" => algebra.getAirlines("country_id", safeId).flatMap(toResponse(_))
-        case _            => algebra.getAirlines(field, value).flatMap(toResponse(_))
+        case "id" => idToResponse(value)(algebra.getAirline)
+        case "country_id" =>
+          idToResponse(value, EntryHasInvalidForeignKey)(algebra.getAirlines(field, _))
+        case _ => algebra.getAirlines(field, value).flatMap(toResponse(_))
       }
 
     // GET /airlines/country/{value}?field={country_field, default: id}
     case GET -> Root / "country" / value :? FieldMatcherIdDefault(field) =>
-      lazy val safeId = value.asLong.getOrElse(-1L)
       if (field.endsWith("id")) {
-        algebra.getAirlinesByCountry(field, safeId).flatMap(toResponse(_))
+        idToResponse(value, EntryHasInvalidForeignKey)(algebra.getAirlinesByCountry(field, _))
       } else {
         algebra.getAirlinesByCountry(field, value).flatMap(toResponse(_))
       }
 
     // POST /airlines
     case req @ POST -> Root =>
-      req
-        .attemptAs[AirlineCreate]
-        .foldF[ApiResult[Long]](
-          _ => EntryInvalidFormat.elevate[F, Long],
-          algebra.createAirline
-        )
-        .flatMap(toResponse(_))
+      processRequest(req)(algebra.createAirline).flatMap(toResponse(_))
 
     // PUT /airlines/{id}
     case req @ PUT -> Root / id =>
-      id.asLong.fold {
-        BadRequest(EntryInvalidFormat.error)
-      } { id =>
-        req
-          .attemptAs[Airline]
-          .foldF[ApiResult[Long]](
-            _ => EntryInvalidFormat.elevate[F, Long],
-            airline =>
-              if (id != airline.id) {
-                InconsistentIds(id, airline.id).elevate[F, Long]
-              } else {
-                algebra.updateAirline(airline)
-              }
-          )
-          .flatMap(toResponse(_))
+      idToResponse(id) { i =>
+        processRequest[Airline, Long](req) { airline =>
+          if (i != airline.id) {
+            InconsistentIds(i, airline.id).elevate[F, Long]
+          } else {
+            algebra.updateAirline(airline)
+          }
+        }
       }
 
     // PATCH /airlines/{id}
     case req @ PATCH -> Root / id =>
-      id.asLong.fold {
-        BadRequest(EntryInvalidFormat.error)
-      } { id =>
-        req
-          .attemptAs[AirlinePatch]
-          .foldF[ApiResult[Airline]](
-            _ => EntryInvalidFormat.elevate[F, Airline],
-            algebra.partiallyUpdateAirline(id, _)
-          )
-          .flatMap(toResponse(_))
-      }
+      idToResponse(id)(i => processRequest(req)(algebra.partiallyUpdateAirline(i, _)))
 
     // DELETE /airlines/{id}
     case DELETE -> Root / id =>
-      id.asLong.fold {
-        BadRequest(EntryInvalidFormat.error)
-      }(id => algebra.removeAirline(id).flatMap(toResponse(_)))
+      idToResponse(id)(algebra.removeAirline)
   }
 }
 

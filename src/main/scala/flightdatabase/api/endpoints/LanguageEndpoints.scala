@@ -2,15 +2,9 @@ package flightdatabase.api.endpoints
 
 import cats.effect._
 import cats.implicits._
-import flightdatabase.api._
-import flightdatabase.domain.ApiResult
-import flightdatabase.domain.EntryInvalidFormat
 import flightdatabase.domain.InconsistentIds
 import flightdatabase.domain.language.Language
 import flightdatabase.domain.language.LanguageAlgebra
-import flightdatabase.domain.language.LanguageCreate
-import flightdatabase.domain.language.LanguagePatch
-import flightdatabase.utils.implicits.enrichString
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
 
@@ -36,60 +30,33 @@ class LanguageEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Lang
     // GET /languages/{value}?field={language_field; default=id}
     case GET -> Root / value :? FieldMatcherIdDefault(field) =>
       field match {
-        case "id" =>
-          val safeId = value.asLong.getOrElse(-1L)
-          algebra.getLanguage(safeId).flatMap(toResponse(_))
-        case _ => algebra.getLanguages(field, value).flatMap(toResponse(_))
+        case "id" => idToResponse(value)(algebra.getLanguage)
+        case _    => algebra.getLanguages(field, value).flatMap(toResponse(_))
       }
 
     // POST /languages
     case req @ POST -> Root =>
-      req
-        .attemptAs[LanguageCreate]
-        .foldF[ApiResult[Long]](
-          _ => EntryInvalidFormat.elevate[F, Long],
-          algebra.createLanguage
-        )
-        .flatMap(toResponse(_))
+      processRequest(req)(algebra.createLanguage).flatMap(toResponse(_))
 
     // PUT /languages/{id}
     case req @ PUT -> Root / id =>
-      id.asLong.fold {
-        BadRequest(EntryInvalidFormat.error)
-      } { id =>
-        req
-          .attemptAs[Language]
-          .foldF[ApiResult[Long]](
-            _ => EntryInvalidFormat.elevate[F, Long],
-            lang =>
-              if (id != lang.id) {
-                InconsistentIds(id, lang.id).elevate[F, Long]
-              } else {
-                algebra.updateLanguage(lang)
-              }
-          )
-          .flatMap(toResponse(_))
+      idToResponse(id) { i =>
+        processRequest[Language, Long](req) { language =>
+          if (i != language.id) {
+            InconsistentIds(i, language.id).elevate[F, Long]
+          } else {
+            algebra.updateLanguage(language)
+          }
+        }
       }
 
     // PATCH /languages/{id}
     case req @ PATCH -> Root / id =>
-      id.asLong.fold {
-        BadRequest(EntryInvalidFormat.error)
-      } { id =>
-        req
-          .attemptAs[LanguagePatch]
-          .foldF[ApiResult[Language]](
-            _ => EntryInvalidFormat.elevate[F, Language],
-            algebra.partiallyUpdateLanguage(id, _)
-          )
-          .flatMap(toResponse(_))
-      }
+      idToResponse(id)(i => processRequest(req)(algebra.partiallyUpdateLanguage(i, _)))
 
     // DELETE /languages/{id}
     case DELETE -> Root / id =>
-      id.asLong.fold {
-        BadRequest(EntryInvalidFormat.error)
-      }(id => algebra.removeLanguage(id).flatMap(toResponse(_)))
+      idToResponse(id)(algebra.removeLanguage)
   }
 }
 

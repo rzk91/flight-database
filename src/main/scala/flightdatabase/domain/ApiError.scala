@@ -44,7 +44,7 @@ case object EntryHasInvalidForeignKey extends ApiError {
 case class EntryNotFound[A](entry: A) extends ApiError {
 
   override val error: String = if (entry.toString.contains("-1")) {
-    s"Error: Entry not found"
+    "Error: Entry not found"
   } else {
     s"Error: Entry with id '$entry' not found"
   }
