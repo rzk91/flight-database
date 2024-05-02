@@ -26,7 +26,7 @@ class ManufacturerRepository[F[_]: Concurrent] private (
     manufacturerExists(id).unique.execute
 
   override def getManufacturers: F[ApiResult[List[Manufacturer]]] =
-    selectAllManufacturers.asList.execute
+    selectAllManufacturers.asList().execute
 
   override def getManufacturersOnlyNames: F[ApiResult[List[String]]] =
     getFieldList[Manufacturer, String]("name").execute
@@ -35,13 +35,13 @@ class ManufacturerRepository[F[_]: Concurrent] private (
     selectManufacturersBy("id", id).asSingle(id).execute
 
   override def getManufacturers[V: Put](field: String, value: V): F[ApiResult[List[Manufacturer]]] =
-    selectManufacturersBy(field, value).asList.execute
+    selectManufacturersBy(field, value).asList(Some(field), Some(value)).execute
 
   override def getManufacturersByCity[V: Put](
     field: String,
     value: V
   ): F[ApiResult[List[Manufacturer]]] =
-    selectManufacturersByCity[City, V](field, value).asList.execute
+    selectManufacturersByCity[City, V](field, value).asList(Some(field), Some(value)).execute
 
   override def getManufacturersByCountry[V: Put](
     field: String,

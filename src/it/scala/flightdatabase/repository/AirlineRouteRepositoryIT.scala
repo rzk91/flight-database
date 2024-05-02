@@ -8,6 +8,9 @@ import flightdatabase.domain.EntryCheckFailed
 import flightdatabase.domain.EntryHasInvalidForeignKey
 import flightdatabase.domain.EntryListEmpty
 import flightdatabase.domain.EntryNotFound
+import flightdatabase.domain.InvalidField
+import flightdatabase.domain.InvalidValueType
+import flightdatabase.domain.SqlError
 import flightdatabase.domain.airline_route.AirlineRoute
 import flightdatabase.domain.airline_route.AirlineRouteCreate
 import flightdatabase.domain.airline_route.AirlineRoutePatch
@@ -31,6 +34,11 @@ final class AirlineRouteRepositoryIT extends RepositoryCheck {
   val idNotPresent: Long = 100
   val valueNotPresent: String = "NotPresent"
   val veryLongIdNotPresent: Long = 1039495454540034858L
+  val invalidFieldSyntax: String = "Field with spaces"
+  val sqlErrorInvalidSyntax: SqlError = SqlError("42601")
+  val invalidFieldColumn: String = "non_existent_field"
+  val invalidLongValue: String = "invalid"
+  val invalidStringValue: Int = 1
 
   // airline-id -> (airline_airplane_ids, airline_name, airline_iata, airline_icao)
   val airlineIdMap: Map[Long, (List[Long], String, String, String)] = Map(
@@ -204,6 +212,45 @@ final class AirlineRouteRepositoryIT extends RepositoryCheck {
     allRoutesByAirportId(idNotPresent).error shouldBe EntryListEmpty
     inboundRoutesByAirportIata(valueNotPresent).error shouldBe EntryListEmpty
     outboundRoutesByAirportIcao(valueNotPresent).error shouldBe EntryListEmpty
+  }
+
+  "Selecting a non-existent field" should "return an error" in {
+    repo.getAirlineRoutes(invalidFieldSyntax, "value").error shouldBe sqlErrorInvalidSyntax
+    repo.getAirlineRoutesByAirline(invalidFieldSyntax, "value").error shouldBe sqlErrorInvalidSyntax
+    repo
+      .getAirlineRoutesByAirplane(invalidFieldSyntax, "value")
+      .error shouldBe sqlErrorInvalidSyntax
+    repo
+      .getAirlineRoutesByAirport(invalidFieldSyntax, "value", None)
+      .error shouldBe sqlErrorInvalidSyntax
+
+    repo.getAirlineRoutes(invalidFieldColumn, "value").error shouldBe InvalidField(
+      invalidFieldColumn
+    )
+    repo.getAirlineRoutesByAirline(invalidFieldColumn, "value").error shouldBe InvalidField(
+      invalidFieldColumn
+    )
+    repo.getAirlineRoutesByAirplane(invalidFieldColumn, "value").error shouldBe InvalidField(
+      invalidFieldColumn
+    )
+    repo.getAirlineRoutesByAirport(invalidFieldColumn, "value", None).error shouldBe InvalidField(
+      invalidFieldColumn
+    )
+  }
+
+  "Selecting an existing field with an invalid value type" should "return an error" in {
+    repo.getAirlineRoutes("route_number", invalidStringValue).error shouldBe InvalidValueType(
+      invalidStringValue.toString
+    )
+    repo.getAirlineRoutesByAirline("name", invalidStringValue).error shouldBe InvalidValueType(
+      invalidStringValue.toString
+    )
+    repo.getAirlineRoutesByAirplane("capacity", invalidLongValue).error shouldBe InvalidValueType(
+      invalidLongValue
+    )
+    repo
+      .getAirlineRoutesByAirport("number_of_runways", invalidLongValue, None)
+      .error shouldBe InvalidValueType(invalidLongValue)
   }
 
   "Creating an airline-route" should "not take place if fields do not satisfy their criteria" in {

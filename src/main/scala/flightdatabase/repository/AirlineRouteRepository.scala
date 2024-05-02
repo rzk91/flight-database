@@ -32,7 +32,7 @@ class AirlineRouteRepository[F[_]: Concurrent] private (
     airlineRouteExists(id).unique.execute
 
   override def getAirlineRoutes: F[ApiResult[List[AirlineRoute]]] =
-    selectAllAirlineRoutes.asList.execute
+    selectAllAirlineRoutes.asList().execute
 
   override def getAirlineRoutesOnlyRoutes: F[ApiResult[List[String]]] =
     getFieldList[AirlineRoute, String]("route_number").execute
@@ -41,18 +41,23 @@ class AirlineRouteRepository[F[_]: Concurrent] private (
     selectAirlineRouteBy("id", id).asSingle(id).execute
 
   override def getAirlineRoutes[V: Put](field: String, value: V): F[ApiResult[List[AirlineRoute]]] =
-    selectAirlineRouteBy(field, value).asList.execute
+    selectAirlineRouteBy(field, value).asList(Some(field), Some(value)).execute
 
   override def getAirlineRoutesByAirlineId(airlineId: Long): F[ApiResult[List[AirlineRoute]]] =
-    selectAirlineRoutesByExternal[AirlineAirplane, Long]("airline_id", airlineId).asList.execute
+    selectAirlineRoutesByExternal[AirlineAirplane, Long]("airline_id", airlineId)
+      .asList(invalidValue = Some(airlineId))
+      .execute
 
   override def getAirlineRoutesByAirline[V: Put](
     field: String,
     value: V
   ): F[ApiResult[List[AirlineRoute]]] =
     // Get airline IDs for given airline field values
-    EitherT(selectWhereQuery[Airline, Long, V]("id", field, value).asList.execute)
-      .flatMap[ApiError, ApiOutput[List[AirlineRoute]]] { airlineIdsOutput =>
+    EitherT(
+      selectWhereQuery[Airline, Long, V]("id", field, value)
+        .asList(Some(field), Some(value))
+        .execute
+    ).flatMap[ApiError, ApiOutput[List[AirlineRoute]]] { airlineIdsOutput =>
         // Accumulate all airline_routes for each airline_airplane_id based on each airline_id
         val airlineIds = airlineIdsOutput.value
         airlineIds
@@ -67,14 +72,19 @@ class AirlineRouteRepository[F[_]: Concurrent] private (
       .value
 
   override def getAirlineRoutesByAirplaneId(airplaneId: Long): F[ApiResult[List[AirlineRoute]]] =
-    selectAirlineRoutesByExternal[AirlineAirplane, Long]("airplane_id", airplaneId).asList.execute
+    selectAirlineRoutesByExternal[AirlineAirplane, Long]("airplane_id", airplaneId)
+      .asList(invalidValue = Some(airplaneId))
+      .execute
 
   override def getAirlineRoutesByAirplane[V: Put](
     field: String,
     value: V
   ): F[ApiResult[List[AirlineRoute]]] =
-    EitherT(selectWhereQuery[Airplane, Long, V]("id", field, value).asList.execute)
-      .flatMap[ApiError, ApiOutput[List[AirlineRoute]]] { airplaneIdsOutput =>
+    EitherT(
+      selectWhereQuery[Airplane, Long, V]("id", field, value)
+        .asList(Some(field), Some(value))
+        .execute
+    ).flatMap[ApiError, ApiOutput[List[AirlineRoute]]] { airplaneIdsOutput =>
         val airplaneIds = airplaneIdsOutput.value
         airplaneIds
           .foldLeft(EitherT.pure[F, ApiError](List.empty[AirlineRoute])) { (acc, id) =>
@@ -99,7 +109,7 @@ class AirlineRouteRepository[F[_]: Concurrent] private (
       val destinationQuery = q("destination_airport_id")
       (startQuery.toFragment ++ fr"UNION" ++ destinationQuery.toFragment).query[AirlineRoute]
     }(in => q(if (in) "destination_airport_id" else "start_airport_id"))
-  }.asList.execute
+  }.asList(Some(field), Some(value)).execute
 
   override def createAirlineRoute(airlineRoute: AirlineRouteCreate): F[ApiResult[Long]] =
     insertAirlineRoute(airlineRoute).attemptInsert.execute

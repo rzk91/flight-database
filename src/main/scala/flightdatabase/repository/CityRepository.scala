@@ -23,7 +23,7 @@ class CityRepository[F[_]: Concurrent] private (
 
   override def doesCityExist(id: Long): F[Boolean] = cityExists(id).unique.execute
 
-  override def getCities: F[ApiResult[List[City]]] = selectAllCities.asList.execute
+  override def getCities: F[ApiResult[List[City]]] = selectAllCities.asList().execute
 
   override def getCitiesOnlyNames: F[ApiResult[List[String]]] =
     getFieldList[City, String]("name").execute
@@ -31,10 +31,10 @@ class CityRepository[F[_]: Concurrent] private (
   override def getCity(id: Long): F[ApiResult[City]] = selectCitiesBy("id", id).asSingle(id).execute
 
   override def getCities[V: Put](field: String, value: V): F[ApiResult[List[City]]] =
-    selectCitiesBy(field, value).asList.execute
+    selectCitiesBy(field, value).asList(Some(field), Some(value)).execute
 
   def getCitiesByCountry[V: Put](field: String, value: V): F[ApiResult[List[City]]] =
-    selectCitiesByExternal[Country, V](field, value).asList.execute
+    selectCitiesByExternal[Country, V](field, value).asList(Some(field), Some(value)).execute
 
   // Do we need checks for latitude/longitude <-> country matching?
   override def createCity(city: CityCreate): F[ApiResult[Long]] =

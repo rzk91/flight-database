@@ -8,6 +8,9 @@ import flightdatabase.domain.EntryCheckFailed
 import flightdatabase.domain.EntryHasInvalidForeignKey
 import flightdatabase.domain.EntryListEmpty
 import flightdatabase.domain.EntryNotFound
+import flightdatabase.domain.InvalidField
+import flightdatabase.domain.InvalidValueType
+import flightdatabase.domain.SqlError
 import flightdatabase.domain.airplane.Airplane
 import flightdatabase.domain.airplane.AirplaneCreate
 import flightdatabase.domain.airplane.AirplanePatch
@@ -29,6 +32,11 @@ final class AirplaneRepositoryIT extends RepositoryCheck {
   val idNotPresent: Long = 10
   val valueNotPresent: String = "Not present"
   val veryLongIdNotPresent: Long = 1039495454540034858L
+  val invalidFieldSyntax: String = "Field with spaces"
+  val sqlErrorInvalidSyntax: SqlError = SqlError("42601")
+  val invalidFieldColumn: String = "non_existent_field"
+  val invalidLongValue: String = "invalid"
+  val invalidStringValue: Int = 1
 
   val newAirplane: AirplaneCreate = AirplaneCreate("A350", 1, 325, 13900)
   val updatedName: String = "A350_updated"
@@ -94,6 +102,26 @@ final class AirplaneRepositoryIT extends RepositoryCheck {
     }
 
     airplaneByManufacturer(valueNotPresent).error shouldBe EntryListEmpty
+  }
+
+  "Selecting a non-existent field" should "return an error" in {
+    repo.getAirplanes(invalidFieldSyntax, "value").error shouldBe sqlErrorInvalidSyntax
+    repo
+      .getAirplanesByManufacturer(invalidFieldSyntax, "value")
+      .error shouldBe sqlErrorInvalidSyntax
+    repo.getAirplanes(invalidFieldColumn, "value").error shouldBe InvalidField(invalidFieldColumn)
+    repo.getAirplanesByManufacturer(invalidFieldColumn, "value").error shouldBe InvalidField(
+      invalidFieldColumn
+    )
+  }
+
+  "Selecting an existing field with an invalid value type" should "return an error" in {
+    repo.getAirplanes("manufacturer_id", invalidLongValue).error shouldBe InvalidValueType(
+      invalidLongValue
+    )
+    repo.getAirplanesByManufacturer("name", invalidStringValue).error shouldBe InvalidValueType(
+      invalidStringValue.toString
+    )
   }
 
   "Creating an airplane" should "work and return the new ID" in {

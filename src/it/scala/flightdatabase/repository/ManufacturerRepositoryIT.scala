@@ -9,6 +9,9 @@ import flightdatabase.domain.EntryCheckFailed
 import flightdatabase.domain.EntryHasInvalidForeignKey
 import flightdatabase.domain.EntryListEmpty
 import flightdatabase.domain.EntryNotFound
+import flightdatabase.domain.InvalidField
+import flightdatabase.domain.InvalidValueType
+import flightdatabase.domain.SqlError
 import flightdatabase.domain.country.Country
 import flightdatabase.domain.manufacturer.Manufacturer
 import flightdatabase.domain.manufacturer.ManufacturerCreate
@@ -30,6 +33,11 @@ final class ManufacturerRepositoryIT extends RepositoryCheck {
   val idNotPresent: Long = 100
   val valueNotPresent: String = "NotPresent"
   val veryLongIdNotPresent: Long = 1039495454540034858L
+  val invalidFieldSyntax: String = "Field with spaces"
+  val sqlErrorInvalidSyntax: SqlError = SqlError("42601")
+  val invalidFieldColumn: String = "non_existent_field"
+  val invalidLongValue: String = "invalid"
+  val invalidStringValue: Int = 1
 
   val cityIdMap: Map[Long, String] = Map(5L -> "Leiden", 6L -> "Chicago")
 
@@ -110,6 +118,37 @@ final class ManufacturerRepositoryIT extends RepositoryCheck {
 
     val fv = FieldValue[Country, String]("name", valueNotPresent)
     manufacturerByCountry(valueNotPresent).error shouldBe EntryNotFound(fv)
+  }
+
+  "Selecting a non-existent field" should "return an error" in {
+    repo.getManufacturers(invalidFieldSyntax, "value").error shouldBe sqlErrorInvalidSyntax
+    repo.getManufacturersByCity(invalidFieldSyntax, "value").error shouldBe sqlErrorInvalidSyntax
+    repo.getManufacturersByCountry(invalidFieldSyntax, "value").error shouldBe sqlErrorInvalidSyntax
+
+    repo.getManufacturers(invalidFieldColumn, "value").error shouldBe InvalidField(
+      invalidFieldColumn
+    )
+    repo.getManufacturersByCity(invalidFieldColumn, "value").error shouldBe InvalidField(
+      invalidFieldColumn
+    )
+    repo.getManufacturersByCountry(invalidFieldColumn, "value").error shouldBe InvalidField(
+      invalidFieldColumn
+    )
+  }
+
+  "Selecting an existing field with an invalid value type" should "return an error" in {
+    repo.getManufacturers("name", invalidStringValue).error shouldBe InvalidValueType(
+      invalidStringValue.toString
+    )
+    repo.getManufacturers("base_city_id", invalidLongValue).error shouldBe InvalidValueType(
+      invalidLongValue
+    )
+    repo.getManufacturersByCity("population", invalidLongValue).error shouldBe InvalidValueType(
+      invalidLongValue
+    )
+    repo.getManufacturersByCountry("name", invalidStringValue).error shouldBe InvalidValueType(
+      invalidStringValue.toString
+    )
   }
 
   "Creating a new manufacturer" should "not take place if fields do not satisfy their criteria" in {

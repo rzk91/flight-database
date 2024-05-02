@@ -22,7 +22,7 @@ class AirplaneRepository[F[_]: Concurrent] private (
   override def doesAirplaneExist(id: Long): F[Boolean] = airplaneExists(id).unique.execute
 
   override def getAirplanes: F[ApiResult[List[Airplane]]] =
-    selectAllAirplanes.asList.execute
+    selectAllAirplanes.asList().execute
 
   override def getAirplanesOnlyNames: F[ApiResult[List[String]]] =
     getFieldList[Airplane, String]("name").execute
@@ -31,10 +31,12 @@ class AirplaneRepository[F[_]: Concurrent] private (
     selectAirplanesBy("id", id).asSingle(id).execute
 
   override def getAirplanes[V: Put](field: String, value: V): F[ApiResult[List[Airplane]]] =
-    selectAirplanesBy(field, value).asList.execute
+    selectAirplanesBy(field, value).asList(Some(field), Some(value)).execute
 
   def getAirplanesByManufacturer[V: Put](field: String, value: V): F[ApiResult[List[Airplane]]] =
-    selectAirplanesByExternal[Manufacturer, V](field, value).asList.execute
+    selectAirplanesByExternal[Manufacturer, V](field, value)
+      .asList(Some(field), Some(value))
+      .execute
 
   override def createAirplane(airplane: AirplaneCreate): F[ApiResult[Long]] =
     insertAirplane(airplane).attemptInsert.execute

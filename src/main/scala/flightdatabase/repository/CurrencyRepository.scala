@@ -21,7 +21,7 @@ class CurrencyRepository[F[_]: Concurrent] private (
   override def doesCurrencyExist(id: Long): F[Boolean] = currencyExists(id).unique.execute
 
   override def getCurrencies: F[ApiResult[List[Currency]]] =
-    selectAllCurrencies.asList.execute
+    selectAllCurrencies.asList().execute
 
   override def getCurrenciesOnlyNames: F[ApiResult[List[String]]] =
     getFieldList[Currency, String]("name").execute
@@ -30,7 +30,7 @@ class CurrencyRepository[F[_]: Concurrent] private (
     selectCurrencyBy("id", id).asSingle(id).execute
 
   override def getCurrencies[V: Put](field: String, value: V): F[ApiResult[List[Currency]]] =
-    selectCurrencyBy(field, value).asList.execute
+    selectCurrencyBy(field, value).asList(Some(field), Some(value)).execute
 
   override def createCurrency(currency: CurrencyCreate): F[ApiResult[Long]] =
     insertCurrency(currency).attemptInsert.execute

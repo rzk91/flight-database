@@ -8,6 +8,9 @@ import flightdatabase.domain.EntryCheckFailed
 import flightdatabase.domain.EntryHasInvalidForeignKey
 import flightdatabase.domain.EntryListEmpty
 import flightdatabase.domain.EntryNotFound
+import flightdatabase.domain.InvalidField
+import flightdatabase.domain.InvalidValueType
+import flightdatabase.domain.SqlError
 import flightdatabase.domain.country.Country
 import flightdatabase.domain.country.CountryCreate
 import flightdatabase.domain.country.CountryPatch
@@ -55,6 +58,11 @@ final class CountryRepositoryIT extends RepositoryCheck {
   val idNotPresent: Long = 100
   val valueNotPresent: String = "NotPresent"
   val veryLongIdNotPresent: Long = 1039495454540034858L
+  val invalidFieldSyntax: String = "Field with spaces"
+  val sqlErrorInvalidSyntax: SqlError = SqlError("42601")
+  val invalidFieldColumn: String = "non_existent_field"
+  val invalidLongValue: String = "invalid"
+  val invalidStringValue: Int = 1
 
   val languageIdMap: Map[Long, (String, String)] = Map(
     1L -> ("EN", "English"),
@@ -179,6 +187,32 @@ final class CountryRepositoryIT extends RepositoryCheck {
           originalCountries.filter(_.currencyId == id): _*
         )
     }
+  }
+
+  "Selecting a non-existent field" should "return an error" in {
+    repo.getCountries(invalidFieldSyntax, "value").error shouldBe sqlErrorInvalidSyntax
+    repo.getCountriesByLanguage(invalidFieldSyntax, "value").error shouldBe sqlErrorInvalidSyntax
+    repo.getCountriesByCurrency(invalidFieldSyntax, "value").error shouldBe sqlErrorInvalidSyntax
+
+    repo.getCountries(invalidFieldColumn, "value").error shouldBe InvalidField(invalidFieldColumn)
+    repo.getCountriesByLanguage(invalidFieldColumn, "value").error shouldBe InvalidField(
+      invalidFieldColumn
+    )
+    repo.getCountriesByCurrency(invalidFieldColumn, "value").error shouldBe InvalidField(
+      invalidFieldColumn
+    )
+  }
+
+  "Selecting an existing field with an invalid value type" should "return an error" in {
+    repo.getCountries("country_code", invalidLongValue).error shouldBe InvalidValueType(
+      invalidLongValue
+    )
+    repo.getCountriesByLanguage("iso2", invalidStringValue).error shouldBe InvalidValueType(
+      invalidStringValue.toString
+    )
+    repo.getCountriesByCurrency("iso", invalidStringValue).error shouldBe InvalidValueType(
+      invalidStringValue.toString
+    )
   }
 
   "Creating a new country" should "not take place if fields do not satisfy their criteria" in {

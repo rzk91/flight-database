@@ -25,7 +25,7 @@ class AirportRepository[F[_]: Concurrent] private (
   override def doesAirportExist(id: Long): F[Boolean] = airportExists(id).unique.execute
 
   override def getAirports: F[ApiResult[List[Airport]]] =
-    selectAllAirports.asList.execute
+    selectAllAirports.asList().execute
 
   override def getAirportsOnlyNames: F[ApiResult[List[String]]] =
     getFieldList[Airport, String]("name").execute
@@ -34,10 +34,10 @@ class AirportRepository[F[_]: Concurrent] private (
     selectAirportsBy("id", id).asSingle(id).execute
 
   override def getAirports[V: Put](field: String, value: V): F[ApiResult[List[Airport]]] =
-    selectAirportsBy(field, value).asList.execute
+    selectAirportsBy(field, value).asList(Some(field), Some(value)).execute
 
   def getAirportsByCity[V: Put](field: String, value: V): F[ApiResult[List[Airport]]] =
-    selectAllAirportsByExternal[City, V](field, value).asList.execute
+    selectAllAirportsByExternal[City, V](field, value).asList(Some(field), Some(value)).execute
 
   def getAirportsByCountry[V: Put](field: String, value: V): F[ApiResult[List[Airport]]] =
     EitherT(getFieldList[City, Long, Country, V]("id", FieldValue(field, value)))

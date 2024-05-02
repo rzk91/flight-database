@@ -17,6 +17,7 @@ package object implicits {
   @inline implicit def stringToRichIterable(s: String): RichIterable[Char] = new RichIterable(s)
   @inline implicit def enrichString(s: String): RichString = new RichString(s)
   @inline implicit def enrichTry[A](t: Try[A]): RichTry[A] = new RichTry(t)
+  @inline implicit def enrichOption[A](o: Option[A]): RichOption[A] = new RichOption(o)
   @inline implicit def enrichDouble(d: Double): RichDouble = new RichDouble(d)
   @inline implicit def enrichPath(path: Path): RichPath = new RichPath(path)
 

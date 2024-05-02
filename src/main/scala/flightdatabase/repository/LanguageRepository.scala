@@ -26,7 +26,7 @@ class LanguageRepository[F[_]: Concurrent] private (
   override def doesLanguageExist(id: Long): F[Boolean] = languageExists(id).unique.execute
 
   override def getLanguages: F[ApiResult[List[Language]]] =
-    selectAllLanguages.asList.execute
+    selectAllLanguages.asList().execute
 
   override def getLanguagesOnlyNames: F[ApiResult[List[String]]] =
     getFieldList[Language, String]("name").execute
@@ -35,7 +35,7 @@ class LanguageRepository[F[_]: Concurrent] private (
     selectLanguageBy("id", id).asSingle(id).execute
 
   override def getLanguages[V: Put](field: String, value: V): F[ApiResult[List[Language]]] =
-    selectLanguageBy(field, value).asList.execute
+    selectLanguageBy(field, value).asList(Some(field), Some(value)).execute
 
   override def createLanguage(language: LanguageCreate): F[ApiResult[Long]] =
     insertLanguage(language).attemptInsert.execute
