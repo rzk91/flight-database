@@ -6,6 +6,7 @@ import flightdatabase.domain.EntryHasInvalidForeignKey
 import flightdatabase.domain.InconsistentIds
 import flightdatabase.domain.city.City
 import flightdatabase.domain.city.CityAlgebra
+import flightdatabase.domain.city.CityCreate
 import flightdatabase.domain.country.Country
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
@@ -58,11 +59,11 @@ class CityEndpoints[F[_]: Concurrent] private (prefix: String, algebra: CityAlge
     // PUT /cities/{id}
     case req @ PUT -> Root / id =>
       idToResponse(id) { i =>
-        processRequest[City, Long](req) { city =>
-          if (i != city.id) {
-            InconsistentIds(i, city.id).elevate[F, Long]
+        processRequest[CityCreate, Long](req) { city =>
+          if (city.id.exists(_ != i)) {
+            InconsistentIds(i, city.id.get).elevate[F, Long]
           } else {
-            algebra.updateCity(city)
+            algebra.updateCity(City.fromCreate(i, city))
           }
         }
       }

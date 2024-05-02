@@ -6,6 +6,7 @@ import flightdatabase.domain.EntryHasInvalidForeignKey
 import flightdatabase.domain.InconsistentIds
 import flightdatabase.domain.airplane.Airplane
 import flightdatabase.domain.airplane.AirplaneAlgebra
+import flightdatabase.domain.airplane.AirplaneCreate
 import flightdatabase.domain.manufacturer.Manufacturer
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
@@ -59,11 +60,11 @@ class AirplaneEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airp
     // PUT /airplanes/{id}
     case req @ PUT -> Root / id =>
       idToResponse(id) { i =>
-        processRequest[Airplane, Long](req) { airplane =>
-          if (i != airplane.id) {
-            InconsistentIds(i, airplane.id).elevate[F, Long]
+        processRequest[AirplaneCreate, Long](req) { airplane =>
+          if (airplane.id.exists(_ != i)) {
+            InconsistentIds(i, airplane.id.get).elevate[F, Long]
           } else {
-            algebra.updateAirplane(airplane)
+            algebra.updateAirplane(Airplane.fromCreate(i, airplane))
           }
         }
       }

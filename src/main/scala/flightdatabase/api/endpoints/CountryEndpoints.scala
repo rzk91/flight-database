@@ -6,6 +6,7 @@ import flightdatabase.domain.EntryHasInvalidForeignKey
 import flightdatabase.domain.InconsistentIds
 import flightdatabase.domain.country.Country
 import flightdatabase.domain.country.CountryAlgebra
+import flightdatabase.domain.country.CountryCreate
 import flightdatabase.domain.currency.Currency
 import flightdatabase.domain.language.Language
 import org.http4s._
@@ -69,11 +70,11 @@ class CountryEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Count
     // PUT /countries/{id}
     case req @ PUT -> Root / id =>
       idToResponse(id) { i =>
-        processRequest[Country, Long](req) { country =>
-          if (i != country.id) {
-            InconsistentIds(i, country.id).elevate[F, Long]
+        processRequest[CountryCreate, Long](req) { country =>
+          if (country.id.exists(_ != i)) {
+            InconsistentIds(i, country.id.get).elevate[F, Long]
           } else {
-            algebra.updateCountry(country)
+            algebra.updateCountry(Country.fromCreate(i, country))
           }
         }
       }

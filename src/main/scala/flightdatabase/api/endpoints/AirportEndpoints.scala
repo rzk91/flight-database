@@ -6,6 +6,7 @@ import flightdatabase.domain.EntryHasInvalidForeignKey
 import flightdatabase.domain.InconsistentIds
 import flightdatabase.domain.airport.Airport
 import flightdatabase.domain.airport.AirportAlgebra
+import flightdatabase.domain.airport.AirportCreate
 import flightdatabase.domain.city.City
 import flightdatabase.domain.country.Country
 import org.http4s._
@@ -68,11 +69,11 @@ class AirportEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airpo
     // PUT /airports/{id}
     case req @ PUT -> Root / id =>
       idToResponse(id) { i =>
-        processRequest[Airport, Long](req) { airport =>
-          if (i != airport.id) {
-            InconsistentIds(i, airport.id).elevate[F, Long]
+        processRequest[AirportCreate, Long](req) { airport =>
+          if (airport.id.exists(_ != i)) {
+            InconsistentIds(i, airport.id.get).elevate[F, Long]
           } else {
-            algebra.updateAirport(airport)
+            algebra.updateAirport(Airport.fromCreate(i, airport))
           }
         }
       }

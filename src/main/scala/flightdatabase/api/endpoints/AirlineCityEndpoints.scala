@@ -7,6 +7,7 @@ import flightdatabase.domain.InconsistentIds
 import flightdatabase.domain.airline.Airline
 import flightdatabase.domain.airline_city.AirlineCity
 import flightdatabase.domain.airline_city.AirlineCityAlgebra
+import flightdatabase.domain.airline_city.AirlineCityCreate
 import flightdatabase.domain.city.City
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
@@ -65,11 +66,11 @@ class AirlineCityEndpoints[F[_]: Concurrent] private (
     // PUT /airline-cities/{id}
     case req @ PUT -> Root / id =>
       idToResponse(id) { i =>
-        processRequest[AirlineCity, Long](req) { airlineCity =>
-          if (i != airlineCity.id) {
-            InconsistentIds(i, airlineCity.id).elevate[F, Long]
+        processRequest[AirlineCityCreate, Long](req) { airlineCity =>
+          if (airlineCity.id.exists(_ != i)) {
+            InconsistentIds(i, airlineCity.id.get).elevate[F, Long]
           } else {
-            algebra.updateAirlineCity(airlineCity)
+            algebra.updateAirlineCity(AirlineCity.fromCreate(i, airlineCity))
           }
         }
       }

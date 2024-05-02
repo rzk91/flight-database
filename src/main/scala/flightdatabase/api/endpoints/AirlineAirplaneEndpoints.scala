@@ -7,6 +7,7 @@ import flightdatabase.domain.InconsistentIds
 import flightdatabase.domain.airline.Airline
 import flightdatabase.domain.airline_airplane.AirlineAirplane
 import flightdatabase.domain.airline_airplane.AirlineAirplaneAlgebra
+import flightdatabase.domain.airline_airplane.AirlineAirplaneCreate
 import flightdatabase.domain.airplane.Airplane
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
@@ -67,11 +68,11 @@ class AirlineAirplaneEndpoints[F[_]: Concurrent] private (
     // PUT /airline-airplanes/{id}
     case req @ PUT -> Root / id =>
       idToResponse(id) { i =>
-        processRequest[AirlineAirplane, Long](req) { aa =>
-          if (i != aa.id) {
-            InconsistentIds(i, aa.id).elevate[F, Long]
+        processRequest[AirlineAirplaneCreate, Long](req) { aa =>
+          if (aa.id.exists(_ != i)) {
+            InconsistentIds(i, aa.id.get).elevate[F, Long]
           } else {
-            algebra.updateAirlineAirplane(aa)
+            algebra.updateAirlineAirplane(AirlineAirplane.fromCreate(i, aa))
           }
         }
       }

@@ -5,6 +5,7 @@ import cats.syntax.flatMap._
 import flightdatabase.domain.InconsistentIds
 import flightdatabase.domain.language.Language
 import flightdatabase.domain.language.LanguageAlgebra
+import flightdatabase.domain.language.LanguageCreate
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
 
@@ -43,11 +44,11 @@ class LanguageEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Lang
     // PUT /languages/{id}
     case req @ PUT -> Root / id =>
       idToResponse(id) { i =>
-        processRequest[Language, Long](req) { language =>
-          if (i != language.id) {
-            InconsistentIds(i, language.id).elevate[F, Long]
+        processRequest[LanguageCreate, Long](req) { language =>
+          if (language.id.exists(_ != i)) {
+            InconsistentIds(i, language.id.get).elevate[F, Long]
           } else {
-            algebra.updateLanguage(language)
+            algebra.updateLanguage(Language.fromCreate(i, language))
           }
         }
       }

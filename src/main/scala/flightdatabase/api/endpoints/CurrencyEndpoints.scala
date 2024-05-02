@@ -5,6 +5,7 @@ import cats.implicits._
 import flightdatabase.domain.InconsistentIds
 import flightdatabase.domain.currency.Currency
 import flightdatabase.domain.currency.CurrencyAlgebra
+import flightdatabase.domain.currency.CurrencyCreate
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
 
@@ -44,11 +45,11 @@ class CurrencyEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Curr
     // PUT /currencies/{id}
     case req @ PUT -> Root / id =>
       idToResponse(id) { i =>
-        processRequest[Currency, Long](req) { currency =>
-          if (i != currency.id) {
-            InconsistentIds(i, currency.id).elevate[F, Long]
+        processRequest[CurrencyCreate, Long](req) { currency =>
+          if (currency.id.exists(_ != i)) {
+            InconsistentIds(i, currency.id.get).elevate[F, Long]
           } else {
-            algebra.updateCurrency(currency)
+            algebra.updateCurrency(Currency.fromCreate(i, currency))
           }
         }
       }

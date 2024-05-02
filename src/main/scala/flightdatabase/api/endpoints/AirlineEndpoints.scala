@@ -5,6 +5,7 @@ import cats.implicits._
 import flightdatabase.domain._
 import flightdatabase.domain.airline.Airline
 import flightdatabase.domain.airline.AirlineAlgebra
+import flightdatabase.domain.airline.AirlineCreate
 import flightdatabase.domain.country.Country
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
@@ -56,11 +57,11 @@ class AirlineEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airli
     // PUT /airlines/{id}
     case req @ PUT -> Root / id =>
       idToResponse(id) { i =>
-        processRequest[Airline, Long](req) { airline =>
-          if (i != airline.id) {
-            InconsistentIds(i, airline.id).elevate[F, Long]
+        processRequest[AirlineCreate, Long](req) { airline =>
+          if (airline.id.exists(_ != i)) {
+            InconsistentIds(i, airline.id.get).elevate[F, Long]
           } else {
-            algebra.updateAirline(airline)
+            algebra.updateAirline(Airline.fromCreate(i, airline))
           }
         }
       }

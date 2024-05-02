@@ -8,6 +8,7 @@ import flightdatabase.domain.city.City
 import flightdatabase.domain.country.Country
 import flightdatabase.domain.manufacturer.Manufacturer
 import flightdatabase.domain.manufacturer.ManufacturerAlgebra
+import flightdatabase.domain.manufacturer.ManufacturerCreate
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
 
@@ -72,11 +73,11 @@ class ManufacturerEndpoints[F[_]: Concurrent] private (
     // PUT /manufacturers/{id}
     case req @ PUT -> Root / id =>
       idToResponse(id) { i =>
-        processRequest[Manufacturer, Long](req) { manufacturer =>
-          if (i != manufacturer.id) {
-            InconsistentIds(i, manufacturer.id).elevate[F, Long]
+        processRequest[ManufacturerCreate, Long](req) { manufacturer =>
+          if (manufacturer.id.exists(_ != i)) {
+            InconsistentIds(i, manufacturer.id.get).elevate[F, Long]
           } else {
-            algebra.updateManufacturer(manufacturer)
+            algebra.updateManufacturer(Manufacturer.fromCreate(i, manufacturer))
           }
         }
       }

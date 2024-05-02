@@ -6,6 +6,7 @@ import flightdatabase.domain._
 import flightdatabase.domain.airline.Airline
 import flightdatabase.domain.airline_route.AirlineRoute
 import flightdatabase.domain.airline_route.AirlineRouteAlgebra
+import flightdatabase.domain.airline_route.AirlineRouteCreate
 import flightdatabase.domain.airplane.Airplane
 import flightdatabase.domain.airport.Airport
 import org.http4s._
@@ -102,11 +103,11 @@ class AirlineRouteEndpoints[F[_]: Concurrent] private (
     // PUT /airline-routes/{id}
     case req @ PUT -> Root / id =>
       idToResponse(id) { i =>
-        processRequest[AirlineRoute, Long](req) { airlineRoute =>
-          if (i != airlineRoute.id) {
-            InconsistentIds(i, airlineRoute.id).elevate[F, Long]
+        processRequest[AirlineRouteCreate, Long](req) { airlineRoute =>
+          if (airlineRoute.id.exists(_ != i)) {
+            InconsistentIds(i, airlineRoute.id.get).elevate[F, Long]
           } else {
-            algebra.updateAirlineRoute(airlineRoute)
+            algebra.updateAirlineRoute(AirlineRoute.fromCreate(i, airlineRoute))
           }
         }
       }
