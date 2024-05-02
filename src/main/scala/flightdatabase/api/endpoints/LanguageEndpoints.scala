@@ -1,7 +1,7 @@
 package flightdatabase.api.endpoints
 
 import cats.effect._
-import cats.implicits._
+import cats.syntax.flatMap._
 import flightdatabase.domain.InconsistentIds
 import flightdatabase.domain.language.Language
 import flightdatabase.domain.language.LanguageAlgebra
@@ -29,9 +29,11 @@ class LanguageEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Lang
 
     // GET /languages/{value}?field={language_field; default=id}
     case GET -> Root / value :? FieldMatcherIdDefault(field) =>
-      field match {
-        case "id" => idToResponse(value)(algebra.getLanguage)
-        case _    => algebra.getLanguages(field, value).flatMap(toResponse(_))
+      withFieldValidation[Language](field) {
+        field match {
+          case "id" => idToResponse(value)(algebra.getLanguage)
+          case _    => algebra.getLanguages(field, value).flatMap(toResponse(_))
+        }
       }
 
     // POST /languages

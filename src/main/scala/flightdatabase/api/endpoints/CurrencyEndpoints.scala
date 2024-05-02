@@ -30,9 +30,11 @@ class CurrencyEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Curr
 
     // GET /currencies/{value}?field={currency_field; default=id}
     case GET -> Root / value :? FieldMatcherIdDefault(field) =>
-      field match {
-        case "id" => idToResponse(value)(algebra.getCurrency)
-        case _    => algebra.getCurrencies(field, value).flatMap(toResponse(_))
+      withFieldValidation[Currency](field) {
+        field match {
+          case "id" => idToResponse(value)(algebra.getCurrency)
+          case _    => algebra.getCurrencies(field, value).flatMap(toResponse(_))
+        }
       }
 
     // POST /currencies

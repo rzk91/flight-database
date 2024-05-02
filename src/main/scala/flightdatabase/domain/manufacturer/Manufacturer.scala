@@ -11,7 +11,9 @@ import io.circe.generic.extras.ConfiguredJsonCodec
 )
 
 object Manufacturer {
-  implicit val manufacturerTableBase: TableBase[Manufacturer] = TableBase.instance(MANUFACTURER)
+
+  implicit val manufacturerTableBase: TableBase[Manufacturer] =
+    TableBase.instance(MANUFACTURER, Set("id", "name", "base_city_id"))
 
   def fromCreate(id: Long, model: ManufacturerCreate): Manufacturer =
     Manufacturer(

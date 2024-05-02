@@ -6,6 +6,7 @@ import flightdatabase.domain.EntryHasInvalidForeignKey
 import flightdatabase.domain.InconsistentIds
 import flightdatabase.domain.airplane.Airplane
 import flightdatabase.domain.airplane.AirplaneAlgebra
+import flightdatabase.domain.manufacturer.Manufacturer
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
 
@@ -30,19 +31,25 @@ class AirplaneEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airp
 
     // GET /airplanes/{value}?field={airplane_field; default: id}
     case GET -> Root / value :? FieldMatcherIdDefault(field) =>
-      field match {
-        case "id" => idToResponse(value)(algebra.getAirplane)
-        case "manufacturer_id" =>
-          idToResponse(value, EntryHasInvalidForeignKey)(algebra.getAirplanes(field, _))
-        case _ => algebra.getAirplanes(field, value).flatMap(toResponse(_))
+      withFieldValidation[Airplane](field) {
+        field match {
+          case "id" => idToResponse(value)(algebra.getAirplane)
+          case "manufacturer_id" =>
+            idToResponse(value, EntryHasInvalidForeignKey)(algebra.getAirplanes(field, _))
+          case _ => algebra.getAirplanes(field, value).flatMap(toResponse(_))
+        }
       }
 
     // GET /airplanes/manufacturer/{value}?field={manufacturer_field; default: id}
     case GET -> Root / "manufacturer" / value :? FieldMatcherIdDefault(field) =>
-      if (field.endsWith("id")) {
-        idToResponse(value, EntryHasInvalidForeignKey)(algebra.getAirplanesByManufacturer(field, _))
-      } else {
-        algebra.getAirplanesByManufacturer(field, value).flatMap(toResponse(_))
+      withFieldValidation[Manufacturer](field) {
+        if (field.endsWith("id")) {
+          idToResponse(value, EntryHasInvalidForeignKey)(
+            algebra.getAirplanesByManufacturer(field, _)
+          )
+        } else {
+          algebra.getAirplanesByManufacturer(field, value).flatMap(toResponse(_))
+        }
       }
 
     // POST /airplanes

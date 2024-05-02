@@ -112,6 +112,13 @@ List of endpoints
 - PATCH /languages/{id}
 - DELETE /languages/{id}
 
+##### Possible additions
+- GET /languages/search?q={query}
+- e.g., GET /languages/search?q={id=1}
+- e.g., GET /languages/search?q={name=English}
+- e.g., GET /languages/search?q={name=English;OR;name=Tamil} ???
+- e.g., GET /languages/search?q={name=English OR Tamil} ???
+
 ### Manufacturers
 - HEAD /manufacturers/{id}
 - GET /manufacturers?only-names

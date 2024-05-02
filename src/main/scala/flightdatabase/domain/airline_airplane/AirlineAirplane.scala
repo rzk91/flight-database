@@ -13,7 +13,7 @@ import io.circe.generic.extras.ConfiguredJsonCodec
 object AirlineAirplane {
 
   implicit val airlineAirplaneTableBase: TableBase[AirlineAirplane] =
-    TableBase.instance(AIRLINE_AIRPLANE)
+    TableBase.instance(AIRLINE_AIRPLANE, Set("id", "airline_id", "airplane_id"))
 
   def fromCreate(id: Long, model: AirlineAirplaneCreate): AirlineAirplane =
     AirlineAirplane(

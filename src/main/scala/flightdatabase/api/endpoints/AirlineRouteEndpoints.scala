@@ -3,8 +3,11 @@ package flightdatabase.api.endpoints
 import cats.effect.Concurrent
 import cats.implicits._
 import flightdatabase.domain._
+import flightdatabase.domain.airline.Airline
 import flightdatabase.domain.airline_route.AirlineRoute
 import flightdatabase.domain.airline_route.AirlineRouteAlgebra
+import flightdatabase.domain.airplane.Airplane
+import flightdatabase.domain.airport.Airport
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
 
@@ -35,35 +38,41 @@ class AirlineRouteEndpoints[F[_]: Concurrent] private (
 
     // GET /airline-routes/{value}?field={airline-route-field; default: id}
     case GET -> Root / value :? FieldMatcherIdDefault(field) =>
-      field match {
-        case "id" => idToResponse(value)(algebra.getAirlineRoute)
-        case str if str.endsWith("id") =>
-          idToResponse(value, EntryHasInvalidForeignKey)(algebra.getAirlineRoutes(field, _))
-        case _ => algebra.getAirlineRoutes(field, value).flatMap(toResponse(_))
+      withFieldValidation[AirlineRoute](field) {
+        field match {
+          case "id" => idToResponse(value)(algebra.getAirlineRoute)
+          case str if str.endsWith("id") =>
+            idToResponse(value, EntryHasInvalidForeignKey)(algebra.getAirlineRoutes(field, _))
+          case _ => algebra.getAirlineRoutes(field, value).flatMap(toResponse(_))
+        }
       }
 
     // GET /airline-routes/airline/{value}?field={airline_field; default: id}
     case GET -> Root / "airline" / value :? FieldMatcherIdDefault(field) =>
-      field match {
-        case "id" =>
-          idToResponse(value, EntryHasInvalidForeignKey)(algebra.getAirlineRoutesByAirlineId)
-        case "country_id" =>
-          idToResponse(value, EntryHasInvalidForeignKey)(
-            algebra.getAirlineRoutesByAirline(field, _)
-          )
-        case _ => algebra.getAirlineRoutesByAirline(field, value).flatMap(toResponse(_))
+      withFieldValidation[Airline](field) {
+        field match {
+          case "id" =>
+            idToResponse(value, EntryHasInvalidForeignKey)(algebra.getAirlineRoutesByAirlineId)
+          case "country_id" =>
+            idToResponse(value, EntryHasInvalidForeignKey)(
+              algebra.getAirlineRoutesByAirline(field, _)
+            )
+          case _ => algebra.getAirlineRoutesByAirline(field, value).flatMap(toResponse(_))
+        }
       }
 
     // GET /airline-routes/airplane/{value}?field={airplane_field; default: id}
     case GET -> Root / "airplane" / value :? FieldMatcherIdDefault(field) =>
-      field match {
-        case "id" =>
-          idToResponse(value, EntryHasInvalidForeignKey)(algebra.getAirlineRoutesByAirplaneId)
-        case "manufacturer_id" =>
-          idToResponse(value, EntryHasInvalidForeignKey)(
-            algebra.getAirlineRoutesByAirplane(field, _)
-          )
-        case _ => algebra.getAirlineRoutesByAirplane(field, value).flatMap(toResponse(_))
+      withFieldValidation[Airplane](field) {
+        field match {
+          case "id" =>
+            idToResponse(value, EntryHasInvalidForeignKey)(algebra.getAirlineRoutesByAirplaneId)
+          case "manufacturer_id" =>
+            idToResponse(value, EntryHasInvalidForeignKey)(
+              algebra.getAirlineRoutesByAirplane(field, _)
+            )
+          case _ => algebra.getAirlineRoutesByAirplane(field, value).flatMap(toResponse(_))
+        }
       }
 
     // GET /airline-routes/airport/{value}?field={airport_field; default: id}&inbound&outbound
@@ -75,12 +84,15 @@ class AirlineRouteEndpoints[F[_]: Concurrent] private (
         case _             => None
       }
 
-      field match {
-        case "id" | "city_id" =>
-          idToResponse(value, EntryHasInvalidForeignKey)(
-            algebra.getAirlineRoutesByAirport(field, _, direction)
-          )
-        case _ => algebra.getAirlineRoutesByAirport(field, value, direction).flatMap(toResponse(_))
+      withFieldValidation[Airport](field) {
+        field match {
+          case "id" | "city_id" =>
+            idToResponse(value, EntryHasInvalidForeignKey)(
+              algebra.getAirlineRoutesByAirport(field, _, direction)
+            )
+          case _ =>
+            algebra.getAirlineRoutesByAirport(field, value, direction).flatMap(toResponse(_))
+        }
       }
 
     // POST /airline-routes

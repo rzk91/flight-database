@@ -6,6 +6,8 @@ import flightdatabase.domain.EntryHasInvalidForeignKey
 import flightdatabase.domain.InconsistentIds
 import flightdatabase.domain.airport.Airport
 import flightdatabase.domain.airport.AirportAlgebra
+import flightdatabase.domain.city.City
+import flightdatabase.domain.country.Country
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
 
@@ -30,27 +32,33 @@ class AirportEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airpo
 
     // GET /airports/{valid}?field={airport_field; default: id}
     case GET -> Root / value :? FieldMatcherIdDefault(field) =>
-      field match {
-        case "id" => idToResponse(value)(algebra.getAirport)
-        case "city_id" =>
-          idToResponse(value, EntryHasInvalidForeignKey)(algebra.getAirports(field, _))
-        case _ => algebra.getAirports(field, value).flatMap(toResponse(_))
+      withFieldValidation[Airport](field) {
+        field match {
+          case "id" => idToResponse(value)(algebra.getAirport)
+          case "city_id" =>
+            idToResponse(value, EntryHasInvalidForeignKey)(algebra.getAirports(field, _))
+          case _ => algebra.getAirports(field, value).flatMap(toResponse(_))
+        }
       }
 
     // GET /airports/city/{value}?field={city_field; default: id}
     case GET -> Root / "city" / value :? FieldMatcherIdDefault(field) =>
-      if (field.endsWith("id")) {
-        idToResponse(value, EntryHasInvalidForeignKey)(algebra.getAirportsByCity(field, _))
-      } else {
-        algebra.getAirportsByCity(field, value).flatMap(toResponse(_))
+      withFieldValidation[City](field) {
+        if (field.endsWith("id")) {
+          idToResponse(value, EntryHasInvalidForeignKey)(algebra.getAirportsByCity(field, _))
+        } else {
+          algebra.getAirportsByCity(field, value).flatMap(toResponse(_))
+        }
       }
 
     // GET /airports/country/{value}?field={country_field; default: id}
     case GET -> Root / "country" / value :? FieldMatcherIdDefault(field) =>
-      if (field.endsWith("id")) {
-        idToResponse(value, EntryHasInvalidForeignKey)(algebra.getAirportsByCountry(field, _))
-      } else {
-        algebra.getAirportsByCountry(field, value).flatMap(toResponse(_))
+      withFieldValidation[Country](field) {
+        if (field.endsWith("id")) {
+          idToResponse(value, EntryHasInvalidForeignKey)(algebra.getAirportsByCountry(field, _))
+        } else {
+          algebra.getAirportsByCountry(field, value).flatMap(toResponse(_))
+        }
       }
 
     // POST /airports

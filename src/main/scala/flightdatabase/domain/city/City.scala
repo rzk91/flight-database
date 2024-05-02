@@ -16,7 +16,11 @@ import io.circe.generic.extras.ConfiguredJsonCodec
 )
 
 object City {
-  implicit val cityTableBase: TableBase[City] = TableBase.instance(CITY)
+
+  implicit val cityTableBase: TableBase[City] = TableBase.instance(
+    CITY,
+    Set("id", "name", "country_id", "capital", "population", "latitude", "longitude", "timezone")
+  )
 
   def fromCreate(id: Long, model: CityCreate): City =
     City(

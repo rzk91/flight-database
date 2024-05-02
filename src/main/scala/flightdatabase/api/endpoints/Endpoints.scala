@@ -11,7 +11,7 @@ import org.http4s.server.Router
 
 abstract class Endpoints[F[_]: Monad](prefix: String) extends Http4sDsl[F] {
 
-  implicit final val dsl: Http4sDsl[F] with RequestDslBinCompat = Http4sDsl.apply[F]
+  implicit final val dsl: Http4sDsl[F] with RequestDslBinCompat = Http4sDsl[F]
 
   lazy val routes: HttpRoutes[F] = Router(prefix -> endpoints)
   def endpoints: HttpRoutes[F]
@@ -22,6 +22,13 @@ abstract class Endpoints[F[_]: Monad](prefix: String) extends Http4sDsl[F] {
   object FieldMatcherIdDefault extends QueryParamDecoderMatcherWithDefault[String]("field", "id")
 
   // Support functions
+  final protected def withFieldValidation[A: TableBase](
+    field: String
+  )(block: => F[Response[F]]): F[Response[F]] = {
+    val allowedFields = implicitly[TableBase[A]].fields
+    if (allowedFields(field)) block else BadRequest(InvalidField(field).error)
+  }
+
   final protected def idToResponse[A](id: String, apiError: ApiError = EntryInvalidFormat)(
     f: Long => F[ApiResult[A]]
   )(implicit enc: EntityEncoder[F, A]): F[Response[F]] =
@@ -53,6 +60,7 @@ abstract class Endpoints[F[_]: Monad](prefix: String) extends Http4sDsl[F] {
       case Left(value: InconsistentIds)            => BadRequest(value.error)
       case Left(value: InvalidTimezone)            => BadRequest(value.error)
       case Left(value: InvalidField)               => BadRequest(value.error)
+      case Left(value: InvalidValueType)           => BadRequest(value.error)
       case Left(value @ EntryAlreadyExists)        => Conflict(value.error)
       case Left(value @ FeatureNotImplemented)     => NotImplemented(value.error)
       case Left(value: EntryNotFound[_])           => NotFound(value.error)

@@ -4,6 +4,8 @@ import cats.effect.Concurrent
 import cats.implicits.toFlatMapOps
 import flightdatabase.domain.EntryHasInvalidForeignKey
 import flightdatabase.domain.InconsistentIds
+import flightdatabase.domain.city.City
+import flightdatabase.domain.country.Country
 import flightdatabase.domain.manufacturer.Manufacturer
 import flightdatabase.domain.manufacturer.ManufacturerAlgebra
 import org.http4s._
@@ -32,27 +34,35 @@ class ManufacturerEndpoints[F[_]: Concurrent] private (
 
     // GET /manufacturers/{value}=field={manufacturer_field; default=id}
     case GET -> Root / value :? FieldMatcherIdDefault(field) =>
-      field match {
-        case "id" => idToResponse(value)(algebra.getManufacturer)
-        case "base_city_id" =>
-          idToResponse(value, EntryHasInvalidForeignKey)(algebra.getManufacturers(field, _))
-        case _ => algebra.getManufacturers(field, value).flatMap(toResponse(_))
+      withFieldValidation[Manufacturer](field) {
+        field match {
+          case "id" => idToResponse(value)(algebra.getManufacturer)
+          case "base_city_id" =>
+            idToResponse(value, EntryHasInvalidForeignKey)(algebra.getManufacturers(field, _))
+          case _ => algebra.getManufacturers(field, value).flatMap(toResponse(_))
+        }
       }
 
     // GET /manufacturers/city/{value}?field={city_field; default=id}
     case GET -> Root / "city" / value :? FieldMatcherIdDefault(field) =>
-      if (field.endsWith("id")) {
-        idToResponse(value, EntryHasInvalidForeignKey)(algebra.getManufacturersByCity(field, _))
-      } else {
-        algebra.getManufacturersByCity(field, value).flatMap(toResponse(_))
+      withFieldValidation[City](field) {
+        if (field.endsWith("id")) {
+          idToResponse(value, EntryHasInvalidForeignKey)(algebra.getManufacturersByCity(field, _))
+        } else {
+          algebra.getManufacturersByCity(field, value).flatMap(toResponse(_))
+        }
       }
 
     // GET /manufacturers/country/{value}?field={country_field; default=id}
     case GET -> Root / "country" / value :? FieldMatcherIdDefault(field) =>
-      if (field.endsWith("id")) {
-        idToResponse(value, EntryHasInvalidForeignKey)(algebra.getManufacturersByCountry(field, _))
-      } else {
-        algebra.getManufacturersByCountry(field, value).flatMap(toResponse(_))
+      withFieldValidation[Country](field) {
+        if (field.endsWith("id")) {
+          idToResponse(value, EntryHasInvalidForeignKey)(
+            algebra.getManufacturersByCountry(field, _)
+          )
+        } else {
+          algebra.getManufacturersByCountry(field, value).flatMap(toResponse(_))
+        }
       }
 
     // POST /manufacturers

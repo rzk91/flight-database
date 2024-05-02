@@ -14,7 +14,10 @@ import io.circe.generic.extras._
 
 object Airplane {
 
-  implicit val airplaneTableBase: TableBase[Airplane] = TableBase.instance(AIRPLANE)
+  implicit val airplaneTableBase: TableBase[Airplane] = TableBase.instance(
+    AIRPLANE,
+    Set("id", "name", "manufacturer_id", "capacity", "max_range_in_km")
+  )
 
   def fromCreate(id: Long, model: AirplaneCreate): Airplane =
     Airplane(

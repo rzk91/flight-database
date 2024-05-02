@@ -6,6 +6,7 @@ import flightdatabase.domain.EntryHasInvalidForeignKey
 import flightdatabase.domain.InconsistentIds
 import flightdatabase.domain.city.City
 import flightdatabase.domain.city.CityAlgebra
+import flightdatabase.domain.country.Country
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
 
@@ -31,19 +32,23 @@ class CityEndpoints[F[_]: Concurrent] private (prefix: String, algebra: CityAlge
 
     // GET /cities/{value}?field={city_field; default=id}
     case GET -> Root / value :? FieldMatcherIdDefault(field) =>
-      field match {
-        case "id" => idToResponse(value)(algebra.getCity)
-        case "country_id" =>
-          idToResponse(value, EntryHasInvalidForeignKey)(algebra.getCities(field, _))
-        case _ => algebra.getCities(field, value).flatMap(toResponse(_))
+      withFieldValidation[City](field) {
+        field match {
+          case "id" => idToResponse(value)(algebra.getCity)
+          case "country_id" =>
+            idToResponse(value, EntryHasInvalidForeignKey)(algebra.getCities(field, _))
+          case _ => algebra.getCities(field, value).flatMap(toResponse(_))
+        }
       }
 
     // GET /cities/country/{value}?field={country_field; default=id}
     case GET -> Root / "country" / value :? FieldMatcherIdDefault(field) =>
-      if (field.endsWith("id")) {
-        idToResponse(value, EntryHasInvalidForeignKey)(algebra.getCitiesByCountry(field, _))
-      } else {
-        algebra.getCitiesByCountry(field, value).flatMap(toResponse(_))
+      withFieldValidation[Country](field) {
+        if (field.endsWith("id")) {
+          idToResponse(value, EntryHasInvalidForeignKey)(algebra.getCitiesByCountry(field, _))
+        } else {
+          algebra.getCitiesByCountry(field, value).flatMap(toResponse(_))
+        }
       }
 
     // POST /cities

@@ -4,8 +4,10 @@ import cats.effect._
 import cats.syntax.flatMap._
 import flightdatabase.domain.EntryHasInvalidForeignKey
 import flightdatabase.domain.InconsistentIds
+import flightdatabase.domain.airline.Airline
 import flightdatabase.domain.airline_airplane.AirlineAirplane
 import flightdatabase.domain.airline_airplane.AirlineAirplaneAlgebra
+import flightdatabase.domain.airplane.Airplane
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
 
@@ -36,22 +38,26 @@ class AirlineAirplaneEndpoints[F[_]: Concurrent] private (
 
     // GET /airline-airplanes/airline/{value}?field={airline_field; default: id}
     case GET -> Root / "airline" / value :? FieldMatcherIdDefault(field) =>
-      if (field.endsWith("id")) {
-        idToResponse(value, EntryHasInvalidForeignKey)(
-          algebra.getAirlineAirplanesByAirline(field, _)
-        )
-      } else {
-        algebra.getAirlineAirplanesByAirline(field, value).flatMap(toResponse(_))
+      withFieldValidation[Airline](field) {
+        if (field.endsWith("id")) {
+          idToResponse(value, EntryHasInvalidForeignKey)(
+            algebra.getAirlineAirplanesByAirline(field, _)
+          )
+        } else {
+          algebra.getAirlineAirplanesByAirline(field, value).flatMap(toResponse(_))
+        }
       }
 
     // GET /airline-airplanes/airplane/{value}?field={airplane_field; default: id}
     case GET -> Root / "airplane" / value :? FieldMatcherIdDefault(field) =>
-      if (field.endsWith("id")) {
-        idToResponse(value, EntryHasInvalidForeignKey)(
-          algebra.getAirlineAirplanesByAirplane(field, _)
-        )
-      } else {
-        algebra.getAirlineAirplanesByAirplane(field, value).flatMap(toResponse(_))
+      withFieldValidation[Airplane](field) {
+        if (field.endsWith("id")) {
+          idToResponse(value, EntryHasInvalidForeignKey)(
+            algebra.getAirlineAirplanesByAirplane(field, _)
+          )
+        } else {
+          algebra.getAirlineAirplanesByAirplane(field, value).flatMap(toResponse(_))
+        }
       }
 
     // POST /airline-airplanes

@@ -4,8 +4,10 @@ import cats.effect.Concurrent
 import cats.implicits._
 import flightdatabase.domain.EntryHasInvalidForeignKey
 import flightdatabase.domain.InconsistentIds
+import flightdatabase.domain.airline.Airline
 import flightdatabase.domain.airline_city.AirlineCity
 import flightdatabase.domain.airline_city.AirlineCityAlgebra
+import flightdatabase.domain.city.City
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
 
@@ -36,18 +38,24 @@ class AirlineCityEndpoints[F[_]: Concurrent] private (
 
     // GET /airline-cities/airline/{value}?field={airline_field, default: id}
     case GET -> Root / "airline" / value :? FieldMatcherIdDefault(field) =>
-      if (field.endsWith("id")) {
-        idToResponse(value, EntryHasInvalidForeignKey)(algebra.getAirlineCitiesByAirline(field, _))
-      } else {
-        algebra.getAirlineCitiesByAirline(field, value).flatMap(toResponse(_))
+      withFieldValidation[Airline](field) {
+        if (field.endsWith("id")) {
+          idToResponse(value, EntryHasInvalidForeignKey)(
+            algebra.getAirlineCitiesByAirline(field, _)
+          )
+        } else {
+          algebra.getAirlineCitiesByAirline(field, value).flatMap(toResponse(_))
+        }
       }
 
     // GET /airline-cities/city/{value}?field={city_field, default: id}
     case GET -> Root / "city" / value :? FieldMatcherIdDefault(field) =>
-      if (field.endsWith("id")) {
-        idToResponse(value, EntryHasInvalidForeignKey)(algebra.getAirlineCitiesByCity(field, _))
-      } else {
-        algebra.getAirlineCitiesByCity(field, value).flatMap(toResponse(_))
+      withFieldValidation[City](field) {
+        if (field.endsWith("id")) {
+          idToResponse(value, EntryHasInvalidForeignKey)(algebra.getAirlineCitiesByCity(field, _))
+        } else {
+          algebra.getAirlineCitiesByCity(field, value).flatMap(toResponse(_))
+        }
       }
 
     // POST /airline-cities

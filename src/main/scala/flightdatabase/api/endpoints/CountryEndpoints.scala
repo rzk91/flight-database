@@ -6,6 +6,8 @@ import flightdatabase.domain.EntryHasInvalidForeignKey
 import flightdatabase.domain.InconsistentIds
 import flightdatabase.domain.country.Country
 import flightdatabase.domain.country.CountryAlgebra
+import flightdatabase.domain.currency.Currency
+import flightdatabase.domain.language.Language
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
 
@@ -31,27 +33,33 @@ class CountryEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Count
 
     // GET /countries/{value}?field={country_field; default=id}
     case GET -> Root / value :? FieldMatcherIdDefault(field) =>
-      field match {
-        case "id" => idToResponse(value)(algebra.getCountry)
-        case str if str.endsWith("id") =>
-          idToResponse(value, EntryHasInvalidForeignKey)(algebra.getCountries(field, _))
-        case _ => algebra.getCountries(field, value).flatMap(toResponse(_))
+      withFieldValidation[Country](field) {
+        field match {
+          case "id" => idToResponse(value)(algebra.getCountry)
+          case str if str.endsWith("id") =>
+            idToResponse(value, EntryHasInvalidForeignKey)(algebra.getCountries(field, _))
+          case _ => algebra.getCountries(field, value).flatMap(toResponse(_))
+        }
       }
 
     // GET /countries/language/{value}?field={language_field, default: id}
     case GET -> Root / "language" / value :? FieldMatcherIdDefault(field) =>
-      field match {
-        case "id" =>
-          idToResponse(value, EntryHasInvalidForeignKey)(algebra.getCountriesByLanguage(field, _))
-        case _ => algebra.getCountriesByLanguage(field, value).flatMap(toResponse(_))
+      withFieldValidation[Language](field) {
+        field match {
+          case "id" =>
+            idToResponse(value, EntryHasInvalidForeignKey)(algebra.getCountriesByLanguage(field, _))
+          case _ => algebra.getCountriesByLanguage(field, value).flatMap(toResponse(_))
+        }
       }
 
     // GET /countries/currency/{value}?field={currency_field, default: id}
     case GET -> Root / "currency" / value :? FieldMatcherIdDefault(field) =>
-      field match {
-        case "id" =>
-          idToResponse(value, EntryHasInvalidForeignKey)(algebra.getCountriesByCurrency(field, _))
-        case _ => algebra.getCountriesByCurrency(field, value).flatMap(toResponse(_))
+      withFieldValidation[Currency](field) {
+        field match {
+          case "id" =>
+            idToResponse(value, EntryHasInvalidForeignKey)(algebra.getCountriesByCurrency(field, _))
+          case _ => algebra.getCountriesByCurrency(field, value).flatMap(toResponse(_))
+        }
       }
 
     // POST /countries
