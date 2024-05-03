@@ -22,17 +22,17 @@ object Airport {
 
   implicit val airportTableBase: TableBase[Airport] = TableBase.instance(
     AIRPORT,
-    Set(
-      "id",
-      "name",
-      "icao",
-      "iata",
-      "city_id",
-      "number_of_runways",
-      "number_of_terminals",
-      "capacity",
-      "international",
-      "junction"
+    Map(
+      "id"                  -> LongType,
+      "name"                -> StringType,
+      "icao"                -> StringType,
+      "iata"                -> StringType,
+      "city_id"             -> LongType,
+      "number_of_runways"   -> IntType,
+      "number_of_terminals" -> IntType,
+      "capacity"            -> LongType,
+      "international"       -> BooleanType,
+      "junction"            -> BooleanType
     )
   )
 

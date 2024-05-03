@@ -43,11 +43,6 @@ class AirlineRouteRepository[F[_]: Concurrent] private (
   override def getAirlineRoutes[V: Put](field: String, value: V): F[ApiResult[List[AirlineRoute]]] =
     selectAirlineRouteBy(field, value).asList(Some(field), Some(value)).execute
 
-  override def getAirlineRoutesByAirlineId(airlineId: Long): F[ApiResult[List[AirlineRoute]]] =
-    selectAirlineRoutesByExternal[AirlineAirplane, Long]("airline_id", airlineId)
-      .asList(invalidValue = Some(airlineId))
-      .execute
-
   override def getAirlineRoutesByAirline[V: Put](
     field: String,
     value: V
@@ -70,11 +65,6 @@ class AirlineRouteRepository[F[_]: Concurrent] private (
           .map(Got(_)) // Convert to ApiOutput
       }
       .value
-
-  override def getAirlineRoutesByAirplaneId(airplaneId: Long): F[ApiResult[List[AirlineRoute]]] =
-    selectAirlineRoutesByExternal[AirlineAirplane, Long]("airplane_id", airplaneId)
-      .asList(invalidValue = Some(airplaneId))
-      .execute
 
   override def getAirlineRoutesByAirplane[V: Put](
     field: String,
@@ -129,6 +119,16 @@ class AirlineRouteRepository[F[_]: Concurrent] private (
 
   override def removeAirlineRoute(id: Long): F[ApiResult[Unit]] =
     deleteAirlineRoute(id).attemptDelete(id).execute
+
+  private def getAirlineRoutesByAirlineId(airlineId: Long): F[ApiResult[List[AirlineRoute]]] =
+    selectAirlineRoutesByExternal[AirlineAirplane, Long]("airline_id", airlineId)
+      .asList(invalidValue = Some(airlineId))
+      .execute
+
+  private def getAirlineRoutesByAirplaneId(airplaneId: Long): F[ApiResult[List[AirlineRoute]]] =
+    selectAirlineRoutesByExternal[AirlineAirplane, Long]("airplane_id", airplaneId)
+      .asList(invalidValue = Some(airplaneId))
+      .execute
 }
 
 object AirlineRouteRepository {

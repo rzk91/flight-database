@@ -13,7 +13,10 @@ import io.circe.generic.extras.ConfiguredJsonCodec
 object AirlineCity {
 
   implicit val airlineCityTableBase: TableBase[AirlineCity] =
-    TableBase.instance(AIRLINE_CITY, Set("id", "airline_id", "city_id"))
+    TableBase.instance(
+      AIRLINE_CITY,
+      Map("id" -> LongType, "airline_id" -> LongType, "city_id" -> LongType)
+    )
 
   def fromCreate(id: Long, model: AirlineCityCreate): AirlineCity =
     AirlineCity(

@@ -19,7 +19,16 @@ object City {
 
   implicit val cityTableBase: TableBase[City] = TableBase.instance(
     CITY,
-    Set("id", "name", "country_id", "capital", "population", "latitude", "longitude", "timezone")
+    Map(
+      "id"         -> LongType,
+      "name"       -> StringType,
+      "country_id" -> LongType,
+      "capital"    -> BooleanType,
+      "population" -> LongType,
+      "latitude"   -> BigDecimalType,
+      "longitude"  -> BigDecimalType,
+      "timezone"   -> StringType
+    )
   )
 
   def fromCreate(id: Long, model: CityCreate): City =

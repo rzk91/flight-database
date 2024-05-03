@@ -2,13 +2,13 @@ package flightdatabase.api.endpoints
 
 import cats.effect.Concurrent
 import cats.implicits.toFlatMapOps
-import flightdatabase.domain.EntryHasInvalidForeignKey
-import flightdatabase.domain.InconsistentIds
+import flightdatabase.domain._
 import flightdatabase.domain.city.City
 import flightdatabase.domain.country.Country
 import flightdatabase.domain.manufacturer.Manufacturer
 import flightdatabase.domain.manufacturer.ManufacturerAlgebra
 import flightdatabase.domain.manufacturer.ManufacturerCreate
+import flightdatabase.utils.implicits.enrichString
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
 
@@ -28,51 +28,61 @@ class ManufacturerEndpoints[F[_]: Concurrent] private (
     // GET /manufacturers?only-names
     case GET -> Root :? OnlyNamesFlagMatcher(onlyNames) =>
       if (onlyNames) {
-        algebra.getManufacturersOnlyNames.flatMap(toResponse(_))
+        algebra.getManufacturersOnlyNames.flatMap(_.toResponse)
       } else {
-        algebra.getManufacturers.flatMap(toResponse(_))
+        algebra.getManufacturers.flatMap(_.toResponse)
       }
 
     // GET /manufacturers/{value}=field={manufacturer_field; default=id}
     case GET -> Root / value :? FieldMatcherIdDefault(field) =>
-      withFieldValidation[Manufacturer](field) {
-        field match {
-          case "id" => idToResponse(value)(algebra.getManufacturer)
-          case "base_city_id" =>
-            idToResponse(value, EntryHasInvalidForeignKey)(algebra.getManufacturers(field, _))
-          case _ => algebra.getManufacturers(field, value).flatMap(toResponse(_))
+      if (field == "id") {
+        value.asLong.toResponse(algebra.getManufacturer)
+      } else {
+        implicitly[TableBase[Manufacturer]].fieldTypeMap.get(field) match {
+          case Some(StringType)  => algebra.getManufacturers(field, value).flatMap(_.toResponse)
+          case Some(IntType)     => value.asInt.toResponse(algebra.getManufacturers(field, _))
+          case Some(LongType)    => value.asLong.toResponse(algebra.getManufacturers(field, _))
+          case Some(BooleanType) => value.asBoolean.toResponse(algebra.getManufacturers(field, _))
+          case Some(BigDecimalType) =>
+            value.asBigDecimal.toResponse(algebra.getManufacturers(field, _))
+          case None => BadRequest(InvalidField(field).error)
         }
       }
 
     // GET /manufacturers/city/{value}?field={city_field; default=id}
     case GET -> Root / "city" / value :? FieldMatcherIdDefault(field) =>
-      withFieldValidation[City](field) {
-        if (field.endsWith("id")) {
-          idToResponse(value, EntryHasInvalidForeignKey)(algebra.getManufacturersByCity(field, _))
-        } else {
-          algebra.getManufacturersByCity(field, value).flatMap(toResponse(_))
-        }
+      implicitly[TableBase[City]].fieldTypeMap.get(field) match {
+        case Some(StringType) => algebra.getManufacturersByCity(field, value).flatMap(_.toResponse)
+        case Some(IntType)    => value.asInt.toResponse(algebra.getManufacturersByCity(field, _))
+        case Some(LongType)   => value.asLong.toResponse(algebra.getManufacturersByCity(field, _))
+        case Some(BooleanType) =>
+          value.asBoolean.toResponse(algebra.getManufacturersByCity(field, _))
+        case Some(BigDecimalType) =>
+          value.asBigDecimal.toResponse(algebra.getManufacturersByCity(field, _))
+        case None => BadRequest(InvalidField(field).error)
       }
 
     // GET /manufacturers/country/{value}?field={country_field; default=id}
     case GET -> Root / "country" / value :? FieldMatcherIdDefault(field) =>
-      withFieldValidation[Country](field) {
-        if (field.endsWith("id")) {
-          idToResponse(value, EntryHasInvalidForeignKey)(
-            algebra.getManufacturersByCountry(field, _)
-          )
-        } else {
-          algebra.getManufacturersByCountry(field, value).flatMap(toResponse(_))
-        }
+      implicitly[TableBase[Country]].fieldTypeMap.get(field) match {
+        case Some(StringType) =>
+          algebra.getManufacturersByCountry(field, value).flatMap(_.toResponse)
+        case Some(IntType)  => value.asInt.toResponse(algebra.getManufacturersByCountry(field, _))
+        case Some(LongType) => value.asLong.toResponse(algebra.getManufacturersByCountry(field, _))
+        case Some(BooleanType) =>
+          value.asBoolean.toResponse(algebra.getManufacturersByCountry(field, _))
+        case Some(BigDecimalType) =>
+          value.asBigDecimal.toResponse(algebra.getManufacturersByCountry(field, _))
+        case None => BadRequest(InvalidField(field).error)
       }
 
     // POST /manufacturers
     case req @ POST -> Root =>
-      processRequest(req)(algebra.createManufacturer).flatMap(toResponse(_))
+      processRequest(req)(algebra.createManufacturer).flatMap(_.toResponse)
 
     // PUT /manufacturers/{id}
     case req @ PUT -> Root / id =>
-      idToResponse(id) { i =>
+      id.asLong.toResponse { i =>
         processRequest[ManufacturerCreate, Long](req) { manufacturer =>
           if (manufacturer.id.exists(_ != i)) {
             InconsistentIds(i, manufacturer.id.get).elevate[F, Long]
@@ -84,11 +94,11 @@ class ManufacturerEndpoints[F[_]: Concurrent] private (
 
     // PATCH /manufacturers/{id}
     case req @ PATCH -> Root / id =>
-      idToResponse(id)(i => processRequest(req)(algebra.partiallyUpdateManufacturer(i, _)))
+      id.asLong.toResponse(i => processRequest(req)(algebra.partiallyUpdateManufacturer(i, _)))
 
     // DELETE /manufacturers/{id}
     case DELETE -> Root / id =>
-      idToResponse(id)(algebra.removeManufacturer)
+      id.asLong.toResponse(algebra.removeManufacturer)
   }
 }
 

@@ -16,7 +16,13 @@ object AirlineRoute {
 
   implicit val airlineRouteTableBase: TableBase[AirlineRoute] = TableBase.instance(
     AIRLINE_ROUTE,
-    Set("id", "airline_airplane_id", "route_number", "start_airport_id", "destination_airport_id")
+    Map(
+      "id"                     -> LongType,
+      "airline_airplane_id"    -> LongType,
+      "route_number"           -> StringType,
+      "start_airport_id"       -> LongType,
+      "destination_airport_id" -> LongType
+    )
   )
 
   def fromCreate(id: Long, model: AirlineRouteCreate): AirlineRoute =

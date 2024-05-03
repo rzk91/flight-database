@@ -9,14 +9,11 @@ trait AirlineRouteAlgebra[F[_]] {
   def getAirlineRoutesOnlyRoutes: F[ApiResult[List[String]]]
   def getAirlineRoute(id: Long): F[ApiResult[AirlineRoute]]
   def getAirlineRoutes[V: Put](field: String, value: V): F[ApiResult[List[AirlineRoute]]]
-  def getAirlineRoutesByAirlineId(airlineId: Long): F[ApiResult[List[AirlineRoute]]]
 
   def getAirlineRoutesByAirline[V: Put](
     field: String,
     value: V
   ): F[ApiResult[List[AirlineRoute]]]
-
-  def getAirlineRoutesByAirplaneId(airplaneId: Long): F[ApiResult[List[AirlineRoute]]]
 
   def getAirlineRoutesByAirplane[V: Put](
     field: String,

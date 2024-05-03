@@ -16,7 +16,13 @@ object Airplane {
 
   implicit val airplaneTableBase: TableBase[Airplane] = TableBase.instance(
     AIRPLANE,
-    Set("id", "name", "manufacturer_id", "capacity", "max_range_in_km")
+    Map(
+      "id"              -> LongType,
+      "name"            -> StringType,
+      "manufacturer_id" -> LongType,
+      "capacity"        -> IntType,
+      "max_range_in_km" -> IntType
+    )
   )
 
   def fromCreate(id: Long, model: AirplaneCreate): Airplane =

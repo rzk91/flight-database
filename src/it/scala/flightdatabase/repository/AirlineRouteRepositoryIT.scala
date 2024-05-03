@@ -140,7 +140,7 @@ final class AirlineRouteRepositoryIT extends RepositoryCheck {
 
   "Selecting airline-routes by external airline fields" should "return the corresponding entries" in {
     def routesByAirlineId(id: Long): IO[ApiResult[List[AirlineRoute]]] =
-      repo.getAirlineRoutesByAirlineId(id)
+      repo.getAirlineRoutesByAirline("id", id)
 
     def routesByAirlineName(name: String): IO[ApiResult[List[AirlineRoute]]] =
       repo.getAirlineRoutesByAirline("name", name)
@@ -169,7 +169,7 @@ final class AirlineRouteRepositoryIT extends RepositoryCheck {
 
   "Selecting airline-routes by external airplane fields" should "return the corresponding entries" in {
     def routesByAirplaneId(id: Long): IO[ApiResult[List[AirlineRoute]]] =
-      repo.getAirlineRoutesByAirplaneId(id)
+      repo.getAirlineRoutesByAirplane("id", id)
 
     def routesByAirplaneName(name: String): IO[ApiResult[List[AirlineRoute]]] =
       repo.getAirlineRoutesByAirplane("name", name)

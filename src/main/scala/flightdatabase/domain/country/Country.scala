@@ -22,18 +22,18 @@ object Country {
 
   implicit val countryTableBase: TableBase[Country] = TableBase.instance(
     COUNTRY,
-    Set(
-      "id",
-      "name",
-      "iso2",
-      "iso3",
-      "country_code",
-      "domain_name",
-      "main_language_id",
-      "secondary_language_id",
-      "tertiary_language_id",
-      "currency_id",
-      "nationality"
+    Map(
+      "id"                    -> LongType,
+      "name"                  -> StringType,
+      "iso2"                  -> StringType,
+      "iso3"                  -> StringType,
+      "country_code"          -> IntType,
+      "domain_name"           -> StringType,
+      "main_language_id"      -> LongType,
+      "secondary_language_id" -> LongType,
+      "tertiary_language_id"  -> LongType,
+      "currency_id"           -> LongType,
+      "nationality"           -> StringType
     )
   )
 
