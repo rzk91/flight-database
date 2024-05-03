@@ -337,9 +337,9 @@ List of endpoints
    curl -I -X HEAD http://localhost:18181/v1/flightdb/countries/1
    ```
 
-2. **GET /countries?onlyNames**
+2. **GET /countries?only-names**
    ```bash
-   curl -i http://localhost:18181/v1/flightdb/countries?onlyNames
+   curl -i http://localhost:18181/v1/flightdb/countries?only-names
    ```
 
 3. **GET /countries/{value}?field={country_field; default=id}**
