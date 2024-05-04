@@ -29,9 +29,6 @@ class LanguageEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Lang
         algebra.getLanguages.flatMap(_.toResponse)
       }
 
-    // GET /languages/search?field={language_field}&value={value}&condition_type={operator; default: eq}
-    // https://developer.adobe.com/commerce/webapi/rest/use-rest/performing-searches/
-
     // GET /languages/{value}?field={language_field; default=id}
     case GET -> Root / value :? FieldMatcherIdDefault(field) =>
       if (field == "id") {

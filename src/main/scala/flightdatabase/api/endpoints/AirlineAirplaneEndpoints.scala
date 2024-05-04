@@ -38,9 +38,6 @@ class AirlineAirplaneEndpoints[F[_]: Concurrent] private (
     case GET -> Root / "airline" / airlineId / "airplane" / airplaneId =>
       (airlineId.asLong, airplaneId.asLong).tupled.toResponse(algebra.getAirlineAirplane)
 
-    // TODO: Refactor to use `processRequestByField` or the like, if possible
-    //  For now, I can't think of a better way to solve this issue
-
     // GET /airline-airplanes/airline/{value}?field={airline_field; default: id}
     case GET -> Root / "airline" / value :? FieldMatcherIdDefault(field) =>
       implicitly[TableBase[Airline]].fieldTypeMap.get(field) match {

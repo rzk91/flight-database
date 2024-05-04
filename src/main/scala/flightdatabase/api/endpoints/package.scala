@@ -49,10 +49,10 @@ package object endpoints {
     }
   }
 
-  implicit class RichOptionTuple[A](private val maybeFields: Option[(A, A)]) extends AnyVal {
+  implicit class RichOptionTuple[A, B](private val maybeFields: Option[(A, B)]) extends AnyVal {
 
     def toResponse[F[_]: Monad, O](
-      f: (A, A) => F[ApiResult[O]],
+      f: (A, B) => F[ApiResult[O]],
       apiError: ApiError = EntryInvalidFormat
     )(implicit dsl: Http4sDsl[F], enc: EntityEncoder[F, O]): F[Response[F]] = {
       import dsl._

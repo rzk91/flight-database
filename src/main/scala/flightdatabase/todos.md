@@ -32,12 +32,14 @@ TODO list
 - ~~Introduce `AirlineCity` as a junction table to account for multiple hubs per airline.~~ DONE!
 - ~~Write integration tests for all algebras.~~ DONE!
 - ~~Make all endpoints uniform.~~ DONE!
-- Comparison queries for all endpoints. (i.e., `GET /cities/filter?population=gt:1000000` should return all cities with
-  a population greater than 1 million. Convention isn't fixed yet.)
+- Comparison queries for all endpoints. (i.e., `GET /cities/filter?field=population&operator=gt&value=1000000` should
+  return all cities with
+  a population greater than 1 million. Convention slightly based
+  on https://developer.adobe.com/commerce/webapi/rest/use-rest/performing-searches/)
+- Introduce fuzzy search? Or at least case-insensitive search?
 - All `endpoints` should return URI of the output resource in the `Location` header. Basically, the `id` field should be
   a JSON object with a `uri` field. This will allow for easy navigation of the API.
 - Add a URI to all foreign key fields in the response (maybe use something similar to `TableBase`).
-- Introduce fuzzy search? Or at least case-insensitive search?
 - Write unit/integration/both tests for all endpoints.
 - Expand API endpoint list to include more complex operations.
 - Move domain to a separate module and rename `src` to `core`.
