@@ -21,7 +21,7 @@ class AirlineAirplaneRepository[F[_]: Concurrent] private (
     airlineAirplaneExists(id).unique.execute
 
   override def getAirlineAirplanes: F[ApiResult[List[AirlineAirplane]]] =
-    selectAllAirlineAirplanes.asList.execute
+    selectAllAirlineAirplanes.asList().execute
 
   override def getAirlineAirplane(id: Long): F[ApiResult[AirlineAirplane]] =
     selectAirlineAirplanesBy("id", id).asSingle(id).execute
@@ -30,8 +30,9 @@ class AirlineAirplaneRepository[F[_]: Concurrent] private (
     airlineId: Long,
     airplaneId: Long
   ): F[ApiResult[AirlineAirplane]] =
-    EitherT(selectAirlineAirplanesBy("airline_id", airlineId).asList)
-      .subflatMap[ApiError, ApiOutput[AirlineAirplane]] { output =>
+    EitherT(
+      selectAirlineAirplanesBy("airline_id", airlineId).asList(invalidValue = Some(airlineId))
+    ).subflatMap[ApiError, ApiOutput[AirlineAirplane]] { output =>
         val airlineAirplanes = output.value
         airlineAirplanes.find(_.airplaneId == airplaneId) match {
           case Some(airlineAirplane) => Right(Got(airlineAirplane))
@@ -45,18 +46,19 @@ class AirlineAirplaneRepository[F[_]: Concurrent] private (
     field: String,
     value: V
   ): F[ApiResult[List[AirlineAirplane]]] =
-    selectAirlineAirplanesBy(field, value).asList.execute
+    selectAirlineAirplanesBy(field, value).asList(Some(field), Some(value)).execute
 
   override def getAirlineAirplanesByExternal[ET: TableBase, EV: Put](
     field: String,
     value: EV
   ): F[ApiResult[List[AirlineAirplane]]] =
-    selectAirlineAirplaneByExternal[ET, EV](field, value).asList.execute
+    selectAirlineAirplaneByExternal[ET, EV](field, value).asList(Some(field), Some(value)).execute
 
-  override def getAirlineAirplanesByAirplaneName(
-    airplaneName: String
+  override def getAirlineAirplanesByAirplane[V: Put](
+    field: String,
+    value: V
   ): F[ApiResult[List[AirlineAirplane]]] =
-    getAirlineAirplanesByExternal[Airplane, String]("name", airplaneName)
+    getAirlineAirplanesByExternal[Airplane, V](field, value)
 
   override def getAirlineAirplanesByAirline[V: Put](
     field: String,

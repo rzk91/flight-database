@@ -8,6 +8,9 @@ import flightdatabase.domain.EntryCheckFailed
 import flightdatabase.domain.EntryHasInvalidForeignKey
 import flightdatabase.domain.EntryListEmpty
 import flightdatabase.domain.EntryNotFound
+import flightdatabase.domain.InvalidField
+import flightdatabase.domain.InvalidValueType
+import flightdatabase.domain.SqlError
 import flightdatabase.domain.airline.Airline
 import flightdatabase.domain.airline.AirlineCreate
 import flightdatabase.domain.airline.AirlinePatch
@@ -27,6 +30,11 @@ final class AirlineRepositoryIT extends RepositoryCheck {
   val idNotPresent: Long = 100
   val valueNotPresent: String = "Not present"
   val veryLongIdNotPresent: Long = 1039495454540034858L
+  val invalidFieldSyntax: String = "Field with spaces"
+  val sqlErrorInvalidSyntax: SqlError = SqlError("42601")
+  val invalidFieldColumn: String = "non_existent_field"
+  val invalidLongValue: String = "invalid"
+  val invalidStringValue: Int = 1
 
   // ID -> (Name, ISO2, ISO3, Country [Phone] Code)
   val countryIdMap: Map[Long, (String, String, String, Int)] = Map(
@@ -135,6 +143,24 @@ final class AirlineRepositoryIT extends RepositoryCheck {
     airlineByCountryIso2(valueNotPresent).error shouldBe EntryListEmpty
     airlineByCountryIso3(valueNotPresent).error shouldBe EntryListEmpty
     airlineByCountryCode(-1).error shouldBe EntryListEmpty
+  }
+
+  "Selecting a non-existent field" should "return an error" in {
+    repo.getAirlines(invalidFieldSyntax, "value").error shouldBe sqlErrorInvalidSyntax
+    repo.getAirlinesByCountry(invalidFieldSyntax, "value").error shouldBe sqlErrorInvalidSyntax
+    repo.getAirlines(invalidFieldColumn, "value").error shouldBe InvalidField(invalidFieldColumn)
+    repo.getAirlinesByCountry(invalidFieldColumn, "value").error shouldBe InvalidField(
+      invalidFieldColumn
+    )
+  }
+
+  "Selecting an existing field with an invalid value type" should "return an error" in {
+    repo.getAirlines("country_id", invalidLongValue).error shouldBe InvalidValueType(
+      invalidLongValue
+    )
+    repo.getAirlinesByCountry("domain_name", invalidStringValue).error shouldBe InvalidValueType(
+      invalidStringValue.toString
+    )
   }
 
   "Creating a new airline" should "not take place if fields do not satisfy their criteria" in {

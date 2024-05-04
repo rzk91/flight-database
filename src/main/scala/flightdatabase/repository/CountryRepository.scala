@@ -9,7 +9,6 @@ import doobie.Put
 import doobie.Transactor
 import doobie.implicits._
 import flightdatabase.domain.ApiResult
-import flightdatabase.domain.InvalidField
 import flightdatabase.domain.country.Country
 import flightdatabase.domain.country.CountryAlgebra
 import flightdatabase.domain.country.CountryCreate
@@ -27,7 +26,7 @@ class CountryRepository[F[_]: Concurrent] private (
     countryExists(id).unique.execute
 
   override def getCountries: F[ApiResult[List[Country]]] =
-    selectAllCountries.asList.execute
+    selectAllCountries.asList().execute
 
   override def getCountriesOnlyNames: F[ApiResult[List[String]]] =
     getFieldList[Country, String]("name").execute
@@ -36,7 +35,7 @@ class CountryRepository[F[_]: Concurrent] private (
     selectCountriesBy("id", id).asSingle(id).execute
 
   override def getCountries[V: Put](field: String, value: V): F[ApiResult[List[Country]]] =
-    selectCountriesBy(field, value).asList.execute
+    selectCountriesBy(field, value).asList(Some(field), Some(value)).execute
 
   override def getCountriesByLanguage[V: Put](
     field: String,
@@ -44,29 +43,19 @@ class CountryRepository[F[_]: Concurrent] private (
   ): F[ApiResult[List[Country]]] = {
     def q(idField: String): Fragment =
       selectCountriesByExternal[Language, V](field, value, Some(idField)).toFragment
-    val allowedFields = Set("id", "name", "iso2", "iso3")
-    if (allowedFields(field)) {
-      {
-        q("main_language_id") ++ fr"UNION" ++
-        q("secondary_language_id") ++ fr"UNION" ++
-        q("tertiary_language_id")
-      }.query[Country].asList.execute
-    } else {
-      InvalidField(field).elevate[F, List[Country]]
-    }
+
+    {
+      q("main_language_id") ++ fr"UNION" ++
+      q("secondary_language_id") ++ fr"UNION" ++
+      q("tertiary_language_id")
+    }.query[Country].asList(Some(field), Some(value)).execute
   }
 
   override def getCountriesByCurrency[V: Put](
     field: String,
     value: V
-  ): F[ApiResult[List[Country]]] = {
-    val allowedFields = Set("id", "name", "iso")
-    if (allowedFields(field)) {
-      selectCountriesByExternal[Currency, V](field, value).asList.execute
-    } else {
-      InvalidField(field).elevate[F, List[Country]]
-    }
-  }
+  ): F[ApiResult[List[Country]]] =
+    selectCountriesByExternal[Currency, V](field, value).asList(Some(field), Some(value)).execute
 
   override def createCountry(country: CountryCreate): F[ApiResult[Long]] =
     insertCountry(country).attemptInsert.execute

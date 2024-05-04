@@ -20,13 +20,13 @@ class AirlineCityRepository[F[_]: Concurrent] private (implicit transactor: Tran
     airlineCityExists(id).unique.execute
 
   override def getAirlineCities: F[ApiResult[List[AirlineCity]]] =
-    selectAllAirlineCities.asList.execute
+    selectAllAirlineCities.asList().execute
 
   override def getAirlineCity(id: Long): F[ApiResult[AirlineCity]] =
     selectAirlineCitiesBy("id", id).asSingle(id).execute
 
   override def getAirlineCity(airlineId: Long, cityId: Long): F[ApiResult[AirlineCity]] =
-    EitherT(selectAirlineCitiesBy("airline_id", airlineId).asList)
+    EitherT(selectAirlineCitiesBy("airline_id", airlineId).asList(invalidValue = Some(airlineId)))
       .subflatMap[ApiError, ApiOutput[AirlineCity]] { output =>
         val airlineCities = output.value
         airlineCities.find(_.cityId == cityId) match {
@@ -38,18 +38,19 @@ class AirlineCityRepository[F[_]: Concurrent] private (implicit transactor: Tran
       .execute
 
   override def getAirlineCities[V: Put](field: String, value: V): F[ApiResult[List[AirlineCity]]] =
-    selectAirlineCitiesBy(field, value).asList.execute
+    selectAirlineCitiesBy(field, value).asList(Some(field), Some(value)).execute
 
   override def getAirlineCitiesByExternal[ET: TableBase, EV: Put](
     field: String,
     value: EV
   ): F[ApiResult[List[AirlineCity]]] =
-    selectAirlineCityByExternal(field, value).asList.execute
+    selectAirlineCityByExternal(field, value).asList(Some(field), Some(value)).execute
 
-  override def getAirlineCitiesByCityName(
-    cityName: String
+  override def getAirlineCitiesByCity[V: Put](
+    field: String,
+    value: V
   ): F[ApiResult[List[AirlineCity]]] =
-    getAirlineCitiesByExternal[City, String]("name", cityName)
+    getAirlineCitiesByExternal[City, V](field, value)
 
   override def getAirlineCitiesByAirline[V: Put](
     field: String,

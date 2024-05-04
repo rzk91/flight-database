@@ -10,7 +10,7 @@ trait CityAlgebra[F[_]] {
   def getCitiesOnlyNames: F[ApiResult[List[String]]]
   def getCity(id: Long): F[ApiResult[City]]
   def getCities[V: Put](field: String, value: V): F[ApiResult[List[City]]]
-  def getCitiesByCountry(country: String): F[ApiResult[List[City]]]
+  def getCitiesByCountry[V: Put](field: String, value: V): F[ApiResult[List[City]]]
   def createCity(city: CityCreate): F[ApiResult[Long]]
   def updateCity(city: City): F[ApiResult[Long]]
   def partiallyUpdateCity(id: Long, patch: CityPatch): F[ApiResult[City]]

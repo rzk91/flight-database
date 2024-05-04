@@ -20,7 +20,21 @@ import io.circe.generic.extras.JsonKey
 
 object Airport {
 
-  implicit val airportTableBase: TableBase[Airport] = TableBase.instance(AIRPORT)
+  implicit val airportTableBase: TableBase[Airport] = TableBase.instance(
+    AIRPORT,
+    Map(
+      "id"                  -> LongType,
+      "name"                -> StringType,
+      "icao"                -> StringType,
+      "iata"                -> StringType,
+      "city_id"             -> LongType,
+      "number_of_runways"   -> IntType,
+      "number_of_terminals" -> IntType,
+      "capacity"            -> LongType,
+      "international"       -> BooleanType,
+      "junction"            -> BooleanType
+    )
+  )
 
   def fromCreate(id: Long, model: AirportCreate): Airport =
     Airport(

@@ -2,14 +2,14 @@ package flightdatabase.api.endpoints
 
 import cats.effect.Concurrent
 import cats.implicits._
-import flightdatabase.api.toResponse
 import flightdatabase.domain._
+import flightdatabase.domain.airline.Airline
 import flightdatabase.domain.airline_route.AirlineRoute
 import flightdatabase.domain.airline_route.AirlineRouteAlgebra
 import flightdatabase.domain.airline_route.AirlineRouteCreate
-import flightdatabase.domain.airline_route.AirlineRoutePatch
+import flightdatabase.domain.airplane.Airplane
+import flightdatabase.domain.airport.Airport
 import flightdatabase.utils.implicits.enrichString
-import flightdatabase.utils.implicits.stringToRichIterable
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
 
@@ -22,7 +22,7 @@ class AirlineRouteEndpoints[F[_]: Concurrent] private (
   private object InboundFlagMatcher extends FlagQueryParamMatcher("inbound")
   private object OutboundFlagMatcher extends FlagQueryParamMatcher("outbound")
 
-  override def endpoints: HttpRoutes[F] = HttpRoutes.of {
+  override val endpoints: HttpRoutes[F] = HttpRoutes.of {
     // HEAD /airline-routes/{id}
     case HEAD -> Root / LongVar(id) =>
       algebra.doesAirlineRouteExist(id).flatMap {
@@ -33,111 +33,101 @@ class AirlineRouteEndpoints[F[_]: Concurrent] private (
     // GET /airline-routes?only-routes
     case GET -> Root :? OnlyNumbersFlagMatcher(onlyRoutes) =>
       if (onlyRoutes) {
-        algebra.getAirlineRoutesOnlyRoutes.flatMap(toResponse(_))
+        algebra.getAirlineRoutesOnlyRoutes.flatMap(_.toResponse)
       } else {
-        algebra.getAirlineRoutes.flatMap(toResponse(_))
+        algebra.getAirlineRoutes.flatMap(_.toResponse)
       }
 
-    // TODO: Rewrite the following routes based on recent changes in repository
-    // GET /airline-routes/{id}
-    case GET -> Root / id =>
-      id.asLong.fold {
-        BadRequest(EntryInvalidFormat.error)
-      }(id => algebra.getAirlineRoute(id).flatMap(toResponse(_)))
-
-    // GET /airline-routes/route/{route_number}
-    case GET -> Root / "route" / routeNumber =>
-      algebra.getAirlineRoutes("route_number", routeNumber).flatMap(toResponse(_))
-
-    // GET /airline-routes/airline/{airline_id}
-    case GET -> Root / "airline" / airlineId =>
-      airlineId.asLong.fold {
-        BadRequest(EntryInvalidFormat.error)
-      }(airlineId => algebra.getAirlineRoutesByAirlineId(airlineId).flatMap(toResponse(_)))
-
-    // GET /airline-routes/airplane/{airplane_id}
-    case GET -> Root / "airplane" / airplaneId =>
-      airplaneId.asLong.fold {
-        BadRequest(EntryInvalidFormat.error)
-      }(airplaneId => algebra.getAirlineRoutesByAirplaneId(airplaneId).flatMap(toResponse(_)))
-
-    // GET /airline-routes/airport/{airport_id_or_iata_or_icao}?inbound&outbound
-    case GET -> Root / "airport" / airportIdOrIataOrIcao :?
-          InboundFlagMatcher(inbound) +& OutboundFlagMatcher(outbound) => {
-        airportIdOrIataOrIcao.asLong match {
-          case Some(airportId) =>
-            algebra
-              .getAirlineRoutesByAirport(
-                "airport_id",
-                airportId,
-                (inbound, outbound) match {
-                  case (true, false) => Some(true)
-                  case (false, true) => Some(false)
-                  case _             => None
-                }
-              )
-          case None =>
-            algebra
-              .getAirlineRoutesByAirport(
-                if (airportIdOrIataOrIcao.lengthEquals(3)) "iata" else "icao",
-                airportIdOrIataOrIcao,
-                (inbound, outbound) match {
-                  case (true, false) => Some(true)
-                  case (false, true) => Some(false)
-                  case _             => None
-                }
-              )
+    // GET /airline-routes/{value}?field={airline-route-field; default: id}
+    case GET -> Root / value :? FieldMatcherIdDefault(field) =>
+      if (field == "id") {
+        value.asLong.toResponse(algebra.getAirlineRoute)
+      } else {
+        implicitly[TableBase[AirlineRoute]].fieldTypeMap.get(field) match {
+          case Some(StringType)  => algebra.getAirlineRoutes(field, value).flatMap(_.toResponse)
+          case Some(IntType)     => value.asInt.toResponse(algebra.getAirlineRoutes(field, _))
+          case Some(LongType)    => value.asLong.toResponse(algebra.getAirlineRoutes(field, _))
+          case Some(BooleanType) => value.asBoolean.toResponse(algebra.getAirlineRoutes(field, _))
+          case Some(BigDecimalType) =>
+            value.asBigDecimal.toResponse(algebra.getAirlineRoutes(field, _))
+          case None => BadRequest(InvalidField(field).error)
         }
-      }.flatMap(toResponse(_))
+      }
+
+    // GET /airline-routes/airline/{value}?field={airline_field; default: id}
+    case GET -> Root / "airline" / value :? FieldMatcherIdDefault(field) =>
+      implicitly[TableBase[Airline]].fieldTypeMap.get(field) match {
+        case Some(StringType) =>
+          algebra.getAirlineRoutesByAirline(field, value).flatMap(_.toResponse)
+        case Some(IntType)  => value.asInt.toResponse(algebra.getAirlineRoutesByAirline(field, _))
+        case Some(LongType) => value.asLong.toResponse(algebra.getAirlineRoutesByAirline(field, _))
+        case Some(BooleanType) =>
+          value.asBoolean.toResponse(algebra.getAirlineRoutesByAirline(field, _))
+        case Some(BigDecimalType) =>
+          value.asBigDecimal.toResponse(algebra.getAirlineRoutesByAirline(field, _))
+        case None => BadRequest(InvalidField(field).error)
+      }
+
+    // GET /airline-routes/airplane/{value}?field={airplane_field; default: id}
+    case GET -> Root / "airplane" / value :? FieldMatcherIdDefault(field) =>
+      implicitly[TableBase[Airplane]].fieldTypeMap.get(field) match {
+        case Some(StringType) =>
+          algebra.getAirlineRoutesByAirplane(field, value).flatMap(_.toResponse)
+        case Some(IntType)  => value.asInt.toResponse(algebra.getAirlineRoutesByAirplane(field, _))
+        case Some(LongType) => value.asLong.toResponse(algebra.getAirlineRoutesByAirplane(field, _))
+        case Some(BooleanType) =>
+          value.asBoolean.toResponse(algebra.getAirlineRoutesByAirplane(field, _))
+        case Some(BigDecimalType) =>
+          value.asBigDecimal.toResponse(algebra.getAirlineRoutesByAirplane(field, _))
+        case None => BadRequest(InvalidField(field).error)
+      }
+
+    // GET /airline-routes/airport/{value}?field={airport_field; default: id}&inbound&outbound
+    case GET -> Root / "airport" / value :? FieldMatcherIdDefault(field) +&
+          InboundFlagMatcher(inbound) +& OutboundFlagMatcher(outbound) =>
+      val direction = (inbound, outbound) match {
+        case (true, false) => Some(true)
+        case (false, true) => Some(false)
+        case _             => None
+      }
+
+      implicitly[TableBase[Airport]].fieldTypeMap.get(field) match {
+        case Some(StringType) =>
+          algebra.getAirlineRoutesByAirport(field, value, direction).flatMap(_.toResponse)
+        case Some(IntType) =>
+          value.asInt.toResponse(algebra.getAirlineRoutesByAirport(field, _, direction))
+        case Some(LongType) =>
+          value.asLong.toResponse(algebra.getAirlineRoutesByAirport(field, _, direction))
+        case Some(BooleanType) =>
+          value.asBoolean.toResponse(algebra.getAirlineRoutesByAirport(field, _, direction))
+        case Some(BigDecimalType) =>
+          value.asBigDecimal.toResponse(algebra.getAirlineRoutesByAirport(field, _, direction))
+        case None => BadRequest(InvalidField(field).error)
+      }
 
     // POST /airline-routes
     case req @ POST -> Root =>
-      req
-        .attemptAs[AirlineRouteCreate]
-        .foldF[ApiResult[Long]](
-          _ => EntryInvalidFormat.elevate[F, Long],
-          algebra.createAirlineRoute
-        )
-        .flatMap(toResponse(_))
+      processRequest(req)(algebra.createAirlineRoute).flatMap(_.toResponse)
 
     // PUT /airline-routes/{id}
     case req @ PUT -> Root / id =>
-      id.asLong.fold {
-        BadRequest(EntryInvalidFormat.error)
-      } { id =>
-        req
-          .attemptAs[AirlineRoute]
-          .foldF[ApiResult[Long]](
-            _ => EntryInvalidFormat.elevate[F, Long],
-            airlineRoute =>
-              if (id != airlineRoute.id) {
-                InconsistentIds(id, airlineRoute.id).elevate[F, Long]
-              } else {
-                algebra.updateAirlineRoute(airlineRoute)
-              }
-          )
-          .flatMap(toResponse(_))
+      id.asLong.toResponse { i =>
+        processRequest[AirlineRouteCreate, Long](req) { airlineRoute =>
+          if (airlineRoute.id.exists(_ != i)) {
+            InconsistentIds(i, airlineRoute.id.get).elevate[F, Long]
+          } else {
+            algebra.updateAirlineRoute(AirlineRoute.fromCreate(i, airlineRoute))
+          }
+        }
       }
 
     // PATCH /airline-routes/{id}
     case req @ PATCH -> Root / id =>
-      id.asLong.fold {
-        BadRequest(EntryInvalidFormat.error)
-      } { id =>
-        req
-          .attemptAs[AirlineRoutePatch]
-          .foldF[ApiResult[AirlineRoute]](
-            _ => EntryInvalidFormat.elevate[F, AirlineRoute],
-            algebra.partiallyUpdateAirlineRoute(id, _)
-          )
-          .flatMap(toResponse(_))
-      }
+      id.asLong.toResponse(i => processRequest(req)(algebra.partiallyUpdateAirlineRoute(i, _)))
 
     // DELETE /airline-routes/{id}
     case DELETE -> Root / id =>
-      id.asLong.fold {
-        BadRequest(EntryInvalidFormat.error)
-      }(id => algebra.removeAirlineRoute(id).flatMap(toResponse(_)))
+      id.asLong.toResponse(algebra.removeAirlineRoute)
   }
 }
 

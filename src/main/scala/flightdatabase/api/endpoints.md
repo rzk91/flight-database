@@ -1,49 +1,496 @@
-List of possible endpoints
----------------------------
+List of endpoints
+-----------------
 
-### Language
-Using the `language` table as an example for some simple set of endpoints where the queries do not depend on other tables.
-1. **Basic CRUD Operations:**
-   - GET /languages: Retrieve a list of all languages.
-   - GET /languages/{id}: Retrieve a specific language by its ID.
-   - POST /languages: Create a new language.
-   - PUT /languages/{id}: Update an existing language by its ID.
-   - DELETE /languages/{id}: Delete a language by its ID.
+- Base URL: `http://localhost:18181/v1/flightdb`
 
-2. **Filter/Search-Based Endpoints:**
-   - GET /languages?name={name}: Retrieve languages by name.
-   - GET /languages?iso2={iso2}: Retrieve languages by ISO 2-letter code.
-   - GET /languages?iso3={iso3}: Retrieve languages by ISO 3-letter code.
-   - GET /languages?name_contains={substring}: Retrieve languages whose names contain a specific substring.
-   - GET /languages?iso2_starts_with={prefix}: Retrieve languages with ISO 2-letter codes that start with a specific prefix.
-   - GET /languages?iso3_ends_with={suffix}: Retrieve languages with ISO 3-letter codes that end with a specific suffix.
-   - GET /languages?created_after={date}: Retrieve languages created after a certain date.
-   - GET /languages?updated_before={date}: Retrieve languages that were last updated before a certain date.
-   - GET /languages?sort_by={attribute}&order={asc/desc}: Retrieve languages sorted by a specific attribute (e.g., name, ISO code) in either ascending or descending order.
-   - GET /languages?limit={limit}&offset={offset}: Paginate the results by specifying a limit on the number of languages returned per request and an offset to skip a certain number of results.
+### Hello-World
+1. **GET /hello/{name}**
+   ```bash
+   curl -i http://localhost:18181/v1/flightdb/hello/me
+   ```
 
-### Country
-These endpoints are slightly complicated given the dependency to many other tables.
-1. **Basic CRUD Operations:**
-	- Same as the above. The complications arise when we actually implement these.
-2. **Filter/Search-Based Endpoints:**
-	 - Pretty much similar to the ones above but again, the complications arise due to dependency on other tables.
-3. **Endpoints for Language Relationships:**
-   - GET /countries/{id}/main_language: Retrieve the main language spoken in the specified country.
-   - GET /countries/{id}/secondary_language: Retrieve the secondary language spoken in the specified country.
-   - GET /countries/{id}/tertiary_language: Retrieve the tertiary language spoken in the specified country.
-   - GET /languages/{language_id}/countries: Retrieve a list of countries where the specified language is spoken as a main, secondary, or tertiary language.
+### Airline-Airplanes
+1. **HEAD /airline-airplanes/{id}**
+   ```bash
+   curl -I -X HEAD http://localhost:18181/v1/flightdb/airline-airplanes/1
+   ```
 
-4. **Endpoints for Currency Relationship:**
-   - GET /countries/{id}/currency: Retrieve the currency used in the specified country.
-   - GET /currencies/{currency_id}/countries: Retrieve a list of countries that use the specified currency.
+2. **GET /airline-airplanes**
+   ```bash
+   curl -i http://localhost:18181/v1/flightdb/airline-airplanes
+   ```
 
-5. **Some other endpoints based on other tables:**
-	- GET /cities?name={name}: Retrieve cities by name.
-	- GET /cities?country_id={country_id}: Retrieve cities in a specific country.
-	- GET /cities?population_greater_than={value}: Retrieve cities with a population greater than a certain value.
-	- GET /cities?population_less_than={value}: Retrieve cities with a population less than a certain value.
-	- GET /cities?latitude={latitude}&longitude={longitude}&radius={radius}: Retrieve cities within a certain radius of a given latitude and longitude.
-Endpoints for Country Relationship:
-	- GET /cities/{id}/country: Retrieve the country to which the specified city belongs.
-	- GET /countries/{country_id}/cities: Retrieve a list of cities in the specified country.
+3. **GET /airline-airplanes/{id}**
+   ```bash
+   curl -i GET http://localhost:18181/v1/flightdb/airline-airplanes/1
+   ```
+
+4. **GET /airline-airplanes/airline/{airline_id}/airplane/{airplane_id}**
+   ```bash
+   curl -i GET http://localhost:18181/v1/flightdb/airline-airplanes/airline/1/airplane/1
+   ```
+
+5. **GET /airline-airplanes/airline/{value}?field={airline_field; default: id}**
+   ```bash
+   curl -i http://localhost:18181/v1/flightdb/airline-airplanes/airline/Lufthansa?field=name
+   ```
+
+6. **GET /airline-airplanes/airplane/{value}?field={airplane_field; default: id}**
+   ```bash
+   curl -i http://localhost:18181/v1/flightdb/airline-airplanes/airplane/A380?field=name
+   ```
+
+7. **POST /airline-airplanes**
+   ```bash
+   curl -i -X POST http://localhost:18181/v1/flightdb/airline-airplanes -H "Content-Type: application/json" -d '{"airline_id": 1, "airplane_id": 1}'
+   ```
+
+8. **PUT /airline-airplanes/{id}**
+   ```bash
+   curl -i -X PUT http://localhost:18181/v1/flightdb/airline-airplanes/1 -H "Content-Type: application/json" -d '{"id": 1, "airline_id": 1, "airplane_id": 2}'
+   ```
+
+9. **PATCH /airline-airplanes/{id}**
+   ```bash
+   curl -i -X PATCH http://localhost:18181/v1/flightdb/airline-airplanes/1 -H "Content-Type: application/json" -d '{"airplane_id": 3}'
+   ```
+
+10. **DELETE /airline-airplanes/{id}**
+   ```bash
+   curl -i -X DELETE http://localhost:18181/v1/flightdb/airline-airplanes/1
+   ```
+
+### Airline-Cities
+1. **HEAD /airline-cities/{id}**
+   ```bash
+   curl -I -X HEAD http://localhost:18181/v1/flightdb/airline-cities/1
+   ```
+
+2. **GET /airline-cities**
+   ```bash
+   curl -i http://localhost:18181/v1/flightdb/airline-cities
+   ```
+
+3. **GET /airline-cities/{id}**
+   ```bash
+   curl -i http://localhost:18181/v1/flightdb/airline-cities/1
+   ```
+
+4. **GET /airline-cities/airline/{airline_id}/city/{city_id}**
+   ```bash
+   curl -i http://localhost:18181/v1/flightdb/airline-cities/airline/1/city/1
+   ```
+
+5. **GET /airline-cities/airline/{value}?field={airline_field; default: id}**
+   ```bash
+   curl -i http://localhost:18181/v1/flightdb/airline-cities/airline/Lufthansa?field=name
+   ```
+
+6. **GET /airline-cities/city/{value}?field={city_field; default: id}**
+   ```bash
+   curl -i http://localhost:18181/v1/flightdb/airline-cities/city/Bangalore?field=name
+   ```
+
+7. **POST /airline-cities**
+   ```bash
+   curl -i -X POST http://localhost:18181/v1/flightdb/airline-cities -H "Content-Type: application/json" -d '{"airline_id": 1, "city_id": 1}'
+   ```
+
+8. **PUT /airline-cities/{id}**
+   ```bash
+   curl -i -X PUT http://localhost:18181/v1/flightdb/airline-cities/1 -H "Content-Type: application/json" -d '{"airline_id": 1, "city_id": 2}'
+   ```
+
+9. **PATCH /airline-cities/{id}**
+   ```bash
+   curl -i -X PATCH http://localhost:18181/v1/flightdb/airline-cities/1 -H "Content-Type: application/json" -d '{"city_id": 3}'
+   ```
+
+10. **DELETE /airline-cities/{id}**
+   ```bash
+   curl -i -X DELETE http://localhost:18181/v1/flightdb/airline-cities/1
+   ```
+
+### Airlines
+1. **HEAD /airlines/{id}**
+   ```bash
+   curl -I -X HEAD http://localhost:18181/v1/flightdb/airlines/1
+   ```
+
+2. **GET /airlines?only-names**
+   ```bash
+   curl -i http://localhost:18181/v1/flightdb/airlines?only-names
+   ```
+
+3. **GET /airlines/{value}?field={field; default: id}**
+   ```bash
+   curl -i http://localhost:18181/v1/flightdb/airlines/Lufthansa?field=name
+   ```
+
+4. **GET /airlines/country/{value}?field={field; default: id}**
+   ```bash
+   curl -i http://localhost:18181/v1/flightdb/airlines/country/DE?field=iso2
+   ```
+
+5. **POST /airlines**
+   ```bash
+   curl -i -X POST http://localhost:18181/v1/flightdb/airlines -H "Content-Type: application/json" -d '{"name": "New Airline", "iata": "NA", "icao": "NAA", "call_sign": "NEWAIR", "country_id": 1}'
+   ```
+
+6. **PUT /airlines/{id}**
+   ```bash
+   curl -i -X PUT http://localhost:18181/v1/flightdb/airlines/3 -H "Content-Type: application/json" -d '{"id": 3, "name": "Updated Airline", "iata": "UA", "icao": "UAA", "call_sign": "UPDAIR", "country_id": 1}'
+   ```
+
+7. **PATCH /airlines/{id}**
+   ```bash
+   curl -i -X PATCH http://localhost:18181/v1/flightdb/airlines/3 -H "Content-Type: application/json" -d '{"name": "Updated Airline Name"}'
+   ```
+
+8. **DELETE /airlines/{id}**
+   ```bash
+   curl -i -X DELETE http://localhost:18181/v1/flightdb/airlines/3
+   ```
+
+### Airline-Routes
+1. **HEAD /airline-routes/{id}**
+   ```bash
+   curl -I -X HEAD http://localhost:18181/v1/flightdb/airline-routes/1
+   ```
+
+2. **GET /airline-routes?only-routes**
+   ```bash
+   curl -i http://localhost:18181/v1/flightdb/airline-routes?only-routes
+   ```
+
+3. **GET /airline-routes/{value}?field={airline-route-field; default: id}**
+   ```bash
+   curl -i http://localhost:18181/v1/flightdb/airline-routes/LH754?field=route_number
+   ```
+
+4. **GET /airline-routes/airline/{value}?field={airline_field; default: id}**
+   ```bash
+   curl -i http://localhost:18181/v1/flightdb/airline-routes/airline/Lufthansa?field=name
+   ```
+
+5. **GET /airline-routes/airplane/{value}?field={airplane_field; default: id}**
+   ```bash
+   curl -i http://localhost:18181/v1/flightdb/airline-routes/airplane/A380?field=name
+   ```
+
+6. **GET /airline-routes/airport/{value}?field={airport_field; default: id}&inbound&outbound**
+   ```bash
+   curl -i http://localhost:18181/v1/flightdb/airline-routes/airport/FRA?field=iata&inbound&outbound
+   ```
+
+7. **POST /airline-routes**
+   ```bash
+   curl -i -X POST http://localhost:18181/v1/flightdb/airline-routes -H "Content-Type: application/json" -d '{"airline_airplane_id": 1, "route_number": "LH754", "start_airport_id": 1, "destination_airport_id": 2}'
+   ```
+
+8. **PUT /airline-routes/{id}**
+   ```bash
+   curl -i -X PUT http://localhost:18181/v1/flightdb/airline-routes/1 -H "Content-Type: application/json" -d '{"airline_airplane_id": 1, "route_number": "LH755", "start_airport_id": 2, "destination_airport_id": 1}'
+   ```
+
+9. **PATCH /airline-routes/{id}**
+   ```bash
+   curl -i -X PATCH http://localhost:18181/v1/flightdb/airline-routes/1 -H "Content-Type: application/json" -d '{"route_number": "LH756"}'
+   ```
+
+10. **DELETE /airline-routes/{id}**
+   ```bash
+   curl -i -X DELETE http://localhost:18181/v1/flightdb/airline-routes/1
+   ```
+
+### Airplanes
+1. **HEAD /airplanes/{id}**
+   ```bash
+   curl -I -X HEAD http://localhost:18181/v1/flightdb/airplanes/1
+   ```
+
+2. **GET /airplanes?only-names**
+   ```bash
+   curl -i http://localhost:18181/v1/flightdb/airplanes?only-names
+   ```
+
+3. **GET /airplanes/{value}?field={airplane_field; default=id}**
+   ```bash
+   curl -i http://localhost:18181/v1/flightdb/airplanes/A380?field=name
+   ```
+
+4. **GET /airplanes/manufacturer/{value}?field={manufacturer_field; default=id}**
+   ```bash
+   curl -i http://localhost:18181/v1/flightdb/airplanes/manufacturer/Airbus?field=name
+   ```
+
+5. **POST /airplanes**
+   ```bash
+   curl -i -X POST http://localhost:18181/v1/flightdb/airplanes -H "Content-Type: application/json" -d '{"name": "A350", "manufacturer_id": 1, "capacity": 440, "max_range_in_km": 15000}'
+   ```
+
+6. **PUT /airplanes/{id}**
+   ```bash
+   curl -i -X PUT http://localhost:18181/v1/flightdb/airplanes/1 -H "Content-Type: application/json" -d '{"name": "A380-800", "manufacturer_id": 1, "capacity": 853, "max_range_in_km": 14800}'
+   ```
+
+7. **PATCH /airplanes/{id}**
+   ```bash
+   curl -i -X PATCH http://localhost:18181/v1/flightdb/airplanes/1 -H "Content-Type: application/json" -d '{"name": "A380-800 Plus"}'
+   ```
+
+8. **DELETE /airplanes/{id}**
+   ```bash
+   curl -i -X DELETE http://localhost:18181/v1/flightdb/airplanes/1
+   ```
+
+### Airports
+1. **HEAD /airports/{id}**
+   ```bash
+   curl -I -X HEAD http://localhost:18181/v1/flightdb/airports/1
+   ```
+
+2. **GET /airports?only-names**
+   ```bash
+   curl -i http://localhost:18181/v1/flightdb/airports?only-names
+   ```
+
+3. **GET /airports/{value}?field={airport_field; default=id}**
+   ```bash
+   curl -i http://localhost:18181/v1/flightdb/airports/FRA?field=iata
+   ```
+
+4. **GET /airports/city/{value}?field={city_field; default=id}**
+   ```bash
+   curl -i http://localhost:18181/v1/flightdb/airports/city/Bangalore?field=name
+   ```
+
+5. **GET /airports/country/{value}?field={country_field; default=id}**
+   ```bash
+   curl -i http://localhost:18181/v1/flightdb/airports/country/IN?field=iso2
+   ```
+
+6. **POST /airports**
+   ```bash
+   curl -i -X POST http://localhost:18181/v1/flightdb/airports -H "Content-Type: application/json" -d '{"name": "New Airport", "icao": "ICAO", "iata": "IATA", "city_id": 1, "number_of_runways": 2, "number_of_terminals": 1, "capacity": 100000, "international": true, "junction": false}'
+   ```
+
+7. **PUT /airports/{id}**
+   ```bash
+   curl -i -X PUT http://localhost:18181/v1/flightdb/airports/1 -H "Content-Type: application/json" -d '{"name": "Updated Airport", "icao": "ICAO", "iata": "IATA", "city_id": 1, "number_of_runways": 2, "number_of_terminals": 1, "capacity": 100000, "international": true, "junction": false}'
+   ```
+
+8. **PATCH /airports/{id}**
+   ```bash
+   curl -i -X PATCH http://localhost:18181/v1/flightdb/airports/1 -H "Content-Type: application/json" -d '{"name": "Updated Airport Name"}'
+   ```
+
+9. **DELETE /airports/{id}**
+   ```bash
+   curl -i -X DELETE http://localhost:18181/v1/flightdb/airports/1
+   ```
+
+### Cities
+1. **HEAD /cities/{id}**
+   ```bash
+   curl -I -X HEAD http://localhost:18181/v1/flightdb/cities/1
+   ```
+
+2. **GET /cities?only-names**
+   ```bash
+   curl -i http://localhost:18181/v1/flightdb/cities?only-names
+   ```
+
+3. **GET /cities/{value}?field={city_field; default=id}**
+   ```bash
+   curl -i http://localhost:18181/v1/flightdb/cities/Bangalore?field=name
+   ```
+
+4. **GET /cities/country/{value}?field={country_field; default=id}**
+   ```bash
+   curl -i http://localhost:18181/v1/flightdb/cities/country/IN?field=iso2
+   ```
+
+5. **POST /cities**
+   ```bash
+   curl -i -X POST http://localhost:18181/v1/flightdb/cities -H "Content-Type: application/json" -d '{"name": "New City", "country_id": 1, "capital": false, "population": 100000, "latitude": 12.9715987, "longitude": 77.5945627, "timezone": "Asia/Kolkata"}'
+   ```
+
+6. **PUT /cities/{id}**
+   ```bash
+   curl -i -X PUT http://localhost:18181/v1/flightdb/cities/1 -H "Content-Type: application/json" -d '{"name": "Updated City", "country_id": 1, "capital": false, "population": 100000, "latitude": 12.9715987, "longitude": 77.5945627, "timezone": "Asia/Kolkata"}'
+   ```
+
+7. **PATCH /cities/{id}**
+   ```bash
+   curl -i -X PATCH http://localhost:18181/v1/flightdb/cities/1 -H "Content-Type: application/json" -d '{"name": "Updated City Name"}'
+   ```
+
+8. **DELETE /cities/{id}**
+   ```bash
+   curl -i -X DELETE http://localhost:18181/v1/flightdb/cities/1
+   ```
+
+### Countries
+1. **HEAD /countries/{id}**
+   ```bash
+   curl -I -X HEAD http://localhost:18181/v1/flightdb/countries/1
+   ```
+
+2. **GET /countries?only-names**
+   ```bash
+   curl -i http://localhost:18181/v1/flightdb/countries?only-names
+   ```
+
+3. **GET /countries/{value}?field={country_field; default=id}**
+   ```bash
+   curl -i http://localhost:18181/v1/flightdb/countries/IN?field=iso2
+   ```
+
+4. **GET /countries/language/{value}?field={language_field; default: id}**
+   ```bash
+   curl -i http://localhost:18181/v1/flightdb/countries/language/EN?field=iso2
+   ```
+
+5. **GET /countries/currency/{value}?field={currency_field; default: id}**
+   ```bash
+   curl -i http://localhost:18181/v1/flightdb/countries/currency/USD?field=iso
+   ```
+
+6. **POST /countries**
+   ```bash
+   curl -i -X POST http://localhost:18181/v1/flightdb/countries -H "Content-Type: application/json" -d '{"name": "India", "iso2": "IN", "iso3": "IND", "country_code": 91, "domain_name": ".in", "main_language_id": 1, "secondary_language_id": 2, "tertiary_language_id": 3, "currency_id": 1, "nationality": "Indian"}'
+   ```
+
+7. **PUT /countries/{id}**
+   ```bash
+   curl -i -X PUT http://localhost:18181/v1/flightdb/countries/1 -H "Content-Type: application/json" -d '{"name": "India", "iso2": "IN", "iso3": "IND", "country_code": 91, "domain_name": ".in", "main_language_id": 1, "secondary_language_id": 2, "tertiary_language_id": 3, "currency_id": 1, "nationality": "Indian"}'
+   ```
+
+8. **PATCH /countries/{id}**
+   ```bash
+   curl -i -X PATCH http://localhost:18181/v1/flightdb/countries/1 -H "Content-Type: application/json" -d '{"name": "Republic of India"}'
+   ```
+
+9. **DELETE /countries/{id}**
+   ```bash
+   curl -i -X DELETE http://localhost:18181/v1/flightdb/countries/1
+   ```
+
+### Currencies
+1. **HEAD /currencies/{id}**
+   ```bash
+   curl -I -X HEAD http://localhost:18181/v1/flightdb/currencies/1
+   ```
+
+2. **GET /currencies?only-names**
+   ```bash
+   curl -i http://localhost:18181/v1/flightdb/currencies?only-names
+   ```
+
+3. **GET /currencies/{value}?field={currency_field; default=id}**
+   ```bash
+   curl -i http://localhost:18181/v1/flightdb/currencies/USD?field=iso
+   ```
+
+4. **POST /currencies**
+   ```bash
+   curl -i -X POST http://localhost:18181/v1/flightdb/currencies -H "Content-Type: application/json" -d '{"name": "Japanese Yen", "iso": "JPY", "symbol": "¥"}'
+   ```
+
+5. **PUT /currencies/{id}**
+   ```bash
+   curl -i -X PUT http://localhost:18181/v1/flightdb/currencies/1 -H "Content-Type: application/json" -d '{"name": "US Dollar", "iso": "USD", "symbol": "$"}'
+   ```
+
+6. **PATCH /currencies/{id}**
+   ```bash
+   curl -i -X PATCH http://localhost:18181/v1/flightdb/currencies/1 -H "Content-Type: application/json" -d '{"name": "US Dollar"}'
+   ```
+
+7. **DELETE /currencies/{id}**
+   ```bash
+   curl -i -X DELETE http://localhost:18181/v1/flightdb/currencies/1
+   ```
+
+### Languages
+1. **HEAD /languages/{id}**
+   ```bash
+   curl -I -X HEAD http://localhost:18181/v1/flightdb/languages/1
+   ```
+
+2. **GET /languages?only-names**
+   ```bash
+   curl -i http://localhost:18181/v1/flightdb/languages?only-names
+   ```
+
+3. **GET /languages/{value}?field={language_field; default=id}**
+   ```bash
+   curl -i http://localhost:18181/v1/flightdb/languages/EN?field=iso2
+   ```
+
+4. **POST /languages**
+   ```bash
+   curl -i -X POST http://localhost:18181/v1/flightdb/languages -H "Content-Type: application/json" -d '{"name": "Spanish", "iso2": "ES", "iso3": "ESP", "original_name": "Español"}'
+   ```
+
+5. **PUT /languages/{id}**
+   ```bash
+   curl -i -X PUT http://localhost:18181/v1/flightdb/languages/1 -H "Content-Type: application/json" -d '{"name": "English", "iso2": "EN", "iso3": "ENG", "original_name": "English"}'
+   ```
+
+6. **PATCH /languages/{id}**
+   ```bash
+   curl -i -X PATCH http://localhost:18181/v1/flightdb/languages/1 -H "Content-Type: application/json" -d '{"name": "British English"}'
+   ```
+
+7. **DELETE /languages/{id}**
+   ```bash
+   curl -i -X DELETE http://localhost:18181/v1/flightdb/languages/1
+   ```
+
+### Manufacturers
+1. **HEAD /manufacturers/{id}**
+   ```bash
+   curl -I -X HEAD http://localhost:18181/v1/flightdb/manufacturers/1
+   ```
+
+2. **GET /manufacturers?only-names**
+   ```bash
+   curl -i http://localhost:18181/v1/flightdb/manufacturers?only-names
+   ```
+
+3. **GET /manufacturers/{value}?field={manufacturer_field; default=id}**
+   ```bash
+   curl -i http://localhost:18181/v1/flightdb/manufacturers/Airbus?field=name
+   ```
+
+4. **GET /manufacturers/city/{value}?field={city_field; default=id}**
+   ```bash
+   curl -i http://localhost:18181/v1/flightdb/manufacturers/city/Leiden?field=name
+   ```
+
+5. **GET /manufacturers/country/{value}?field={country_field; default=id}**
+   ```bash
+   curl -i http://localhost:18181/v1/flightdb/manufacturers/country/Netherlands?field=name
+   ```
+
+6. **POST /manufacturers**
+   ```bash
+   curl -i -X POST http://localhost:18181/v1/flightdb/manufacturers -H "Content-Type: application/json" -d '{"name": "Airbus", "base_city_id": 1}'
+   ```
+
+7. **PUT /manufacturers/{id}**
+   ```bash
+   curl -i -X PUT http://localhost:18181/v1/flightdb/manufacturers/1 -H "Content-Type: application/json" -d '{"name": "Boeing", "base_city_id": 2}'
+   ```
+
+8. **PATCH /manufacturers/{id}**
+   ```bash
+   curl -i -X PATCH http://localhost:18181/v1/flightdb/manufacturers/1 -H "Content-Type: application/json" -d '{"name": "Airbus"}'
+   ```
+
+9. **DELETE /manufacturers/{id}**
+   ```bash
+   curl -i -X DELETE http://localhost:18181/v1/flightdb/manufacturers/1
+   ```

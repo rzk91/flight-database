@@ -7,6 +7,7 @@ class RichString(private val str: String) extends AnyVal {
   def asInt: Option[Int] = Try(str.trim.toInt).toOption
   def asLong: Option[Long] = Try(str.trim.toLong).toOption
   def asDouble: Option[Double] = Try(str.toDouble).toOption
+  def asBigDecimal: Option[BigDecimal] = Try(BigDecimal(str.trim)).toOption
 
   def asBoolean: Option[Boolean] =
     Try(str.trim.toLowerCase).collect {

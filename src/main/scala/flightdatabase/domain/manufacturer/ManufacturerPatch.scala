@@ -5,5 +5,5 @@ import io.circe.generic.extras.ConfiguredJsonCodec
 
 @ConfiguredJsonCodec final case class ManufacturerPatch(
   name: Option[String] = None,
-  cityBasedIn: Option[Long] = None
+  baseCityId: Option[Long] = None
 )

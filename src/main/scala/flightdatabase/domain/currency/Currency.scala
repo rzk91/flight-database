@@ -12,7 +12,12 @@ import io.circe.generic.extras.ConfiguredJsonCodec
 )
 
 object Currency {
-  implicit val currencyTableBase: TableBase[Currency] = TableBase.instance(CURRENCY)
+
+  implicit val currencyTableBase: TableBase[Currency] =
+    TableBase.instance(
+      CURRENCY,
+      Map("id" -> LongType, "name" -> StringType, "iso" -> StringType, "symbol" -> StringType)
+    )
 
   def fromCreate(id: Long, model: CurrencyCreate): Currency =
     Currency(

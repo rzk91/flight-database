@@ -2,14 +2,12 @@ package flightdatabase.api.endpoints
 
 import cats.effect.Concurrent
 import cats.implicits._
-import flightdatabase.api._
-import flightdatabase.domain.ApiResult
-import flightdatabase.domain.EntryInvalidFormat
-import flightdatabase.domain.InconsistentIds
+import flightdatabase.domain._
+import flightdatabase.domain.airline.Airline
 import flightdatabase.domain.airline_city.AirlineCity
 import flightdatabase.domain.airline_city.AirlineCityAlgebra
 import flightdatabase.domain.airline_city.AirlineCityCreate
-import flightdatabase.domain.airline_city.AirlineCityPatch
+import flightdatabase.domain.city.City
 import flightdatabase.utils.implicits.enrichString
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
@@ -19,7 +17,7 @@ class AirlineCityEndpoints[F[_]: Concurrent] private (
   algebra: AirlineCityAlgebra[F]
 ) extends Endpoints[F](prefix) {
 
-  override def endpoints: HttpRoutes[F] = HttpRoutes.of {
+  override val endpoints: HttpRoutes[F] = HttpRoutes.of {
     // HEAD /airline-cities/{id}
     case HEAD -> Root / LongVar(id) =>
       algebra.doesAirlineCityExist(id).flatMap {
@@ -29,86 +27,67 @@ class AirlineCityEndpoints[F[_]: Concurrent] private (
 
     // GET /airline-cities
     case GET -> Root =>
-      algebra.getAirlineCities.flatMap(toResponse(_))
+      algebra.getAirlineCities.flatMap(_.toResponse)
 
     // GET /airline-cities/{id}
     case GET -> Root / id =>
-      id.asLong.fold {
-        BadRequest(EntryInvalidFormat.error)
-      }(id => algebra.getAirlineCity(id).flatMap(toResponse(_)))
+      id.asLong.toResponse(algebra.getAirlineCity)
 
     // GET /airline-cities/airline/{airline_id}/city/{city_id}
     case GET -> Root / "airline" / airlineId / "city" / cityId =>
-      (airlineId.asLong, cityId.asLong).tupled.fold {
-        BadRequest(EntryInvalidFormat.error)
-      } {
-        case (aId, cId) =>
-          algebra.getAirlineCity(aId, cId).flatMap(toResponse(_))
+      (airlineId.asLong, cityId.asLong).tupled.toResponse(algebra.getAirlineCity)
+
+    // GET /airline-cities/airline/{value}?field={airline_field, default: id}
+    case GET -> Root / "airline" / value :? FieldMatcherIdDefault(field) =>
+      implicitly[TableBase[Airline]].fieldTypeMap.get(field) match {
+        case Some(StringType) =>
+          algebra.getAirlineCitiesByAirline(field, value).flatMap(_.toResponse)
+        case Some(IntType)  => value.asInt.toResponse(algebra.getAirlineCitiesByAirline(field, _))
+        case Some(LongType) => value.asLong.toResponse(algebra.getAirlineCitiesByAirline(field, _))
+        case Some(BooleanType) =>
+          value.asBoolean.toResponse(algebra.getAirlineCitiesByAirline(field, _))
+        case Some(BigDecimalType) =>
+          value.asBigDecimal.toResponse(algebra.getAirlineCitiesByAirline(field, _))
+        case None => BadRequest(InvalidField(field).error)
       }
 
-    // GET /airline-cities/city/{value}?field={id/name, default: name}
-    case GET -> Root / "city" / city => {
-        city.asLong.fold {
-          // Treat city as name
-          algebra.getAirlineCitiesByCityName(city)
-        }(algebra.getAirlineCities("city_id", _))
-      }.flatMap(toResponse(_))
-
-    // GET /airline-cities/airline/{value}?field={id/name/iata/icao/call_sign, default: name}
-    case GET -> Root / "airline" / value :? FieldMatcherWithDefaultName(field) =>
-      (value.asLong match {
-        case Some(airlineId) => algebra.getAirlineCitiesByAirline("id", airlineId)
-        case None            => algebra.getAirlineCitiesByAirline(field, value)
-      }).flatMap(toResponse(_))
+    // GET /airline-cities/city/{value}?field={city_field, default: id}
+    case GET -> Root / "city" / value :? FieldMatcherIdDefault(field) =>
+      implicitly[TableBase[City]].fieldTypeMap.get(field) match {
+        case Some(StringType) =>
+          algebra.getAirlineCitiesByCity(field, value).flatMap(_.toResponse)
+        case Some(IntType)  => value.asInt.toResponse(algebra.getAirlineCitiesByCity(field, _))
+        case Some(LongType) => value.asLong.toResponse(algebra.getAirlineCitiesByCity(field, _))
+        case Some(BooleanType) =>
+          value.asBoolean.toResponse(algebra.getAirlineCitiesByCity(field, _))
+        case Some(BigDecimalType) =>
+          value.asBigDecimal.toResponse(algebra.getAirlineCitiesByCity(field, _))
+        case None => BadRequest(InvalidField(field).error)
+      }
 
     // POST /airline-cities
     case req @ POST -> Root =>
-      req
-        .attemptAs[AirlineCityCreate]
-        .foldF[ApiResult[Long]](
-          _ => EntryInvalidFormat.elevate[F, Long],
-          algebra.createAirlineCity
-        )
-        .flatMap(toResponse(_))
+      processRequest(req)(algebra.createAirlineCity).flatMap(_.toResponse)
 
     // PUT /airline-cities/{id}
     case req @ PUT -> Root / id =>
-      id.asLong.fold {
-        BadRequest(EntryInvalidFormat.error)
-      } { id =>
-        req
-          .attemptAs[AirlineCity]
-          .foldF[ApiResult[Long]](
-            _ => EntryInvalidFormat.elevate[F, Long],
-            airlineCity =>
-              if (id != airlineCity.id) {
-                InconsistentIds(id, airlineCity.id).elevate[F, Long]
-              } else {
-                algebra.updateAirlineCity(airlineCity)
-              }
-          )
-          .flatMap(toResponse(_))
+      id.asLong.toResponse { i =>
+        processRequest[AirlineCityCreate, Long](req) { airlineCity =>
+          if (airlineCity.id.exists(_ != i)) {
+            InconsistentIds(i, airlineCity.id.get).elevate[F, Long]
+          } else {
+            algebra.updateAirlineCity(AirlineCity.fromCreate(i, airlineCity))
+          }
+        }
       }
 
     // PATCH /airline-cities/{id}
     case req @ PATCH -> Root / id =>
-      id.asLong.fold {
-        BadRequest(EntryInvalidFormat.error)
-      } { id =>
-        req
-          .attemptAs[AirlineCityPatch]
-          .foldF[ApiResult[AirlineCity]](
-            _ => EntryInvalidFormat.elevate[F, AirlineCity],
-            algebra.partiallyUpdateAirlineCity(id, _)
-          )
-          .flatMap(toResponse(_))
-      }
+      id.asLong.toResponse(i => processRequest(req)(algebra.partiallyUpdateAirlineCity(i, _)))
 
     // DELETE /airline-cities/{id}
     case DELETE -> Root / id =>
-      id.asLong.fold {
-        BadRequest(EntryInvalidFormat.error)
-      }(id => algebra.removeAirlineCity(id).flatMap(toResponse(_)))
+      id.asLong.toResponse(algebra.removeAirlineCity)
   }
 }
 

@@ -2,14 +2,11 @@ package flightdatabase.api.endpoints
 
 import cats.effect._
 import cats.implicits._
-import flightdatabase.api._
-import flightdatabase.domain.ApiResult
-import flightdatabase.domain.EntryInvalidFormat
-import flightdatabase.domain.InconsistentIds
+import flightdatabase.domain._
 import flightdatabase.domain.airplane.Airplane
 import flightdatabase.domain.airplane.AirplaneAlgebra
 import flightdatabase.domain.airplane.AirplaneCreate
-import flightdatabase.domain.airplane.AirplanePatch
+import flightdatabase.domain.manufacturer.Manufacturer
 import flightdatabase.utils.implicits.enrichString
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
@@ -17,7 +14,7 @@ import org.http4s.circe.CirceEntityCodec._
 class AirplaneEndpoints[F[_]: Concurrent] private (prefix: String, algebra: AirplaneAlgebra[F])
     extends Endpoints[F](prefix) {
 
-  override def endpoints: HttpRoutes[F] = HttpRoutes.of {
+  override val endpoints: HttpRoutes[F] = HttpRoutes.of {
     // HEAD /airplanes/{id}
     case HEAD -> Root / LongVar(id) =>
       algebra.doesAirplaneExist(id).flatMap {
@@ -28,77 +25,63 @@ class AirplaneEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airp
     // GET /airplanes?only-names
     case GET -> Root :? OnlyNamesFlagMatcher(onlyNames) =>
       if (onlyNames) {
-        algebra.getAirplanesOnlyNames.flatMap(toResponse(_))
+        algebra.getAirplanesOnlyNames.flatMap(_.toResponse)
       } else {
-        algebra.getAirplanes.flatMap(toResponse(_))
+        algebra.getAirplanes.flatMap(_.toResponse)
       }
 
-    // GET /airplanes/{id}
-    case GET -> Root / id =>
-      id.asLong.fold {
-        BadRequest(EntryInvalidFormat.error)
-      }(id => algebra.getAirplane(id).flatMap(toResponse(_)))
+    // GET /airplanes/{value}?field={airplane_field; default: id}
+    case GET -> Root / value :? FieldMatcherIdDefault(field) =>
+      if (field == "id") {
+        value.asLong.toResponse(algebra.getAirplane)
+      } else {
+        implicitly[TableBase[Airplane]].fieldTypeMap.get(field) match {
+          case Some(StringType)     => algebra.getAirplanes(field, value).flatMap(_.toResponse)
+          case Some(IntType)        => value.asInt.toResponse(algebra.getAirplanes(field, _))
+          case Some(LongType)       => value.asLong.toResponse(algebra.getAirplanes(field, _))
+          case Some(BooleanType)    => value.asBoolean.toResponse(algebra.getAirplanes(field, _))
+          case Some(BigDecimalType) => value.asBigDecimal.toResponse(algebra.getAirplanes(field, _))
+          case None                 => BadRequest(InvalidField(field).error)
+        }
+      }
 
-    // GET /airplanes/name/{name}
-    case GET -> Root / "name" / name =>
-      algebra.getAirplanes("name", name).flatMap(toResponse(_))
-
-    // GET /airplanes/manufacturer/{manufacturer_name} OR
-    // GET /airplanes/manufacturer/{manufacturer_id}
-    case GET -> Root / "manufacturer" / manufacturer =>
-      manufacturer.asLong.fold[F[Response[F]]] {
-        // Treat manufacturer as name
-        algebra.getAirplanesByManufacturer(manufacturer).flatMap(toResponse(_))
-      }(algebra.getAirplanes("manufacturer_id", _).flatMap(toResponse(_)))
+    // GET /airplanes/manufacturer/{value}?field={manufacturer_field; default: id}
+    case GET -> Root / "manufacturer" / value :? FieldMatcherIdDefault(field) =>
+      implicitly[TableBase[Manufacturer]].fieldTypeMap.get(field) match {
+        case Some(StringType) =>
+          algebra.getAirplanesByManufacturer(field, value).flatMap(_.toResponse)
+        case Some(IntType)  => value.asInt.toResponse(algebra.getAirplanesByManufacturer(field, _))
+        case Some(LongType) => value.asLong.toResponse(algebra.getAirplanesByManufacturer(field, _))
+        case Some(BooleanType) =>
+          value.asBoolean.toResponse(algebra.getAirplanesByManufacturer(field, _))
+        case Some(BigDecimalType) =>
+          value.asBigDecimal.toResponse(algebra.getAirplanesByManufacturer(field, _))
+        case None => BadRequest(InvalidField(field).error)
+      }
 
     // POST /airplanes
     case req @ POST -> Root =>
-      req
-        .attemptAs[AirplaneCreate]
-        .foldF[ApiResult[Long]](
-          _ => EntryInvalidFormat.elevate[F, Long],
-          algebra.createAirplane
-        )
-        .flatMap(toResponse(_))
+      processRequest(req)(algebra.createAirplane).flatMap(_.toResponse)
 
     // PUT /airplanes/{id}
     case req @ PUT -> Root / id =>
-      id.asLong.fold {
-        BadRequest(EntryInvalidFormat.error)
-      } { id =>
-        req
-          .attemptAs[Airplane]
-          .foldF[ApiResult[Long]](
-            _ => EntryInvalidFormat.elevate[F, Long],
-            airplane =>
-              if (id != airplane.id) {
-                InconsistentIds(id, airplane.id).elevate[F, Long]
-              } else {
-                algebra.updateAirplane(airplane)
-              }
-          )
-          .flatMap(toResponse(_))
+      id.asLong.toResponse { i =>
+        processRequest[AirplaneCreate, Long](req) { airplane =>
+          if (airplane.id.exists(_ != i)) {
+            InconsistentIds(i, airplane.id.get).elevate[F, Long]
+          } else {
+            algebra.updateAirplane(Airplane.fromCreate(i, airplane))
+          }
+        }
       }
 
     // PATCH /airplanes/{id}
     case req @ PATCH -> Root / id =>
-      id.asLong.fold {
-        BadRequest(EntryInvalidFormat.error)
-      } { id =>
-        req
-          .attemptAs[AirplanePatch]
-          .foldF[ApiResult[Airplane]](
-            _ => EntryInvalidFormat.elevate[F, Airplane],
-            algebra.partiallyUpdateAirplane(id, _)
-          )
-          .flatMap(toResponse(_))
-      }
+      id.asLong.toResponse(i => processRequest(req)(algebra.partiallyUpdateAirplane(i, _)))
 
     // DELETE /airplanes/{id}
     case DELETE -> Root / id =>
-      id.asLong.fold {
-        BadRequest(EntryInvalidFormat.error)
-      }(id => algebra.removeAirplane(id).flatMap(toResponse(_)))
+      id.asLong.toResponse(algebra.removeAirplane)
   }
 
 }

@@ -7,7 +7,9 @@ import flightdatabase.domain.EntryAlreadyExists
 import flightdatabase.domain.EntryCheckFailed
 import flightdatabase.domain.EntryListEmpty
 import flightdatabase.domain.EntryNotFound
-import flightdatabase.domain.UnknownDbError
+import flightdatabase.domain.InvalidField
+import flightdatabase.domain.InvalidValueType
+import flightdatabase.domain.SqlError
 import flightdatabase.domain.currency.Currency
 import flightdatabase.domain.currency.CurrencyCreate
 import flightdatabase.domain.currency.CurrencyPatch
@@ -35,6 +37,10 @@ final class CurrencyRepositoryIT extends RepositoryCheck {
   val newCurrency: CurrencyCreate = CurrencyCreate("New Currency", "NCR", Some("NCR"))
   val updatedName: String = "Updated Currency"
   val patchedName: String = "Patched Currency"
+  val invalidFieldSyntax: String = "Field with spaces"
+  val sqlErrorInvalidSyntax: SqlError = SqlError("42601")
+  val invalidFieldColumn: String = "non_existent_field"
+  val invalidStringValue: Int = 1
 
   "Checking if a currency exists" should "return a valid result" in {
     def currencyExists(id: Long): Boolean = repo.doesCurrencyExist(id).unsafeRunSync()
@@ -77,6 +83,17 @@ final class CurrencyRepositoryIT extends RepositoryCheck {
     currencyByIso(valueNotPresent).error shouldBe EntryListEmpty
   }
 
+  "Selecting a non-existent field" should "return an error" in {
+    repo.getCurrencies(invalidFieldSyntax, "value").error shouldBe sqlErrorInvalidSyntax
+    repo.getCurrencies(invalidFieldColumn, "value").error shouldBe InvalidField(invalidFieldColumn)
+  }
+
+  "Selecting an existing field with an invalid value type" should "return an error" in {
+    repo.getCurrencies("iso", invalidStringValue).error shouldBe InvalidValueType(
+      invalidStringValue.toString
+    )
+  }
+
   "Creating a new currency" should "not take place if fields do not satisfy their criteria" in {
     val invalidCurrencies = List(
       newCurrency.copy(name = ""),
@@ -88,7 +105,7 @@ final class CurrencyRepositoryIT extends RepositoryCheck {
     }
 
     val invalidSymbol = newCurrency.copy(symbol = Some("Something too long"))
-    repo.createCurrency(invalidSymbol).error shouldBe UnknownDbError(stringTooLongSqlState)
+    repo.createCurrency(invalidSymbol).error shouldBe SqlError(stringTooLongSqlState)
   }
 
   it should "not take place for a currency with existing unique fields" in {
@@ -128,7 +145,7 @@ final class CurrencyRepositoryIT extends RepositoryCheck {
     }
 
     val invalidSymbol = existingCurrency.copy(symbol = Some("Something too long"))
-    repo.updateCurrency(invalidSymbol).error shouldBe UnknownDbError(stringTooLongSqlState)
+    repo.updateCurrency(invalidSymbol).error shouldBe SqlError(stringTooLongSqlState)
   }
 
   it should "not take place for a currency with existing unique fields" in {
@@ -174,7 +191,7 @@ final class CurrencyRepositoryIT extends RepositoryCheck {
     val invalidSymbol = CurrencyPatch(symbol = Some("Something too long"))
     repo
       .partiallyUpdateCurrency(existingCurrency.id, invalidSymbol)
-      .error shouldBe UnknownDbError(stringTooLongSqlState)
+      .error shouldBe SqlError(stringTooLongSqlState)
   }
 
   it should "not take place for a currency with existing unique fields" in {

@@ -15,7 +15,7 @@ trait AirlineCityAlgebra[F[_]] {
     field: String,
     value: EV
   ): F[ApiResult[List[AirlineCity]]]
-  def getAirlineCitiesByCityName(cityName: String): F[ApiResult[List[AirlineCity]]]
+  def getAirlineCitiesByCity[V: Put](field: String, value: V): F[ApiResult[List[AirlineCity]]]
   def getAirlineCitiesByAirline[V: Put](field: String, value: V): F[ApiResult[List[AirlineCity]]]
   def createAirlineCity(airlineCity: AirlineCityCreate): F[ApiResult[Long]]
   def updateAirlineCity(airlineCity: AirlineCity): F[ApiResult[Long]]

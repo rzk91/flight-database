@@ -19,7 +19,23 @@ import io.circe.generic.extras.ConfiguredJsonCodec
 )
 
 object Country {
-  implicit val countryTableBase: TableBase[Country] = TableBase.instance(COUNTRY)
+
+  implicit val countryTableBase: TableBase[Country] = TableBase.instance(
+    COUNTRY,
+    Map(
+      "id"                    -> LongType,
+      "name"                  -> StringType,
+      "iso2"                  -> StringType,
+      "iso3"                  -> StringType,
+      "country_code"          -> IntType,
+      "domain_name"           -> StringType,
+      "main_language_id"      -> LongType,
+      "secondary_language_id" -> LongType,
+      "tertiary_language_id"  -> LongType,
+      "currency_id"           -> LongType,
+      "nationality"           -> StringType
+    )
+  )
 
   def fromCreate(id: Long, model: CountryCreate): Country =
     Country(

@@ -13,7 +13,18 @@ import io.circe.generic.extras.ConfiguredJsonCodec
 )
 
 object Language {
-  implicit val languageTableBase: TableBase[Language] = TableBase.instance(LANGUAGE)
+
+  implicit val languageTableBase: TableBase[Language] =
+    TableBase.instance(
+      LANGUAGE,
+      Map(
+        "id"            -> LongType,
+        "name"          -> StringType,
+        "iso2"          -> StringType,
+        "iso3"          -> StringType,
+        "original_name" -> StringType
+      )
+    )
 
   def fromCreate(id: Long, model: LanguageCreate): Language =
     Language(

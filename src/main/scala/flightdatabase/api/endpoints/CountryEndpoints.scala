@@ -2,14 +2,12 @@ package flightdatabase.api.endpoints
 
 import cats.effect._
 import cats.implicits._
-import flightdatabase.api._
-import flightdatabase.domain.ApiResult
-import flightdatabase.domain.EntryInvalidFormat
-import flightdatabase.domain.InconsistentIds
+import flightdatabase.domain._
 import flightdatabase.domain.country.Country
 import flightdatabase.domain.country.CountryAlgebra
 import flightdatabase.domain.country.CountryCreate
-import flightdatabase.domain.country.CountryPatch
+import flightdatabase.domain.currency.Currency
+import flightdatabase.domain.language.Language
 import flightdatabase.utils.implicits.enrichString
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
@@ -17,7 +15,7 @@ import org.http4s.circe.CirceEntityCodec._
 class CountryEndpoints[F[_]: Concurrent] private (prefix: String, algebra: CountryAlgebra[F])
     extends Endpoints[F](prefix) {
 
-  override def endpoints: HttpRoutes[F] = HttpRoutes.of {
+  override val endpoints: HttpRoutes[F] = HttpRoutes.of {
 
     // HEAD /countries/{id}
     case HEAD -> Root / LongVar(id) =>
@@ -29,85 +27,75 @@ class CountryEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Count
     // GET /countries?onlyNames
     case GET -> Root :? OnlyNamesFlagMatcher(onlyNames) =>
       if (onlyNames) {
-        algebra.getCountriesOnlyNames.flatMap(toResponse(_))
+        algebra.getCountriesOnlyNames.flatMap(_.toResponse)
       } else {
-        algebra.getCountries.flatMap(toResponse(_))
+        algebra.getCountries.flatMap(_.toResponse)
       }
 
-    // GET /countries/{id}
-    case GET -> Root / id =>
-      id.asLong.fold {
-        BadRequest(EntryInvalidFormat.error)
-      }(id => algebra.getCountry(id).flatMap(toResponse(_)))
-
-    // GET /countries/name/{name}
-    case GET -> Root / "name" / name =>
-      algebra.getCountries("name", name).flatMap(toResponse(_))
-
-    // GET /countries/language/{value}?field={iso2, default: name}
-    case GET -> Root / "language" / value :? FieldMatcherWithDefaultName(field) =>
-      value.asLong
-        .fold(algebra.getCountriesByLanguage(field, value)) { long =>
-          algebra.getCountriesByLanguage("id", long)
+    // GET /countries/{value}?field={country_field; default=id}
+    case GET -> Root / value :? FieldMatcherIdDefault(field) =>
+      if (field == "id") {
+        value.asLong.toResponse(algebra.getCountry)
+      } else {
+        implicitly[TableBase[Country]].fieldTypeMap.get(field) match {
+          case Some(StringType)     => algebra.getCountries(field, value).flatMap(_.toResponse)
+          case Some(IntType)        => value.asInt.toResponse(algebra.getCountries(field, _))
+          case Some(LongType)       => value.asLong.toResponse(algebra.getCountries(field, _))
+          case Some(BooleanType)    => value.asBoolean.toResponse(algebra.getCountries(field, _))
+          case Some(BigDecimalType) => value.asBigDecimal.toResponse(algebra.getCountries(field, _))
+          case None                 => BadRequest(InvalidField(field).error)
         }
-        .flatMap(toResponse(_))
+      }
 
-    // GET /countries/currency/{value}?field={iso, default: name}
-    case GET -> Root / "currency" / value :? FieldMatcherWithDefaultName(field) =>
-      value.asLong
-        .fold(algebra.getCountriesByCurrency(field, value)) { long =>
-          algebra.getCountriesByCurrency("id", long)
-        }
-        .flatMap(toResponse(_))
+    // GET /countries/language/{value}?field={language_field, default: id}
+    case GET -> Root / "language" / value :? FieldMatcherIdDefault(field) =>
+      implicitly[TableBase[Language]].fieldTypeMap.get(field) match {
+        case Some(StringType) => algebra.getCountriesByLanguage(field, value).flatMap(_.toResponse)
+        case Some(IntType)    => value.asInt.toResponse(algebra.getCountriesByLanguage(field, _))
+        case Some(LongType)   => value.asLong.toResponse(algebra.getCountriesByLanguage(field, _))
+        case Some(BooleanType) =>
+          value.asBoolean.toResponse(algebra.getCountriesByLanguage(field, _))
+        case Some(BigDecimalType) =>
+          value.asBigDecimal.toResponse(algebra.getCountriesByLanguage(field, _))
+        case None => BadRequest(InvalidField(field).error)
+      }
+
+    // GET /countries/currency/{value}?field={currency_field, default: id}
+    case GET -> Root / "currency" / value :? FieldMatcherIdDefault(field) =>
+      implicitly[TableBase[Currency]].fieldTypeMap.get(field) match {
+        case Some(StringType) => algebra.getCountriesByCurrency(field, value).flatMap(_.toResponse)
+        case Some(IntType)    => value.asInt.toResponse(algebra.getCountriesByCurrency(field, _))
+        case Some(LongType)   => value.asLong.toResponse(algebra.getCountriesByCurrency(field, _))
+        case Some(BooleanType) =>
+          value.asBoolean.toResponse(algebra.getCountriesByCurrency(field, _))
+        case Some(BigDecimalType) =>
+          value.asBigDecimal.toResponse(algebra.getCountriesByCurrency(field, _))
+        case None => BadRequest(InvalidField(field).error)
+      }
 
     // POST /countries
     case req @ POST -> Root =>
-      req
-        .attemptAs[CountryCreate]
-        .foldF[ApiResult[Long]](
-          _ => EntryInvalidFormat.elevate[F, Long],
-          algebra.createCountry
-        )
-        .flatMap(toResponse(_))
+      processRequest(req)(algebra.createCountry).flatMap(_.toResponse)
 
     // PUT /countries/{id}
     case req @ PUT -> Root / id =>
-      id.asLong.fold {
-        BadRequest(EntryInvalidFormat.error)
-      } { id =>
-        req
-          .attemptAs[Country]
-          .foldF[ApiResult[Long]](
-            _ => EntryInvalidFormat.elevate[F, Long],
-            country =>
-              if (id != country.id) {
-                InconsistentIds(id, country.id).elevate[F, Long]
-              } else {
-                algebra.updateCountry(country)
-              }
-          )
-          .flatMap(toResponse(_))
+      id.asLong.toResponse { i =>
+        processRequest[CountryCreate, Long](req) { country =>
+          if (country.id.exists(_ != i)) {
+            InconsistentIds(i, country.id.get).elevate[F, Long]
+          } else {
+            algebra.updateCountry(Country.fromCreate(i, country))
+          }
+        }
       }
 
     // PATCH /countries/{id}
     case req @ PATCH -> Root / id =>
-      id.asLong.fold {
-        BadRequest(EntryInvalidFormat.error)
-      } { id =>
-        req
-          .attemptAs[CountryPatch]
-          .foldF[ApiResult[Country]](
-            _ => EntryInvalidFormat.elevate[F, Country],
-            algebra.partiallyUpdateCountry(id, _)
-          )
-          .flatMap(toResponse(_))
-      }
+      id.asLong.toResponse(i => processRequest(req)(algebra.partiallyUpdateCountry(i, _)))
 
     // DELETE /countries/{id}
     case DELETE -> Root / id =>
-      id.asLong.fold {
-        BadRequest(EntryInvalidFormat.error)
-      }(id => algebra.removeCountry(id).flatMap(toResponse(_)))
+      id.asLong.toResponse(algebra.removeCountry)
   }
 }
 

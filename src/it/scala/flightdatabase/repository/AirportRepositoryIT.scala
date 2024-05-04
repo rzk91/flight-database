@@ -8,6 +8,9 @@ import flightdatabase.domain.EntryCheckFailed
 import flightdatabase.domain.EntryHasInvalidForeignKey
 import flightdatabase.domain.EntryListEmpty
 import flightdatabase.domain.EntryNotFound
+import flightdatabase.domain.InvalidField
+import flightdatabase.domain.InvalidValueType
+import flightdatabase.domain.SqlError
 import flightdatabase.domain.airport.Airport
 import flightdatabase.domain.airport.AirportCreate
 import flightdatabase.domain.airport.AirportPatch
@@ -67,6 +70,11 @@ final class AirportRepositoryIT extends RepositoryCheck {
   val idNotPresent: Long = 10
   val valueNotPresent: String = "Not present"
   val veryLongIdNotPresent: Long = 1039495454540034858L
+  val invalidFieldSyntax: String = "Field with spaces"
+  val sqlErrorInvalidSyntax: SqlError = SqlError("42601")
+  val invalidFieldColumn: String = "non_existent_field"
+  val invalidLongValue: String = "invalid"
+  val invalidStringValue: Int = 1
 
   val newAirport: AirportCreate = AirportCreate(
     "Chhatrapati Shivaji Maharaj International Airport",
@@ -141,7 +149,7 @@ final class AirportRepositoryIT extends RepositoryCheck {
 
   "Selecting airports by city name" should "return the corresponding entries" in {
     def airportByCity(city: String): IO[ApiResult[List[Airport]]] =
-      repo.getAirportsByCity(city)
+      repo.getAirportsByCity("name", city)
 
     forAll(cityToIdMap) {
       case (city, id) =>
@@ -155,7 +163,7 @@ final class AirportRepositoryIT extends RepositoryCheck {
 
   "Selecting airport by country" should "also return the corresponding entries" in {
     def airportByCountry(country: String): IO[ApiResult[List[Airport]]] =
-      repo.getAirportsByCountry(country)
+      repo.getAirportsByCountry("name", country)
 
     forAll(countryToCityIdMap) {
       case (country, cityId) =>
@@ -166,6 +174,32 @@ final class AirportRepositoryIT extends RepositoryCheck {
 
     val fv = FieldValue[Country, String]("name", valueNotPresent)
     airportByCountry(valueNotPresent).error shouldBe EntryNotFound(fv)
+  }
+
+  "Selecting a non-existent field" should "return an error" in {
+    repo.getAirports(invalidFieldSyntax, "value").error shouldBe sqlErrorInvalidSyntax
+    repo.getAirportsByCity(invalidFieldSyntax, "value").error shouldBe sqlErrorInvalidSyntax
+    repo.getAirportsByCountry(invalidFieldSyntax, "value").error shouldBe sqlErrorInvalidSyntax
+
+    repo.getAirports(invalidFieldColumn, "value").error shouldBe InvalidField(invalidFieldColumn)
+    repo.getAirportsByCity(invalidFieldColumn, "value").error shouldBe InvalidField(
+      invalidFieldColumn
+    )
+    repo.getAirportsByCountry(invalidFieldColumn, "value").error shouldBe InvalidField(
+      invalidFieldColumn
+    )
+  }
+
+  "Selecting an existing field with an invalid value type" should "return an error" in {
+    repo.getAirports("iata", invalidStringValue).error shouldBe InvalidValueType(
+      invalidStringValue.toString
+    )
+    repo.getAirportsByCity("population", invalidLongValue).error shouldBe InvalidValueType(
+      invalidLongValue
+    )
+    repo.getAirportsByCountry("iso2", invalidStringValue).error shouldBe InvalidValueType(
+      invalidStringValue.toString
+    )
   }
 
   "Creating a new airport" should "not take place if the fields do not satisfy their criteria" in {

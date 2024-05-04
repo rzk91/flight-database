@@ -2,14 +2,11 @@ package flightdatabase.api.endpoints
 
 import cats.effect._
 import cats.implicits._
-import flightdatabase.api._
-import flightdatabase.domain.ApiResult
-import flightdatabase.domain.EntryInvalidFormat
-import flightdatabase.domain.InconsistentIds
+import flightdatabase.domain._
 import flightdatabase.domain.city.City
 import flightdatabase.domain.city.CityAlgebra
 import flightdatabase.domain.city.CityCreate
-import flightdatabase.domain.city.CityPatch
+import flightdatabase.domain.country.Country
 import flightdatabase.utils.implicits.enrichString
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
@@ -17,7 +14,7 @@ import org.http4s.circe.CirceEntityCodec._
 class CityEndpoints[F[_]: Concurrent] private (prefix: String, algebra: CityAlgebra[F])
     extends Endpoints[F](prefix) {
 
-  override def endpoints: HttpRoutes[F] = HttpRoutes.of {
+  override val endpoints: HttpRoutes[F] = HttpRoutes.of {
 
     // HEAD /cities/{id}
     case HEAD -> Root / LongVar(id) =>
@@ -29,77 +26,61 @@ class CityEndpoints[F[_]: Concurrent] private (prefix: String, algebra: CityAlge
     // GET /cities?only-names
     case GET -> Root :? OnlyNamesFlagMatcher(onlyNames) =>
       if (onlyNames) {
-        algebra.getCitiesOnlyNames.flatMap(toResponse(_))
+        algebra.getCitiesOnlyNames.flatMap(_.toResponse)
       } else {
-        algebra.getCities.flatMap(toResponse(_))
+        algebra.getCities.flatMap(_.toResponse)
       }
 
-    // GET /cities/{id}
-    case GET -> Root / id =>
-      id.asLong.fold {
-        BadRequest(EntryInvalidFormat.error)
-      }(id => algebra.getCity(id).flatMap(toResponse(_)))
+    // GET /cities/{value}?field={city_field; default=id}
+    case GET -> Root / value :? FieldMatcherIdDefault(field) =>
+      if (field == "id") {
+        value.asLong.toResponse(algebra.getCity)
+      } else {
+        implicitly[TableBase[City]].fieldTypeMap.get(field) match {
+          case Some(StringType)     => algebra.getCities(field, value).flatMap(_.toResponse)
+          case Some(IntType)        => value.asInt.toResponse(algebra.getCities(field, _))
+          case Some(LongType)       => value.asLong.toResponse(algebra.getCities(field, _))
+          case Some(BooleanType)    => value.asBoolean.toResponse(algebra.getCities(field, _))
+          case Some(BigDecimalType) => value.asBigDecimal.toResponse(algebra.getCities(field, _))
+          case None                 => BadRequest(InvalidField(field).error)
+        }
+      }
 
-    // GET /cities/name/{name}
-    case GET -> Root / "name" / name =>
-      algebra.getCities("name", name).flatMap(toResponse(_))
-
-    // GET /cities/country/{country_name} OR
-    // GET /cities/country/{country_id}
-    case GET -> Root / "country" / country =>
-      country.asLong.fold[F[Response[F]]] {
-        // Treat country as name
-        algebra.getCitiesByCountry(country).flatMap(toResponse(_))
-      }(algebra.getCities("country_id", _).flatMap(toResponse(_)))
+    // GET /cities/country/{value}?field={country_field; default=id}
+    case GET -> Root / "country" / value :? FieldMatcherIdDefault(field) =>
+      implicitly[TableBase[Country]].fieldTypeMap.get(field) match {
+        case Some(StringType)  => algebra.getCitiesByCountry(field, value).flatMap(_.toResponse)
+        case Some(IntType)     => value.asInt.toResponse(algebra.getCitiesByCountry(field, _))
+        case Some(LongType)    => value.asLong.toResponse(algebra.getCitiesByCountry(field, _))
+        case Some(BooleanType) => value.asBoolean.toResponse(algebra.getCitiesByCountry(field, _))
+        case Some(BigDecimalType) =>
+          value.asBigDecimal.toResponse(algebra.getCitiesByCountry(field, _))
+        case None => BadRequest(InvalidField(field).error)
+      }
 
     // POST /cities
     case req @ POST -> Root =>
-      req
-        .attemptAs[CityCreate]
-        .foldF[ApiResult[Long]](
-          _ => EntryInvalidFormat.elevate[F, Long],
-          algebra.createCity
-        )
-        .flatMap(toResponse(_))
+      processRequest(req)(algebra.createCity).flatMap(_.toResponse)
 
     // PUT /cities/{id}
     case req @ PUT -> Root / id =>
-      id.asLong.fold {
-        BadRequest(EntryInvalidFormat.error)
-      } { id =>
-        req
-          .attemptAs[City]
-          .foldF[ApiResult[Long]](
-            _ => EntryInvalidFormat.elevate[F, Long],
-            city =>
-              if (id != city.id) {
-                InconsistentIds(id, city.id).elevate[F, Long]
-              } else {
-                algebra.updateCity(city)
-              }
-          )
-          .flatMap(toResponse(_))
+      id.asLong.toResponse { i =>
+        processRequest[CityCreate, Long](req) { city =>
+          if (city.id.exists(_ != i)) {
+            InconsistentIds(i, city.id.get).elevate[F, Long]
+          } else {
+            algebra.updateCity(City.fromCreate(i, city))
+          }
+        }
       }
 
     // PATCH /cities/{id}
     case req @ PATCH -> Root / id =>
-      id.asLong.fold {
-        BadRequest(EntryInvalidFormat.error)
-      } { id =>
-        req
-          .attemptAs[CityPatch]
-          .foldF[ApiResult[City]](
-            _ => EntryInvalidFormat.elevate[F, City],
-            algebra.partiallyUpdateCity(id, _)
-          )
-          .flatMap(toResponse(_))
-      }
+      id.asLong.toResponse(i => processRequest(req)(algebra.partiallyUpdateCity(i, _)))
 
     // DELETE /cities/{id}
     case DELETE -> Root / id =>
-      id.asLong.fold {
-        BadRequest(EntryInvalidFormat.error)
-      }(id => algebra.removeCity(id).flatMap(toResponse(_)))
+      id.asLong.toResponse(algebra.removeCity)
   }
 }
 

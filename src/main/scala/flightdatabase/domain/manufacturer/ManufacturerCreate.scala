@@ -6,18 +6,18 @@ import io.circe.generic.extras.ConfiguredJsonCodec
 @ConfiguredJsonCodec final case class ManufacturerCreate(
   id: Option[Long],
   name: String,
-  cityBasedIn: Long
+  baseCityId: Long
 )
 
 object ManufacturerCreate {
 
   def apply(
     name: String,
-    cityBasedIn: Long
+    baseCityId: Long
   ): ManufacturerCreate =
     new ManufacturerCreate(
       None,
       name,
-      cityBasedIn
+      baseCityId
     )
 }
