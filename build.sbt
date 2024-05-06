@@ -26,7 +26,7 @@ val doobieVersion = "1.0.0-RC5"
 val http4sVersion = "0.23.26"
 val pureconfigVersion = "0.17.6"
 val flywayVersion = "10.11.0"
-val scalaTestVersion = "3.2.17"
+val scalaTestVersion = "3.2.18"
 val testcontainersVersion = "0.41.3"
 
 val circeDependencies = Seq(
@@ -53,7 +53,8 @@ val http4sDependencies = Seq(
 val otherDependencies = Seq(
   "com.github.pureconfig"      %% "pureconfig"                % pureconfigVersion,
   "com.github.pureconfig"      %% "pureconfig-cats-effect"    % pureconfigVersion,
-  "org.slf4j"                  % "slf4j-log4j12"              % "2.0.9",
+  "com.beachape"               %% "enumeratum"                % "1.7.3",
+  "org.slf4j"                  % "slf4j-log4j12"              % "2.0.13",
   "com.typesafe.scala-logging" %% "scala-logging"             % "3.9.5",
   "commons-io"                 % "commons-io"                 % "2.16.1",
   "org.flywaydb"               % "flyway-core"                % flywayVersion,
