@@ -37,6 +37,7 @@ TODO list
   a population greater than 1 million. Convention slightly based
   on https://developer.adobe.com/commerce/webapi/rest/use-rest/performing-searches/)
 - Introduce fuzzy search? Or at least case-insensitive search?
+- Make it possible to select a set of fields and not only one or all.
 - All `endpoints` should return URI of the output resource in the `Location` header. Basically, the `id` field should be
   a JSON object with a `uri` field. This will allow for easy navigation of the API.
 - Add a URI to all foreign key fields in the response (maybe use something similar to `TableBase`).

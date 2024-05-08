@@ -48,12 +48,12 @@ class CurrencyEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Curr
 
     // POST /currencies
     case req @ POST -> Root =>
-      processRequest(req)(algebra.createCurrency).flatMap(_.toResponse)
+      processRequestBody(req)(algebra.createCurrency).flatMap(_.toResponse)
 
     // PUT /currencies/{id}
     case req @ PUT -> Root / id =>
       id.asLong.toResponse { i =>
-        processRequest[CurrencyCreate, Long](req) { currency =>
+        processRequestBody[CurrencyCreate, Long](req) { currency =>
           if (currency.id.exists(_ != i)) {
             InconsistentIds(i, currency.id.get).elevate[F, Long]
           } else {
@@ -64,7 +64,7 @@ class CurrencyEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Curr
 
     // PATCH /currencies/{id}
     case req @ PATCH -> Root / id =>
-      id.asLong.toResponse(i => processRequest(req)(algebra.partiallyUpdateCurrency(i, _)))
+      id.asLong.toResponse(i => processRequestBody(req)(algebra.partiallyUpdateCurrency(i, _)))
 
     // DELETE /currencies/{id}
     case DELETE -> Root / id =>

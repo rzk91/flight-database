@@ -61,12 +61,12 @@ class AirplaneEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airp
 
     // POST /airplanes
     case req @ POST -> Root =>
-      processRequest(req)(algebra.createAirplane).flatMap(_.toResponse)
+      processRequestBody(req)(algebra.createAirplane).flatMap(_.toResponse)
 
     // PUT /airplanes/{id}
     case req @ PUT -> Root / id =>
       id.asLong.toResponse { i =>
-        processRequest[AirplaneCreate, Long](req) { airplane =>
+        processRequestBody[AirplaneCreate, Long](req) { airplane =>
           if (airplane.id.exists(_ != i)) {
             InconsistentIds(i, airplane.id.get).elevate[F, Long]
           } else {
@@ -77,7 +77,7 @@ class AirplaneEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airp
 
     // PATCH /airplanes/{id}
     case req @ PATCH -> Root / id =>
-      id.asLong.toResponse(i => processRequest(req)(algebra.partiallyUpdateAirplane(i, _)))
+      id.asLong.toResponse(i => processRequestBody(req)(algebra.partiallyUpdateAirplane(i, _)))
 
     // DELETE /airplanes/{id}
     case DELETE -> Root / id =>

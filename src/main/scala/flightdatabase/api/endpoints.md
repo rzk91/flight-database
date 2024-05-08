@@ -8,7 +8,7 @@ List of endpoints
    ```bash
    curl -i http://localhost:18181/v1/flightdb/hello/me
    ```
-
+   
 ### Airline-Airplanes
 1. **HEAD /airline-airplanes/{id}**
    ```bash
@@ -20,45 +20,50 @@ List of endpoints
    curl -i http://localhost:18181/v1/flightdb/airline-airplanes
    ```
 
-3. **GET /airline-airplanes/{id}**
+3. **GET /airline-airplanes/filter?field={airline_airplane_field; default: id}&operator={operator; default: eq}&value={value}**
    ```bash
-   curl -i GET http://localhost:18181/v1/flightdb/airline-airplanes/1
+   curl -i http://localhost:18181/v1/flightdb/airline-airplanes/filter?field=id&operator=eq&value=1
    ```
 
-4. **GET /airline-airplanes/airline/{airline_id}/airplane/{airplane_id}**
+4. **GET /airline-airplanes/{id}**
    ```bash
-   curl -i GET http://localhost:18181/v1/flightdb/airline-airplanes/airline/1/airplane/1
+   curl -i http://localhost:18181/v1/flightdb/airline-airplanes/1
    ```
 
-5. **GET /airline-airplanes/airline/{value}?field={airline_field; default: id}**
+5. **GET /airline-airplanes/airline/{airline_id}/airplane/{airplane_id}**
    ```bash
-   curl -i http://localhost:18181/v1/flightdb/airline-airplanes/airline/Lufthansa?field=name
+   curl -i http://localhost:18181/v1/flightdb/airline-airplanes/airline/1/airplane/1
    ```
 
-6. **GET /airline-airplanes/airplane/{value}?field={airplane_field; default: id}**
+6. **GET /airline-airplanes/airline/filter?field={airline_field; default: id}&operator={operator; default: eq}&value={value}**
    ```bash
-   curl -i http://localhost:18181/v1/flightdb/airline-airplanes/airplane/A380?field=name
+   curl -i http://localhost:18181/v1/flightdb/airline-airplanes/airline/filter?field=id&operator=eq&value=1
    ```
 
-7. **POST /airline-airplanes**
+7. **GET /airline-airplanes/airplane/filter?field={airplane_field; default: id}&operator={operator; default: eq}&value={value}**
+   ```bash
+   curl -i http://localhost:18181/v1/flightdb/airline-airplanes/airplane/filter?field=id&operator=eq&value=1
+   ```
+
+8. **POST /airline-airplanes**
    ```bash
    curl -i -X POST http://localhost:18181/v1/flightdb/airline-airplanes -H "Content-Type: application/json" -d '{"airline_id": 1, "airplane_id": 1}'
    ```
 
-8. **PUT /airline-airplanes/{id}**
+9. **PUT /airline-airplanes/{id}**
    ```bash
-   curl -i -X PUT http://localhost:18181/v1/flightdb/airline-airplanes/1 -H "Content-Type: application/json" -d '{"id": 1, "airline_id": 1, "airplane_id": 2}'
+   curl -i -X PUT http://localhost:18181/v1/flightdb/airline-airplanes/1 -H "Content-Type: application/json" -d '{"airline_id": 2, "airplane_id": 2}'
    ```
 
-9. **PATCH /airline-airplanes/{id}**
-   ```bash
-   curl -i -X PATCH http://localhost:18181/v1/flightdb/airline-airplanes/1 -H "Content-Type: application/json" -d '{"airplane_id": 3}'
-   ```
+10. **PATCH /airline-airplanes/{id}**
+    ```bash
+    curl -i -X PATCH http://localhost:18181/v1/flightdb/airline-airplanes/1 -H "Content-Type: application/json" -d '{"airline_id": 3}'
+    ```
 
-10. **DELETE /airline-airplanes/{id}**
-   ```bash
-   curl -i -X DELETE http://localhost:18181/v1/flightdb/airline-airplanes/1
-   ```
+11. **DELETE /airline-airplanes/{id}**
+    ```bash
+    curl -i -X DELETE http://localhost:18181/v1/flightdb/airline-airplanes/1
+    ```
 
 ### Airline-Cities
 1. **HEAD /airline-cities/{id}**

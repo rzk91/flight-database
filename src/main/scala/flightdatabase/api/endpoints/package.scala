@@ -1,8 +1,11 @@
 package flightdatabase.api
 
 import cats.Monad
+import cats.data.{NonEmptyList => Nel}
+import cats.implicits.toTraverseOps
 import cats.syntax.flatMap._
 import flightdatabase.domain._
+import flightdatabase.utils.implicits.enrichString
 import org.http4s._
 import org.http4s.dsl.Http4sDsl
 
@@ -28,6 +31,7 @@ package object endpoints {
         case Left(value: InconsistentIds)            => BadRequest(value.error)
         case Left(value: InvalidTimezone)            => BadRequest(value.error)
         case Left(value: InvalidField)               => BadRequest(value.error)
+        case Left(value: InvalidOperator)            => BadRequest(value.error)
         case Left(value: InvalidValueType)           => BadRequest(value.error)
         case Left(value @ EntryAlreadyExists)        => Conflict(value.error)
         case Left(value @ FeatureNotImplemented)     => NotImplemented(value.error)
@@ -58,5 +62,33 @@ package object endpoints {
       import dsl._
       maybeFields.fold(BadRequest(apiError.error))(f.tupled(_).flatMap(_.toResponse))
     }
+  }
+
+  implicit class ValuesOps(private val values: String) extends AnyVal {
+
+    def asStringToResponse[F[_]: Monad, O](field: String, op: Operator)(
+      f: Nel[String] => F[ApiResult[O]]
+    )(implicit dsl: Http4sDsl[F], enc: EntityEncoder[F, O]): F[Response[F]] =
+      values.splitToNel().map(_.toOption).sequence.toResponse(f)
+
+    def asIntToResponse[F[_]: Monad, O](field: String, op: Operator)(
+      f: Nel[Int] => F[ApiResult[O]]
+    )(implicit dsl: Http4sDsl[F], enc: EntityEncoder[F, O]): F[Response[F]] =
+      values.splitToNel().map(_.asInt).sequence.toResponse(f)
+
+    def asLongToResponse[F[_]: Monad, O](field: String, op: Operator)(
+      f: Nel[Long] => F[ApiResult[O]]
+    )(implicit dsl: Http4sDsl[F], enc: EntityEncoder[F, O]): F[Response[F]] =
+      values.splitToNel().map(_.asLong).sequence.toResponse(f)
+
+    def asBooleanToResponse[F[_]: Monad, O](field: String, op: Operator)(
+      f: Nel[Boolean] => F[ApiResult[O]]
+    )(implicit dsl: Http4sDsl[F], enc: EntityEncoder[F, O]): F[Response[F]] =
+      values.splitToNel().map(_.asBoolean).sequence.toResponse(f)
+
+    def asBigDecimalToResponse[F[_]: Monad, O](field: String, op: Operator)(
+      f: Nel[BigDecimal] => F[ApiResult[O]]
+    )(implicit dsl: Http4sDsl[F], enc: EntityEncoder[F, O]): F[Response[F]] =
+      values.splitToNel().map(_.asBigDecimal).sequence.toResponse(f)
   }
 }

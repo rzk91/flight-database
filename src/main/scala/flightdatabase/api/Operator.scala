@@ -14,8 +14,8 @@ object Operator extends Enum[Operator] {
 
   case object Equals extends Operator("eq") { val inSql = "=" }
   case object NotEquals extends Operator("neq") { val inSql = "<>" }
-  case object Is extends Operator("is") { val inSql = "IS" }
-  case object IsNot extends Operator("is_not") { val inSql = "IS NOT" }
+  case object Is extends Operator("is") { val inSql = "=" }
+  case object IsNot extends Operator("is_not") { val inSql = "<>" }
   case object GreaterThan extends Operator("gt") { val inSql = ">" }
   case object GreaterThanOrEqualTo extends Operator("gteq") { val inSql = ">=" }
   case object LessThan extends Operator("lt") { val inSql = "<" }

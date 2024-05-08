@@ -2,6 +2,7 @@ package flightdatabase.domain
 
 import cats.Applicative
 import cats.syntax.either._
+import flightdatabase.api.Operator
 
 sealed trait ApiError {
   def error: String
@@ -49,6 +50,10 @@ case class InvalidTimezone(timezone: String) extends ApiError {
 
 case class InvalidField(field: String) extends ApiError {
   override val error: String = s"Error: Invalid field '$field'"
+}
+
+case class InvalidOperator(operator: Operator) extends ApiError {
+  override val error: String = s"Error: Invalid operator '$operator'"
 }
 
 case class InvalidValueType(value: String) extends ApiError {

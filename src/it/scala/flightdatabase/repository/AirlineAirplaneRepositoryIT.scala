@@ -1,7 +1,9 @@
 package flightdatabase.repository
 
+import cats.data.{NonEmptyList => Nel}
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
+import flightdatabase.api.Operator
 import flightdatabase.domain.ApiResult
 import flightdatabase.domain.EntryAlreadyExists
 import flightdatabase.domain.EntryHasInvalidForeignKey
@@ -77,10 +79,10 @@ final class AirlineAirplaneRepositoryIT extends RepositoryCheck {
 
   "Selecting airline airplanes by other fields" should "return the corresponding entries" in {
     def airlineAirplaneByAirlineId(id: Long): IO[ApiResult[List[AirlineAirplane]]] =
-      repo.getAirlineAirplanes("airline_id", id)
+      repo.getAirlineAirplanes("airline_id", Nel.one(id), Operator.Equals)
 
     def airlineAirplaneByAirplaneId(id: Long): IO[ApiResult[List[AirlineAirplane]]] =
-      repo.getAirlineAirplanes("airplane_id", id)
+      repo.getAirlineAirplanes("airplane_id", Nel.one(id), Operator.Equals)
 
     val distinctAirlineIds = originalAirlineAirplanes.map(_.airlineId).distinct
     val distinctAirplaneIds = originalAirlineAirplanes.map(_.airplaneId).distinct
@@ -105,13 +107,13 @@ final class AirlineAirplaneRepositoryIT extends RepositoryCheck {
 
   "Selecting airline airplanes by external fields" should "return the corresponding entries" in {
     def airlineAirplanesByAirlineName(name: String): IO[ApiResult[List[AirlineAirplane]]] =
-      repo.getAirlineAirplanesByAirline("name", name)
+      repo.getAirlineAirplanesByAirline("name", Nel.one(name), Operator.Equals)
 
     def airlineAirplanesByAirplaneName(name: String): IO[ApiResult[List[AirlineAirplane]]] =
-      repo.getAirlineAirplanesByAirplane("name", name)
+      repo.getAirlineAirplanesByAirplane("name", Nel.one(name), Operator.Equals)
 
     def airlineAirplanesByAirlineIata(iata: String): IO[ApiResult[List[AirlineAirplane]]] =
-      repo.getAirlineAirplanesByAirline("iata", iata)
+      repo.getAirlineAirplanesByAirline("iata", Nel.one(iata), Operator.Equals)
 
     forAll(airlineIdMap) {
       case (id, (name, iso)) =>

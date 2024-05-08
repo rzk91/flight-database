@@ -107,12 +107,12 @@ class AirlineRouteEndpoints[F[_]: Concurrent] private (
 
     // POST /airline-routes
     case req @ POST -> Root =>
-      processRequest(req)(algebra.createAirlineRoute).flatMap(_.toResponse)
+      processRequestBody(req)(algebra.createAirlineRoute).flatMap(_.toResponse)
 
     // PUT /airline-routes/{id}
     case req @ PUT -> Root / id =>
       id.asLong.toResponse { i =>
-        processRequest[AirlineRouteCreate, Long](req) { airlineRoute =>
+        processRequestBody[AirlineRouteCreate, Long](req) { airlineRoute =>
           if (airlineRoute.id.exists(_ != i)) {
             InconsistentIds(i, airlineRoute.id.get).elevate[F, Long]
           } else {
@@ -123,7 +123,7 @@ class AirlineRouteEndpoints[F[_]: Concurrent] private (
 
     // PATCH /airline-routes/{id}
     case req @ PATCH -> Root / id =>
-      id.asLong.toResponse(i => processRequest(req)(algebra.partiallyUpdateAirlineRoute(i, _)))
+      id.asLong.toResponse(i => processRequestBody(req)(algebra.partiallyUpdateAirlineRoute(i, _)))
 
     // DELETE /airline-routes/{id}
     case DELETE -> Root / id =>

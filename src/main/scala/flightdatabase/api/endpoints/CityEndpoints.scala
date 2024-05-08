@@ -60,12 +60,12 @@ class CityEndpoints[F[_]: Concurrent] private (prefix: String, algebra: CityAlge
 
     // POST /cities
     case req @ POST -> Root =>
-      processRequest(req)(algebra.createCity).flatMap(_.toResponse)
+      processRequestBody(req)(algebra.createCity).flatMap(_.toResponse)
 
     // PUT /cities/{id}
     case req @ PUT -> Root / id =>
       id.asLong.toResponse { i =>
-        processRequest[CityCreate, Long](req) { city =>
+        processRequestBody[CityCreate, Long](req) { city =>
           if (city.id.exists(_ != i)) {
             InconsistentIds(i, city.id.get).elevate[F, Long]
           } else {
@@ -76,7 +76,7 @@ class CityEndpoints[F[_]: Concurrent] private (prefix: String, algebra: CityAlge
 
     // PATCH /cities/{id}
     case req @ PATCH -> Root / id =>
-      id.asLong.toResponse(i => processRequest(req)(algebra.partiallyUpdateCity(i, _)))
+      id.asLong.toResponse(i => processRequestBody(req)(algebra.partiallyUpdateCity(i, _)))
 
     // DELETE /cities/{id}
     case DELETE -> Root / id =>

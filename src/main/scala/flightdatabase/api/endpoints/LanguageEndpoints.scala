@@ -46,12 +46,12 @@ class LanguageEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Lang
 
     // POST /languages
     case req @ POST -> Root =>
-      processRequest(req)(algebra.createLanguage).flatMap(_.toResponse)
+      processRequestBody(req)(algebra.createLanguage).flatMap(_.toResponse)
 
     // PUT /languages/{id}
     case req @ PUT -> Root / id =>
       id.asLong.toResponse { i =>
-        processRequest[LanguageCreate, Long](req) { language =>
+        processRequestBody[LanguageCreate, Long](req) { language =>
           if (language.id.exists(_ != i)) {
             InconsistentIds(i, language.id.get).elevate[F, Long]
           } else {
@@ -62,7 +62,7 @@ class LanguageEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Lang
 
     // PATCH /languages/{id}
     case req @ PATCH -> Root / id =>
-      id.asLong.toResponse(i => processRequest(req)(algebra.partiallyUpdateLanguage(i, _)))
+      id.asLong.toResponse(i => processRequestBody(req)(algebra.partiallyUpdateLanguage(i, _)))
 
     // DELETE /languages/{id}
     case DELETE -> Root / id =>

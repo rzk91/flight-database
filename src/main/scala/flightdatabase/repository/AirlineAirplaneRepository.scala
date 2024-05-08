@@ -1,11 +1,13 @@
 package flightdatabase.repository
 
 import cats.data.EitherT
+import cats.data.{NonEmptyList => Nel}
 import cats.effect.Concurrent
 import cats.effect.Resource
 import cats.implicits._
 import doobie.Put
 import doobie.Transactor
+import flightdatabase.api.Operator
 import flightdatabase.domain._
 import flightdatabase.domain.airline.Airline
 import flightdatabase.domain.airline_airplane._
@@ -24,14 +26,15 @@ class AirlineAirplaneRepository[F[_]: Concurrent] private (
     selectAllAirlineAirplanes.asList().execute
 
   override def getAirlineAirplane(id: Long): F[ApiResult[AirlineAirplane]] =
-    selectAirlineAirplanesBy("id", id).asSingle(id).execute
+    selectAirlineAirplanesBy("id", Nel.one(id), Operator.Equals).asSingle(id).execute
 
   override def getAirlineAirplane(
     airlineId: Long,
     airplaneId: Long
   ): F[ApiResult[AirlineAirplane]] =
     EitherT(
-      selectAirlineAirplanesBy("airline_id", airlineId).asList(invalidValue = Some(airlineId))
+      selectAirlineAirplanesBy("airline_id", Nel.one(airlineId), Operator.Equals)
+        .asList(invalidValue = Some(airlineId))
     ).subflatMap[ApiError, ApiOutput[AirlineAirplane]] { output =>
         val airlineAirplanes = output.value
         airlineAirplanes.find(_.airplaneId == airplaneId) match {
@@ -44,27 +47,33 @@ class AirlineAirplaneRepository[F[_]: Concurrent] private (
 
   override def getAirlineAirplanes[V: Put](
     field: String,
-    value: V
+    values: Nel[V],
+    operator: Operator
   ): F[ApiResult[List[AirlineAirplane]]] =
-    selectAirlineAirplanesBy(field, value).asList(Some(field), Some(value)).execute
+    selectAirlineAirplanesBy(field, values, operator).asList(Some(field), Some(values)).execute
 
   override def getAirlineAirplanesByExternal[ET: TableBase, EV: Put](
     field: String,
-    value: EV
+    values: Nel[EV],
+    operator: Operator
   ): F[ApiResult[List[AirlineAirplane]]] =
-    selectAirlineAirplaneByExternal[ET, EV](field, value).asList(Some(field), Some(value)).execute
+    selectAirlineAirplaneByExternal[ET, EV](field, values, operator)
+      .asList(Some(field), Some(values))
+      .execute
 
   override def getAirlineAirplanesByAirplane[V: Put](
     field: String,
-    value: V
+    values: Nel[V],
+    operator: Operator
   ): F[ApiResult[List[AirlineAirplane]]] =
-    getAirlineAirplanesByExternal[Airplane, V](field, value)
+    getAirlineAirplanesByExternal[Airplane, V](field, values, operator)
 
   override def getAirlineAirplanesByAirline[V: Put](
     field: String,
-    value: V
+    values: Nel[V],
+    operator: Operator
   ): F[ApiResult[List[AirlineAirplane]]] =
-    getAirlineAirplanesByExternal[Airline, V](field, value)
+    getAirlineAirplanesByExternal[Airline, V](field, values, operator)
 
   override def createAirlineAirplane(airlineAirplane: AirlineAirplaneCreate): F[ApiResult[Long]] =
     insertAirlineAirplane(airlineAirplane).attemptInsert.execute

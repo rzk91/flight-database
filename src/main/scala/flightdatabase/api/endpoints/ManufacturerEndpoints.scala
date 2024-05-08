@@ -78,12 +78,12 @@ class ManufacturerEndpoints[F[_]: Concurrent] private (
 
     // POST /manufacturers
     case req @ POST -> Root =>
-      processRequest(req)(algebra.createManufacturer).flatMap(_.toResponse)
+      processRequestBody(req)(algebra.createManufacturer).flatMap(_.toResponse)
 
     // PUT /manufacturers/{id}
     case req @ PUT -> Root / id =>
       id.asLong.toResponse { i =>
-        processRequest[ManufacturerCreate, Long](req) { manufacturer =>
+        processRequestBody[ManufacturerCreate, Long](req) { manufacturer =>
           if (manufacturer.id.exists(_ != i)) {
             InconsistentIds(i, manufacturer.id.get).elevate[F, Long]
           } else {
@@ -94,7 +94,7 @@ class ManufacturerEndpoints[F[_]: Concurrent] private (
 
     // PATCH /manufacturers/{id}
     case req @ PATCH -> Root / id =>
-      id.asLong.toResponse(i => processRequest(req)(algebra.partiallyUpdateManufacturer(i, _)))
+      id.asLong.toResponse(i => processRequestBody(req)(algebra.partiallyUpdateManufacturer(i, _)))
 
     // DELETE /manufacturers/{id}
     case DELETE -> Root / id =>

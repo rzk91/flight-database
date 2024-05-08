@@ -1,5 +1,7 @@
 package flightdatabase.utils.implicits
 
+import cats.data.{NonEmptyList => Nel}
+
 import scala.util.Try
 
 class RichString(private val str: String) extends AnyVal {
@@ -36,6 +38,11 @@ class RichString(private val str: String) extends AnyVal {
   def splitInTwo(by: Char): (String, String) = {
     val split = str.split(by)
     (split.head, split.last)
+  }
+
+  def splitToNel(by: Char = ','): Nel[String] = {
+    val split = str.split(by).toList
+    Nel.of(split.head, split.tail: _*) // Safe because split is never empty
   }
 
   private def escape(char: Char): String = {

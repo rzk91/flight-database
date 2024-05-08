@@ -32,7 +32,7 @@ abstract class Endpoints[F[_]: Monad](prefix: String) extends Http4sDsl[F] {
       extends QueryParamDecoderMatcherWithDefault[Operator]("operator", Operator.Equals)
 
   // Support functions
-  final protected def processRequest[IN, OUT](
+  final protected def processRequestBody[IN, OUT](
     req: Request[F],
     apiError: ApiError = EntryInvalidFormat
   )(f: IN => F[ApiResult[OUT]])(
@@ -46,4 +46,14 @@ abstract class Endpoints[F[_]: Monad](prefix: String) extends Http4sDsl[F] {
         f
       )
 
+  final protected def processFilter[T: TableBase](field: String, operator: Operator)(
+    pf: PartialFunction[Option[FieldType], F[Response[F]]]
+  ): F[Response[F]] =
+    pf.applyOrElse[Option[FieldType], F[Response[F]]](
+      implicitly[TableBase[T]].fieldTypeMap.get(field),
+      default = {
+        case Some(_) => BadRequest(InvalidOperator(operator).error)
+        case None    => BadRequest(InvalidField(field).error)
+      }
+    )
 }

@@ -75,12 +75,12 @@ class CountryEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Count
 
     // POST /countries
     case req @ POST -> Root =>
-      processRequest(req)(algebra.createCountry).flatMap(_.toResponse)
+      processRequestBody(req)(algebra.createCountry).flatMap(_.toResponse)
 
     // PUT /countries/{id}
     case req @ PUT -> Root / id =>
       id.asLong.toResponse { i =>
-        processRequest[CountryCreate, Long](req) { country =>
+        processRequestBody[CountryCreate, Long](req) { country =>
           if (country.id.exists(_ != i)) {
             InconsistentIds(i, country.id.get).elevate[F, Long]
           } else {
@@ -91,7 +91,7 @@ class CountryEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Count
 
     // PATCH /countries/{id}
     case req @ PATCH -> Root / id =>
-      id.asLong.toResponse(i => processRequest(req)(algebra.partiallyUpdateCountry(i, _)))
+      id.asLong.toResponse(i => processRequestBody(req)(algebra.partiallyUpdateCountry(i, _)))
 
     // DELETE /countries/{id}
     case DELETE -> Root / id =>

@@ -72,12 +72,12 @@ class AirportEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airpo
 
     // POST /airports
     case req @ POST -> Root =>
-      processRequest(req)(algebra.createAirport).flatMap(_.toResponse)
+      processRequestBody(req)(algebra.createAirport).flatMap(_.toResponse)
 
     // PUT /airports/{id}
     case req @ PUT -> Root / id =>
       id.asLong.toResponse { i =>
-        processRequest[AirportCreate, Long](req) { airport =>
+        processRequestBody[AirportCreate, Long](req) { airport =>
           if (airport.id.exists(_ != i)) {
             InconsistentIds(i, airport.id.get).elevate[F, Long]
           } else {
@@ -88,7 +88,7 @@ class AirportEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airpo
 
     // PATCH /airports/{id}
     case req @ PATCH -> Root / id =>
-      id.asLong.toResponse(i => processRequest(req)(algebra.partiallyUpdateAirport(i, _)))
+      id.asLong.toResponse(i => processRequestBody(req)(algebra.partiallyUpdateAirport(i, _)))
 
     // DELETE /airports/{id}
     case DELETE -> Root / id =>
