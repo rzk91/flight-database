@@ -14,6 +14,7 @@ import flightdatabase.domain.airline_airplane.AirlineAirplaneCreate
 import flightdatabase.domain.airline_airplane.AirlineAirplanePatch
 import flightdatabase.testutils.RepositoryCheck
 import flightdatabase.testutils.implicits.enrichIOOperation
+import flightdatabase.utils.implicits.iterableToRichIterable
 import org.scalatest.Inspectors.forAll
 
 final class AirlineAirplaneRepositoryIT extends RepositoryCheck {
@@ -32,12 +33,15 @@ final class AirlineAirplaneRepositoryIT extends RepositoryCheck {
   val valueNotPresent: String = "Not Present"
   val veryLongIdNotPresent: Long = 1000000000000000000L
 
+  // airlineId -> (name, iata)
   val airlineIdMap: Map[Long, (String, String)] = Map(
     1L -> ("Lufthansa", "LH"),
     2L -> ("Emirates", "EK")
   )
 
-  val airplaneIdMap: Map[Long, String] = Map(1L -> "A380", 2L -> "747-8", 3L -> "A320neo")
+  // airplaneId -> (name, capacity)
+  val airplaneIdMap: Map[Long, (String, Int)] =
+    Map(1L -> ("A380", 853), 2L -> ("747-8", 410), 3L -> ("A320neo", 194))
 
   val newAirlineAirplane: AirlineAirplaneCreate = AirlineAirplaneCreate(2, 2) // EK -> 747-8
   val updatedAirplane: Long = 4                                               // EK -> 787-8
@@ -115,6 +119,13 @@ final class AirlineAirplaneRepositoryIT extends RepositoryCheck {
     def airlineAirplanesByAirlineIata(iata: String): IO[ApiResult[List[AirlineAirplane]]] =
       repo.getAirlineAirplanesByAirline("iata", Nel.one(iata), Operator.Equals)
 
+    def airlineAirplanesByAirplaneCapacity(capacity: Int): IO[ApiResult[List[AirlineAirplane]]] =
+      repo.getAirlineAirplanesByAirplane(
+        "capacity",
+        Nel.one(capacity),
+        Operator.GreaterThanOrEqualTo
+      )
+
     forAll(airlineIdMap) {
       case (id, (name, iso)) =>
         airlineAirplanesByAirlineName(name).value should contain only (
@@ -126,11 +137,22 @@ final class AirlineAirplaneRepositoryIT extends RepositoryCheck {
     }
 
     forAll(airplaneIdMap) {
-      case (id, name) =>
+      case (id, (name, _)) =>
         airlineAirplanesByAirplaneName(name).value should contain only (
           originalAirlineAirplanes.filter(_.airplaneId == id): _*
         )
     }
+
+    val leastCapacity = 200
+
+    airlineAirplanesByAirplaneCapacity(leastCapacity).value should contain only (
+      originalAirlineAirplanes.filter(aa =>
+        airplaneIdMap
+          .withFilter { case (_, (_, capacity)) => capacity >= leastCapacity }
+          .map { case (id, _) => id }
+          .containsElement(aa.airplaneId)
+      ): _*
+    )
 
     airlineAirplanesByAirlineName(valueNotPresent).error shouldBe EntryListEmpty
     airlineAirplanesByAirlineIata(valueNotPresent).error shouldBe EntryListEmpty
