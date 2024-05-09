@@ -1,11 +1,13 @@
 package flightdatabase.repository
 
 import cats.data.EitherT
+import cats.data.{NonEmptyList => Nel}
 import cats.effect.Concurrent
 import cats.effect.Resource
 import cats.implicits._
 import doobie.Put
 import doobie.Transactor
+import flightdatabase.api.Operator
 import flightdatabase.domain._
 import flightdatabase.domain.airline.Airline
 import flightdatabase.domain.airline_city._
@@ -23,11 +25,13 @@ class AirlineCityRepository[F[_]: Concurrent] private (implicit transactor: Tran
     selectAllAirlineCities.asList().execute
 
   override def getAirlineCity(id: Long): F[ApiResult[AirlineCity]] =
-    selectAirlineCitiesBy("id", id).asSingle(id).execute
+    selectAirlineCitiesBy("id", Nel.one(id), Operator.Equals).asSingle(id).execute
 
   override def getAirlineCity(airlineId: Long, cityId: Long): F[ApiResult[AirlineCity]] =
-    EitherT(selectAirlineCitiesBy("airline_id", airlineId).asList(invalidValue = Some(airlineId)))
-      .subflatMap[ApiError, ApiOutput[AirlineCity]] { output =>
+    EitherT(
+      selectAirlineCitiesBy("airline_id", Nel.one(airlineId), Operator.Equals)
+        .asList(invalidValue = Some(airlineId))
+    ).subflatMap[ApiError, ApiOutput[AirlineCity]] { output =>
         val airlineCities = output.value
         airlineCities.find(_.cityId == cityId) match {
           case Some(airlineCity) => Right(Got(airlineCity))
@@ -37,26 +41,33 @@ class AirlineCityRepository[F[_]: Concurrent] private (implicit transactor: Tran
       .value
       .execute
 
-  override def getAirlineCities[V: Put](field: String, value: V): F[ApiResult[List[AirlineCity]]] =
-    selectAirlineCitiesBy(field, value).asList(Some(field), Some(value)).execute
+  override def getAirlineCities[V: Put](
+    field: String,
+    values: Nel[V],
+    operator: Operator
+  ): F[ApiResult[List[AirlineCity]]] =
+    selectAirlineCitiesBy(field, values, operator).asList(Some(field), Some(values)).execute
 
   override def getAirlineCitiesByExternal[ET: TableBase, EV: Put](
     field: String,
-    value: EV
+    values: Nel[EV],
+    operator: Operator
   ): F[ApiResult[List[AirlineCity]]] =
-    selectAirlineCityByExternal(field, value).asList(Some(field), Some(value)).execute
+    selectAirlineCityByExternal(field, values, operator).asList(Some(field), Some(values)).execute
 
   override def getAirlineCitiesByCity[V: Put](
     field: String,
-    value: V
+    values: Nel[V],
+    operator: Operator
   ): F[ApiResult[List[AirlineCity]]] =
-    getAirlineCitiesByExternal[City, V](field, value)
+    getAirlineCitiesByExternal[City, V](field, values, operator)
 
   override def getAirlineCitiesByAirline[V: Put](
     field: String,
-    value: V
+    values: Nel[V],
+    operator: Operator
   ): F[ApiResult[List[AirlineCity]]] =
-    getAirlineCitiesByExternal[Airline, V](field, value)
+    getAirlineCitiesByExternal[Airline, V](field, values, operator)
 
   override def createAirlineCity(airlineCity: AirlineCityCreate): F[ApiResult[Long]] =
     insertAirlineCity(airlineCity).attemptInsert.execute

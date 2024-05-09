@@ -3,11 +3,9 @@ package flightdatabase.api.endpoints
 import cats.effect.Concurrent
 import cats.implicits._
 import flightdatabase.domain._
-import flightdatabase.domain.airline.Airline
 import flightdatabase.domain.airline_city.AirlineCity
 import flightdatabase.domain.airline_city.AirlineCityAlgebra
 import flightdatabase.domain.airline_city.AirlineCityCreate
-import flightdatabase.domain.city.City
 import flightdatabase.utils.implicits.enrichString
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
@@ -29,6 +27,16 @@ class AirlineCityEndpoints[F[_]: Concurrent] private (
     case GET -> Root =>
       algebra.getAirlineCities.flatMap(_.toResponse)
 
+    // GET /airline-cities/filter?field={airline_city_field; default: id}&operator={operator; default: eq}&value={value}
+    case GET -> Root / "filter" :?
+          FieldMatcherIdDefault(field) +& OperatorMatcherEqDefault(op) +& ValueMatcher(values) =>
+      processFilter[AirlineCity](field, op) {
+        case Some(LongType) if LongType.operators(op) =>
+          values.asLongToResponse[F, List[AirlineCity]](field, op)(
+            algebra.getAirlineCities(field, _, op)
+          )
+      }
+
     // GET /airline-cities/{id}
     case GET -> Root / id =>
       id.asLong.toResponse(algebra.getAirlineCity)
@@ -37,32 +45,56 @@ class AirlineCityEndpoints[F[_]: Concurrent] private (
     case GET -> Root / "airline" / airlineId / "city" / cityId =>
       (airlineId.asLong, cityId.asLong).tupled.toResponse(algebra.getAirlineCity)
 
-    // GET /airline-cities/airline/{value}?field={airline_field, default: id}
-    case GET -> Root / "airline" / value :? FieldMatcherIdDefault(field) =>
-      implicitly[TableBase[Airline]].fieldTypeMap.get(field) match {
-        case Some(StringType) =>
-          algebra.getAirlineCitiesByAirline(field, value).flatMap(_.toResponse)
-        case Some(IntType)  => value.asInt.toResponse(algebra.getAirlineCitiesByAirline(field, _))
-        case Some(LongType) => value.asLong.toResponse(algebra.getAirlineCitiesByAirline(field, _))
-        case Some(BooleanType) =>
-          value.asBoolean.toResponse(algebra.getAirlineCitiesByAirline(field, _))
-        case Some(BigDecimalType) =>
-          value.asBigDecimal.toResponse(algebra.getAirlineCitiesByAirline(field, _))
-        case None => BadRequest(InvalidField(field).error)
+    // GET /airline-cities/airline/filter?field={airline_field; default: id}&operator={operator; default: eq}&value={value}
+    case GET -> Root / "airline" / "filter" :?
+          FieldMatcherIdDefault(field) +& OperatorMatcherEqDefault(op) +& ValueMatcher(values) =>
+      processFilter[AirlineCity](field, op) {
+        case Some(StringType) if StringType.operators(op) =>
+          values.asStringToResponse[F, List[AirlineCity]](field, op)(
+            algebra.getAirlineCitiesByAirline(field, _, op)
+          )
+        case Some(IntType) if IntType.operators(op) =>
+          values.asIntToResponse[F, List[AirlineCity]](field, op)(
+            algebra.getAirlineCitiesByAirline(field, _, op)
+          )
+        case Some(LongType) if LongType.operators(op) =>
+          values.asLongToResponse[F, List[AirlineCity]](field, op)(
+            algebra.getAirlineCitiesByAirline(field, _, op)
+          )
+        case Some(BooleanType) if BooleanType.operators(op) =>
+          values.asBooleanToResponse[F, List[AirlineCity]](field, op)(
+            algebra.getAirlineCitiesByAirline(field, _, op)
+          )
+        case Some(BigDecimalType) if BigDecimalType.operators(op) =>
+          values.asBigDecimalToResponse[F, List[AirlineCity]](field, op)(
+            algebra.getAirlineCitiesByAirline(field, _, op)
+          )
       }
 
-    // GET /airline-cities/city/{value}?field={city_field, default: id}
-    case GET -> Root / "city" / value :? FieldMatcherIdDefault(field) =>
-      implicitly[TableBase[City]].fieldTypeMap.get(field) match {
-        case Some(StringType) =>
-          algebra.getAirlineCitiesByCity(field, value).flatMap(_.toResponse)
-        case Some(IntType)  => value.asInt.toResponse(algebra.getAirlineCitiesByCity(field, _))
-        case Some(LongType) => value.asLong.toResponse(algebra.getAirlineCitiesByCity(field, _))
-        case Some(BooleanType) =>
-          value.asBoolean.toResponse(algebra.getAirlineCitiesByCity(field, _))
-        case Some(BigDecimalType) =>
-          value.asBigDecimal.toResponse(algebra.getAirlineCitiesByCity(field, _))
-        case None => BadRequest(InvalidField(field).error)
+    // GET /airline-cities/city/filter?field={city_field; default: id}&operator={operator; default: eq}&value={value}
+    case GET -> Root / "city" / "filter" :?
+          FieldMatcherIdDefault(field) +& OperatorMatcherEqDefault(op) +& ValueMatcher(values) =>
+      processFilter[AirlineCity](field, op) {
+        case Some(StringType) if StringType.operators(op) =>
+          values.asStringToResponse[F, List[AirlineCity]](field, op)(
+            algebra.getAirlineCitiesByCity(field, _, op)
+          )
+        case Some(IntType) if IntType.operators(op) =>
+          values.asIntToResponse[F, List[AirlineCity]](field, op)(
+            algebra.getAirlineCitiesByCity(field, _, op)
+          )
+        case Some(LongType) if LongType.operators(op) =>
+          values.asLongToResponse[F, List[AirlineCity]](field, op)(
+            algebra.getAirlineCitiesByCity(field, _, op)
+          )
+        case Some(BooleanType) if BooleanType.operators(op) =>
+          values.asBooleanToResponse[F, List[AirlineCity]](field, op)(
+            algebra.getAirlineCitiesByCity(field, _, op)
+          )
+        case Some(BigDecimalType) if BigDecimalType.operators(op) =>
+          values.asBigDecimalToResponse[F, List[AirlineCity]](field, op)(
+            algebra.getAirlineCitiesByCity(field, _, op)
+          )
       }
 
     // POST /airline-cities

@@ -43,5 +43,6 @@ trait AirlineAirplaneAlgebra[F[_]] {
     id: Long,
     patch: AirlineAirplanePatch
   ): F[ApiResult[AirlineAirplane]]
+
   def removeAirlineAirplane(id: Long): F[ApiResult[Unit]]
 }

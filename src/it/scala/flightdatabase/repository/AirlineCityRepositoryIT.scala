@@ -1,7 +1,9 @@
 package flightdatabase.repository
 
+import cats.data.{NonEmptyList => Nel}
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
+import flightdatabase.api.Operator
 import flightdatabase.domain.ApiResult
 import flightdatabase.domain.EntryAlreadyExists
 import flightdatabase.domain.EntryHasInvalidForeignKey
@@ -12,6 +14,7 @@ import flightdatabase.domain.airline_city.AirlineCityCreate
 import flightdatabase.domain.airline_city.AirlineCityPatch
 import flightdatabase.testutils.RepositoryCheck
 import flightdatabase.testutils.implicits.enrichIOOperation
+import flightdatabase.utils.implicits.iterableToRichIterable
 import org.scalatest.Inspectors.forAll
 
 final class AirlineCityRepositoryIT extends RepositoryCheck {
@@ -33,7 +36,9 @@ final class AirlineCityRepositoryIT extends RepositoryCheck {
     2L -> ("Emirates", "EK", "UAE")
   )
 
-  val cityIdMap: Map[Long, String] = Map(2L -> "Frankfurt am Main", 4L -> "Dubai")
+  // cityId -> (name, population)
+  val cityIdMap: Map[Long, (String, Long)] =
+    Map(2L -> ("Frankfurt am Main", 791000L), 4L -> ("Dubai", 3490000L))
 
   val newAirlineCity: AirlineCityCreate = AirlineCityCreate(1, 3) // Lufthansa -> Berlin
   val updatedCity: Long = 5                                       // Leiden
@@ -73,9 +78,9 @@ final class AirlineCityRepositoryIT extends RepositoryCheck {
 
   "Selecting airline-city combinations by other fields" should "return the corresponding entries" in {
     def entriesByAirlineId(id: Long): IO[ApiResult[List[AirlineCity]]] =
-      repo.getAirlineCities("airline_id", id)
+      repo.getAirlineCities("airline_id", Nel.one(id), Operator.Equals)
     def entriesByCityId(id: Long): IO[ApiResult[List[AirlineCity]]] =
-      repo.getAirlineCities("city_id", id)
+      repo.getAirlineCities("city_id", Nel.one(id), Operator.Equals)
 
     val distinctAirlineIds = originalAirlineCities.map(_.airlineId).distinct
     val distinctCityIds = originalAirlineCities.map(_.cityId).distinct
@@ -100,16 +105,19 @@ final class AirlineCityRepositoryIT extends RepositoryCheck {
 
   "Selecting airline-city combinations by external fields" should "return the corresponding entries" in {
     def entryByAirlineName(name: String): IO[ApiResult[List[AirlineCity]]] =
-      repo.getAirlineCitiesByAirline("name", name)
+      repo.getAirlineCitiesByAirline("name", Nel.one(name), Operator.Equals)
 
     def entryByAirlineIata(iata: String): IO[ApiResult[List[AirlineCity]]] =
-      repo.getAirlineCitiesByAirline("iata", iata)
+      repo.getAirlineCitiesByAirline("iata", Nel.one(iata), Operator.Equals)
 
     def entryByAirlineIcao(icao: String): IO[ApiResult[List[AirlineCity]]] =
-      repo.getAirlineCitiesByAirline("icao", icao)
+      repo.getAirlineCitiesByAirline("icao", Nel.one(icao), Operator.Equals)
 
     def entryByCityName(name: String): IO[ApiResult[List[AirlineCity]]] =
-      repo.getAirlineCitiesByCity("name", name)
+      repo.getAirlineCitiesByCity("name", Nel.one(name), Operator.Equals)
+
+    def entryByCityPop(pop: Long): IO[ApiResult[List[AirlineCity]]] =
+      repo.getAirlineCitiesByCity("population", Nel.one(pop), Operator.LessThanOrEqualTo)
 
     forAll(airlineIdMap) {
       case (id, (name, iata, icao)) =>
@@ -125,11 +133,22 @@ final class AirlineCityRepositoryIT extends RepositoryCheck {
     }
 
     forAll(cityIdMap) {
-      case (id, name) =>
+      case (id, (name, _)) =>
         entryByCityName(name).value should contain only (
           originalAirlineCities.filter(_.cityId == id): _*
         )
     }
+
+    val mostPopulation = 1000000L
+
+    entryByCityPop(mostPopulation).value should contain only (
+      originalAirlineCities.filter { ac =>
+        cityIdMap
+          .withFilter { case (_, (_, pop)) => pop <= mostPopulation }
+          .map { case (cityId, _) => cityId }
+          .containsElement(ac.cityId)
+      }: _*
+    )
 
     entryByAirlineName(valueNotPresent).error shouldBe EntryListEmpty
     entryByAirlineIata(valueNotPresent).error shouldBe EntryListEmpty
