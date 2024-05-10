@@ -31,6 +31,7 @@ class RichString(private val str: String) extends AnyVal {
   def encodeSpacesInUrl(): String = str.replaceAll(" ", "%20")
   def encodePlusInUrl(): String = str.replaceAll("\\+", "%2B")
   def elseIfBlank(default: => String): String = if (str.isBlank) default else str
+  def wrapInBrackets: String = s"($str)"
 
   def elseIfContains(substr: String, default: => String): String =
     if (str.contains(substr)) default else str

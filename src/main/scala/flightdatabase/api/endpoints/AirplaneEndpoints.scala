@@ -30,34 +30,31 @@ class AirplaneEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airp
         algebra.getAirplanes.flatMap(_.toResponse)
       }
 
-    // GET /airplanes/{value}?field={airplane_field; default: id}
-    case GET -> Root / value :? FieldMatcherIdDefault(field) =>
-      if (field == "id") {
-        value.asLong.toResponse(algebra.getAirplane)
-      } else {
-        implicitly[TableBase[Airplane]].fieldTypeMap.get(field) match {
-          case Some(StringType)     => algebra.getAirplanes(field, value).flatMap(_.toResponse)
-          case Some(IntType)        => value.asInt.toResponse(algebra.getAirplanes(field, _))
-          case Some(LongType)       => value.asLong.toResponse(algebra.getAirplanes(field, _))
-          case Some(BooleanType)    => value.asBoolean.toResponse(algebra.getAirplanes(field, _))
-          case Some(BigDecimalType) => value.asBigDecimal.toResponse(algebra.getAirplanes(field, _))
-          case None                 => BadRequest(InvalidField(field).error)
-        }
-      }
+    // GET /airplanes/filter?field={airplane_field}&operator={operator; default: eq}&value={value}
+    case GET -> Root / "filter" :?
+          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +& ValueMatcher(values) =>
+      processFilter[Airplane, Airplane](field, operator, values)(
+        stringF = algebra.getAirplanesBy,
+        intF = algebra.getAirplanesBy,
+        longF = algebra.getAirplanesBy,
+        boolF = algebra.getAirplanesBy,
+        bigDecimalF = algebra.getAirplanesBy
+      )
 
-    // GET /airplanes/manufacturer/{value}?field={manufacturer_field; default: id}
-    case GET -> Root / "manufacturer" / value :? FieldMatcherIdDefault(field) =>
-      implicitly[TableBase[Manufacturer]].fieldTypeMap.get(field) match {
-        case Some(StringType) =>
-          algebra.getAirplanesByManufacturer(field, value).flatMap(_.toResponse)
-        case Some(IntType)  => value.asInt.toResponse(algebra.getAirplanesByManufacturer(field, _))
-        case Some(LongType) => value.asLong.toResponse(algebra.getAirplanesByManufacturer(field, _))
-        case Some(BooleanType) =>
-          value.asBoolean.toResponse(algebra.getAirplanesByManufacturer(field, _))
-        case Some(BigDecimalType) =>
-          value.asBigDecimal.toResponse(algebra.getAirplanesByManufacturer(field, _))
-        case None => BadRequest(InvalidField(field).error)
-      }
+    // GET /airplanes/{id}
+    case GET -> Root / id =>
+      id.asLong.toResponse(algebra.getAirplane)
+
+    // GET /airplanes/manufacturer/filter?field={manufacturer_field}&operator={operator; default: eq}&value={value}
+    case GET -> Root / "manufacturer" / "filter" :?
+          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +& ValueMatcher(values) =>
+      processFilter[Manufacturer, Airplane](field, operator, values)(
+        stringF = algebra.getAirplanesByManufacturer,
+        intF = algebra.getAirplanesByManufacturer,
+        longF = algebra.getAirplanesByManufacturer,
+        boolF = algebra.getAirplanesByManufacturer,
+        bigDecimalF = algebra.getAirplanesByManufacturer
+      )
 
     // POST /airplanes
     case req @ POST -> Root =>

@@ -78,9 +78,9 @@ final class AirlineCityRepositoryIT extends RepositoryCheck {
 
   "Selecting airline-city combinations by other fields" should "return the corresponding entries" in {
     def entriesByAirlineId(id: Long): IO[ApiResult[List[AirlineCity]]] =
-      repo.getAirlineCities("airline_id", Nel.one(id), Operator.Equals)
+      repo.getAirlineCitiesBy("airline_id", Nel.one(id), Operator.Equals)
     def entriesByCityId(id: Long): IO[ApiResult[List[AirlineCity]]] =
-      repo.getAirlineCities("city_id", Nel.one(id), Operator.Equals)
+      repo.getAirlineCitiesBy("city_id", Nel.one(id), Operator.Equals)
 
     val distinctAirlineIds = originalAirlineCities.map(_.airlineId).distinct
     val distinctCityIds = originalAirlineCities.map(_.cityId).distinct

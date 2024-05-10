@@ -1,6 +1,7 @@
 package flightdatabase.api.endpoints
 
 import cats.Monad
+import cats.data.{NonEmptyList => Nel}
 import cats.implicits.toBifunctorOps
 import flightdatabase.api.Operator
 import flightdatabase.api.Operator.StringOperatorOps
@@ -21,7 +22,7 @@ abstract class Endpoints[F[_]: Monad](prefix: String) extends Http4sDsl[F] {
   object OnlyNamesFlagMatcher extends FlagQueryParamMatcher("only-names")
   object FullOutputFlagMatcher extends FlagQueryParamMatcher("full-output")
   object ValueMatcher extends QueryParamDecoderMatcher[String]("value")
-  object FieldMatcherIdDefault extends QueryParamDecoderMatcherWithDefault[String]("field", "id")
+  object FieldMatcher extends QueryParamDecoderMatcher[String]("field")
 
   implicit val operatorQueryParamDecoder: QueryParamDecoder[Operator] =
     QueryParamDecoder[String].emap { s =>
@@ -46,14 +47,31 @@ abstract class Endpoints[F[_]: Monad](prefix: String) extends Http4sDsl[F] {
         f
       )
 
-  final protected def processFilter[T: TableBase](field: String, operator: Operator)(
-    pf: PartialFunction[Option[FieldType], F[Response[F]]]
-  ): F[Response[F]] =
-    pf.applyOrElse[Option[FieldType], F[Response[F]]](
-      implicitly[TableBase[T]].fieldTypeMap.get(field),
-      default = {
-        case Some(_) => BadRequest(InvalidOperator(operator).error)
-        case None    => BadRequest(InvalidField(field).error)
-      }
-    )
+  final protected type L[V, T] = (String, Nel[V], Operator) => F[ApiResult[List[T]]]
+
+  final protected def processFilter[IN: TableBase, OUT](
+    field: String,
+    operator: Operator,
+    values: String
+  )(
+    stringF: L[String, OUT],
+    intF: L[Int, OUT],
+    longF: L[Long, OUT],
+    boolF: L[Boolean, OUT],
+    bigDecimalF: L[BigDecimal, OUT]
+  )(implicit enc: EntityEncoder[F, List[OUT]]): F[Response[F]] =
+    implicitly[TableBase[IN]].fieldTypeMap.get(field) match {
+      case Some(StringType) if StringType.operators(operator) =>
+        values.asStringToResponse(field, operator)(stringF(field, _, operator))
+      case Some(IntType) if IntType.operators(operator) =>
+        values.asIntToResponse(field, operator)(intF(field, _, operator))
+      case Some(LongType) if LongType.operators(operator) =>
+        values.asLongToResponse(field, operator)(longF(field, _, operator))
+      case Some(BooleanType) if BooleanType.operators(operator) =>
+        values.asBooleanToResponse(field, operator)(boolF(field, _, operator))
+      case Some(BigDecimalType) if BigDecimalType.operators(operator) =>
+        values.asBigDecimalToResponse(field, operator)(bigDecimalF(field, _, operator))
+      case Some(_) => BadRequest(InvalidOperator(operator).error)
+      case None    => BadRequest(InvalidField(field).error)
+    }
 }

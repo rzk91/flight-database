@@ -83,10 +83,10 @@ final class AirlineAirplaneRepositoryIT extends RepositoryCheck {
 
   "Selecting airline airplanes by other fields" should "return the corresponding entries" in {
     def airlineAirplaneByAirlineId(id: Long): IO[ApiResult[List[AirlineAirplane]]] =
-      repo.getAirlineAirplanes("airline_id", Nel.one(id), Operator.Equals)
+      repo.getAirlineAirplanesBy("airline_id", Nel.one(id), Operator.Equals)
 
     def airlineAirplaneByAirplaneId(id: Long): IO[ApiResult[List[AirlineAirplane]]] =
-      repo.getAirlineAirplanes("airplane_id", Nel.one(id), Operator.Equals)
+      repo.getAirlineAirplanesBy("airplane_id", Nel.one(id), Operator.Equals)
 
     val distinctAirlineIds = originalAirlineAirplanes.map(_.airlineId).distinct
     val distinctAirplaneIds = originalAirlineAirplanes.map(_.airplaneId).distinct

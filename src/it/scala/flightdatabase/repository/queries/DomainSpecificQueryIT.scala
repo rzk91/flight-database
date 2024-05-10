@@ -1,5 +1,7 @@
 package flightdatabase.repository.queries
 
+import cats.data.{NonEmptyList => Nel}
+import flightdatabase.api.Operator
 import flightdatabase.domain.airplane.AirplaneCreate
 import flightdatabase.domain.city.City
 import flightdatabase.domain.country.Country
@@ -13,8 +15,11 @@ final class DomainSpecificQueryIT extends DbChecker {
   "All airplane queries" should "work correctly" in {
     check(AirplaneQueries.airplaneExists(1))
     check(AirplaneQueries.selectAllAirplanes)
-    check(AirplaneQueries.selectAirplanesBy("id", 1L))
-    check(AirplaneQueries.selectAirplanesByExternal[Manufacturer, String]("name", "Airbus"))
+    check(AirplaneQueries.selectAirplanesBy("id", Nel.one(1L), Operator.Equals))
+    check(
+      AirplaneQueries
+        .selectAirplanesByExternal[Manufacturer, String]("name", Nel.one("Airbus"), Operator.Equals)
+    )
     check(AirplaneQueries.insertAirplane(AirplaneCreate(None, "Boeing 747", 2, 416, 13400)))
     check(AirplaneQueries.deleteAirplane(1))
   }
@@ -22,14 +27,20 @@ final class DomainSpecificQueryIT extends DbChecker {
   // Airport checks
   "All airport queries" should "work correctly" in {
     check(AirportQueries.selectAllAirports)
-    check(AirportQueries.selectAllAirportsByExternal[City, String]("name", "Bangalore"))
+    check(
+      AirportQueries
+        .selectAllAirportsByExternal[City, String]("name", Nel.one("Bangalore"), Operator.Equals)
+    )
     check(AirportQueries.deleteAirport(1))
   }
 
   // City checks
   "All city queries" should "work correctly" in {
     check(CityQueries.selectAllCities)
-    check(CityQueries.selectCitiesByExternal[Country, String]("name", "Germany"))
+    check(
+      CityQueries
+        .selectCitiesByExternal[Country, String]("name", Nel.one("Germany"), Operator.Equals)
+    )
     check(CityQueries.deleteCity(1))
   }
 

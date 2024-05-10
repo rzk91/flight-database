@@ -12,7 +12,7 @@ trait AirlineAirplaneAlgebra[F[_]] {
   def getAirlineAirplane(id: Long): F[ApiResult[AirlineAirplane]]
   def getAirlineAirplane(airlineId: Long, airplaneId: Long): F[ApiResult[AirlineAirplane]]
 
-  def getAirlineAirplanes[V: Put](
+  def getAirlineAirplanesBy[V: Put](
     field: String,
     values: Nel[V],
     operator: Operator

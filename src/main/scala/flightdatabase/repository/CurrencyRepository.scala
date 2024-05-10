@@ -1,11 +1,13 @@
 package flightdatabase.repository
 
 import cats.data.EitherT
+import cats.data.{NonEmptyList => Nel}
 import cats.effect.Concurrent
 import cats.effect.Resource
 import cats.implicits._
 import doobie.Put
 import doobie.Transactor
+import flightdatabase.api.Operator
 import flightdatabase.domain.ApiResult
 import flightdatabase.domain.currency.Currency
 import flightdatabase.domain.currency.CurrencyAlgebra
@@ -27,10 +29,14 @@ class CurrencyRepository[F[_]: Concurrent] private (
     getFieldList[Currency, String]("name").execute
 
   override def getCurrency(id: Long): F[ApiResult[Currency]] =
-    selectCurrencyBy("id", id).asSingle(id).execute
+    selectCurrencyBy("id", Nel.one(id), Operator.Equals).asSingle(id).execute
 
-  override def getCurrencies[V: Put](field: String, value: V): F[ApiResult[List[Currency]]] =
-    selectCurrencyBy(field, value).asList(Some(field), Some(value)).execute
+  override def getCurrenciesBy[V: Put](
+    field: String,
+    values: Nel[V],
+    operator: Operator
+  ): F[ApiResult[List[Currency]]] =
+    selectCurrencyBy(field, values, operator).asList(Some(field), Some(values)).execute
 
   override def createCurrency(currency: CurrencyCreate): F[ApiResult[Long]] =
     insertCurrency(currency).attemptInsert.execute

@@ -22,14 +22,14 @@ private[repository] object AirlineCityQueries {
     values: Nel[V],
     operator: Operator
   ): Query0[AirlineCity] =
-    (selectAll ++ whereFragment2(s"airline_city.$field", values, operator)).query[AirlineCity]
+    (selectAll ++ whereFragment(s"airline_city.$field", values, operator)).query[AirlineCity]
 
   def selectAirlineCityByExternal[ET: TableBase, EV: Put](
     externalField: String,
     externalValues: Nel[EV],
     operator: Operator
   ): Query0[AirlineCity] = {
-    selectAll ++ innerJoinWhereFragment2[AirlineCity, ET, EV](
+    selectAll ++ innerJoinWhereFragment[AirlineCity, ET, EV](
       externalField,
       externalValues,
       operator

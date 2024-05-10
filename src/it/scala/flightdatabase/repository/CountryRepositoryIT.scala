@@ -1,7 +1,9 @@
 package flightdatabase.repository
 
+import cats.data.{NonEmptyList => Nel}
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
+import flightdatabase.api.Operator
 import flightdatabase.domain.ApiResult
 import flightdatabase.domain.EntryAlreadyExists
 import flightdatabase.domain.EntryCheckFailed
@@ -117,19 +119,19 @@ final class CountryRepositoryIT extends RepositoryCheck {
 
   "Selecting a country by other fields" should "return the corresponding entries" in {
     def countryByName(name: String): IO[ApiResult[List[Country]]] =
-      repo.getCountries("name", name)
+      repo.getCountriesBy("name", Nel.one(name), Operator.Equals)
 
     def countryByIso2(iso2: String): IO[ApiResult[List[Country]]] =
-      repo.getCountries("iso2", iso2)
+      repo.getCountriesBy("iso2", Nel.one(iso2), Operator.Equals)
 
     def countryByNationality(nationality: String): IO[ApiResult[List[Country]]] =
-      repo.getCountries("nationality", nationality)
+      repo.getCountriesBy("nationality", Nel.one(nationality), Operator.Equals)
 
     def countryByLanguage(id: Long): IO[ApiResult[List[Country]]] =
-      repo.getCountriesByLanguage("id", id)
+      repo.getCountriesByLanguage("id", Nel.one(id), Operator.Equals)
 
     def countryByCurrency(id: Long): IO[ApiResult[List[Country]]] =
-      repo.getCountriesByCurrency("id", id)
+      repo.getCountriesByCurrency("id", Nel.one(id), Operator.Equals)
 
     val distinctLanguageIds = originalCountries.flatMap(allLanguageIds).distinct
 
@@ -160,16 +162,16 @@ final class CountryRepositoryIT extends RepositoryCheck {
 
   "Selecting a country by external fields" should "return the corresponding entries" in {
     def countriesByLanguageIso2(iso2: String): IO[ApiResult[List[Country]]] =
-      repo.getCountriesByLanguage("iso2", iso2)
+      repo.getCountriesByLanguage("iso2", Nel.one(iso2), Operator.Equals)
 
     def countriesByLanguageName(name: String): IO[ApiResult[List[Country]]] =
-      repo.getCountriesByLanguage("name", name)
+      repo.getCountriesByLanguage("name", Nel.one(name), Operator.Equals)
 
     def countriesByCurrencyIso(iso: String): IO[ApiResult[List[Country]]] =
-      repo.getCountriesByCurrency("iso", iso)
+      repo.getCountriesByCurrency("iso", Nel.one(iso), Operator.Equals)
 
     def countriesByCurrencyName(name: String): IO[ApiResult[List[Country]]] =
-      repo.getCountriesByCurrency("name", name)
+      repo.getCountriesByCurrency("name", Nel.one(name), Operator.Equals)
 
     forAll(languageIdMap) {
       case (id, (iso2, name)) =>
@@ -190,29 +192,37 @@ final class CountryRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting a non-existent field" should "return an error" in {
-    repo.getCountries(invalidFieldSyntax, "value").error shouldBe sqlErrorInvalidSyntax
-    repo.getCountriesByLanguage(invalidFieldSyntax, "value").error shouldBe sqlErrorInvalidSyntax
-    repo.getCountriesByCurrency(invalidFieldSyntax, "value").error shouldBe sqlErrorInvalidSyntax
+    repo
+      .getCountriesBy(invalidFieldSyntax, Nel.one("value"), Operator.Equals)
+      .error shouldBe sqlErrorInvalidSyntax
+    repo
+      .getCountriesByLanguage(invalidFieldSyntax, Nel.one("value"), Operator.Equals)
+      .error shouldBe sqlErrorInvalidSyntax
+    repo
+      .getCountriesByCurrency(invalidFieldSyntax, Nel.one("value"), Operator.Equals)
+      .error shouldBe sqlErrorInvalidSyntax
 
-    repo.getCountries(invalidFieldColumn, "value").error shouldBe InvalidField(invalidFieldColumn)
-    repo.getCountriesByLanguage(invalidFieldColumn, "value").error shouldBe InvalidField(
-      invalidFieldColumn
-    )
-    repo.getCountriesByCurrency(invalidFieldColumn, "value").error shouldBe InvalidField(
-      invalidFieldColumn
-    )
+    repo
+      .getCountriesBy(invalidFieldColumn, Nel.one("value"), Operator.Equals)
+      .error shouldBe InvalidField(invalidFieldColumn)
+    repo
+      .getCountriesByLanguage(invalidFieldColumn, Nel.one("value"), Operator.Equals)
+      .error shouldBe InvalidField(invalidFieldColumn)
+    repo
+      .getCountriesByCurrency(invalidFieldColumn, Nel.one("value"), Operator.Equals)
+      .error shouldBe InvalidField(invalidFieldColumn)
   }
 
   "Selecting an existing field with an invalid value type" should "return an error" in {
-    repo.getCountries("country_code", invalidLongValue).error shouldBe InvalidValueType(
-      invalidLongValue
-    )
-    repo.getCountriesByLanguage("iso2", invalidStringValue).error shouldBe InvalidValueType(
-      invalidStringValue.toString
-    )
-    repo.getCountriesByCurrency("iso", invalidStringValue).error shouldBe InvalidValueType(
-      invalidStringValue.toString
-    )
+    repo
+      .getCountriesBy("country_code", Nel.one(invalidLongValue), Operator.Equals)
+      .error shouldBe InvalidValueType(invalidLongValue)
+    repo
+      .getCountriesByLanguage("iso2", Nel.one(invalidStringValue), Operator.Equals)
+      .error shouldBe InvalidValueType(invalidStringValue.toString)
+    repo
+      .getCountriesByCurrency("iso", Nel.one(invalidStringValue), Operator.Equals)
+      .error shouldBe InvalidValueType(invalidStringValue.toString)
   }
 
   "Creating a new country" should "not take place if fields do not satisfy their criteria" in {
@@ -265,7 +275,8 @@ final class CountryRepositoryIT extends RepositoryCheck {
   }
 
   "Updating a country" should "not take place if fields do not satisfy their criteria" in {
-    val existingCountry = repo.getCountries("name", newCountry.name).value.head
+    val existingCountry =
+      repo.getCountriesBy("name", Nel.one(newCountry.name), Operator.Equals).value.head
 
     val invalidCountries = List(
       existingCountry.copy(name = ""),
@@ -299,7 +310,8 @@ final class CountryRepositoryIT extends RepositoryCheck {
   }
 
   it should "throw an error if a language/currency does not exist" in {
-    val existingCountry = repo.getCountries("name", newCountry.name).value.head
+    val existingCountry =
+      repo.getCountriesBy("name", Nel.one(newCountry.name), Operator.Equals).value.head
 
     val invalidCountries = List(
       existingCountry.copy(mainLanguageId = idNotPresent),
@@ -312,7 +324,8 @@ final class CountryRepositoryIT extends RepositoryCheck {
   }
 
   it should "update a country if all criteria are satisfied" in {
-    val existingCountry = repo.getCountries("name", newCountry.name).value.head
+    val existingCountry =
+      repo.getCountriesBy("name", Nel.one(newCountry.name), Operator.Equals).value.head
 
     val updated = existingCountry.copy(name = updatedName)
     repo.updateCountry(updated).value shouldBe existingCountry.id
@@ -322,7 +335,8 @@ final class CountryRepositoryIT extends RepositoryCheck {
   }
 
   "Patching a country" should "not take place if fields do not satisfy their criteria" in {
-    val existingCountry = repo.getCountries("name", updatedName).value.head
+    val existingCountry =
+      repo.getCountriesBy("name", Nel.one(updatedName), Operator.Equals).value.head
 
     val invalidPatches = List(
       CountryPatch(name = Some("")),
@@ -383,7 +397,8 @@ final class CountryRepositoryIT extends RepositoryCheck {
   }
 
   it should "patch a country if all criteria are satisfied" in {
-    val existingCountry = repo.getCountries("name", updatedName).value.head
+    val existingCountry =
+      repo.getCountriesBy("name", Nel.one(updatedName), Operator.Equals).value.head
 
     val patched = CountryPatch(name = Some(patchedName))
     repo
@@ -395,7 +410,8 @@ final class CountryRepositoryIT extends RepositoryCheck {
   }
 
   "Removing a country" should "work correctly" in {
-    val existingCountry = repo.getCountries("name", patchedName).value.head
+    val existingCountry =
+      repo.getCountriesBy("name", Nel.one(patchedName), Operator.Equals).value.head
 
     repo.removeCountry(existingCountry.id).value shouldBe ()
     repo

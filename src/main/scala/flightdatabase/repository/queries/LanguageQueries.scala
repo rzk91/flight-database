@@ -1,10 +1,12 @@
 package flightdatabase.repository.queries
 
+import cats.data.{NonEmptyList => Nel}
 import doobie.Fragment
 import doobie.Put
 import doobie.Query0
 import doobie.implicits._
 import doobie.util.update.Update0
+import flightdatabase.api.Operator
 import flightdatabase.domain.language.Language
 import flightdatabase.domain.language.LanguageCreate
 
@@ -14,8 +16,12 @@ private[repository] object LanguageQueries {
 
   def selectAllLanguages: Query0[Language] = selectAll.query[Language]
 
-  def selectLanguageBy[V: Put](field: String, value: V): Query0[Language] =
-    (selectAll ++ whereFragment(s"language.$field", value)).query[Language]
+  def selectLanguageBy[V: Put](
+    field: String,
+    values: Nel[V],
+    operator: Operator
+  ): Query0[Language] =
+    (selectAll ++ whereFragment(s"language.$field", values, operator)).query[Language]
 
   def insertLanguage(model: LanguageCreate): Update0 =
     sql"""

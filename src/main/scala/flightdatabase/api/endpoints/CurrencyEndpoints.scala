@@ -30,21 +30,20 @@ class CurrencyEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Curr
         algebra.getCurrencies.flatMap(_.toResponse)
       }
 
-    // GET /currencies/{value}?field={currency_field; default=id}
-    case GET -> Root / value :? FieldMatcherIdDefault(field) =>
-      if (field == "id") {
-        value.asLong.toResponse(algebra.getCurrency)
-      } else {
-        implicitly[TableBase[Currency]].fieldTypeMap.get(field) match {
-          case Some(StringType)  => algebra.getCurrencies(field, value).flatMap(_.toResponse)
-          case Some(IntType)     => value.asInt.toResponse(algebra.getCurrencies(field, _))
-          case Some(LongType)    => value.asLong.toResponse(algebra.getCurrencies(field, _))
-          case Some(BooleanType) => value.asBoolean.toResponse(algebra.getCurrencies(field, _))
-          case Some(BigDecimalType) =>
-            value.asBigDecimal.toResponse(algebra.getCurrencies(field, _))
-          case None => BadRequest(InvalidField(field).error)
-        }
-      }
+    // GET /currencies/filter?field={currency_field}&operator={operator; default: eq}&value={value}
+    case GET -> Root / "filter" :?
+          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +& ValueMatcher(values) =>
+      processFilter[Currency, Currency](field, operator, values)(
+        stringF = algebra.getCurrenciesBy,
+        intF = algebra.getCurrenciesBy,
+        longF = algebra.getCurrenciesBy,
+        boolF = algebra.getCurrenciesBy,
+        bigDecimalF = algebra.getCurrenciesBy
+      )
+
+    // GET /currencies/{id}
+    case GET -> Root / id =>
+      id.asLong.toResponse(algebra.getCurrency)
 
     // POST /currencies
     case req @ POST -> Root =>

@@ -1,6 +1,8 @@
 package flightdatabase.domain.country
 
+import cats.data.{NonEmptyList => Nel}
 import doobie.Put
+import flightdatabase.api.Operator
 import flightdatabase.domain.ApiResult
 
 trait CountryAlgebra[F[_]] {
@@ -9,9 +11,25 @@ trait CountryAlgebra[F[_]] {
   def getCountries: F[ApiResult[List[Country]]]
   def getCountriesOnlyNames: F[ApiResult[List[String]]]
   def getCountry(id: Long): F[ApiResult[Country]]
-  def getCountries[V: Put](field: String, value: V): F[ApiResult[List[Country]]]
-  def getCountriesByLanguage[V: Put](field: String, value: V): F[ApiResult[List[Country]]]
-  def getCountriesByCurrency[V: Put](field: String, value: V): F[ApiResult[List[Country]]]
+
+  def getCountriesBy[V: Put](
+    field: String,
+    values: Nel[V],
+    operator: Operator
+  ): F[ApiResult[List[Country]]]
+
+  def getCountriesByLanguage[V: Put](
+    field: String,
+    values: Nel[V],
+    operator: Operator
+  ): F[ApiResult[List[Country]]]
+
+  def getCountriesByCurrency[V: Put](
+    field: String,
+    values: Nel[V],
+    operator: Operator
+  ): F[ApiResult[List[Country]]]
+
   def createCountry(country: CountryCreate): F[ApiResult[Long]]
   def updateCountry(country: Country): F[ApiResult[Long]]
   def partiallyUpdateCountry(id: Long, patch: CountryPatch): F[ApiResult[Country]]

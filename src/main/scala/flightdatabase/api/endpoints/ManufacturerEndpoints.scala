@@ -33,48 +33,42 @@ class ManufacturerEndpoints[F[_]: Concurrent] private (
         algebra.getManufacturers.flatMap(_.toResponse)
       }
 
-    // GET /manufacturers/{value}=field={manufacturer_field; default=id}
-    case GET -> Root / value :? FieldMatcherIdDefault(field) =>
-      if (field == "id") {
-        value.asLong.toResponse(algebra.getManufacturer)
-      } else {
-        implicitly[TableBase[Manufacturer]].fieldTypeMap.get(field) match {
-          case Some(StringType)  => algebra.getManufacturers(field, value).flatMap(_.toResponse)
-          case Some(IntType)     => value.asInt.toResponse(algebra.getManufacturers(field, _))
-          case Some(LongType)    => value.asLong.toResponse(algebra.getManufacturers(field, _))
-          case Some(BooleanType) => value.asBoolean.toResponse(algebra.getManufacturers(field, _))
-          case Some(BigDecimalType) =>
-            value.asBigDecimal.toResponse(algebra.getManufacturers(field, _))
-          case None => BadRequest(InvalidField(field).error)
-        }
-      }
+    // GET /manufacturers/filter?field={manufacturer_field}&operator={operator; default: eq}&value={value}
+    case GET -> Root / "filter" :?
+          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +& ValueMatcher(values) =>
+      processFilter[Manufacturer, Manufacturer](field, operator, values)(
+        stringF = algebra.getManufacturersBy,
+        intF = algebra.getManufacturersBy,
+        longF = algebra.getManufacturersBy,
+        boolF = algebra.getManufacturersBy,
+        bigDecimalF = algebra.getManufacturersBy
+      )
 
-    // GET /manufacturers/city/{value}?field={city_field; default=id}
-    case GET -> Root / "city" / value :? FieldMatcherIdDefault(field) =>
-      implicitly[TableBase[City]].fieldTypeMap.get(field) match {
-        case Some(StringType) => algebra.getManufacturersByCity(field, value).flatMap(_.toResponse)
-        case Some(IntType)    => value.asInt.toResponse(algebra.getManufacturersByCity(field, _))
-        case Some(LongType)   => value.asLong.toResponse(algebra.getManufacturersByCity(field, _))
-        case Some(BooleanType) =>
-          value.asBoolean.toResponse(algebra.getManufacturersByCity(field, _))
-        case Some(BigDecimalType) =>
-          value.asBigDecimal.toResponse(algebra.getManufacturersByCity(field, _))
-        case None => BadRequest(InvalidField(field).error)
-      }
+    // GET /manufacturers/{id}
+    case GET -> Root / id =>
+      id.asLong.toResponse(algebra.getManufacturer)
 
-    // GET /manufacturers/country/{value}?field={country_field; default=id}
-    case GET -> Root / "country" / value :? FieldMatcherIdDefault(field) =>
-      implicitly[TableBase[Country]].fieldTypeMap.get(field) match {
-        case Some(StringType) =>
-          algebra.getManufacturersByCountry(field, value).flatMap(_.toResponse)
-        case Some(IntType)  => value.asInt.toResponse(algebra.getManufacturersByCountry(field, _))
-        case Some(LongType) => value.asLong.toResponse(algebra.getManufacturersByCountry(field, _))
-        case Some(BooleanType) =>
-          value.asBoolean.toResponse(algebra.getManufacturersByCountry(field, _))
-        case Some(BigDecimalType) =>
-          value.asBigDecimal.toResponse(algebra.getManufacturersByCountry(field, _))
-        case None => BadRequest(InvalidField(field).error)
-      }
+    // GET /manufacturers/city/filter?field={city_field}&operator={operator; default: eq}&value={value}
+    case GET -> Root / "city" / "filter" :?
+          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +& ValueMatcher(values) =>
+      processFilter[City, Manufacturer](field, operator, values)(
+        stringF = algebra.getManufacturersByCity,
+        intF = algebra.getManufacturersByCity,
+        longF = algebra.getManufacturersByCity,
+        boolF = algebra.getManufacturersByCity,
+        bigDecimalF = algebra.getManufacturersByCity
+      )
+
+    // GET /manufacturers/country/filter?field={country_field}&operator={operator; default: eq}&value={value}
+    case GET -> Root / "country" / "filter" :?
+          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +& ValueMatcher(values) =>
+      processFilter[Country, Manufacturer](field, operator, values)(
+        stringF = algebra.getManufacturersByCountry,
+        intF = algebra.getManufacturersByCountry,
+        longF = algebra.getManufacturersByCountry,
+        boolF = algebra.getManufacturersByCountry,
+        bigDecimalF = algebra.getManufacturersByCountry
+      )
 
     // POST /manufacturers
     case req @ POST -> Root =>

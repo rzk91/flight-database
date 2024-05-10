@@ -1,7 +1,9 @@
 package flightdatabase.repository
 
+import cats.data.{NonEmptyList => Nel}
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
+import flightdatabase.api.Operator
 import flightdatabase.domain.ApiResult
 import flightdatabase.domain.EntryAlreadyExists
 import flightdatabase.domain.EntryCheckFailed
@@ -70,9 +72,9 @@ final class AirplaneRepositoryIT extends RepositoryCheck {
 
   "Selecting an airplane by other fields" should "return the corresponding entries" in {
     def airplaneByName(name: String): IO[ApiResult[List[Airplane]]] =
-      repo.getAirplanes("name", name)
+      repo.getAirplanesBy("name", Nel.one(name), Operator.Equals)
     def airplaneByManufacturerId(id: Long): IO[ApiResult[List[Airplane]]] =
-      repo.getAirplanes("manufacturer_id", id)
+      repo.getAirplanesBy("manufacturer_id", Nel.one(id), Operator.Equals)
 
     val distinctManufacturerIds = originalAirplanes.map(_.manufacturerId).distinct
 
@@ -92,7 +94,7 @@ final class AirplaneRepositoryIT extends RepositoryCheck {
 
   "Selecting an airplane by manufacturer name" should "return the corresponding entries" in {
     def airplaneByManufacturer(name: String): IO[ApiResult[List[Airplane]]] =
-      repo.getAirplanesByManufacturer("name", name)
+      repo.getAirplanesByManufacturer("name", Nel.one(name), Operator.Equals)
 
     forAll(manufacturerToIdMap) {
       case (manufacturer, id) =>
@@ -105,23 +107,27 @@ final class AirplaneRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting a non-existent field" should "return an error" in {
-    repo.getAirplanes(invalidFieldSyntax, "value").error shouldBe sqlErrorInvalidSyntax
     repo
-      .getAirplanesByManufacturer(invalidFieldSyntax, "value")
+      .getAirplanesBy(invalidFieldSyntax, Nel.one("value"), Operator.Equals)
       .error shouldBe sqlErrorInvalidSyntax
-    repo.getAirplanes(invalidFieldColumn, "value").error shouldBe InvalidField(invalidFieldColumn)
-    repo.getAirplanesByManufacturer(invalidFieldColumn, "value").error shouldBe InvalidField(
-      invalidFieldColumn
-    )
+    repo
+      .getAirplanesByManufacturer(invalidFieldSyntax, Nel.one("value"), Operator.Equals)
+      .error shouldBe sqlErrorInvalidSyntax
+    repo
+      .getAirplanesBy(invalidFieldColumn, Nel.one("value"), Operator.Equals)
+      .error shouldBe InvalidField(invalidFieldColumn)
+    repo
+      .getAirplanesByManufacturer(invalidFieldColumn, Nel.one("value"), Operator.Equals)
+      .error shouldBe InvalidField(invalidFieldColumn)
   }
 
   "Selecting an existing field with an invalid value type" should "return an error" in {
-    repo.getAirplanes("manufacturer_id", invalidLongValue).error shouldBe InvalidValueType(
-      invalidLongValue
-    )
-    repo.getAirplanesByManufacturer("name", invalidStringValue).error shouldBe InvalidValueType(
-      invalidStringValue.toString
-    )
+    repo
+      .getAirplanesBy("manufacturer_id", Nel.one(invalidLongValue), Operator.Equals)
+      .error shouldBe InvalidValueType(invalidLongValue)
+    repo
+      .getAirplanesByManufacturer("name", Nel.one(invalidStringValue), Operator.Equals)
+      .error shouldBe InvalidValueType(invalidStringValue.toString)
   }
 
   "Creating an airplane" should "work and return the new ID" in {

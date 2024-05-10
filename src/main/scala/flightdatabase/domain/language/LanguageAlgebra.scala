@@ -1,6 +1,8 @@
 package flightdatabase.domain.language
 
+import cats.data.{NonEmptyList => Nel}
 import doobie.Put
+import flightdatabase.api.Operator
 import flightdatabase.domain.ApiResult
 
 trait LanguageAlgebra[F[_]] {
@@ -8,7 +10,13 @@ trait LanguageAlgebra[F[_]] {
   def getLanguages: F[ApiResult[List[Language]]]
   def getLanguagesOnlyNames: F[ApiResult[List[String]]]
   def getLanguage(id: Long): F[ApiResult[Language]]
-  def getLanguages[V: Put](field: String, value: V): F[ApiResult[List[Language]]]
+
+  def getLanguagesBy[V: Put](
+    field: String,
+    values: Nel[V],
+    operator: Operator
+  ): F[ApiResult[List[Language]]]
+
   def createLanguage(language: LanguageCreate): F[ApiResult[Long]]
   def updateLanguage(language: Language): F[ApiResult[Long]]
   def partiallyUpdateLanguage(id: Long, patch: LanguagePatch): F[ApiResult[Language]]

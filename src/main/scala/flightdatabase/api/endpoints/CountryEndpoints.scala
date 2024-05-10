@@ -32,46 +32,42 @@ class CountryEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Count
         algebra.getCountries.flatMap(_.toResponse)
       }
 
-    // GET /countries/{value}?field={country_field; default=id}
-    case GET -> Root / value :? FieldMatcherIdDefault(field) =>
-      if (field == "id") {
-        value.asLong.toResponse(algebra.getCountry)
-      } else {
-        implicitly[TableBase[Country]].fieldTypeMap.get(field) match {
-          case Some(StringType)     => algebra.getCountries(field, value).flatMap(_.toResponse)
-          case Some(IntType)        => value.asInt.toResponse(algebra.getCountries(field, _))
-          case Some(LongType)       => value.asLong.toResponse(algebra.getCountries(field, _))
-          case Some(BooleanType)    => value.asBoolean.toResponse(algebra.getCountries(field, _))
-          case Some(BigDecimalType) => value.asBigDecimal.toResponse(algebra.getCountries(field, _))
-          case None                 => BadRequest(InvalidField(field).error)
-        }
-      }
+    // GET /countries/filter?field={country_field}&operator={operator; default: eq}&value={value}
+    case GET -> Root / "filter" :?
+          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +& ValueMatcher(values) =>
+      processFilter[Country, Country](field, operator, values)(
+        stringF = algebra.getCountriesBy,
+        intF = algebra.getCountriesBy,
+        longF = algebra.getCountriesBy,
+        boolF = algebra.getCountriesBy,
+        bigDecimalF = algebra.getCountriesBy
+      )
 
-    // GET /countries/language/{value}?field={language_field, default: id}
-    case GET -> Root / "language" / value :? FieldMatcherIdDefault(field) =>
-      implicitly[TableBase[Language]].fieldTypeMap.get(field) match {
-        case Some(StringType) => algebra.getCountriesByLanguage(field, value).flatMap(_.toResponse)
-        case Some(IntType)    => value.asInt.toResponse(algebra.getCountriesByLanguage(field, _))
-        case Some(LongType)   => value.asLong.toResponse(algebra.getCountriesByLanguage(field, _))
-        case Some(BooleanType) =>
-          value.asBoolean.toResponse(algebra.getCountriesByLanguage(field, _))
-        case Some(BigDecimalType) =>
-          value.asBigDecimal.toResponse(algebra.getCountriesByLanguage(field, _))
-        case None => BadRequest(InvalidField(field).error)
-      }
+    // GET /countries/{id}
+    case GET -> Root / id =>
+      id.asLong.toResponse(algebra.getCountry)
 
-    // GET /countries/currency/{value}?field={currency_field, default: id}
-    case GET -> Root / "currency" / value :? FieldMatcherIdDefault(field) =>
-      implicitly[TableBase[Currency]].fieldTypeMap.get(field) match {
-        case Some(StringType) => algebra.getCountriesByCurrency(field, value).flatMap(_.toResponse)
-        case Some(IntType)    => value.asInt.toResponse(algebra.getCountriesByCurrency(field, _))
-        case Some(LongType)   => value.asLong.toResponse(algebra.getCountriesByCurrency(field, _))
-        case Some(BooleanType) =>
-          value.asBoolean.toResponse(algebra.getCountriesByCurrency(field, _))
-        case Some(BigDecimalType) =>
-          value.asBigDecimal.toResponse(algebra.getCountriesByCurrency(field, _))
-        case None => BadRequest(InvalidField(field).error)
-      }
+    // GET /countries/language/filter?field={language_field}&operator={operator; default: eq}&value={value}
+    case GET -> Root / "language" / "filter" :?
+          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +& ValueMatcher(values) =>
+      processFilter[Language, Country](field, operator, values)(
+        stringF = algebra.getCountriesByLanguage,
+        intF = algebra.getCountriesByLanguage,
+        longF = algebra.getCountriesByLanguage,
+        boolF = algebra.getCountriesByLanguage,
+        bigDecimalF = algebra.getCountriesByLanguage
+      )
+
+    // GET /countries/currency/filter?field={currency_field}&operator={operator; default: eq}&value={value}
+    case GET -> Root / "currency" / "filter" :?
+          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +& ValueMatcher(values) =>
+      processFilter[Currency, Country](field, operator, values)(
+        stringF = algebra.getCountriesByCurrency,
+        intF = algebra.getCountriesByCurrency,
+        longF = algebra.getCountriesByCurrency,
+        boolF = algebra.getCountriesByCurrency,
+        bigDecimalF = algebra.getCountriesByCurrency
+      )
 
     // POST /countries
     case req @ POST -> Root =>

@@ -1,10 +1,12 @@
 package flightdatabase.repository.queries
 
+import cats.data.{NonEmptyList => Nel}
 import doobie.Fragment
 import doobie.Put
 import doobie.Query0
 import doobie.Update0
 import doobie.implicits.toSqlInterpolator
+import flightdatabase.api.Operator
 import flightdatabase.domain.TableBase
 import flightdatabase.domain.manufacturer.Manufacturer
 import flightdatabase.domain.manufacturer.ManufacturerCreate
@@ -15,16 +17,22 @@ private[repository] object ManufacturerQueries {
 
   def selectAllManufacturers: Query0[Manufacturer] = selectAll.query[Manufacturer]
 
-  def selectManufacturersBy[V: Put](field: String, value: V): Query0[Manufacturer] =
-    (selectAll ++ whereFragment(s"manufacturer.$field", value)).query[Manufacturer]
+  def selectManufacturersBy[V: Put](
+    field: String,
+    values: Nel[V],
+    operator: Operator
+  ): Query0[Manufacturer] =
+    (selectAll ++ whereFragment(s"manufacturer.$field", values, operator)).query[Manufacturer]
 
   def selectManufacturersByCity[ET: TableBase, EV: Put](
     externalField: String,
-    externalValue: EV
+    externalValues: Nel[EV],
+    operator: Operator
   ): Query0[Manufacturer] = {
     selectAll ++ innerJoinWhereFragment[Manufacturer, ET, EV](
       externalField,
-      externalValue,
+      externalValues,
+      operator,
       Some("base_city_id")
     )
   }.query[Manufacturer]

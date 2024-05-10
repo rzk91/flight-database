@@ -31,10 +31,11 @@ class AirlineAirplaneRepository[F[_]: Concurrent] private (
   override def getAirlineAirplane(
     airlineId: Long,
     airplaneId: Long
-  ): F[ApiResult[AirlineAirplane]] =
+  ): F[ApiResult[AirlineAirplane]] = {
+    val asNel = Nel.one(airlineId)
     EitherT(
-      selectAirlineAirplanesBy("airline_id", Nel.one(airlineId), Operator.Equals)
-        .asList(invalidValue = Some(airlineId))
+      selectAirlineAirplanesBy("airline_id", asNel, Operator.Equals)
+        .asList(invalidValues = Some(asNel))
     ).subflatMap[ApiError, ApiOutput[AirlineAirplane]] { output =>
         val airlineAirplanes = output.value
         airlineAirplanes.find(_.airplaneId == airplaneId) match {
@@ -44,8 +45,9 @@ class AirlineAirplaneRepository[F[_]: Concurrent] private (
       }
       .value
       .execute
+  }
 
-  override def getAirlineAirplanes[V: Put](
+  override def getAirlineAirplanesBy[V: Put](
     field: String,
     values: Nel[V],
     operator: Operator

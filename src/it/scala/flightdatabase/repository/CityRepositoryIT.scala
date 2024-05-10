@@ -1,7 +1,9 @@
 package flightdatabase.repository
 
+import cats.data.{NonEmptyList => Nel}
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
+import flightdatabase.api.Operator
 import flightdatabase.domain.ApiResult
 import flightdatabase.domain.EntryAlreadyExists
 import flightdatabase.domain.EntryCheckFailed
@@ -153,8 +155,10 @@ final class CityRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting a city by other fields" should "return the corresponding entries" in {
-    def cityByName(name: String): IO[ApiResult[List[City]]] = repo.getCities("name", name)
-    def cityByCountryId(id: Long): IO[ApiResult[List[City]]] = repo.getCities("country_id", id)
+    def cityByName(name: String): IO[ApiResult[List[City]]] =
+      repo.getCitiesBy("name", Nel.one(name), Operator.Equals)
+    def cityByCountryId(id: Long): IO[ApiResult[List[City]]] =
+      repo.getCitiesBy("country_id", Nel.one(id), Operator.Equals)
 
     val distinctCountryIds = originalCities.map(_.countryId).distinct
 
@@ -172,7 +176,7 @@ final class CityRepositoryIT extends RepositoryCheck {
 
   "Selecting a city by country name" should "return the corresponding entries" in {
     def cityByCountry(name: String): IO[ApiResult[List[City]]] =
-      repo.getCitiesByCountry("name", name)
+      repo.getCitiesByCountry("name", Nel.one(name), Operator.Equals)
 
     forAll(countryToIdMap) {
       case (country, id) =>
@@ -185,19 +189,27 @@ final class CityRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting a non-existent field" should "return an error" in {
-    repo.getCities(invalidFieldSyntax, "value").error shouldBe sqlErrorInvalidSyntax
-    repo.getCitiesByCountry(invalidFieldSyntax, "value").error shouldBe sqlErrorInvalidSyntax
-    repo.getCities(invalidFieldColumn, "value").error shouldBe InvalidField(invalidFieldColumn)
-    repo.getCitiesByCountry(invalidFieldColumn, "value").error shouldBe InvalidField(
-      invalidFieldColumn
-    )
+    repo
+      .getCitiesBy(invalidFieldSyntax, Nel.one("value"), Operator.Equals)
+      .error shouldBe sqlErrorInvalidSyntax
+    repo
+      .getCitiesByCountry(invalidFieldSyntax, Nel.one("value"), Operator.Equals)
+      .error shouldBe sqlErrorInvalidSyntax
+    repo
+      .getCitiesBy(invalidFieldColumn, Nel.one("value"), Operator.Equals)
+      .error shouldBe InvalidField(invalidFieldColumn)
+    repo
+      .getCitiesByCountry(invalidFieldColumn, Nel.one("value"), Operator.Equals)
+      .error shouldBe InvalidField(invalidFieldColumn)
   }
 
   "Selecting an existing field with an invalid value type" should "return an error" in {
-    repo.getCities("population", invalidLongValue).error shouldBe InvalidValueType(invalidLongValue)
-    repo.getCitiesByCountry("name", invalidStringValue).error shouldBe InvalidValueType(
-      invalidStringValue.toString
-    )
+    repo
+      .getCitiesBy("population", Nel.one(invalidLongValue), Operator.Equals)
+      .error shouldBe InvalidValueType(invalidLongValue)
+    repo
+      .getCitiesByCountry("name", Nel.one(invalidStringValue), Operator.Equals)
+      .error shouldBe InvalidValueType(invalidStringValue.toString)
   }
 
   "Creating a new city" should "not take place if fields do not satisfy their criteria" in {
@@ -262,13 +274,13 @@ final class CityRepositoryIT extends RepositoryCheck {
   }
 
   "Updating a city" should "work and return the updated city ID" in {
-    val original = repo.getCities("name", newCity.name).value.head
+    val original = repo.getCitiesBy("name", Nel.one(newCity.name), Operator.Equals).value.head
     val updatedCity = original.copy(population = original.population + 100000)
     repo.updateCity(updatedCity).value shouldBe updatedCity.id
   }
 
   it should "also allow changing the city's name to a non-empty value" in {
-    val original = repo.getCities("name", newCity.name).value.head
+    val original = repo.getCitiesBy("name", Nel.one(newCity.name), Operator.Equals).value.head
     val updatedCity = original.copy(name = updatedName)
     repo.updateCity(updatedCity).value shouldBe updatedCity.id
 
@@ -281,7 +293,7 @@ final class CityRepositoryIT extends RepositoryCheck {
   }
 
   it should "throw an error if we update the timezone to an invalid value" in {
-    val original = repo.getCities("name", updatedName).value.head
+    val original = repo.getCitiesBy("name", Nel.one(updatedName), Operator.Equals).value.head
     val updatedCity = original.copy(timezone = "")
     repo.updateCity(updatedCity).error shouldBe InvalidTimezone("")
 
@@ -291,13 +303,13 @@ final class CityRepositoryIT extends RepositoryCheck {
   }
 
   it should "throw a foreign key error if the country does not exist" in {
-    val original = repo.getCities("name", updatedName).value.head
+    val original = repo.getCitiesBy("name", Nel.one(updatedName), Operator.Equals).value.head
     val updatedCity = original.copy(countryId = idNotPresent)
     repo.updateCity(updatedCity).error shouldBe EntryHasInvalidForeignKey
   }
 
   "Patching a city" should "work and return the updated city ID" in {
-    val original = repo.getCities("name", updatedName).value.head
+    val original = repo.getCitiesBy("name", Nel.one(updatedName), Operator.Equals).value.head
     val patch = CityPatch(name = Some(patchedName))
     val patched = City.fromPatch(original.id, patch, original)
     repo.partiallyUpdateCity(original.id, patch).value shouldBe patched
@@ -309,7 +321,7 @@ final class CityRepositoryIT extends RepositoryCheck {
   }
 
   it should "throw an error if we patch a city with an invalid timezone" in {
-    val original = repo.getCities("name", patchedName).value.head
+    val original = repo.getCitiesBy("name", Nel.one(patchedName), Operator.Equals).value.head
     val patch = CityPatch(timezone = Some(""))
     repo.partiallyUpdateCity(original.id, patch).error shouldBe InvalidTimezone("")
 
@@ -319,13 +331,13 @@ final class CityRepositoryIT extends RepositoryCheck {
   }
 
   it should "throw a foreign key error if the country does not exist" in {
-    val original = repo.getCities("name", patchedName).value.head
+    val original = repo.getCitiesBy("name", Nel.one(patchedName), Operator.Equals).value.head
     val patch = CityPatch(countryId = Some(idNotPresent))
     repo.partiallyUpdateCity(original.id, patch).error shouldBe EntryHasInvalidForeignKey
   }
 
   "Removing a city" should "work correctly" in {
-    val cityToRemove = repo.getCities("name", patchedName).value.head
+    val cityToRemove = repo.getCitiesBy("name", Nel.one(patchedName), Operator.Equals).value.head
     repo.removeCity(cityToRemove.id).value shouldBe ()
     repo.doesCityExist(cityToRemove.id).unsafeRunSync() shouldBe false
   }

@@ -1,21 +1,24 @@
 package flightdatabase.repository
 
 import cats.data.EitherT
+import cats.data.{NonEmptyList => Nel}
 import cats.effect.Concurrent
 import cats.effect.Resource
 import cats.implicits._
+import doobie.ConnectionIO
 import doobie.Put
 import doobie.Transactor
+import flightdatabase.api.Operator
 import flightdatabase.domain.ApiResult
+import flightdatabase.domain.EntryListEmpty
 import flightdatabase.domain.airport.Airport
 import flightdatabase.domain.airport.AirportAlgebra
 import flightdatabase.domain.airport.AirportCreate
 import flightdatabase.domain.airport.AirportPatch
 import flightdatabase.domain.city.City
 import flightdatabase.domain.country.Country
-import flightdatabase.domain.listToApiResult
 import flightdatabase.repository.queries.AirportQueries._
-import flightdatabase.utils.FieldValue
+import flightdatabase.utils.FieldValues
 import flightdatabase.utils.implicits._
 
 class AirportRepository[F[_]: Concurrent] private (
@@ -31,20 +34,37 @@ class AirportRepository[F[_]: Concurrent] private (
     getFieldList[Airport, String]("name").execute
 
   override def getAirport(id: Long): F[ApiResult[Airport]] =
-    selectAirportsBy("id", id).asSingle(id).execute
+    selectAirportsBy("id", Nel.one(id), Operator.Equals).asSingle(id).execute
 
-  override def getAirports[V: Put](field: String, value: V): F[ApiResult[List[Airport]]] =
-    selectAirportsBy(field, value).asList(Some(field), Some(value)).execute
+  override def getAirportsBy[V: Put](
+    field: String,
+    values: Nel[V],
+    operator: Operator
+  ): F[ApiResult[List[Airport]]] =
+    selectAirportsBy(field, values, operator).asList(Some(field), Some(values)).execute
 
-  def getAirportsByCity[V: Put](field: String, value: V): F[ApiResult[List[Airport]]] =
-    selectAllAirportsByExternal[City, V](field, value).asList(Some(field), Some(value)).execute
+  def getAirportsByCity[V: Put](
+    field: String,
+    values: Nel[V],
+    operator: Operator
+  ): F[ApiResult[List[Airport]]] =
+    selectAllAirportsByExternal[City, V](field, values, operator)
+      .asList(Some(field), Some(values))
+      .execute
 
-  def getAirportsByCountry[V: Put](field: String, value: V): F[ApiResult[List[Airport]]] =
-    EitherT(getFieldList[City, Long, Country, V]("id", FieldValue(field, value)))
-      .flatMapF {
-        _.value
-          .flatTraverse(selectAllAirportsByExternal[City, Long]("id", _).to[List])
-          .map(listToApiResult)
+  def getAirportsByCountry[V: Put](
+    field: String,
+    values: Nel[V],
+    operator: Operator
+  ): F[ApiResult[List[Airport]]] =
+    EitherT(getFieldList[City, Long, Country, V]("id", FieldValues(field, values), operator))
+      .flatMapF { cityIds =>
+        Nel.fromList(cityIds.value) match {
+          case Some(ids) =>
+            selectAllAirportsByExternal[City, Long]("id", ids, Operator.In)
+              .asList(Some(field), Some(ids))
+          case None => EntryListEmpty.elevate[ConnectionIO, List[Airport]]
+        }
       }
       .value
       .execute

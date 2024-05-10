@@ -1,7 +1,9 @@
 package flightdatabase.repository
 
+import cats.data.{NonEmptyList => Nel}
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
+import flightdatabase.api.Operator
 import flightdatabase.domain.ApiResult
 import flightdatabase.domain.EntryAlreadyExists
 import flightdatabase.domain.EntryCheckFailed
@@ -71,8 +73,9 @@ final class CurrencyRepositoryIT extends RepositoryCheck {
 
   "Selecting a currency by other fields" should "return the corresponding entries" in {
     def currencyByName(name: String): IO[ApiResult[List[Currency]]] =
-      repo.getCurrencies("name", name)
-    def currencyByIso(iso: String): IO[ApiResult[List[Currency]]] = repo.getCurrencies("iso", iso)
+      repo.getCurrenciesBy("name", Nel.one(name), Operator.Equals)
+    def currencyByIso(iso: String): IO[ApiResult[List[Currency]]] =
+      repo.getCurrenciesBy("iso", Nel.one(iso), Operator.Equals)
 
     forAll(originalCurrencies) { currency =>
       currencyByName(currency.name).value should contain only currency
@@ -84,12 +87,18 @@ final class CurrencyRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting a non-existent field" should "return an error" in {
-    repo.getCurrencies(invalidFieldSyntax, "value").error shouldBe sqlErrorInvalidSyntax
-    repo.getCurrencies(invalidFieldColumn, "value").error shouldBe InvalidField(invalidFieldColumn)
+    repo
+      .getCurrenciesBy(invalidFieldSyntax, Nel.one("value"), Operator.Equals)
+      .error shouldBe sqlErrorInvalidSyntax
+    repo
+      .getCurrenciesBy(invalidFieldColumn, Nel.one("value"), Operator.Equals)
+      .error shouldBe InvalidField(invalidFieldColumn)
   }
 
   "Selecting an existing field with an invalid value type" should "return an error" in {
-    repo.getCurrencies("iso", invalidStringValue).error shouldBe InvalidValueType(
+    repo
+      .getCurrenciesBy("iso", Nel.one(invalidStringValue), Operator.Equals)
+      .error shouldBe InvalidValueType(
       invalidStringValue.toString
     )
   }
@@ -167,7 +176,8 @@ final class CurrencyRepositoryIT extends RepositoryCheck {
   }
 
   it should "work if all criteria are met" in {
-    val existingCurrency = repo.getCurrencies("name", newCurrency.name).value.head
+    val existingCurrency =
+      repo.getCurrenciesBy("name", Nel.one(newCurrency.name), Operator.Equals).value.head
     val updated = existingCurrency.copy(name = updatedName)
 
     repo.updateCurrency(updated).value shouldBe existingCurrency.id
@@ -213,7 +223,8 @@ final class CurrencyRepositoryIT extends RepositoryCheck {
   }
 
   it should "work if all criteria are met" in {
-    val existingCurrency = repo.getCurrencies("name", updatedName).value.head
+    val existingCurrency =
+      repo.getCurrenciesBy("name", Nel.one(updatedName), Operator.Equals).value.head
     val patched = CurrencyPatch(name = Some(patchedName))
 
     repo
@@ -225,7 +236,8 @@ final class CurrencyRepositoryIT extends RepositoryCheck {
   }
 
   "Removing a currency" should "work correctly" in {
-    val existingCurrency = repo.getCurrencies("name", patchedName).value.head
+    val existingCurrency =
+      repo.getCurrenciesBy("name", Nel.one(patchedName), Operator.Equals).value.head
     repo.removeCurrency(existingCurrency.id).value shouldBe ()
 
     repo.getCurrency(existingCurrency.id).error shouldBe EntryNotFound(existingCurrency.id)

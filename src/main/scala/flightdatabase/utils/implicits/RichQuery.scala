@@ -1,5 +1,6 @@
 package flightdatabase.utils.implicits
 
+import cats.data.{NonEmptyList => Nel}
 import cats.syntax.applicativeError._
 import doobie.ConnectionIO
 import doobie.Query0
@@ -19,11 +20,11 @@ class RichQuery[A](private val q: Query0[A]) extends AnyVal {
 
   def asList(
     invalidField: Option[String] = None,
-    invalidValue: Option[_] = None
+    invalidValues: Option[Nel[_]] = None
   ): ConnectionIO[ApiResult[List[A]]] =
     q.to[List].attemptSqlState.map {
       case Right(list) => listToApiResult(list)
-      case Left(error) => sqlStateToApiError(error, invalidField, invalidValue).asResult[List[A]]
+      case Left(error) => sqlStateToApiError(error, invalidField, invalidValues).asResult[List[A]]
     }
 
   def asSingle[E](entry: E): ConnectionIO[ApiResult[A]] =
@@ -31,7 +32,8 @@ class RichQuery[A](private val q: Query0[A]) extends AnyVal {
       case Right(Some(a)) => toApiResult(a)
       case Right(None)    => EntryNotFound(entry).asResult[A]
       case Left(error: SQLException) =>
-        sqlStateToApiError(SqlState(error.getSQLState), invalidValue = Some(entry)).asResult[A]
+        sqlStateToApiError(SqlState(error.getSQLState), invalidValues = Some(Nel.one(entry)))
+          .asResult[A]
       case Left(error) => UnknownDbError(error.getLocalizedMessage).asResult[A]
     }
 

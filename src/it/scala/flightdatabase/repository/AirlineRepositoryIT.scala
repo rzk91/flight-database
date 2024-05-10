@@ -1,7 +1,9 @@
 package flightdatabase.repository
 
+import cats.data.{NonEmptyList => Nel}
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
+import flightdatabase.api.Operator
 import flightdatabase.domain.ApiResult
 import flightdatabase.domain.EntryAlreadyExists
 import flightdatabase.domain.EntryCheckFailed
@@ -75,13 +77,16 @@ final class AirlineRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting an airline by other fields" should "return the corresponding airlines" in {
-    def airlinesByName(name: String): IO[ApiResult[List[Airline]]] = repo.getAirlines("name", name)
-    def airlinesByIata(iata: String): IO[ApiResult[List[Airline]]] = repo.getAirlines("iata", iata)
-    def airlinesByIcao(icao: String): IO[ApiResult[List[Airline]]] = repo.getAirlines("icao", icao)
+    def airlinesByName(name: String): IO[ApiResult[List[Airline]]] =
+      repo.getAirlinesBy("name", Nel.one(name), Operator.Equals)
+    def airlinesByIata(iata: String): IO[ApiResult[List[Airline]]] =
+      repo.getAirlinesBy("iata", Nel.one(iata), Operator.Equals)
+    def airlinesByIcao(icao: String): IO[ApiResult[List[Airline]]] =
+      repo.getAirlinesBy("icao", Nel.one(icao), Operator.Equals)
     def airlinesByCallSign(callSign: String): IO[ApiResult[List[Airline]]] =
-      repo.getAirlines("call_sign", callSign)
+      repo.getAirlinesBy("call_sign", Nel.one(callSign), Operator.Equals)
     def airlinesByCountryId(id: Long): IO[ApiResult[List[Airline]]] =
-      repo.getAirlines("country_id", id)
+      repo.getAirlinesBy("country_id", Nel.one(id), Operator.Equals)
 
     val distinctNames = originalAirlines.map(_.name).distinct
     val distinctCountryIds = originalAirlines.map(_.countryId).distinct
@@ -112,16 +117,16 @@ final class AirlineRepositoryIT extends RepositoryCheck {
 
   "Selecting an airline by country field" should "return the corresponding entries" in {
     def airlineByCountryName(name: String): IO[ApiResult[List[Airline]]] =
-      repo.getAirlinesByCountry("name", name)
+      repo.getAirlinesByCountry("name", Nel.one(name), Operator.Equals)
 
     def airlineByCountryIso2(iso2: String): IO[ApiResult[List[Airline]]] =
-      repo.getAirlinesByCountry("iso2", iso2)
+      repo.getAirlinesByCountry("iso2", Nel.one(iso2), Operator.Equals)
 
     def airlineByCountryIso3(iso3: String): IO[ApiResult[List[Airline]]] =
-      repo.getAirlinesByCountry("iso3", iso3)
+      repo.getAirlinesByCountry("iso3", Nel.one(iso3), Operator.Equals)
 
     def airlineByCountryCode(code: Int): IO[ApiResult[List[Airline]]] =
-      repo.getAirlinesByCountry("country_code", code)
+      repo.getAirlinesByCountry("country_code", Nel.one(code), Operator.Equals)
 
     forAll(countryIdMap) {
       case (id, (name, iso2, iso3, code)) =>
@@ -146,21 +151,27 @@ final class AirlineRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting a non-existent field" should "return an error" in {
-    repo.getAirlines(invalidFieldSyntax, "value").error shouldBe sqlErrorInvalidSyntax
-    repo.getAirlinesByCountry(invalidFieldSyntax, "value").error shouldBe sqlErrorInvalidSyntax
-    repo.getAirlines(invalidFieldColumn, "value").error shouldBe InvalidField(invalidFieldColumn)
-    repo.getAirlinesByCountry(invalidFieldColumn, "value").error shouldBe InvalidField(
-      invalidFieldColumn
-    )
+    repo
+      .getAirlinesBy(invalidFieldSyntax, Nel.one("value"), Operator.Equals)
+      .error shouldBe sqlErrorInvalidSyntax
+    repo
+      .getAirlinesByCountry(invalidFieldSyntax, Nel.one("value"), Operator.Equals)
+      .error shouldBe sqlErrorInvalidSyntax
+    repo
+      .getAirlinesBy(invalidFieldColumn, Nel.one("value"), Operator.Equals)
+      .error shouldBe InvalidField(invalidFieldColumn)
+    repo
+      .getAirlinesByCountry(invalidFieldColumn, Nel.one("value"), Operator.Equals)
+      .error shouldBe InvalidField(invalidFieldColumn)
   }
 
   "Selecting an existing field with an invalid value type" should "return an error" in {
-    repo.getAirlines("country_id", invalidLongValue).error shouldBe InvalidValueType(
-      invalidLongValue
-    )
-    repo.getAirlinesByCountry("domain_name", invalidStringValue).error shouldBe InvalidValueType(
-      invalidStringValue.toString
-    )
+    repo
+      .getAirlinesBy("country_id", Nel.one(invalidLongValue), Operator.Equals)
+      .error shouldBe InvalidValueType(invalidLongValue)
+    repo
+      .getAirlinesByCountry("domain_name", Nel.one(invalidStringValue), Operator.Equals)
+      .error shouldBe InvalidValueType(invalidStringValue.toString)
   }
 
   "Creating a new airline" should "not take place if fields do not satisfy their criteria" in {
@@ -243,7 +254,8 @@ final class AirlineRepositoryIT extends RepositoryCheck {
   }
 
   it should "work if all criteria are met" in {
-    val existingAirline = repo.getAirlines("name", newAirline.name).value.head
+    val existingAirline =
+      repo.getAirlinesBy("name", Nel.one(newAirline.name), Operator.Equals).value.head
     val updated = existingAirline.copy(name = updatedName)
     repo.updateAirline(updated).value shouldBe updated.id
 
@@ -293,7 +305,8 @@ final class AirlineRepositoryIT extends RepositoryCheck {
   }
 
   it should "work if all criteria are met" in {
-    val existingAirline = repo.getAirlines("name", updatedName).value.head
+    val existingAirline =
+      repo.getAirlinesBy("name", Nel.one(updatedName), Operator.Equals).value.head
     val patch = AirlinePatch(name = Some(patchedName))
     val patched = existingAirline.copy(name = patchedName)
     repo.partiallyUpdateAirline(existingAirline.id, patch).value shouldBe patched
@@ -303,7 +316,8 @@ final class AirlineRepositoryIT extends RepositoryCheck {
   }
 
   "Removing an airline" should "work correctly" in {
-    val existingAirline = repo.getAirlines("name", patchedName).value.head
+    val existingAirline =
+      repo.getAirlinesBy("name", Nel.one(patchedName), Operator.Equals).value.head
     repo.removeAirline(existingAirline.id).value shouldBe ()
     repo.getAirline(existingAirline.id).error shouldBe EntryNotFound(existingAirline.id)
   }

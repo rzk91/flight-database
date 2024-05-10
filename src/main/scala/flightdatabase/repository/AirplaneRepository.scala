@@ -1,11 +1,13 @@
 package flightdatabase.repository
 
 import cats.data.EitherT
+import cats.data.{NonEmptyList => Nel}
 import cats.effect.Concurrent
 import cats.effect.Resource
 import cats.implicits._
 import doobie.Put
 import doobie.Transactor
+import flightdatabase.api.Operator
 import flightdatabase.domain.ApiResult
 import flightdatabase.domain.airplane.Airplane
 import flightdatabase.domain.airplane.AirplaneAlgebra
@@ -28,14 +30,22 @@ class AirplaneRepository[F[_]: Concurrent] private (
     getFieldList[Airplane, String]("name").execute
 
   override def getAirplane(id: Long): F[ApiResult[Airplane]] =
-    selectAirplanesBy("id", id).asSingle(id).execute
+    selectAirplanesBy("id", Nel.one(id), Operator.Equals).asSingle(id).execute
 
-  override def getAirplanes[V: Put](field: String, value: V): F[ApiResult[List[Airplane]]] =
-    selectAirplanesBy(field, value).asList(Some(field), Some(value)).execute
+  override def getAirplanesBy[V: Put](
+    field: String,
+    values: Nel[V],
+    operator: Operator
+  ): F[ApiResult[List[Airplane]]] =
+    selectAirplanesBy(field, values, operator).asList(Some(field), Some(values)).execute
 
-  def getAirplanesByManufacturer[V: Put](field: String, value: V): F[ApiResult[List[Airplane]]] =
-    selectAirplanesByExternal[Manufacturer, V](field, value)
-      .asList(Some(field), Some(value))
+  def getAirplanesByManufacturer[V: Put](
+    field: String,
+    values: Nel[V],
+    operator: Operator
+  ): F[ApiResult[List[Airplane]]] =
+    selectAirplanesByExternal[Manufacturer, V](field, values, operator)
+      .asList(Some(field), Some(values))
       .execute
 
   override def createAirplane(airplane: AirplaneCreate): F[ApiResult[Long]] =

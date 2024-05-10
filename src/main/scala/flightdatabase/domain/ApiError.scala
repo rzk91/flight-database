@@ -57,7 +57,7 @@ case class InvalidOperator(operator: Operator) extends ApiError {
 }
 
 case class InvalidValueType(value: String) extends ApiError {
-  override val error: String = s"Error: Invalid type for value '$value'"
+  override val error: String = s"Error: Invalid type for value(s) '$value'"
 }
 
 case class SqlError(sqlState: String) extends ApiError {

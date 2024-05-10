@@ -22,7 +22,7 @@ private[repository] object AirlineAirplaneQueries {
     values: Nel[V],
     operator: Operator
   ): Query0[AirlineAirplane] =
-    (selectAll ++ whereFragment2(s"airline_airplane.$field", values, operator))
+    (selectAll ++ whereFragment(s"airline_airplane.$field", values, operator))
       .query[AirlineAirplane]
 
   def selectAirlineAirplaneByExternal[ET: TableBase, EV: Put](
@@ -30,7 +30,7 @@ private[repository] object AirlineAirplaneQueries {
     externalValues: Nel[EV],
     operator: Operator
   ): Query0[AirlineAirplane] = {
-    selectAll ++ innerJoinWhereFragment2[AirlineAirplane, ET, EV](
+    selectAll ++ innerJoinWhereFragment[AirlineAirplane, ET, EV](
       externalField,
       externalValues,
       operator

@@ -12,7 +12,7 @@ trait AirlineCityAlgebra[F[_]] {
   def getAirlineCity(id: Long): F[ApiResult[AirlineCity]]
   def getAirlineCity(airlineId: Long, cityId: Long): F[ApiResult[AirlineCity]]
 
-  def getAirlineCities[V: Put](
+  def getAirlineCitiesBy[V: Put](
     field: String,
     values: Nel[V],
     operator: Operator

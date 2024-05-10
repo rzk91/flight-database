@@ -1,12 +1,14 @@
 package flightdatabase.repository
 
+import cats.data.{NonEmptyList => Nel}
 import cats.effect.unsafe.implicits.global
 import doobie.implicits._
+import flightdatabase.api.Operator
 import flightdatabase.domain.EntryNotFound
 import flightdatabase.domain.city.City
 import flightdatabase.domain.country.Country
 import flightdatabase.testutils.RepositoryCheck
-import flightdatabase.utils.FieldValue
+import flightdatabase.utils.FieldValues
 import flightdatabase.utils.implicits.enrichConnectionIO
 
 final class GenericRepositoryIT extends RepositoryCheck {
@@ -27,7 +29,11 @@ final class GenericRepositoryIT extends RepositoryCheck {
 
   "Selecting all city names in Germany" should "return a correct list" in {
     val cityNames =
-      getFieldList[City, String, Country, String]("name", FieldValue("name", "Germany")).execute
+      getFieldList[City, String, Country, String](
+        "name",
+        FieldValues("name", Nel.one("Germany")),
+        Operator.Equals
+      ).execute
         .unsafeRunSync()
         .value
         .value
@@ -37,8 +43,8 @@ final class GenericRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting all city names in Brazil" should "return an empty list" in {
-    val fieldValueBrazil = FieldValue[Country, String]("name", "Brazil")
-    getFieldList[City, String, Country, String]("name", fieldValueBrazil).execute
+    val fieldValueBrazil = FieldValues[Country, String]("name", Nel.one("Brazil"))
+    getFieldList[City, String, Country, String]("name", fieldValueBrazil, Operator.Equals).execute
       .unsafeRunSync()
       .left
       .value shouldBe EntryNotFound(fieldValueBrazil)

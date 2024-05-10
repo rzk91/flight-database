@@ -1,6 +1,7 @@
 package flightdatabase.repository
 
 import cats.data.EitherT
+import cats.data.{NonEmptyList => Nel}
 import cats.effect.Concurrent
 import cats.effect.Resource
 import cats.implicits._
@@ -8,10 +9,9 @@ import doobie.Put
 import doobie.Query0
 import doobie.Transactor
 import doobie.implicits._
-import flightdatabase.domain.ApiError
-import flightdatabase.domain.ApiOutput
+import flightdatabase.api.Operator
 import flightdatabase.domain.ApiResult
-import flightdatabase.domain.Got
+import flightdatabase.domain.EntryListEmpty
 import flightdatabase.domain.airline.Airline
 import flightdatabase.domain.airline_airplane.AirlineAirplane
 import flightdatabase.domain.airline_route.AirlineRoute
@@ -38,68 +38,52 @@ class AirlineRouteRepository[F[_]: Concurrent] private (
     getFieldList[AirlineRoute, String]("route_number").execute
 
   override def getAirlineRoute(id: Long): F[ApiResult[AirlineRoute]] =
-    selectAirlineRouteBy("id", id).asSingle(id).execute
+    selectAirlineRouteBy("id", Nel.one(id), Operator.Equals).asSingle(id).execute
 
-  override def getAirlineRoutes[V: Put](field: String, value: V): F[ApiResult[List[AirlineRoute]]] =
-    selectAirlineRouteBy(field, value).asList(Some(field), Some(value)).execute
+  override def getAirlineRoutesBy[V: Put](
+    field: String,
+    values: Nel[V],
+    operator: Operator
+  ): F[ApiResult[List[AirlineRoute]]] =
+    selectAirlineRouteBy(field, values, operator).asList(Some(field), Some(values)).execute
 
   override def getAirlineRoutesByAirline[V: Put](
     field: String,
-    value: V
+    values: Nel[V],
+    operator: Operator
   ): F[ApiResult[List[AirlineRoute]]] =
     // Get airline IDs for given airline field values
     EitherT(
-      selectWhereQuery[Airline, Long, V]("id", field, value)
-        .asList(Some(field), Some(value))
+      selectWhereQuery[Airline, Long, V]("id", field, values, operator)
+        .asList(Some(field), Some(values))
         .execute
-    ).flatMap[ApiError, ApiOutput[List[AirlineRoute]]] { airlineIdsOutput =>
-        // Accumulate all airline_routes for each airline_airplane_id based on each airline_id
-        val airlineIds = airlineIdsOutput.value
-        airlineIds
-          .foldLeft(EitherT.pure[F, ApiError](List.empty[AirlineRoute])) { (acc, id) =>
-            for {
-              accRoutes <- acc
-              routes    <- EitherT(getAirlineRoutesByAirlineId(id))
-            } yield accRoutes ++ routes.value
-          }
-          .map(Got(_)) // Convert to ApiOutput
-      }
-      .value
+    ).flatMapF(aIds => getAirlineRoutesByAirlineIds(aIds.value)).value
 
   override def getAirlineRoutesByAirplane[V: Put](
     field: String,
-    value: V
+    values: Nel[V],
+    operator: Operator
   ): F[ApiResult[List[AirlineRoute]]] =
     EitherT(
-      selectWhereQuery[Airplane, Long, V]("id", field, value)
-        .asList(Some(field), Some(value))
+      selectWhereQuery[Airplane, Long, V]("id", field, values, operator)
+        .asList(Some(field), Some(values))
         .execute
-    ).flatMap[ApiError, ApiOutput[List[AirlineRoute]]] { airplaneIdsOutput =>
-        val airplaneIds = airplaneIdsOutput.value
-        airplaneIds
-          .foldLeft(EitherT.pure[F, ApiError](List.empty[AirlineRoute])) { (acc, id) =>
-            for {
-              accRoutes <- acc
-              routes    <- EitherT(getAirlineRoutesByAirplaneId(id))
-            } yield accRoutes ++ routes.value
-          }
-          .map(Got(_))
-      }
-      .value
+    ).flatMapF(aIds => getAirlineRoutesByAirplaneIds(aIds.value)).value
 
   override def getAirlineRoutesByAirport[V: Put](
     field: String,
-    value: V,
+    values: Nel[V],
+    operator: Operator,
     inbound: Option[Boolean] // None for both inbound and outbound
   ): F[ApiResult[List[AirlineRoute]]] = {
     def q(f: String): Query0[AirlineRoute] =
-      selectAirlineRoutesByExternal[Airport, V](field, value, Some(f))
+      selectAirlineRoutesByExternal[Airport, V](field, values, operator, Some(f))
     inbound.fold {
       val startQuery = q("start_airport_id")
       val destinationQuery = q("destination_airport_id")
       (startQuery.toFragment ++ fr"UNION" ++ destinationQuery.toFragment).query[AirlineRoute]
     }(in => q(if (in) "destination_airport_id" else "start_airport_id"))
-  }.asList(Some(field), Some(value)).execute
+  }.asList(Some(field), Some(values)).execute
 
   override def createAirlineRoute(airlineRoute: AirlineRouteCreate): F[ApiResult[Long]] =
     insertAirlineRoute(airlineRoute).attemptInsert.execute
@@ -120,15 +104,27 @@ class AirlineRouteRepository[F[_]: Concurrent] private (
   override def removeAirlineRoute(id: Long): F[ApiResult[Unit]] =
     deleteAirlineRoute(id).attemptDelete(id).execute
 
-  private def getAirlineRoutesByAirlineId(airlineId: Long): F[ApiResult[List[AirlineRoute]]] =
-    selectAirlineRoutesByExternal[AirlineAirplane, Long]("airline_id", airlineId)
-      .asList(invalidValue = Some(airlineId))
-      .execute
+  private def getAirlineRoutesByAirlineIds(
+    airlineIds: List[Long]
+  ): F[ApiResult[List[AirlineRoute]]] =
+    Nel.fromList(airlineIds) match {
+      case Some(ids) =>
+        selectAirlineRoutesByExternal[AirlineAirplane, Long]("airline_id", ids, Operator.In)
+          .asList(invalidValues = Some(ids))
+          .execute
+      case None => EntryListEmpty.elevate[F, List[AirlineRoute]]
+    }
 
-  private def getAirlineRoutesByAirplaneId(airplaneId: Long): F[ApiResult[List[AirlineRoute]]] =
-    selectAirlineRoutesByExternal[AirlineAirplane, Long]("airplane_id", airplaneId)
-      .asList(invalidValue = Some(airplaneId))
-      .execute
+  private def getAirlineRoutesByAirplaneIds(
+    airplaneIds: List[Long]
+  ): F[ApiResult[List[AirlineRoute]]] =
+    Nel.fromList(airplaneIds) match {
+      case Some(ids) =>
+        selectAirlineRoutesByExternal[AirlineAirplane, Long]("airplane_id", ids, Operator.In)
+          .asList(invalidValues = Some(ids))
+          .execute
+      case None => EntryListEmpty.elevate[F, List[AirlineRoute]]
+    }
 }
 
 object AirlineRouteRepository {

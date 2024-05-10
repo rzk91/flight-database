@@ -31,44 +31,42 @@ class AirportEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airpo
         algebra.getAirports.flatMap(_.toResponse)
       }
 
-    // GET /airports/{valid}?field={airport_field; default: id}
-    case GET -> Root / value :? FieldMatcherIdDefault(field) =>
-      if (field == "id") {
-        value.asLong.toResponse(algebra.getAirport)
-      } else {
-        implicitly[TableBase[Airport]].fieldTypeMap.get(field) match {
-          case Some(StringType)     => algebra.getAirports(field, value).flatMap(_.toResponse)
-          case Some(IntType)        => value.asInt.toResponse(algebra.getAirports(field, _))
-          case Some(LongType)       => value.asLong.toResponse(algebra.getAirports(field, _))
-          case Some(BooleanType)    => value.asBoolean.toResponse(algebra.getAirports(field, _))
-          case Some(BigDecimalType) => value.asBigDecimal.toResponse(algebra.getAirports(field, _))
-          case None                 => BadRequest(InvalidField(field).error)
-        }
-      }
+    // GET /airports/filter?field={airport_field}&operator={operator; default: eq}&value={value}
+    case GET -> Root / "filter" :?
+          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +& ValueMatcher(values) =>
+      processFilter[Airport, Airport](field, operator, values)(
+        stringF = algebra.getAirportsBy,
+        intF = algebra.getAirportsBy,
+        longF = algebra.getAirportsBy,
+        boolF = algebra.getAirportsBy,
+        bigDecimalF = algebra.getAirportsBy
+      )
 
-    // GET /airports/city/{value}?field={city_field; default: id}
-    case GET -> Root / "city" / value :? FieldMatcherIdDefault(field) =>
-      implicitly[TableBase[City]].fieldTypeMap.get(field) match {
-        case Some(StringType)  => algebra.getAirportsByCity(field, value).flatMap(_.toResponse)
-        case Some(IntType)     => value.asInt.toResponse(algebra.getAirportsByCity(field, _))
-        case Some(LongType)    => value.asLong.toResponse(algebra.getAirportsByCity(field, _))
-        case Some(BooleanType) => value.asBoolean.toResponse(algebra.getAirportsByCity(field, _))
-        case Some(BigDecimalType) =>
-          value.asBigDecimal.toResponse(algebra.getAirportsByCity(field, _))
-        case None => BadRequest(InvalidField(field).error)
-      }
+    // GET /airports/{id}
+    case GET -> Root / id =>
+      id.asLong.toResponse(algebra.getAirport)
 
-    // GET /airports/country/{value}?field={country_field; default: id}
-    case GET -> Root / "country" / value :? FieldMatcherIdDefault(field) =>
-      implicitly[TableBase[Country]].fieldTypeMap.get(field) match {
-        case Some(StringType)  => algebra.getAirportsByCountry(field, value).flatMap(_.toResponse)
-        case Some(IntType)     => value.asInt.toResponse(algebra.getAirportsByCountry(field, _))
-        case Some(LongType)    => value.asLong.toResponse(algebra.getAirportsByCountry(field, _))
-        case Some(BooleanType) => value.asBoolean.toResponse(algebra.getAirportsByCountry(field, _))
-        case Some(BigDecimalType) =>
-          value.asBigDecimal.toResponse(algebra.getAirportsByCountry(field, _))
-        case None => BadRequest(InvalidField(field).error)
-      }
+    // GET /airports/city/filter?field={city_field}&operator={operator; default: eq}&value={value}
+    case GET -> Root / "city" / "filter" :?
+          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +& ValueMatcher(values) =>
+      processFilter[City, Airport](field, operator, values)(
+        stringF = algebra.getAirportsByCity,
+        intF = algebra.getAirportsByCity,
+        longF = algebra.getAirportsByCity,
+        boolF = algebra.getAirportsByCity,
+        bigDecimalF = algebra.getAirportsByCity
+      )
+
+    // GET /airports/country/filter?field={country_field}&operator={operator; default: eq}&value={value}
+    case GET -> Root / "country" / "filter" :?
+          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +& ValueMatcher(values) =>
+      processFilter[Country, Airport](field, operator, values)(
+        stringF = algebra.getAirportsByCountry,
+        intF = algebra.getAirportsByCountry,
+        longF = algebra.getAirportsByCountry,
+        boolF = algebra.getAirportsByCountry,
+        bigDecimalF = algebra.getAirportsByCountry
+      )
 
     // POST /airports
     case req @ POST -> Root =>

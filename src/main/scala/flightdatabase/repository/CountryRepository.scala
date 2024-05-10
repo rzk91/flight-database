@@ -1,6 +1,7 @@
 package flightdatabase.repository
 
 import cats.data.EitherT
+import cats.data.{NonEmptyList => Nel}
 import cats.effect.Concurrent
 import cats.effect.Resource
 import cats.implicits._
@@ -8,6 +9,7 @@ import doobie.Fragment
 import doobie.Put
 import doobie.Transactor
 import doobie.implicits._
+import flightdatabase.api.Operator
 import flightdatabase.domain.ApiResult
 import flightdatabase.domain.country.Country
 import flightdatabase.domain.country.CountryAlgebra
@@ -32,30 +34,38 @@ class CountryRepository[F[_]: Concurrent] private (
     getFieldList[Country, String]("name").execute
 
   override def getCountry(id: Long): F[ApiResult[Country]] =
-    selectCountriesBy("id", id).asSingle(id).execute
+    selectCountriesBy("id", Nel.one(id), Operator.Equals).asSingle(id).execute
 
-  override def getCountries[V: Put](field: String, value: V): F[ApiResult[List[Country]]] =
-    selectCountriesBy(field, value).asList(Some(field), Some(value)).execute
+  override def getCountriesBy[V: Put](
+    field: String,
+    values: Nel[V],
+    operator: Operator
+  ): F[ApiResult[List[Country]]] =
+    selectCountriesBy(field, values, operator).asList(Some(field), Some(values)).execute
 
   override def getCountriesByLanguage[V: Put](
     field: String,
-    value: V
+    values: Nel[V],
+    operator: Operator
   ): F[ApiResult[List[Country]]] = {
     def q(idField: String): Fragment =
-      selectCountriesByExternal[Language, V](field, value, Some(idField)).toFragment
+      selectCountriesByExternal[Language, V](field, values, operator, Some(idField)).toFragment
 
     {
       q("main_language_id") ++ fr"UNION" ++
       q("secondary_language_id") ++ fr"UNION" ++
       q("tertiary_language_id")
-    }.query[Country].asList(Some(field), Some(value)).execute
+    }.query[Country].asList(Some(field), Some(values)).execute
   }
 
   override def getCountriesByCurrency[V: Put](
     field: String,
-    value: V
+    values: Nel[V],
+    operator: Operator
   ): F[ApiResult[List[Country]]] =
-    selectCountriesByExternal[Currency, V](field, value).asList(Some(field), Some(value)).execute
+    selectCountriesByExternal[Currency, V](field, values, operator)
+      .asList(Some(field), Some(values))
+      .execute
 
   override def createCountry(country: CountryCreate): F[ApiResult[Long]] =
     insertCountry(country).attemptInsert.execute

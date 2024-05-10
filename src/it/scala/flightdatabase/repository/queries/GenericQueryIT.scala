@@ -22,20 +22,20 @@ final class GenericQueryIT extends DbChecker {
   }
 
   "A simple get query with an `equals` where clause" should "not fail" in {
-    check(selectWhereQuery[Country, Long, String]("id", "name", "Germany"))
-    check(selectWhereQuery[City, String, Long]("name", "country_id", 1))
+    check(selectWhereQuery[Country, Long, String]("id", "name", Nel.one("Germany")))
+    check(selectWhereQuery[City, String, Long]("name", "country_id", Nel.one(1)))
   }
 
   "A simple get query with an `in` where clause" should "not fail" in {
     check(
-      selectWhereQuery2[Country, Long, String](
+      selectWhereQuery[Country, Long, String](
         "id",
         "name",
         Nel.of("Germany", "France"),
         Operator.In
       )
     )
-    check(selectWhereQuery2[City, String, Long]("name", "country_id", Nel.of(1, 2), Operator.NotIn))
+    check(selectWhereQuery[City, String, Long]("name", "country_id", Nel.of(1, 2), Operator.NotIn))
   }
 
   "A simple inner join query" should "not fail" in {
@@ -48,7 +48,8 @@ final class GenericQueryIT extends DbChecker {
     check(
       (allAirplanes ++ innerJoinWhereFragment[Airplane, Manufacturer, String](
         "name",
-        "Airbus"
+        Nel.one("Airbus"),
+        Operator.Equals
       )).query[Airplane]
     )
   }
@@ -61,7 +62,7 @@ final class GenericQueryIT extends DbChecker {
        | FROM airplane
      """.stripMargin
     check(
-      (allAirplanes ++ innerJoinWhereFragment2[Airplane, Manufacturer, String](
+      (allAirplanes ++ innerJoinWhereFragment[Airplane, Manufacturer, String](
         "name",
         Nel.one("^[aA].*$"),
         Operator.RegexMatch

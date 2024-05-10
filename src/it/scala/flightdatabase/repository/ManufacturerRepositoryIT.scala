@@ -1,7 +1,9 @@
 package flightdatabase.repository
 
+import cats.data.{NonEmptyList => Nel}
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
+import flightdatabase.api.Operator
 import flightdatabase.domain.ApiError
 import flightdatabase.domain.ApiResult
 import flightdatabase.domain.EntryAlreadyExists
@@ -18,7 +20,7 @@ import flightdatabase.domain.manufacturer.ManufacturerCreate
 import flightdatabase.domain.manufacturer.ManufacturerPatch
 import flightdatabase.testutils.RepositoryCheck
 import flightdatabase.testutils.implicits.enrichIOOperation
-import flightdatabase.utils.FieldValue
+import flightdatabase.utils.FieldValues
 import org.scalatest.Inspectors.forAll
 
 final class ManufacturerRepositoryIT extends RepositoryCheck {
@@ -77,10 +79,10 @@ final class ManufacturerRepositoryIT extends RepositoryCheck {
 
   "Selecting a manufacturer by other fields" should "return the correct manufacturer(s)" in {
     def manufacturerByName(name: String): IO[ApiResult[List[Manufacturer]]] =
-      repo.getManufacturers("name", name)
+      repo.getManufacturersBy("name", Nel.one(name), Operator.Equals)
 
     def manufacturerByCity(cityId: Long): IO[ApiResult[List[Manufacturer]]] =
-      repo.getManufacturers("base_city_id", cityId)
+      repo.getManufacturersBy("base_city_id", Nel.one(cityId), Operator.Equals)
 
     val distinctCityIds = originalManufacturers.map(_.baseCityId).distinct
 
@@ -95,10 +97,10 @@ final class ManufacturerRepositoryIT extends RepositoryCheck {
 
   "Selecting a manufacturer by city/country name" should "return the correct list of manufacturers" in {
     def manufacturerByCity(city: String): IO[ApiResult[List[Manufacturer]]] =
-      repo.getManufacturersByCity("name", city)
+      repo.getManufacturersByCity("name", Nel.one(city), Operator.Equals)
 
     def manufacturerByCountry(country: String): IO[ApiResult[List[Manufacturer]]] =
-      repo.getManufacturersByCountry("name", country)
+      repo.getManufacturersByCountry("name", Nel.one(country), Operator.Equals)
 
     forAll(cityIdMap) {
       case (cityId, cityName) =>
@@ -116,39 +118,45 @@ final class ManufacturerRepositoryIT extends RepositoryCheck {
 
     manufacturerByCity(valueNotPresent).error shouldBe EntryListEmpty
 
-    val fv = FieldValue[Country, String]("name", valueNotPresent)
+    val fv = FieldValues[Country, String]("name", Nel.one(valueNotPresent))
     manufacturerByCountry(valueNotPresent).error shouldBe EntryNotFound(fv)
   }
 
   "Selecting a non-existent field" should "return an error" in {
-    repo.getManufacturers(invalidFieldSyntax, "value").error shouldBe sqlErrorInvalidSyntax
-    repo.getManufacturersByCity(invalidFieldSyntax, "value").error shouldBe sqlErrorInvalidSyntax
-    repo.getManufacturersByCountry(invalidFieldSyntax, "value").error shouldBe sqlErrorInvalidSyntax
+    repo
+      .getManufacturersBy(invalidFieldSyntax, Nel.one("value"), Operator.Equals)
+      .error shouldBe sqlErrorInvalidSyntax
+    repo
+      .getManufacturersByCity(invalidFieldSyntax, Nel.one("value"), Operator.Equals)
+      .error shouldBe sqlErrorInvalidSyntax
+    repo
+      .getManufacturersByCountry(invalidFieldSyntax, Nel.one("value"), Operator.Equals)
+      .error shouldBe sqlErrorInvalidSyntax
 
-    repo.getManufacturers(invalidFieldColumn, "value").error shouldBe InvalidField(
-      invalidFieldColumn
-    )
-    repo.getManufacturersByCity(invalidFieldColumn, "value").error shouldBe InvalidField(
-      invalidFieldColumn
-    )
-    repo.getManufacturersByCountry(invalidFieldColumn, "value").error shouldBe InvalidField(
-      invalidFieldColumn
-    )
+    repo
+      .getManufacturersBy(invalidFieldColumn, Nel.one("value"), Operator.Equals)
+      .error shouldBe InvalidField(invalidFieldColumn)
+    repo
+      .getManufacturersByCity(invalidFieldColumn, Nel.one("value"), Operator.Equals)
+      .error shouldBe InvalidField(invalidFieldColumn)
+    repo
+      .getManufacturersByCountry(invalidFieldColumn, Nel.one("value"), Operator.Equals)
+      .error shouldBe InvalidField(invalidFieldColumn)
   }
 
   "Selecting an existing field with an invalid value type" should "return an error" in {
-    repo.getManufacturers("name", invalidStringValue).error shouldBe InvalidValueType(
-      invalidStringValue.toString
-    )
-    repo.getManufacturers("base_city_id", invalidLongValue).error shouldBe InvalidValueType(
-      invalidLongValue
-    )
-    repo.getManufacturersByCity("population", invalidLongValue).error shouldBe InvalidValueType(
-      invalidLongValue
-    )
-    repo.getManufacturersByCountry("name", invalidStringValue).error shouldBe InvalidValueType(
-      invalidStringValue.toString
-    )
+    repo
+      .getManufacturersBy("name", Nel.one(invalidStringValue), Operator.Equals)
+      .error shouldBe InvalidValueType(invalidStringValue.toString)
+    repo
+      .getManufacturersBy("base_city_id", Nel.one(invalidLongValue), Operator.Equals)
+      .error shouldBe InvalidValueType(invalidLongValue)
+    repo
+      .getManufacturersByCity("population", Nel.one(invalidLongValue), Operator.Equals)
+      .error shouldBe InvalidValueType(invalidLongValue)
+    repo
+      .getManufacturersByCountry("name", Nel.one(invalidStringValue), Operator.Equals)
+      .error shouldBe InvalidValueType(invalidStringValue.toString)
   }
 
   "Creating a new manufacturer" should "not take place if fields do not satisfy their criteria" in {
@@ -195,7 +203,8 @@ final class ManufacturerRepositoryIT extends RepositoryCheck {
   }
 
   it should "work if all criteria are met" in {
-    val existingManufacturer = repo.getManufacturers("name", newManufacturer.name).value.head
+    val existingManufacturer =
+      repo.getManufacturersBy("name", Nel.one(newManufacturer.name), Operator.Equals).value.head
 
     val updated = existingManufacturer.copy(name = updatedName)
     repo.updateManufacturer(updated).value shouldBe existingManufacturer.id
@@ -227,7 +236,8 @@ final class ManufacturerRepositoryIT extends RepositoryCheck {
   }
 
   it should "work if all criteria are met" in {
-    val existingManufacturer = repo.getManufacturers("name", updatedName).value.head
+    val existingManufacturer =
+      repo.getManufacturersBy("name", Nel.one(updatedName), Operator.Equals).value.head
 
     val patch = ManufacturerPatch(name = Some(patchedName))
     val patched = existingManufacturer.copy(name = patchedName)
@@ -237,7 +247,8 @@ final class ManufacturerRepositoryIT extends RepositoryCheck {
   }
 
   "Removing a manufacturer" should "work correctly" in {
-    val existingManufacturer = repo.getManufacturers("name", patchedName).value.head
+    val existingManufacturer =
+      repo.getManufacturersBy("name", Nel.one(patchedName), Operator.Equals).value.head
     repo.removeManufacturer(existingManufacturer.id).value shouldBe ()
     repo.getManufacturer(existingManufacturer.id).error shouldBe EntryNotFound(
       existingManufacturer.id

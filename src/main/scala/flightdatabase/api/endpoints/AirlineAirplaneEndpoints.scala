@@ -3,9 +3,11 @@ package flightdatabase.api.endpoints
 import cats.effect._
 import cats.implicits._
 import flightdatabase.domain._
+import flightdatabase.domain.airline.Airline
 import flightdatabase.domain.airline_airplane.AirlineAirplane
 import flightdatabase.domain.airline_airplane.AirlineAirplaneAlgebra
 import flightdatabase.domain.airline_airplane.AirlineAirplaneCreate
+import flightdatabase.domain.airplane.Airplane
 import flightdatabase.utils.implicits.enrichString
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
@@ -27,15 +29,18 @@ class AirlineAirplaneEndpoints[F[_]: Concurrent] private (
     case GET -> Root =>
       algebra.getAirlineAirplanes.flatMap(_.toResponse)
 
-    // GET /airline-airplanes/filter?field={airline_airplane_field; default: id}&operator={operator; default: eq}&value={value}
+    // All methods are the same but for the type of object which is only determined based on `field`
+    // I can not seem to figure out how to make this more DRY
+    // GET /airline-airplanes/filter?field={airline_airplane_field}&operator={operator; default: eq}&value={value}
     case GET -> Root / "filter" :?
-          FieldMatcherIdDefault(field) +& OperatorMatcherEqDefault(op) +& ValueMatcher(values) =>
-      processFilter[AirlineAirplane](field, op) {
-        case Some(LongType) if LongType.operators(op) =>
-          values.asLongToResponse[F, List[AirlineAirplane]](field, op)(
-            algebra.getAirlineAirplanes(field, _, op)
-          )
-      }
+          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +& ValueMatcher(values) =>
+      processFilter[AirlineAirplane, AirlineAirplane](field, operator, values)(
+        stringF = algebra.getAirlineAirplanesBy,
+        intF = algebra.getAirlineAirplanesBy,
+        longF = algebra.getAirlineAirplanesBy,
+        boolF = algebra.getAirlineAirplanesBy,
+        bigDecimalF = algebra.getAirlineAirplanesBy
+      )
 
     // GET /airline-airplanes/{id}
     case GET -> Root / id =>
@@ -45,57 +50,27 @@ class AirlineAirplaneEndpoints[F[_]: Concurrent] private (
     case GET -> Root / "airline" / airlineId / "airplane" / airplaneId =>
       (airlineId.asLong, airplaneId.asLong).tupled.toResponse(algebra.getAirlineAirplane)
 
-    // GET /airline-airplanes/airline/filter?field={airline_field; default: id}&operator={operator; default: eq}&value={value}
+    // GET /airline-airplanes/airline/filter?field={airline_field}&operator={operator; default: eq}&value={value}
     case GET -> Root / "airline" / "filter" :?
-          FieldMatcherIdDefault(field) +& OperatorMatcherEqDefault(op) +& ValueMatcher(values) =>
-      processFilter[AirlineAirplane](field, op) {
-        case Some(StringType) if StringType.operators(op) =>
-          values.asStringToResponse[F, List[AirlineAirplane]](field, op)(
-            algebra.getAirlineAirplanesByAirline(field, _, op)
-          )
-        case Some(IntType) if IntType.operators(op) =>
-          values.asIntToResponse[F, List[AirlineAirplane]](field, op)(
-            algebra.getAirlineAirplanesByAirline(field, _, op)
-          )
-        case Some(LongType) if LongType.operators(op) =>
-          values.asLongToResponse[F, List[AirlineAirplane]](field, op)(
-            algebra.getAirlineAirplanesByAirline(field, _, op)
-          )
-        case Some(BooleanType) if BooleanType.operators(op) =>
-          values.asBooleanToResponse[F, List[AirlineAirplane]](field, op)(
-            algebra.getAirlineAirplanesByAirline(field, _, op)
-          )
-        case Some(BigDecimalType) if BigDecimalType.operators(op) =>
-          values.asBigDecimalToResponse[F, List[AirlineAirplane]](field, op)(
-            algebra.getAirlineAirplanesByAirline(field, _, op)
-          )
-      }
+          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +& ValueMatcher(values) =>
+      processFilter[Airline, AirlineAirplane](field, operator, values)(
+        stringF = algebra.getAirlineAirplanesByAirline,
+        intF = algebra.getAirlineAirplanesByAirline,
+        longF = algebra.getAirlineAirplanesByAirline,
+        boolF = algebra.getAirlineAirplanesByAirline,
+        bigDecimalF = algebra.getAirlineAirplanesByAirline
+      )
 
-    // GET /airline-airplanes/airplane/filter?field={airplane_field; default: id}&operator={operator; default: eq}&value={value}
+    // GET /airline-airplanes/airplane/filter?field={airplane_field}&operator={operator; default: eq}&value={value}
     case GET -> Root / "airplane" / value :?
-          FieldMatcherIdDefault(field) +& OperatorMatcherEqDefault(op) +& ValueMatcher(values) =>
-      processFilter[AirlineAirplane](field, op) {
-        case Some(StringType) if StringType.operators(op) =>
-          values.asStringToResponse[F, List[AirlineAirplane]](field, op)(
-            algebra.getAirlineAirplanesByAirplane(field, _, op)
-          )
-        case Some(IntType) if IntType.operators(op) =>
-          values.asIntToResponse[F, List[AirlineAirplane]](field, op)(
-            algebra.getAirlineAirplanesByAirplane(field, _, op)
-          )
-        case Some(LongType) if LongType.operators(op) =>
-          values.asLongToResponse[F, List[AirlineAirplane]](field, op)(
-            algebra.getAirlineAirplanesByAirplane(field, _, op)
-          )
-        case Some(BooleanType) if BooleanType.operators(op) =>
-          values.asBooleanToResponse[F, List[AirlineAirplane]](field, op)(
-            algebra.getAirlineAirplanesByAirplane(field, _, op)
-          )
-        case Some(BigDecimalType) if BigDecimalType.operators(op) =>
-          values.asBigDecimalToResponse[F, List[AirlineAirplane]](field, op)(
-            algebra.getAirlineAirplanesByAirplane(field, _, op)
-          )
-      }
+          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +& ValueMatcher(values) =>
+      processFilter[Airplane, AirlineAirplane](field, operator, values)(
+        stringF = algebra.getAirlineAirplanesByAirplane,
+        intF = algebra.getAirlineAirplanesByAirplane,
+        longF = algebra.getAirlineAirplanesByAirplane,
+        boolF = algebra.getAirlineAirplanesByAirplane,
+        bigDecimalF = algebra.getAirlineAirplanesByAirplane
+      )
 
     // POST /airline-airplanes
     case req @ POST -> Root =>

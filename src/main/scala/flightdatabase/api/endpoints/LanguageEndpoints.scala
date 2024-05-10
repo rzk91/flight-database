@@ -29,20 +29,20 @@ class LanguageEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Lang
         algebra.getLanguages.flatMap(_.toResponse)
       }
 
-    // GET /languages/{value}?field={language_field; default=id}
-    case GET -> Root / value :? FieldMatcherIdDefault(field) =>
-      if (field == "id") {
-        value.asLong.toResponse(algebra.getLanguage)
-      } else {
-        implicitly[TableBase[Language]].fieldTypeMap.get(field) match {
-          case Some(StringType)     => algebra.getLanguages(field, value).flatMap(_.toResponse)
-          case Some(IntType)        => value.asInt.toResponse(algebra.getLanguages(field, _))
-          case Some(LongType)       => value.asLong.toResponse(algebra.getLanguages(field, _))
-          case Some(BooleanType)    => value.asBoolean.toResponse(algebra.getLanguages(field, _))
-          case Some(BigDecimalType) => value.asBigDecimal.toResponse(algebra.getLanguages(field, _))
-          case None                 => BadRequest(InvalidField(field).error)
-        }
-      }
+    // GET /languages/filter?field={language_field}&operator={operator; default: eq}&value={value}
+    case GET -> Root / "filter" :?
+          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +& ValueMatcher(values) =>
+      processFilter[Language, Language](field, operator, values)(
+        stringF = algebra.getLanguagesBy,
+        intF = algebra.getLanguagesBy,
+        longF = algebra.getLanguagesBy,
+        boolF = algebra.getLanguagesBy,
+        bigDecimalF = algebra.getLanguagesBy
+      )
+
+    // GET /languages/{id}
+    case GET -> Root / id =>
+      id.asLong.toResponse(algebra.getLanguage)
 
     // POST /languages
     case req @ POST -> Root =>

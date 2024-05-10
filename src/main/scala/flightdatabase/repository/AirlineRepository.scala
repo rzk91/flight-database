@@ -1,11 +1,13 @@
 package flightdatabase.repository
 
 import cats.data.EitherT
+import cats.data.{NonEmptyList => Nel}
 import cats.effect.Concurrent
 import cats.effect.Resource
 import cats.implicits._
 import doobie.Put
 import doobie.Transactor
+import flightdatabase.api.Operator
 import flightdatabase.domain.ApiResult
 import flightdatabase.domain.airline.Airline
 import flightdatabase.domain.airline.AirlineAlgebra
@@ -26,13 +28,21 @@ class AirlineRepository[F[_]: Concurrent] private (
     getFieldList[Airline, String]("name").execute
 
   override def getAirline(id: Long): F[ApiResult[Airline]] =
-    selectAirlineBy("id", id).asSingle(id).execute
+    selectAirlineBy("id", Nel.one(id), Operator.Equals).asSingle(id).execute
 
-  override def getAirlines[V: Put](field: String, value: V): F[ApiResult[List[Airline]]] =
-    selectAirlineBy(field, value).asList(Some(field), Some(value)).execute
+  override def getAirlinesBy[V: Put](
+    field: String,
+    values: Nel[V],
+    operator: Operator
+  ): F[ApiResult[List[Airline]]] =
+    selectAirlineBy(field, values, operator).asList(Some(field), Some(values)).execute
 
-  override def getAirlinesByCountry[V: Put](field: String, value: V): F[ApiResult[List[Airline]]] =
-    selectAirlineByCountry[V](field, value).asList(Some(field), Some(value)).execute
+  override def getAirlinesByCountry[V: Put](
+    field: String,
+    values: Nel[V],
+    operator: Operator
+  ): F[ApiResult[List[Airline]]] =
+    selectAirlineByCountry[V](field, values, operator).asList(Some(field), Some(values)).execute
 
   override def createAirline(airline: AirlineCreate): F[ApiResult[Long]] =
     insertAirline(airline).attemptInsert.execute

@@ -31,32 +31,31 @@ class CityEndpoints[F[_]: Concurrent] private (prefix: String, algebra: CityAlge
         algebra.getCities.flatMap(_.toResponse)
       }
 
-    // GET /cities/{value}?field={city_field; default=id}
-    case GET -> Root / value :? FieldMatcherIdDefault(field) =>
-      if (field == "id") {
-        value.asLong.toResponse(algebra.getCity)
-      } else {
-        implicitly[TableBase[City]].fieldTypeMap.get(field) match {
-          case Some(StringType)     => algebra.getCities(field, value).flatMap(_.toResponse)
-          case Some(IntType)        => value.asInt.toResponse(algebra.getCities(field, _))
-          case Some(LongType)       => value.asLong.toResponse(algebra.getCities(field, _))
-          case Some(BooleanType)    => value.asBoolean.toResponse(algebra.getCities(field, _))
-          case Some(BigDecimalType) => value.asBigDecimal.toResponse(algebra.getCities(field, _))
-          case None                 => BadRequest(InvalidField(field).error)
-        }
-      }
+    // GET /cities/filter?field={city_field}&operator={operator; default: eq}&value={value}
+    case GET -> Root / "filter" :?
+          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +& ValueMatcher(values) =>
+      processFilter[City, City](field, operator, values)(
+        stringF = algebra.getCitiesBy,
+        intF = algebra.getCitiesBy,
+        longF = algebra.getCitiesBy,
+        boolF = algebra.getCitiesBy,
+        bigDecimalF = algebra.getCitiesBy
+      )
 
-    // GET /cities/country/{value}?field={country_field; default=id}
-    case GET -> Root / "country" / value :? FieldMatcherIdDefault(field) =>
-      implicitly[TableBase[Country]].fieldTypeMap.get(field) match {
-        case Some(StringType)  => algebra.getCitiesByCountry(field, value).flatMap(_.toResponse)
-        case Some(IntType)     => value.asInt.toResponse(algebra.getCitiesByCountry(field, _))
-        case Some(LongType)    => value.asLong.toResponse(algebra.getCitiesByCountry(field, _))
-        case Some(BooleanType) => value.asBoolean.toResponse(algebra.getCitiesByCountry(field, _))
-        case Some(BigDecimalType) =>
-          value.asBigDecimal.toResponse(algebra.getCitiesByCountry(field, _))
-        case None => BadRequest(InvalidField(field).error)
-      }
+    // GET /cities/{id}
+    case GET -> Root / id =>
+      id.asLong.toResponse(algebra.getCity)
+
+    // GET /cities/country/filter?field={country_field}&operator={operator; default: eq}&value={value}
+    case GET -> Root / "country" / "filter" :?
+          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +& ValueMatcher(values) =>
+      processFilter[Country, City](field, operator, values)(
+        stringF = algebra.getCitiesByCountry,
+        intF = algebra.getCitiesByCountry,
+        longF = algebra.getCitiesByCountry,
+        boolF = algebra.getCitiesByCountry,
+        bigDecimalF = algebra.getCitiesByCountry
+      )
 
     // POST /cities
     case req @ POST -> Root =>

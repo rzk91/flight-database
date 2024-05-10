@@ -20,7 +20,7 @@ List of endpoints
    curl -i http://localhost:18181/v1/flightdb/airline-airplanes
    ```
 
-3. **GET /airline-airplanes/filter?field={airline_airplane_field; default: id}&operator={operator; default: eq}&value={value}**
+3. **GET /airline-airplanes/filter?field={airline_airplane_field}&operator={operator; default: eq}&value={value}**
    ```bash
    curl -i http://localhost:18181/v1/flightdb/airline-airplanes/filter?field=id&operator=eq&value=1
    ```
@@ -35,12 +35,12 @@ List of endpoints
    curl -i http://localhost:18181/v1/flightdb/airline-airplanes/airline/1/airplane/1
    ```
 
-6. **GET /airline-airplanes/airline/filter?field={airline_field; default: id}&operator={operator; default: eq}&value={value}**
+6. **GET /airline-airplanes/airline/filter?field={airline_field}&operator={operator; default: eq}&value={value}**
    ```bash
    curl -i http://localhost:18181/v1/flightdb/airline-airplanes/airline/filter?field=id&operator=eq&value=1
    ```
 
-7. **GET /airline-airplanes/airplane/filter?field={airplane_field; default: id}&operator={operator; default: eq}&value={value}**
+7. **GET /airline-airplanes/airplane/filter?field={airplane_field}&operator={operator; default: eq}&value={value}**
    ```bash
    curl -i http://localhost:18181/v1/flightdb/airline-airplanes/airplane/filter?field=id&operator=eq&value=1
    ```
@@ -86,12 +86,12 @@ List of endpoints
    curl -i http://localhost:18181/v1/flightdb/airline-cities/airline/1/city/1
    ```
 
-5. **GET /airline-cities/airline/{value}?field={airline_field; default: id}**
+5. **GET /airline-cities/airline/{value}?field={airline_field}**
    ```bash
    curl -i http://localhost:18181/v1/flightdb/airline-cities/airline/Lufthansa?field=name
    ```
 
-6. **GET /airline-cities/city/{value}?field={city_field; default: id}**
+6. **GET /airline-cities/city/{value}?field={city_field}**
    ```bash
    curl -i http://localhost:18181/v1/flightdb/airline-cities/city/Bangalore?field=name
    ```
@@ -127,12 +127,12 @@ List of endpoints
    curl -i http://localhost:18181/v1/flightdb/airlines?only-names
    ```
 
-3. **GET /airlines/{value}?field={field; default: id}**
+3. **GET /airlines/{value}?field={field}**
    ```bash
    curl -i http://localhost:18181/v1/flightdb/airlines/Lufthansa?field=name
    ```
 
-4. **GET /airlines/country/{value}?field={field; default: id}**
+4. **GET /airlines/country/{value}?field={field}**
    ```bash
    curl -i http://localhost:18181/v1/flightdb/airlines/country/DE?field=iso2
    ```
@@ -168,22 +168,22 @@ List of endpoints
    curl -i http://localhost:18181/v1/flightdb/airline-routes?only-routes
    ```
 
-3. **GET /airline-routes/{value}?field={airline-route-field; default: id}**
+3. **GET /airline-routes/{value}?field={airline-route-field}**
    ```bash
    curl -i http://localhost:18181/v1/flightdb/airline-routes/LH754?field=route_number
    ```
 
-4. **GET /airline-routes/airline/{value}?field={airline_field; default: id}**
+4. **GET /airline-routes/airline/{value}?field={airline_field}**
    ```bash
    curl -i http://localhost:18181/v1/flightdb/airline-routes/airline/Lufthansa?field=name
    ```
 
-5. **GET /airline-routes/airplane/{value}?field={airplane_field; default: id}**
+5. **GET /airline-routes/airplane/{value}?field={airplane_field}**
    ```bash
    curl -i http://localhost:18181/v1/flightdb/airline-routes/airplane/A380?field=name
    ```
 
-6. **GET /airline-routes/airport/{value}?field={airport_field; default: id}&inbound&outbound**
+6. **GET /airline-routes/airport/{value}?field={airport_field}&inbound&outbound**
    ```bash
    curl -i http://localhost:18181/v1/flightdb/airline-routes/airport/FRA?field=iata&inbound&outbound
    ```
@@ -352,12 +352,12 @@ List of endpoints
    curl -i http://localhost:18181/v1/flightdb/countries/IN?field=iso2
    ```
 
-4. **GET /countries/language/{value}?field={language_field; default: id}**
+4. **GET /countries/language/{value}?field={language_field}**
    ```bash
    curl -i http://localhost:18181/v1/flightdb/countries/language/EN?field=iso2
    ```
 
-5. **GET /countries/currency/{value}?field={currency_field; default: id}**
+5. **GET /countries/currency/{value}?field={currency_field}**
    ```bash
    curl -i http://localhost:18181/v1/flightdb/countries/currency/USD?field=iso
    ```

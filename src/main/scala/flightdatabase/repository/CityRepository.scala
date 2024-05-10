@@ -1,12 +1,14 @@
 package flightdatabase.repository
 
 import cats.data.EitherT
+import cats.data.{NonEmptyList => Nel}
 import cats.effect.Concurrent
 import cats.effect.Resource
 import cats.implicits._
 import com.ibm.icu.util.TimeZone
 import doobie.Put
 import doobie.Transactor
+import flightdatabase.api.Operator
 import flightdatabase.domain._
 import flightdatabase.domain.city.City
 import flightdatabase.domain.city.CityAlgebra
@@ -28,13 +30,24 @@ class CityRepository[F[_]: Concurrent] private (
   override def getCitiesOnlyNames: F[ApiResult[List[String]]] =
     getFieldList[City, String]("name").execute
 
-  override def getCity(id: Long): F[ApiResult[City]] = selectCitiesBy("id", id).asSingle(id).execute
+  override def getCity(id: Long): F[ApiResult[City]] =
+    selectCitiesBy("id", Nel.one(id), Operator.Equals).asSingle(id).execute
 
-  override def getCities[V: Put](field: String, value: V): F[ApiResult[List[City]]] =
-    selectCitiesBy(field, value).asList(Some(field), Some(value)).execute
+  override def getCitiesBy[V: Put](
+    field: String,
+    values: Nel[V],
+    operator: Operator
+  ): F[ApiResult[List[City]]] =
+    selectCitiesBy(field, values, operator).asList(Some(field), Some(values)).execute
 
-  def getCitiesByCountry[V: Put](field: String, value: V): F[ApiResult[List[City]]] =
-    selectCitiesByExternal[Country, V](field, value).asList(Some(field), Some(value)).execute
+  def getCitiesByCountry[V: Put](
+    field: String,
+    values: Nel[V],
+    operator: Operator
+  ): F[ApiResult[List[City]]] =
+    selectCitiesByExternal[Country, V](field, values, operator)
+      .asList(Some(field), Some(values))
+      .execute
 
   // Do we need checks for latitude/longitude <-> country matching?
   override def createCity(city: CityCreate): F[ApiResult[Long]] =
@@ -65,7 +78,7 @@ class CityRepository[F[_]: Concurrent] private (
   override protected def validateTimezone(timezone: String, countryId: Long): F[ApiResult[Unit]] =
     EitherT(
       CountryQueries
-        .selectCountriesBy("id", countryId)
+        .selectCountriesBy("id", Nel.one(countryId), Operator.Equals)
         .map(_.iso2)
         .asSingle(countryId)
     ).leftMap {

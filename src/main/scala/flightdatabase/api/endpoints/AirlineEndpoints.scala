@@ -30,32 +30,31 @@ class AirlineEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airli
         algebra.getAirlines.flatMap(_.toResponse)
       }
 
-    // GET /airlines/{value}?field={airline_field, default: id}
-    case GET -> Root / value :? FieldMatcherIdDefault(field) =>
-      if (field == "id") {
-        value.asLong.toResponse(algebra.getAirline)
-      } else {
-        implicitly[TableBase[Airline]].fieldTypeMap.get(field) match {
-          case Some(StringType)     => algebra.getAirlines(field, value).flatMap(_.toResponse)
-          case Some(IntType)        => value.asInt.toResponse(algebra.getAirlines(field, _))
-          case Some(LongType)       => value.asLong.toResponse(algebra.getAirlines(field, _))
-          case Some(BooleanType)    => value.asBoolean.toResponse(algebra.getAirlines(field, _))
-          case Some(BigDecimalType) => value.asBigDecimal.toResponse(algebra.getAirlines(field, _))
-          case None                 => BadRequest(InvalidField(field).error)
-        }
-      }
+    // GET /airlines/filter?field={airline_field}&operator={operator, default: eq}&value={values}
+    case GET -> Root / "filter" :?
+          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +& ValueMatcher(values) =>
+      processFilter[Airline, Airline](field, operator, values)(
+        stringF = algebra.getAirlinesBy,
+        intF = algebra.getAirlinesBy,
+        longF = algebra.getAirlinesBy,
+        boolF = algebra.getAirlinesBy,
+        bigDecimalF = algebra.getAirlinesBy
+      )
 
-    // GET /airlines/country/{value}?field={country_field, default: id}
-    case GET -> Root / "country" / value :? FieldMatcherIdDefault(field) =>
-      implicitly[TableBase[Country]].fieldTypeMap.get(field) match {
-        case Some(StringType)  => algebra.getAirlinesByCountry(field, value).flatMap(_.toResponse)
-        case Some(IntType)     => value.asInt.toResponse(algebra.getAirlinesByCountry(field, _))
-        case Some(LongType)    => value.asLong.toResponse(algebra.getAirlinesByCountry(field, _))
-        case Some(BooleanType) => value.asBoolean.toResponse(algebra.getAirlinesByCountry(field, _))
-        case Some(BigDecimalType) =>
-          value.asBigDecimal.toResponse(algebra.getAirlinesByCountry(field, _))
-        case None => BadRequest(InvalidField(field).error)
-      }
+    // GET /airlines/{id}
+    case GET -> Root / id =>
+      id.asLong.toResponse(algebra.getAirline)
+
+    // GET /airlines/country/filter?field={country_field}&operator={operator, default: eq}&value={value}
+    case GET -> Root / "country" / "filter" :?
+          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +& ValueMatcher(values) =>
+      processFilter[Country, Airline](field, operator, values)(
+        stringF = algebra.getAirlinesByCountry,
+        intF = algebra.getAirlinesByCountry,
+        longF = algebra.getAirlinesByCountry,
+        boolF = algebra.getAirlinesByCountry,
+        bigDecimalF = algebra.getAirlinesByCountry
+      )
 
     // POST /airlines
     case req @ POST -> Root =>

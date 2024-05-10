@@ -1,7 +1,9 @@
 package flightdatabase.repository
 
+import cats.data.{NonEmptyList => Nel}
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
+import flightdatabase.api.Operator
 import flightdatabase.domain.ApiResult
 import flightdatabase.domain.EntryAlreadyExists
 import flightdatabase.domain.EntryCheckFailed
@@ -74,16 +76,16 @@ final class LanguageRepositoryIT extends RepositoryCheck {
 
   "Selecting a language by other fields" should "return the corresponding entries" in {
     def languageByName(name: String): IO[ApiResult[List[Language]]] =
-      repo.getLanguages("name", name)
+      repo.getLanguagesBy("name", Nel.one(name), Operator.Equals)
 
     def languageByIso2(iso2: String): IO[ApiResult[List[Language]]] =
-      repo.getLanguages("iso2", iso2)
+      repo.getLanguagesBy("iso2", Nel.one(iso2), Operator.Equals)
 
     def languageByIso3(iso3: String): IO[ApiResult[List[Language]]] =
-      repo.getLanguages("iso3", iso3)
+      repo.getLanguagesBy("iso3", Nel.one(iso3), Operator.Equals)
 
     def languageByOriginalName(name: String): IO[ApiResult[List[Language]]] =
-      repo.getLanguages("original_name", name)
+      repo.getLanguagesBy("original_name", Nel.one(name), Operator.Equals)
 
     forAll(originalLanguages) { language =>
       languageByName(language.name).value should contain only language
@@ -99,12 +101,18 @@ final class LanguageRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting a non-existent field" should "return an error" in {
-    repo.getLanguages(invalidFieldSyntax, "value").error shouldBe sqlErrorInvalidSyntax
-    repo.getLanguages(invalidFieldColumn, "value").error shouldBe InvalidField(invalidFieldColumn)
+    repo
+      .getLanguagesBy(invalidFieldSyntax, Nel.one("value"), Operator.Equals)
+      .error shouldBe sqlErrorInvalidSyntax
+    repo
+      .getLanguagesBy(invalidFieldColumn, Nel.one("value"), Operator.Equals)
+      .error shouldBe InvalidField(invalidFieldColumn)
   }
 
   "Selecting an existing field with an invalid value type" should "return an error" in {
-    repo.getLanguages("name", invalidStringValue).error shouldBe InvalidValueType(
+    repo
+      .getLanguagesBy("name", Nel.one(invalidStringValue), Operator.Equals)
+      .error shouldBe InvalidValueType(
       invalidStringValue.toString
     )
   }
@@ -198,7 +206,8 @@ final class LanguageRepositoryIT extends RepositoryCheck {
   }
 
   it should "work if all criteria are met" in {
-    val existingLanguage = repo.getLanguages("name", newLanguage.name).value.head
+    val existingLanguage =
+      repo.getLanguagesBy("name", Nel.one(newLanguage.name), Operator.Equals).value.head
     val updated = existingLanguage.copy(name = updatedName)
     repo.updateLanguage(updated).value shouldBe existingLanguage.id
 
@@ -251,7 +260,8 @@ final class LanguageRepositoryIT extends RepositoryCheck {
   }
 
   it should "work if all criteria are met" in {
-    val existingLanguage = repo.getLanguages("name", updatedName).value.head
+    val existingLanguage =
+      repo.getLanguagesBy("name", Nel.one(updatedName), Operator.Equals).value.head
     val patched = LanguagePatch(name = Some(patchedName))
 
     repo
@@ -263,7 +273,8 @@ final class LanguageRepositoryIT extends RepositoryCheck {
   }
 
   "Removing a language" should "work correctly" in {
-    val existingLanguage = repo.getLanguages("name", patchedName).value.head
+    val existingLanguage =
+      repo.getLanguagesBy("name", Nel.one(patchedName), Operator.Equals).value.head
     repo.removeLanguage(existingLanguage.id).value shouldBe ()
 
     repo.getLanguage(existingLanguage.id).error shouldBe EntryNotFound(existingLanguage.id)

@@ -1,10 +1,12 @@
 package flightdatabase.repository.queries
 
+import cats.data.{NonEmptyList => Nel}
 import doobie.Fragment
 import doobie.Put
 import doobie.Query0
 import doobie.Update0
 import doobie.implicits._
+import flightdatabase.api.Operator
 import flightdatabase.domain.TableBase
 import flightdatabase.domain.airline_route.AirlineRoute
 import flightdatabase.domain.airline_route.AirlineRouteCreate
@@ -15,17 +17,23 @@ private[repository] object AirlineRouteQueries {
 
   def selectAllAirlineRoutes: Query0[AirlineRoute] = selectAll.query[AirlineRoute]
 
-  def selectAirlineRouteBy[V: Put](field: String, value: V): Query0[AirlineRoute] =
-    (selectAll ++ whereFragment(s"airline_route.$field", value)).query[AirlineRoute]
+  def selectAirlineRouteBy[V: Put](
+    field: String,
+    values: Nel[V],
+    operator: Operator
+  ): Query0[AirlineRoute] =
+    (selectAll ++ whereFragment(s"airline_route.$field", values, operator)).query[AirlineRoute]
 
   def selectAirlineRoutesByExternal[ET: TableBase, EV: Put](
     externalField: String,
-    externalValue: EV,
+    externalValues: Nel[EV],
+    operator: Operator,
     overrideExternalIdField: Option[String] = None
   ): Query0[AirlineRoute] = {
     selectAll ++ innerJoinWhereFragment[AirlineRoute, ET, EV](
       externalField,
-      externalValue,
+      externalValues,
+      operator,
       overrideExternalIdField
     )
   }.query[AirlineRoute]

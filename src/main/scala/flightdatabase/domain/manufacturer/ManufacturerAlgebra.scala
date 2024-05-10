@@ -1,6 +1,8 @@
 package flightdatabase.domain.manufacturer
 
+import cats.data.{NonEmptyList => Nel}
 import doobie.Put
+import flightdatabase.api.Operator
 import flightdatabase.domain.ApiResult
 
 trait ManufacturerAlgebra[F[_]] {
@@ -8,9 +10,25 @@ trait ManufacturerAlgebra[F[_]] {
   def getManufacturers: F[ApiResult[List[Manufacturer]]]
   def getManufacturersOnlyNames: F[ApiResult[List[String]]]
   def getManufacturer(id: Long): F[ApiResult[Manufacturer]]
-  def getManufacturers[V: Put](field: String, value: V): F[ApiResult[List[Manufacturer]]]
-  def getManufacturersByCity[V: Put](field: String, value: V): F[ApiResult[List[Manufacturer]]]
-  def getManufacturersByCountry[V: Put](field: String, value: V): F[ApiResult[List[Manufacturer]]]
+
+  def getManufacturersBy[V: Put](
+    field: String,
+    values: Nel[V],
+    operator: Operator
+  ): F[ApiResult[List[Manufacturer]]]
+
+  def getManufacturersByCity[V: Put](
+    field: String,
+    values: Nel[V],
+    operator: Operator
+  ): F[ApiResult[List[Manufacturer]]]
+
+  def getManufacturersByCountry[V: Put](
+    field: String,
+    values: Nel[V],
+    operator: Operator
+  ): F[ApiResult[List[Manufacturer]]]
+
   def createManufacturer(manufacturer: ManufacturerCreate): F[ApiResult[Long]]
   def updateManufacturer(manufacturer: Manufacturer): F[ApiResult[Long]]
   def partiallyUpdateManufacturer(id: Long, patch: ManufacturerPatch): F[ApiResult[Manufacturer]]

@@ -27,10 +27,11 @@ class AirlineCityRepository[F[_]: Concurrent] private (implicit transactor: Tran
   override def getAirlineCity(id: Long): F[ApiResult[AirlineCity]] =
     selectAirlineCitiesBy("id", Nel.one(id), Operator.Equals).asSingle(id).execute
 
-  override def getAirlineCity(airlineId: Long, cityId: Long): F[ApiResult[AirlineCity]] =
+  override def getAirlineCity(airlineId: Long, cityId: Long): F[ApiResult[AirlineCity]] = {
+    val asNel = Nel.one(airlineId)
     EitherT(
-      selectAirlineCitiesBy("airline_id", Nel.one(airlineId), Operator.Equals)
-        .asList(invalidValue = Some(airlineId))
+      selectAirlineCitiesBy("airline_id", asNel, Operator.Equals)
+        .asList(invalidValues = Some(asNel))
     ).subflatMap[ApiError, ApiOutput[AirlineCity]] { output =>
         val airlineCities = output.value
         airlineCities.find(_.cityId == cityId) match {
@@ -40,8 +41,9 @@ class AirlineCityRepository[F[_]: Concurrent] private (implicit transactor: Tran
       }
       .value
       .execute
+  }
 
-  override def getAirlineCities[V: Put](
+  override def getAirlineCitiesBy[V: Put](
     field: String,
     values: Nel[V],
     operator: Operator

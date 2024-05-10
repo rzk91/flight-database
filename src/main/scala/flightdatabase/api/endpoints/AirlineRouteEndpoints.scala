@@ -38,72 +38,60 @@ class AirlineRouteEndpoints[F[_]: Concurrent] private (
         algebra.getAirlineRoutes.flatMap(_.toResponse)
       }
 
-    // GET /airline-routes/{value}?field={airline-route-field; default: id}
-    case GET -> Root / value :? FieldMatcherIdDefault(field) =>
-      if (field == "id") {
-        value.asLong.toResponse(algebra.getAirlineRoute)
-      } else {
-        implicitly[TableBase[AirlineRoute]].fieldTypeMap.get(field) match {
-          case Some(StringType)  => algebra.getAirlineRoutes(field, value).flatMap(_.toResponse)
-          case Some(IntType)     => value.asInt.toResponse(algebra.getAirlineRoutes(field, _))
-          case Some(LongType)    => value.asLong.toResponse(algebra.getAirlineRoutes(field, _))
-          case Some(BooleanType) => value.asBoolean.toResponse(algebra.getAirlineRoutes(field, _))
-          case Some(BigDecimalType) =>
-            value.asBigDecimal.toResponse(algebra.getAirlineRoutes(field, _))
-          case None => BadRequest(InvalidField(field).error)
-        }
-      }
+    // GET /airline-routes/filter?field={airline-route-field}&operator={operator; default: eq}&value={value}
+    case GET -> Root / "filter" :?
+          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +& ValueMatcher(values) =>
+      processFilter[AirlineRoute, AirlineRoute](field, operator, values)(
+        stringF = algebra.getAirlineRoutesBy,
+        intF = algebra.getAirlineRoutesBy,
+        longF = algebra.getAirlineRoutesBy,
+        boolF = algebra.getAirlineRoutesBy,
+        bigDecimalF = algebra.getAirlineRoutesBy
+      )
 
-    // GET /airline-routes/airline/{value}?field={airline_field; default: id}
-    case GET -> Root / "airline" / value :? FieldMatcherIdDefault(field) =>
-      implicitly[TableBase[Airline]].fieldTypeMap.get(field) match {
-        case Some(StringType) =>
-          algebra.getAirlineRoutesByAirline(field, value).flatMap(_.toResponse)
-        case Some(IntType)  => value.asInt.toResponse(algebra.getAirlineRoutesByAirline(field, _))
-        case Some(LongType) => value.asLong.toResponse(algebra.getAirlineRoutesByAirline(field, _))
-        case Some(BooleanType) =>
-          value.asBoolean.toResponse(algebra.getAirlineRoutesByAirline(field, _))
-        case Some(BigDecimalType) =>
-          value.asBigDecimal.toResponse(algebra.getAirlineRoutesByAirline(field, _))
-        case None => BadRequest(InvalidField(field).error)
-      }
+    // GET /airline-routes/{id}
+    case GET -> Root / id =>
+      id.asLong.toResponse(algebra.getAirlineRoute)
 
-    // GET /airline-routes/airplane/{value}?field={airplane_field; default: id}
-    case GET -> Root / "airplane" / value :? FieldMatcherIdDefault(field) =>
-      implicitly[TableBase[Airplane]].fieldTypeMap.get(field) match {
-        case Some(StringType) =>
-          algebra.getAirlineRoutesByAirplane(field, value).flatMap(_.toResponse)
-        case Some(IntType)  => value.asInt.toResponse(algebra.getAirlineRoutesByAirplane(field, _))
-        case Some(LongType) => value.asLong.toResponse(algebra.getAirlineRoutesByAirplane(field, _))
-        case Some(BooleanType) =>
-          value.asBoolean.toResponse(algebra.getAirlineRoutesByAirplane(field, _))
-        case Some(BigDecimalType) =>
-          value.asBigDecimal.toResponse(algebra.getAirlineRoutesByAirplane(field, _))
-        case None => BadRequest(InvalidField(field).error)
-      }
+    // GET /airline-routes/airline/filter?field={airline_field}&operator={operator; default: eq}&value={value}
+    case GET -> Root / "airline" / "filter" :?
+          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +& ValueMatcher(values) =>
+      processFilter[Airline, AirlineRoute](field, operator, values)(
+        stringF = algebra.getAirlineRoutesByAirline,
+        intF = algebra.getAirlineRoutesByAirline,
+        longF = algebra.getAirlineRoutesByAirline,
+        boolF = algebra.getAirlineRoutesByAirline,
+        bigDecimalF = algebra.getAirlineRoutesByAirline
+      )
 
-    // GET /airline-routes/airport/{value}?field={airport_field; default: id}&inbound&outbound
-    case GET -> Root / "airport" / value :? FieldMatcherIdDefault(field) +&
-          InboundFlagMatcher(inbound) +& OutboundFlagMatcher(outbound) =>
+    // GET /airline-routes/airplane/filter?field={airplane_field}&operator={operator; default: eq}&value={value}
+    case GET -> Root / "airplane" / "filter" :?
+          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +& ValueMatcher(values) =>
+      processFilter[Airplane, AirlineRoute](field, operator, values)(
+        stringF = algebra.getAirlineRoutesByAirplane,
+        intF = algebra.getAirlineRoutesByAirplane,
+        longF = algebra.getAirlineRoutesByAirplane,
+        boolF = algebra.getAirlineRoutesByAirplane,
+        bigDecimalF = algebra.getAirlineRoutesByAirplane
+      )
+
+    // GET /airline-routes/airport/filter?field={airport_field}&operator={operator; default: eq}&value={value}&inbound&outbound
+    case GET -> Root / "airport" / "filter" :?
+          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +& ValueMatcher(values) +&
+            InboundFlagMatcher(inbound) +& OutboundFlagMatcher(outbound) =>
       val direction = (inbound, outbound) match {
         case (true, false) => Some(true)
         case (false, true) => Some(false)
         case _             => None
       }
 
-      implicitly[TableBase[Airport]].fieldTypeMap.get(field) match {
-        case Some(StringType) =>
-          algebra.getAirlineRoutesByAirport(field, value, direction).flatMap(_.toResponse)
-        case Some(IntType) =>
-          value.asInt.toResponse(algebra.getAirlineRoutesByAirport(field, _, direction))
-        case Some(LongType) =>
-          value.asLong.toResponse(algebra.getAirlineRoutesByAirport(field, _, direction))
-        case Some(BooleanType) =>
-          value.asBoolean.toResponse(algebra.getAirlineRoutesByAirport(field, _, direction))
-        case Some(BigDecimalType) =>
-          value.asBigDecimal.toResponse(algebra.getAirlineRoutesByAirport(field, _, direction))
-        case None => BadRequest(InvalidField(field).error)
-      }
+      processFilter[Airport, AirlineRoute](field, operator, values)(
+        stringF = algebra.getAirlineRoutesByAirport(_, _, _, direction),
+        intF = algebra.getAirlineRoutesByAirport(_, _, _, direction),
+        longF = algebra.getAirlineRoutesByAirport(_, _, _, direction),
+        boolF = algebra.getAirlineRoutesByAirport(_, _, _, direction),
+        bigDecimalF = algebra.getAirlineRoutesByAirport(_, _, _, direction)
+      )
 
     // POST /airline-routes
     case req @ POST -> Root =>

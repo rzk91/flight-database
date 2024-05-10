@@ -1,10 +1,12 @@
 package flightdatabase.repository.queries
 
+import cats.data.{NonEmptyList => Nel}
 import doobie.Fragment
 import doobie.Put
 import doobie.Query0
 import doobie.Update0
 import doobie.implicits._
+import flightdatabase.api.Operator
 import flightdatabase.domain.TableBase
 import flightdatabase.domain.airplane.Airplane
 import flightdatabase.domain.airplane.AirplaneCreate
@@ -15,16 +17,22 @@ private[repository] object AirplaneQueries {
 
   def selectAllAirplanes: Query0[Airplane] = selectAll.query[Airplane]
 
-  def selectAirplanesBy[V: Put](field: String, value: V): Query0[Airplane] =
-    (selectAll ++ whereFragment(s"airplane.$field", value)).query[Airplane]
+  def selectAirplanesBy[V: Put](
+    field: String,
+    values: Nel[V],
+    operator: Operator
+  ): Query0[Airplane] =
+    (selectAll ++ whereFragment(s"airplane.$field", values, operator)).query[Airplane]
 
   def selectAirplanesByExternal[ET: TableBase, EV: Put](
     externalField: String,
-    externalValue: EV
+    externalValues: Nel[EV],
+    operator: Operator
   ): Query0[Airplane] = {
     selectAll ++ innerJoinWhereFragment[Airplane, ET, EV](
       externalField,
-      externalValue
+      externalValues,
+      operator
     )
   }.query[Airplane]
 

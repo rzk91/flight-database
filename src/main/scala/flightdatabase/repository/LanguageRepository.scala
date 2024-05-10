@@ -1,11 +1,13 @@
 package flightdatabase.repository
 
 import cats.data.EitherT
+import cats.data.{NonEmptyList => Nel}
 import cats.effect.Concurrent
 import cats.effect.Resource
 import cats.syntax.all._
 import doobie.Put
 import doobie.Transactor
+import flightdatabase.api.Operator
 import flightdatabase.domain.ApiResult
 import flightdatabase.domain.language.Language
 import flightdatabase.domain.language.LanguageAlgebra
@@ -32,10 +34,14 @@ class LanguageRepository[F[_]: Concurrent] private (
     getFieldList[Language, String]("name").execute
 
   override def getLanguage(id: Long): F[ApiResult[Language]] =
-    selectLanguageBy("id", id).asSingle(id).execute
+    selectLanguageBy("id", Nel.one(id), Operator.Equals).asSingle(id).execute
 
-  override def getLanguages[V: Put](field: String, value: V): F[ApiResult[List[Language]]] =
-    selectLanguageBy(field, value).asList(Some(field), Some(value)).execute
+  override def getLanguagesBy[V: Put](
+    field: String,
+    values: Nel[V],
+    operator: Operator
+  ): F[ApiResult[List[Language]]] =
+    selectLanguageBy(field, values, operator).asList(Some(field), Some(values)).execute
 
   override def createLanguage(language: LanguageCreate): F[ApiResult[Long]] =
     insertLanguage(language).attemptInsert.execute
