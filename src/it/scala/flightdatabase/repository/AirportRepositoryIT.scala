@@ -16,10 +16,8 @@ import flightdatabase.domain.SqlError
 import flightdatabase.domain.airport.Airport
 import flightdatabase.domain.airport.AirportCreate
 import flightdatabase.domain.airport.AirportPatch
-import flightdatabase.domain.country.Country
 import flightdatabase.testutils.RepositoryCheck
 import flightdatabase.testutils.implicits.enrichIOOperation
-import flightdatabase.utils.FieldValues
 import org.scalatest.Inspectors.forAll
 
 final class AirportRepositoryIT extends RepositoryCheck {
@@ -174,8 +172,7 @@ final class AirportRepositoryIT extends RepositoryCheck {
         )
     }
 
-    val fv = FieldValues[Country, String]("name", Nel.one(valueNotPresent))
-    airportByCountry(valueNotPresent).error shouldBe EntryNotFound(fv)
+    airportByCountry(valueNotPresent).error shouldBe EntryListEmpty
   }
 
   "Selecting a non-existent field" should "return an error" in {

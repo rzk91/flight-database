@@ -14,13 +14,11 @@ import flightdatabase.domain.EntryNotFound
 import flightdatabase.domain.InvalidField
 import flightdatabase.domain.InvalidValueType
 import flightdatabase.domain.SqlError
-import flightdatabase.domain.country.Country
 import flightdatabase.domain.manufacturer.Manufacturer
 import flightdatabase.domain.manufacturer.ManufacturerCreate
 import flightdatabase.domain.manufacturer.ManufacturerPatch
 import flightdatabase.testutils.RepositoryCheck
 import flightdatabase.testutils.implicits.enrichIOOperation
-import flightdatabase.utils.FieldValues
 import org.scalatest.Inspectors.forAll
 
 final class ManufacturerRepositoryIT extends RepositoryCheck {
@@ -117,9 +115,7 @@ final class ManufacturerRepositoryIT extends RepositoryCheck {
     }
 
     manufacturerByCity(valueNotPresent).error shouldBe EntryListEmpty
-
-    val fv = FieldValues[Country, String]("name", Nel.one(valueNotPresent))
-    manufacturerByCountry(valueNotPresent).error shouldBe EntryNotFound(fv)
+    manufacturerByCountry(valueNotPresent).error shouldBe EntryListEmpty
   }
 
   "Selecting a non-existent field" should "return an error" in {
