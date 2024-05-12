@@ -1,8 +1,8 @@
 package flightdatabase
 
 import cats.Applicative
+import cats.data.EitherT
 import cats.data.{NonEmptyList => Nel}
-import cats.syntax.applicativeError._
 import doobie._
 import doobie.implicits._
 import doobie.postgres.sqlstate._
@@ -12,8 +12,6 @@ import flightdatabase.repository.queries._
 import flightdatabase.utils.FieldValues
 import flightdatabase.utils.implicits.enrichOption
 import flightdatabase.utils.implicits.enrichQuery
-
-import java.sql.SQLException
 
 package object repository {
 
@@ -30,28 +28,21 @@ package object repository {
     val selectTable = implicitly[TableBase[ST]].asString
     val whereTable = whereFieldValues.table
     val idField = maybeIdField.getOrElse(s"${whereTable}_id")
-    for {
-      index <- selectWhereQuery[WT, Long, WV](
+    EitherT(
+      selectWhereQuery[WT, Long, WV](
         "id",
         whereFieldValues.field,
         whereFieldValues.values,
         operator
-      ).option.attempt // TODO: This could be wrong. Check if this should be changed to `to[List]`.
-      values <- index match {
-        case Right(Some(id)) =>
-          selectWhereQuery[ST, SV, Long](selectField, idField, Nel.one(id), Operator.Equals)
-            .asList(Some(selectField))
-        case Right(None) => EntryNotFound(whereFieldValues).elevate[ConnectionIO, List[SV]]
-        case Left(error: SQLException) =>
-          sqlStateToApiError(
-            SqlState(error.getSQLState),
-            Some(whereFieldValues.field),
-            Some(whereFieldValues.values)
-          ).elevate[ConnectionIO, List[SV]]
-        case Left(error) =>
-          UnknownDbError(error.getLocalizedMessage).elevate[ConnectionIO, List[SV]]
+      ).asList(Some(whereFieldValues.field), Some(whereFieldValues.values))
+    ).flatMapF { whereIds =>
+      Nel.fromList(whereIds.value) match {
+        case Some(ids) =>
+          selectWhereQuery[ST, SV, Long](selectField, idField, ids, Operator.In)
+            .asList(Some(selectField), Some(ids))
+        case None => EntryListEmpty.elevate[ConnectionIO, List[SV]]
       }
-    } yield values
+    }.value
   }
 
   def featureNotImplemented[F[_]: Applicative, A]: F[ApiResult[A]] =

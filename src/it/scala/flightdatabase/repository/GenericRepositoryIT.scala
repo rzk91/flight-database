@@ -4,7 +4,7 @@ import cats.data.{NonEmptyList => Nel}
 import cats.effect.unsafe.implicits.global
 import doobie.implicits._
 import flightdatabase.api.Operator
-import flightdatabase.domain.EntryNotFound
+import flightdatabase.domain.EntryListEmpty
 import flightdatabase.domain.city.City
 import flightdatabase.domain.country.Country
 import flightdatabase.testutils.RepositoryCheck
@@ -42,12 +42,27 @@ final class GenericRepositoryIT extends RepositoryCheck {
     cityNames should contain only ("Berlin", "Frankfurt am Main")
   }
 
+  "Selecting all city names in India and Germany" should "return a correct list" in {
+    val cityNames =
+      getFieldList[City, String, Country, String](
+        "name",
+        FieldValues("name", Nel.of("India", "Germany")),
+        Operator.In
+      ).execute
+        .unsafeRunSync()
+        .value
+        .value
+
+    cityNames should not be empty
+    cityNames should contain only ("Bangalore", "Berlin", "Frankfurt am Main")
+  }
+
   "Selecting all city names in Brazil" should "return an empty list" in {
     val fieldValueBrazil = FieldValues[Country, String]("name", Nel.one("Brazil"))
     getFieldList[City, String, Country, String]("name", fieldValueBrazil, Operator.Equals).execute
       .unsafeRunSync()
       .left
-      .value shouldBe EntryNotFound(fieldValueBrazil)
+      .value shouldBe EntryListEmpty
   }
 
 }
