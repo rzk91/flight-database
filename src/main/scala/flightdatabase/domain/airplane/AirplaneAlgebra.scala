@@ -7,21 +7,21 @@ import flightdatabase.domain.ApiResult
 
 trait AirplaneAlgebra[F[_]] {
   def doesAirplaneExist(id: Long): F[Boolean]
-  def getAirplanes: F[ApiResult[List[Airplane]]]
-  def getAirplanesOnlyNames: F[ApiResult[List[String]]]
+  def getAirplanes: F[ApiResult[Nel[Airplane]]]
+  def getAirplanesOnlyNames: F[ApiResult[Nel[String]]]
   def getAirplane(id: Long): F[ApiResult[Airplane]]
 
   def getAirplanesBy[V: Put](
     field: String,
     values: Nel[V],
     operator: Operator
-  ): F[ApiResult[List[Airplane]]]
+  ): F[ApiResult[Nel[Airplane]]]
 
   def getAirplanesByManufacturer[V: Put](
     field: String,
     values: Nel[V],
     operator: Operator
-  ): F[ApiResult[List[Airplane]]]
+  ): F[ApiResult[Nel[Airplane]]]
 
   def createAirplane(airplane: AirplaneCreate): F[ApiResult[Long]]
   def updateAirplane(airplane: Airplane): F[ApiResult[Long]]

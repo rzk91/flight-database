@@ -16,14 +16,14 @@ import flightdatabase.domain.currency.Currency
 import flightdatabase.domain.currency.CurrencyCreate
 import flightdatabase.domain.currency.CurrencyPatch
 import flightdatabase.testutils.RepositoryCheck
-import flightdatabase.testutils.implicits.enrichIOOperation
+import flightdatabase.testutils.implicits._
 import org.scalatest.Inspectors.forAll
 
 final class CurrencyRepositoryIT extends RepositoryCheck {
 
   lazy val repo: CurrencyRepository[IO] = CurrencyRepository.make[IO].unsafeRunSync()
 
-  val originalCurrencies: List[Currency] = List(
+  val originalCurrencies: Nel[Currency] = Nel.of(
     Currency(1, "Indian Rupee", "INR", Some("₹")),
     Currency(2, "Euro", "EUR", Some("€")),
     Currency(3, "Swedish Krona", "SEK", Some("kr")),
@@ -52,17 +52,13 @@ final class CurrencyRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting all currencies" should "return the correct detailed list" in {
-    val currencies = repo.getCurrencies.value
-
-    currencies should not be empty
-    currencies should contain only (originalCurrencies: _*)
+    repo.getCurrencies.value should contain only (originalCurrencies.toList: _*)
   }
 
   it should "only return names if so required" in {
-    val currencyNames = repo.getCurrenciesOnlyNames.value
-
-    currencyNames should not be empty
-    currencyNames should contain only (originalCurrencies.map(_.name): _*)
+    repo.getCurrenciesOnlyNames.value should contain only (
+      originalCurrencies.map(_.name).toList: _*
+    )
   }
 
   "Selecting a currency by ID" should "return the correct currency" in {
@@ -72,9 +68,9 @@ final class CurrencyRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting a currency by other fields" should "return the corresponding entries" in {
-    def currencyByName(name: String): IO[ApiResult[List[Currency]]] =
+    def currencyByName(name: String): IO[ApiResult[Nel[Currency]]] =
       repo.getCurrenciesBy("name", Nel.one(name), Operator.Equals)
-    def currencyByIso(iso: String): IO[ApiResult[List[Currency]]] =
+    def currencyByIso(iso: String): IO[ApiResult[Nel[Currency]]] =
       repo.getCurrenciesBy("iso", Nel.one(iso), Operator.Equals)
 
     forAll(originalCurrencies) { currency =>

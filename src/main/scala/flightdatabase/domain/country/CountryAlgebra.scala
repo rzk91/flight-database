@@ -8,27 +8,27 @@ import flightdatabase.domain.ApiResult
 trait CountryAlgebra[F[_]] {
 
   def doesCountryExist(id: Long): F[Boolean]
-  def getCountries: F[ApiResult[List[Country]]]
-  def getCountriesOnlyNames: F[ApiResult[List[String]]]
+  def getCountries: F[ApiResult[Nel[Country]]]
+  def getCountriesOnlyNames: F[ApiResult[Nel[String]]]
   def getCountry(id: Long): F[ApiResult[Country]]
 
   def getCountriesBy[V: Put](
     field: String,
     values: Nel[V],
     operator: Operator
-  ): F[ApiResult[List[Country]]]
+  ): F[ApiResult[Nel[Country]]]
 
   def getCountriesByLanguage[V: Put](
     field: String,
     values: Nel[V],
     operator: Operator
-  ): F[ApiResult[List[Country]]]
+  ): F[ApiResult[Nel[Country]]]
 
   def getCountriesByCurrency[V: Put](
     field: String,
     values: Nel[V],
     operator: Operator
-  ): F[ApiResult[List[Country]]]
+  ): F[ApiResult[Nel[Country]]]
 
   def createCountry(country: CountryCreate): F[ApiResult[Long]]
   def updateCountry(country: Country): F[ApiResult[Long]]

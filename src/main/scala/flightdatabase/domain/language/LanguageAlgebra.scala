@@ -7,15 +7,15 @@ import flightdatabase.domain.ApiResult
 
 trait LanguageAlgebra[F[_]] {
   def doesLanguageExist(id: Long): F[Boolean]
-  def getLanguages: F[ApiResult[List[Language]]]
-  def getLanguagesOnlyNames: F[ApiResult[List[String]]]
+  def getLanguages: F[ApiResult[Nel[Language]]]
+  def getLanguagesOnlyNames: F[ApiResult[Nel[String]]]
   def getLanguage(id: Long): F[ApiResult[Language]]
 
   def getLanguagesBy[V: Put](
     field: String,
     values: Nel[V],
     operator: Operator
-  ): F[ApiResult[List[Language]]]
+  ): F[ApiResult[Nel[Language]]]
 
   def createLanguage(language: LanguageCreate): F[ApiResult[Long]]
   def updateLanguage(language: Language): F[ApiResult[Long]]

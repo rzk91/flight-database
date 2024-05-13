@@ -17,14 +17,14 @@ import flightdatabase.domain.airplane.Airplane
 import flightdatabase.domain.airplane.AirplaneCreate
 import flightdatabase.domain.airplane.AirplanePatch
 import flightdatabase.testutils.RepositoryCheck
-import flightdatabase.testutils.implicits.enrichIOOperation
+import flightdatabase.testutils.implicits._
 import org.scalatest.Inspectors.forAll
 
 final class AirplaneRepositoryIT extends RepositoryCheck {
 
   lazy val repo: AirplaneRepository[IO] = AirplaneRepository.make[IO].unsafeRunSync()
 
-  val originalAirplanes: List[Airplane] = List(
+  val originalAirplanes: Nel[Airplane] = Nel.of(
     Airplane(1, "A380", 1, 853, 14800),
     Airplane(2, "747-8", 2, 410, 14310),
     Airplane(3, "A320neo", 1, 194, 6300),
@@ -52,16 +52,12 @@ final class AirplaneRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting all airplanes" should "return the correct detailed list" in {
-    val airplanes = repo.getAirplanes.value
-
-    airplanes should not be empty
-    airplanes should contain only (originalAirplanes: _*)
+    repo.getAirplanes.value should contain only (originalAirplanes.toList: _*)
   }
 
   it should "return only names if so required" in {
     val airplanesOnlyNames = repo.getAirplanesOnlyNames.value
-    airplanesOnlyNames should not be empty
-    airplanesOnlyNames should contain only (originalAirplanes.map(_.name): _*)
+    airplanesOnlyNames should contain only (originalAirplanes.map(_.name).toList: _*)
   }
 
   "Selecting an airplane by id" should "return the correct entry" in {
@@ -71,9 +67,9 @@ final class AirplaneRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting an airplane by other fields" should "return the corresponding entries" in {
-    def airplaneByName(name: String): IO[ApiResult[List[Airplane]]] =
+    def airplaneByName(name: String): IO[ApiResult[Nel[Airplane]]] =
       repo.getAirplanesBy("name", Nel.one(name), Operator.Equals)
-    def airplaneByManufacturerId(id: Long): IO[ApiResult[List[Airplane]]] =
+    def airplaneByManufacturerId(id: Long): IO[ApiResult[Nel[Airplane]]] =
       repo.getAirplanesBy("manufacturer_id", Nel.one(id), Operator.Equals)
 
     val distinctManufacturerIds = originalAirplanes.map(_.manufacturerId).distinct
@@ -93,7 +89,7 @@ final class AirplaneRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting an airplane by manufacturer name" should "return the corresponding entries" in {
-    def airplaneByManufacturer(name: String): IO[ApiResult[List[Airplane]]] =
+    def airplaneByManufacturer(name: String): IO[ApiResult[Nel[Airplane]]] =
       repo.getAirplanesByManufacturer("name", Nel.one(name), Operator.Equals)
 
     forAll(manufacturerToIdMap) {

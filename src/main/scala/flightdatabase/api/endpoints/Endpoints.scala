@@ -34,8 +34,7 @@ abstract class Endpoints[F[_]: Monad](prefix: String) extends Http4sDsl[F] {
 
   // Support functions
   final protected def processRequestBody[IN, OUT](
-    req: Request[F],
-    apiError: ApiError = EntryInvalidFormat
+    req: Request[F]
   )(f: IN => F[ApiResult[OUT]])(
     implicit dec: EntityDecoder[F, IN],
     enc: EntityEncoder[F, OUT]
@@ -43,11 +42,11 @@ abstract class Endpoints[F[_]: Monad](prefix: String) extends Http4sDsl[F] {
     req
       .attemptAs[IN]
       .foldF[ApiResult[OUT]](
-        _ => apiError.elevate[F, OUT],
+        _ => EntryInvalidFormat.elevate[F, OUT],
         f
       )
 
-  final protected type L[V, T] = (String, Nel[V], Operator) => F[ApiResult[List[T]]]
+  final protected type L[V, T] = (String, Nel[V], Operator) => F[ApiResult[Nel[T]]]
 
   final protected def processFilter[IN: TableBase, OUT](
     field: String,
@@ -59,7 +58,7 @@ abstract class Endpoints[F[_]: Monad](prefix: String) extends Http4sDsl[F] {
     longF: L[Long, OUT],
     boolF: L[Boolean, OUT],
     bigDecimalF: L[BigDecimal, OUT]
-  )(implicit enc: EntityEncoder[F, List[OUT]]): F[Response[F]] =
+  )(implicit enc: EntityEncoder[F, Nel[OUT]]): F[Response[F]] =
     implicitly[TableBase[IN]].fieldTypeMap.get(field) match {
       case Some(StringType) if StringType.operators(operator) =>
         values.asStringToResponse(field, operator)(stringF(field, _, operator))

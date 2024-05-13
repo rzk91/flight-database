@@ -38,8 +38,8 @@ TODO list
   on https://developer.adobe.com/commerce/webapi/rest/use-rest/performing-searches/)~~ DONE!
 - ~~Introduce ~~fuzzy search? Or at least~~ case-insensitive search?~~ Case-insensitive search is done! Fuzzy search is
   not needed for now.
-- Change all `List` output to `NonEmptyList` output. This will make the API more robust and will allow for better
-  error handling.
+- ~~Change all `List` output to `NonEmptyList` output. This will make the API more robust and will allow for better
+  error handling.~~ DONE!
 - Make it possible to select a set of fields and not only one or all.
 - All `endpoints` should return URI of the output resource in the `Location` header. Basically, the `id` field should be
   a JSON object with a `uri` field. This will allow for easy navigation of the API.

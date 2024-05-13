@@ -13,7 +13,7 @@ import flightdatabase.domain.airline_airplane.AirlineAirplane
 import flightdatabase.domain.airline_airplane.AirlineAirplaneCreate
 import flightdatabase.domain.airline_airplane.AirlineAirplanePatch
 import flightdatabase.testutils.RepositoryCheck
-import flightdatabase.testutils.implicits.enrichIOOperation
+import flightdatabase.testutils.implicits._
 import flightdatabase.utils.implicits.iterableToRichIterable
 import org.scalatest.Inspectors.forAll
 
@@ -21,7 +21,7 @@ final class AirlineAirplaneRepositoryIT extends RepositoryCheck {
 
   lazy val repo: AirlineAirplaneRepository[IO] = AirlineAirplaneRepository.make[IO].unsafeRunSync()
 
-  val originalAirlineAirplanes: List[AirlineAirplane] = List(
+  val originalAirlineAirplanes: Nel[AirlineAirplane] = Nel.of(
     AirlineAirplane(1, 1, 2),
     AirlineAirplane(2, 1, 1),
     AirlineAirplane(3, 1, 3),
@@ -55,10 +55,7 @@ final class AirlineAirplaneRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting all airline airplanes" should "return the correct detailed list" in {
-    val airlineAirplanes = repo.getAirlineAirplanes.value
-
-    airlineAirplanes should not be empty
-    airlineAirplanes should contain only (originalAirlineAirplanes: _*)
+    repo.getAirlineAirplanes.value should contain only (originalAirlineAirplanes.toList: _*)
   }
 
   "Selecting a airline airplane by id" should "return the correct detailed airline airplane" in {
@@ -82,10 +79,10 @@ final class AirlineAirplaneRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting airline airplanes by other fields" should "return the corresponding entries" in {
-    def airlineAirplaneByAirlineId(id: Long): IO[ApiResult[List[AirlineAirplane]]] =
+    def airlineAirplaneByAirlineId(id: Long): IO[ApiResult[Nel[AirlineAirplane]]] =
       repo.getAirlineAirplanesBy("airline_id", Nel.one(id), Operator.Equals)
 
-    def airlineAirplaneByAirplaneId(id: Long): IO[ApiResult[List[AirlineAirplane]]] =
+    def airlineAirplaneByAirplaneId(id: Long): IO[ApiResult[Nel[AirlineAirplane]]] =
       repo.getAirlineAirplanesBy("airplane_id", Nel.one(id), Operator.Equals)
 
     val distinctAirlineIds = originalAirlineAirplanes.map(_.airlineId).distinct
@@ -110,16 +107,16 @@ final class AirlineAirplaneRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting airline airplanes by external fields" should "return the corresponding entries" in {
-    def airlineAirplanesByAirlineName(name: String): IO[ApiResult[List[AirlineAirplane]]] =
+    def airlineAirplanesByAirlineName(name: String): IO[ApiResult[Nel[AirlineAirplane]]] =
       repo.getAirlineAirplanesByAirline("name", Nel.one(name), Operator.Equals)
 
-    def airlineAirplanesByAirplaneName(name: String): IO[ApiResult[List[AirlineAirplane]]] =
+    def airlineAirplanesByAirplaneName(name: String): IO[ApiResult[Nel[AirlineAirplane]]] =
       repo.getAirlineAirplanesByAirplane("name", Nel.one(name), Operator.Equals)
 
-    def airlineAirplanesByAirlineIata(iata: String): IO[ApiResult[List[AirlineAirplane]]] =
+    def airlineAirplanesByAirlineIata(iata: String): IO[ApiResult[Nel[AirlineAirplane]]] =
       repo.getAirlineAirplanesByAirline("iata", Nel.one(iata), Operator.Equals)
 
-    def airlineAirplanesByAirplaneCapacity(capacity: Int): IO[ApiResult[List[AirlineAirplane]]] =
+    def airlineAirplanesByAirplaneCapacity(capacity: Int): IO[ApiResult[Nel[AirlineAirplane]]] =
       repo.getAirlineAirplanesByAirplane(
         "capacity",
         Nel.one(capacity),

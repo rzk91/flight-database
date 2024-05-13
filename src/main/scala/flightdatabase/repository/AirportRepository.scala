@@ -5,12 +5,10 @@ import cats.data.{NonEmptyList => Nel}
 import cats.effect.Concurrent
 import cats.effect.Resource
 import cats.implicits._
-import doobie.ConnectionIO
 import doobie.Put
 import doobie.Transactor
 import flightdatabase.api.Operator
 import flightdatabase.domain.ApiResult
-import flightdatabase.domain.EntryListEmpty
 import flightdatabase.domain.airport.Airport
 import flightdatabase.domain.airport.AirportAlgebra
 import flightdatabase.domain.airport.AirportCreate
@@ -27,10 +25,10 @@ class AirportRepository[F[_]: Concurrent] private (
 
   override def doesAirportExist(id: Long): F[Boolean] = airportExists(id).unique.execute
 
-  override def getAirports: F[ApiResult[List[Airport]]] =
-    selectAllAirports.asList().execute
+  override def getAirports: F[ApiResult[Nel[Airport]]] =
+    selectAllAirports.asNel().execute
 
-  override def getAirportsOnlyNames: F[ApiResult[List[String]]] =
+  override def getAirportsOnlyNames: F[ApiResult[Nel[String]]] =
     getFieldList[Airport, String]("name").execute
 
   override def getAirport(id: Long): F[ApiResult[Airport]] =
@@ -40,31 +38,30 @@ class AirportRepository[F[_]: Concurrent] private (
     field: String,
     values: Nel[V],
     operator: Operator
-  ): F[ApiResult[List[Airport]]] =
-    selectAirportsBy(field, values, operator).asList(Some(field), Some(values)).execute
+  ): F[ApiResult[Nel[Airport]]] =
+    selectAirportsBy(field, values, operator).asNel(Some(field), Some(values)).execute
 
   def getAirportsByCity[V: Put](
     field: String,
     values: Nel[V],
     operator: Operator
-  ): F[ApiResult[List[Airport]]] =
+  ): F[ApiResult[Nel[Airport]]] =
     selectAllAirportsByExternal[City, V](field, values, operator)
-      .asList(Some(field), Some(values))
+      .asNel(Some(field), Some(values))
       .execute
 
   def getAirportsByCountry[V: Put](
     field: String,
     values: Nel[V],
     operator: Operator
-  ): F[ApiResult[List[Airport]]] =
+  ): F[ApiResult[Nel[Airport]]] =
     EitherT(getFieldList[City, Long, Country, V]("id", FieldValues(field, values), operator))
       .flatMapF { cityIds =>
-        Nel.fromList(cityIds.value) match {
-          case Some(ids) =>
-            selectAllAirportsByExternal[City, Long]("id", ids, Operator.In)
-              .asList(Some(field), Some(ids))
-          case None => EntryListEmpty.elevate[ConnectionIO, List[Airport]]
-        }
+        val ids = cityIds.value
+        selectAllAirportsByExternal[City, Long]("id", ids, Operator.In).asNel(
+          Some(field),
+          Some(ids)
+        )
       }
       .value
       .execute

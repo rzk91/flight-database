@@ -7,34 +7,34 @@ import flightdatabase.domain.ApiResult
 
 trait AirlineRouteAlgebra[F[_]] {
   def doesAirlineRouteExist(id: Long): F[Boolean]
-  def getAirlineRoutes: F[ApiResult[List[AirlineRoute]]]
-  def getAirlineRoutesOnlyRoutes: F[ApiResult[List[String]]]
+  def getAirlineRoutes: F[ApiResult[Nel[AirlineRoute]]]
+  def getAirlineRoutesOnlyRoutes: F[ApiResult[Nel[String]]]
   def getAirlineRoute(id: Long): F[ApiResult[AirlineRoute]]
 
   def getAirlineRoutesBy[V: Put](
     field: String,
     values: Nel[V],
     operator: Operator
-  ): F[ApiResult[List[AirlineRoute]]]
+  ): F[ApiResult[Nel[AirlineRoute]]]
 
   def getAirlineRoutesByAirline[V: Put](
     field: String,
     values: Nel[V],
     operator: Operator
-  ): F[ApiResult[List[AirlineRoute]]]
+  ): F[ApiResult[Nel[AirlineRoute]]]
 
   def getAirlineRoutesByAirplane[V: Put](
     field: String,
     values: Nel[V],
     operator: Operator
-  ): F[ApiResult[List[AirlineRoute]]]
+  ): F[ApiResult[Nel[AirlineRoute]]]
 
   def getAirlineRoutesByAirport[V: Put](
     field: String,
     values: Nel[V],
     operator: Operator,
     inbound: Option[Boolean]
-  ): F[ApiResult[List[AirlineRoute]]]
+  ): F[ApiResult[Nel[AirlineRoute]]]
 
   def createAirlineRoute(airlineRoute: AirlineRouteCreate): F[ApiResult[Long]]
   def updateAirlineRoute(airlineRoute: AirlineRoute): F[ApiResult[Long]]

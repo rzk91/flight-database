@@ -17,14 +17,14 @@ import flightdatabase.domain.country.Country
 import flightdatabase.domain.country.CountryCreate
 import flightdatabase.domain.country.CountryPatch
 import flightdatabase.testutils.RepositoryCheck
-import flightdatabase.testutils.implicits.enrichIOOperation
+import flightdatabase.testutils.implicits._
 import org.scalatest.Inspectors.forAll
 
 final class CountryRepositoryIT extends RepositoryCheck {
 
   lazy val repo: CountryRepository[IO] = CountryRepository.make[IO].unsafeRunSync()
 
-  val originalCountries: List[Country] = List(
+  val originalCountries: Nel[Country] = Nel.of(
     Country(1, "India", "IN", "IND", 91, Some(".in"), 7, Some(1), Some(3), 1, "Indian"),
     Country(2, "Germany", "DE", "DEU", 49, Some(".de"), 2, None, None, 2, "German"),
     Country(3, "Sweden", "SE", "SWE", 46, Some(".se"), 4, None, None, 3, "Swede"),
@@ -98,17 +98,11 @@ final class CountryRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting all countries" should "return the correct detailed list" in {
-    val countries = repo.getCountries.value
-
-    countries should not be empty
-    countries should contain only (originalCountries: _*)
+    repo.getCountries.value should contain only (originalCountries.toList: _*)
   }
 
   it should "return only names if so required" in {
-    val countries = repo.getCountriesOnlyNames.value
-
-    countries should not be empty
-    countries should contain only (originalCountries.map(_.name): _*)
+    repo.getCountriesOnlyNames.value should contain only (originalCountries.map(_.name).toList: _*)
   }
 
   "Selecting a country by ID" should "return the correct country" in {
@@ -118,19 +112,19 @@ final class CountryRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting a country by other fields" should "return the corresponding entries" in {
-    def countryByName(name: String): IO[ApiResult[List[Country]]] =
+    def countryByName(name: String): IO[ApiResult[Nel[Country]]] =
       repo.getCountriesBy("name", Nel.one(name), Operator.Equals)
 
-    def countryByIso2(iso2: String): IO[ApiResult[List[Country]]] =
+    def countryByIso2(iso2: String): IO[ApiResult[Nel[Country]]] =
       repo.getCountriesBy("iso2", Nel.one(iso2), Operator.Equals)
 
-    def countryByNationality(nationality: String): IO[ApiResult[List[Country]]] =
+    def countryByNationality(nationality: String): IO[ApiResult[Nel[Country]]] =
       repo.getCountriesBy("nationality", Nel.one(nationality), Operator.Equals)
 
-    def countryByLanguage(id: Long): IO[ApiResult[List[Country]]] =
+    def countryByLanguage(id: Long): IO[ApiResult[Nel[Country]]] =
       repo.getCountriesByLanguage("id", Nel.one(id), Operator.Equals)
 
-    def countryByCurrency(id: Long): IO[ApiResult[List[Country]]] =
+    def countryByCurrency(id: Long): IO[ApiResult[Nel[Country]]] =
       repo.getCountriesByCurrency("id", Nel.one(id), Operator.Equals)
 
     val distinctLanguageIds = originalCountries.flatMap(allLanguageIds).distinct
@@ -144,7 +138,7 @@ final class CountryRepositoryIT extends RepositoryCheck {
     }
 
     forAll(distinctLanguageIds) { id =>
-      val expectedCountries = originalCountries.filter(allLanguageIds(_).contains(id))
+      val expectedCountries = originalCountries.filter(allLanguageIds(_).exists(_ == id))
       countryByLanguage(id).value should contain only (expectedCountries: _*)
     }
 
@@ -161,21 +155,21 @@ final class CountryRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting a country by external fields" should "return the corresponding entries" in {
-    def countriesByLanguageIso2(iso2: String): IO[ApiResult[List[Country]]] =
+    def countriesByLanguageIso2(iso2: String): IO[ApiResult[Nel[Country]]] =
       repo.getCountriesByLanguage("iso2", Nel.one(iso2), Operator.Equals)
 
-    def countriesByLanguageName(name: String): IO[ApiResult[List[Country]]] =
+    def countriesByLanguageName(name: String): IO[ApiResult[Nel[Country]]] =
       repo.getCountriesByLanguage("name", Nel.one(name), Operator.Equals)
 
-    def countriesByCurrencyIso(iso: String): IO[ApiResult[List[Country]]] =
+    def countriesByCurrencyIso(iso: String): IO[ApiResult[Nel[Country]]] =
       repo.getCountriesByCurrency("iso", Nel.one(iso), Operator.Equals)
 
-    def countriesByCurrencyName(name: String): IO[ApiResult[List[Country]]] =
+    def countriesByCurrencyName(name: String): IO[ApiResult[Nel[Country]]] =
       repo.getCountriesByCurrency("name", Nel.one(name), Operator.Equals)
 
     forAll(languageIdMap) {
       case (id, (iso2, name)) =>
-        val expectedCountries = originalCountries.filter(allLanguageIds(_).contains(id))
+        val expectedCountries = originalCountries.filter(allLanguageIds(_).exists(_ == id))
         countriesByLanguageIso2(iso2).value should contain only (expectedCountries: _*)
         countriesByLanguageName(name).value should contain only (expectedCountries: _*)
     }
@@ -423,6 +417,9 @@ final class CountryRepositoryIT extends RepositoryCheck {
     repo.removeCountry(idNotPresent).error shouldBe EntryNotFound(idNotPresent)
   }
 
-  private def allLanguageIds: Country => List[Long] =
-    c => List(Some(c.mainLanguageId), c.secondaryLanguageId, c.tertiaryLanguageId).flatten
+  private def allLanguageIds: Country => Nel[Long] =
+    c =>
+      Nel.fromListUnsafe(
+        List(Some(c.mainLanguageId), c.secondaryLanguageId, c.tertiaryLanguageId).flatten
+      )
 }

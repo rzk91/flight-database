@@ -22,8 +22,8 @@ class AirlineAirplaneRepository[F[_]: Concurrent] private (
   override def doesAirlineAirplaneExist(id: Long): F[Boolean] =
     airlineAirplaneExists(id).unique.execute
 
-  override def getAirlineAirplanes: F[ApiResult[List[AirlineAirplane]]] =
-    selectAllAirlineAirplanes.asList().execute
+  override def getAirlineAirplanes: F[ApiResult[Nel[AirlineAirplane]]] =
+    selectAllAirlineAirplanes.asNel().execute
 
   override def getAirlineAirplane(id: Long): F[ApiResult[AirlineAirplane]] =
     selectAirlineAirplanesBy("id", Nel.one(id), Operator.Equals).asSingle(id).execute
@@ -32,10 +32,10 @@ class AirlineAirplaneRepository[F[_]: Concurrent] private (
     airlineId: Long,
     airplaneId: Long
   ): F[ApiResult[AirlineAirplane]] = {
-    val asNel = Nel.one(airlineId)
+    val idAsNel = Nel.one(airlineId)
     EitherT(
-      selectAirlineAirplanesBy("airline_id", asNel, Operator.Equals)
-        .asList(invalidValues = Some(asNel))
+      selectAirlineAirplanesBy("airline_id", idAsNel, Operator.Equals)
+        .asNel(invalidValues = Some(idAsNel))
     ).subflatMap[ApiError, ApiOutput[AirlineAirplane]] { output =>
         val airlineAirplanes = output.value
         airlineAirplanes.find(_.airplaneId == airplaneId) match {
@@ -51,30 +51,30 @@ class AirlineAirplaneRepository[F[_]: Concurrent] private (
     field: String,
     values: Nel[V],
     operator: Operator
-  ): F[ApiResult[List[AirlineAirplane]]] =
-    selectAirlineAirplanesBy(field, values, operator).asList(Some(field), Some(values)).execute
+  ): F[ApiResult[Nel[AirlineAirplane]]] =
+    selectAirlineAirplanesBy(field, values, operator).asNel(Some(field), Some(values)).execute
 
   override def getAirlineAirplanesByExternal[ET: TableBase, EV: Put](
     field: String,
     values: Nel[EV],
     operator: Operator
-  ): F[ApiResult[List[AirlineAirplane]]] =
+  ): F[ApiResult[Nel[AirlineAirplane]]] =
     selectAirlineAirplaneByExternal[ET, EV](field, values, operator)
-      .asList(Some(field), Some(values))
+      .asNel(Some(field), Some(values))
       .execute
 
   override def getAirlineAirplanesByAirplane[V: Put](
     field: String,
     values: Nel[V],
     operator: Operator
-  ): F[ApiResult[List[AirlineAirplane]]] =
+  ): F[ApiResult[Nel[AirlineAirplane]]] =
     getAirlineAirplanesByExternal[Airplane, V](field, values, operator)
 
   override def getAirlineAirplanesByAirline[V: Put](
     field: String,
     values: Nel[V],
     operator: Operator
-  ): F[ApiResult[List[AirlineAirplane]]] =
+  ): F[ApiResult[Nel[AirlineAirplane]]] =
     getAirlineAirplanesByExternal[Airline, V](field, values, operator)
 
   override def createAirlineAirplane(airlineAirplane: AirlineAirplaneCreate): F[ApiResult[Long]] =

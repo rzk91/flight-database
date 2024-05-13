@@ -18,14 +18,14 @@ import flightdatabase.domain.city.City
 import flightdatabase.domain.city.CityCreate
 import flightdatabase.domain.city.CityPatch
 import flightdatabase.testutils.RepositoryCheck
-import flightdatabase.testutils.implicits.enrichIOOperation
+import flightdatabase.testutils.implicits._
 import org.scalatest.Inspectors.forAll
 
 final class CityRepositoryIT extends RepositoryCheck {
 
   lazy val repo: CityRepository[IO] = CityRepository.make[IO].unsafeRunSync()
 
-  val originalCities: List[City] = List(
+  val originalCities: Nel[City] = Nel.of(
     City(
       1,
       "Bangalore",
@@ -136,16 +136,11 @@ final class CityRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting all cities" should "return the correct detailed list" in {
-    val cities = repo.getCities.value
-
-    cities should not be empty
-    cities should contain only (originalCities: _*)
+    repo.getCities.value should contain only (originalCities.toList: _*)
   }
 
   it should "return only names if so required" in {
-    val citiesOnlyNames = repo.getCitiesOnlyNames.value
-    citiesOnlyNames should not be empty
-    citiesOnlyNames should contain only (originalCities.map(_.name): _*)
+    repo.getCitiesOnlyNames.value should contain only (originalCities.map(_.name).toList: _*)
   }
 
   "Selecting a city by id" should "return the correct entry" in {
@@ -155,9 +150,9 @@ final class CityRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting a city by other fields" should "return the corresponding entries" in {
-    def cityByName(name: String): IO[ApiResult[List[City]]] =
+    def cityByName(name: String): IO[ApiResult[Nel[City]]] =
       repo.getCitiesBy("name", Nel.one(name), Operator.Equals)
-    def cityByCountryId(id: Long): IO[ApiResult[List[City]]] =
+    def cityByCountryId(id: Long): IO[ApiResult[Nel[City]]] =
       repo.getCitiesBy("country_id", Nel.one(id), Operator.Equals)
 
     val distinctCountryIds = originalCities.map(_.countryId).distinct
@@ -175,7 +170,7 @@ final class CityRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting a city by country name" should "return the corresponding entries" in {
-    def cityByCountry(name: String): IO[ApiResult[List[City]]] =
+    def cityByCountry(name: String): IO[ApiResult[Nel[City]]] =
       repo.getCitiesByCountry("name", Nel.one(name), Operator.Equals)
 
     forAll(countryToIdMap) {

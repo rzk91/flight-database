@@ -7,27 +7,27 @@ import flightdatabase.domain.ApiResult
 
 trait ManufacturerAlgebra[F[_]] {
   def doesManufacturerExist(id: Long): F[Boolean]
-  def getManufacturers: F[ApiResult[List[Manufacturer]]]
-  def getManufacturersOnlyNames: F[ApiResult[List[String]]]
+  def getManufacturers: F[ApiResult[Nel[Manufacturer]]]
+  def getManufacturersOnlyNames: F[ApiResult[Nel[String]]]
   def getManufacturer(id: Long): F[ApiResult[Manufacturer]]
 
   def getManufacturersBy[V: Put](
     field: String,
     values: Nel[V],
     operator: Operator
-  ): F[ApiResult[List[Manufacturer]]]
+  ): F[ApiResult[Nel[Manufacturer]]]
 
   def getManufacturersByCity[V: Put](
     field: String,
     values: Nel[V],
     operator: Operator
-  ): F[ApiResult[List[Manufacturer]]]
+  ): F[ApiResult[Nel[Manufacturer]]]
 
   def getManufacturersByCountry[V: Put](
     field: String,
     values: Nel[V],
     operator: Operator
-  ): F[ApiResult[List[Manufacturer]]]
+  ): F[ApiResult[Nel[Manufacturer]]]
 
   def createManufacturer(manufacturer: ManufacturerCreate): F[ApiResult[Long]]
   def updateManufacturer(manufacturer: Manufacturer): F[ApiResult[Long]]

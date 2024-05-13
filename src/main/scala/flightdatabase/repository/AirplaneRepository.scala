@@ -23,10 +23,10 @@ class AirplaneRepository[F[_]: Concurrent] private (
 
   override def doesAirplaneExist(id: Long): F[Boolean] = airplaneExists(id).unique.execute
 
-  override def getAirplanes: F[ApiResult[List[Airplane]]] =
-    selectAllAirplanes.asList().execute
+  override def getAirplanes: F[ApiResult[Nel[Airplane]]] =
+    selectAllAirplanes.asNel().execute
 
-  override def getAirplanesOnlyNames: F[ApiResult[List[String]]] =
+  override def getAirplanesOnlyNames: F[ApiResult[Nel[String]]] =
     getFieldList[Airplane, String]("name").execute
 
   override def getAirplane(id: Long): F[ApiResult[Airplane]] =
@@ -36,16 +36,16 @@ class AirplaneRepository[F[_]: Concurrent] private (
     field: String,
     values: Nel[V],
     operator: Operator
-  ): F[ApiResult[List[Airplane]]] =
-    selectAirplanesBy(field, values, operator).asList(Some(field), Some(values)).execute
+  ): F[ApiResult[Nel[Airplane]]] =
+    selectAirplanesBy(field, values, operator).asNel(Some(field), Some(values)).execute
 
   def getAirplanesByManufacturer[V: Put](
     field: String,
     values: Nel[V],
     operator: Operator
-  ): F[ApiResult[List[Airplane]]] =
+  ): F[ApiResult[Nel[Airplane]]] =
     selectAirplanesByExternal[Manufacturer, V](field, values, operator)
-      .asList(Some(field), Some(values))
+      .asNel(Some(field), Some(values))
       .execute
 
   override def createAirplane(airplane: AirplaneCreate): F[ApiResult[Long]] =

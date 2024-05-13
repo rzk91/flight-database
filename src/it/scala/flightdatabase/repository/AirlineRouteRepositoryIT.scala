@@ -17,14 +17,14 @@ import flightdatabase.domain.airline_route.AirlineRoute
 import flightdatabase.domain.airline_route.AirlineRouteCreate
 import flightdatabase.domain.airline_route.AirlineRoutePatch
 import flightdatabase.testutils.RepositoryCheck
-import flightdatabase.testutils.implicits.enrichIOOperation
+import flightdatabase.testutils.implicits._
 import org.scalatest.Inspectors.forAll
 
 final class AirlineRouteRepositoryIT extends RepositoryCheck {
 
   lazy val repo: AirlineRouteRepository[IO] = AirlineRouteRepository.make[IO].unsafeRunSync()
 
-  val originalAirlineRoutes: List[AirlineRoute] = List(
+  val originalAirlineRoutes: Nel[AirlineRoute] = Nel.of(
     AirlineRoute(1, 1, "LH754", 1, 2),
     AirlineRoute(2, 1, "LH755", 2, 1),
     AirlineRoute(3, 5, "EK565", 2, 3),
@@ -74,17 +74,13 @@ final class AirlineRouteRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting all airline routes" should "return the correct detailed list" in {
-    val airlineRoutes = repo.getAirlineRoutes.value
-
-    airlineRoutes should not be empty
-    airlineRoutes should contain only (originalAirlineRoutes: _*)
+    repo.getAirlineRoutes.value should contain only (originalAirlineRoutes.toList: _*)
   }
 
   "Selecting all airline routes with only route numbers" should "return the correct list" in {
-    val routeNumbers = repo.getAirlineRoutesOnlyRoutes.value
-
-    routeNumbers should not be empty
-    routeNumbers should contain only (originalAirlineRoutes.map(_.route): _*)
+    repo.getAirlineRoutesOnlyRoutes.value should contain only (
+      originalAirlineRoutes.map(_.route).toList: _*
+    )
   }
 
   "Selecting an airline route by ID" should "return the correct route" in {
@@ -96,16 +92,16 @@ final class AirlineRouteRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting an airline-route by other fields" should "return the corresponding entries" in {
-    def routesByNumber(routeNr: String): IO[ApiResult[List[AirlineRoute]]] =
+    def routesByNumber(routeNr: String): IO[ApiResult[Nel[AirlineRoute]]] =
       repo.getAirlineRoutesBy("route_number", Nel.one(routeNr), Operator.Equals)
 
-    def routeByAirlineAirplaneId(id: Long): IO[ApiResult[List[AirlineRoute]]] =
+    def routeByAirlineAirplaneId(id: Long): IO[ApiResult[Nel[AirlineRoute]]] =
       repo.getAirlineRoutesBy("airline_airplane_id", Nel.one(id), Operator.Equals)
 
-    def routeByStartAirportId(id: Long): IO[ApiResult[List[AirlineRoute]]] =
+    def routeByStartAirportId(id: Long): IO[ApiResult[Nel[AirlineRoute]]] =
       repo.getAirlineRoutesBy("start_airport_id", Nel.one(id), Operator.Equals)
 
-    def routeByDestinationAirportId(id: Long): IO[ApiResult[List[AirlineRoute]]] =
+    def routeByDestinationAirportId(id: Long): IO[ApiResult[Nel[AirlineRoute]]] =
       repo.getAirlineRoutesBy("destination_airport_id", Nel.one(id), Operator.Equals)
 
     val distinctAirlineAirplaneIds = originalAirlineRoutes.map(_.airlineAirplaneId).distinct
@@ -141,16 +137,16 @@ final class AirlineRouteRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting airline-routes by external airline fields" should "return the corresponding entries" in {
-    def routesByAirlineId(id: Long): IO[ApiResult[List[AirlineRoute]]] =
+    def routesByAirlineId(id: Long): IO[ApiResult[Nel[AirlineRoute]]] =
       repo.getAirlineRoutesByAirline("id", Nel.one(id), Operator.Equals)
 
-    def routesByAirlineName(name: String): IO[ApiResult[List[AirlineRoute]]] =
+    def routesByAirlineName(name: String): IO[ApiResult[Nel[AirlineRoute]]] =
       repo.getAirlineRoutesByAirline("name", Nel.one(name), Operator.Equals)
 
-    def routesByAirlineIata(iata: String): IO[ApiResult[List[AirlineRoute]]] =
+    def routesByAirlineIata(iata: String): IO[ApiResult[Nel[AirlineRoute]]] =
       repo.getAirlineRoutesByAirline("iata", Nel.one(iata), Operator.Equals)
 
-    def routesByAirlineIcao(icao: String): IO[ApiResult[List[AirlineRoute]]] =
+    def routesByAirlineIcao(icao: String): IO[ApiResult[Nel[AirlineRoute]]] =
       repo.getAirlineRoutesByAirline("icao", Nel.one(icao), Operator.Equals)
 
     forAll(airlineIdMap) {
@@ -170,10 +166,10 @@ final class AirlineRouteRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting airline-routes by external airplane fields" should "return the corresponding entries" in {
-    def routesByAirplaneId(id: Long): IO[ApiResult[List[AirlineRoute]]] =
+    def routesByAirplaneId(id: Long): IO[ApiResult[Nel[AirlineRoute]]] =
       repo.getAirlineRoutesByAirplane("id", Nel.one(id), Operator.Equals)
 
-    def routesByAirplaneName(name: String): IO[ApiResult[List[AirlineRoute]]] =
+    def routesByAirplaneName(name: String): IO[ApiResult[Nel[AirlineRoute]]] =
       repo.getAirlineRoutesByAirplane("name", Nel.one(name), Operator.Equals)
 
     forAll(airplaneIdMap) {
@@ -189,13 +185,13 @@ final class AirlineRouteRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting airline-routes by external airport fields" should "return the corresponding entries" in {
-    def allRoutesByAirportId(id: Long): IO[ApiResult[List[AirlineRoute]]] =
+    def allRoutesByAirportId(id: Long): IO[ApiResult[Nel[AirlineRoute]]] =
       repo.getAirlineRoutesByAirport("id", Nel.one(id), Operator.Equals, None)
 
-    def inboundRoutesByAirportIata(iata: String): IO[ApiResult[List[AirlineRoute]]] =
+    def inboundRoutesByAirportIata(iata: String): IO[ApiResult[Nel[AirlineRoute]]] =
       repo.getAirlineRoutesByAirport("iata", Nel.one(iata), Operator.Equals, Some(true))
 
-    def outboundRoutesByAirportIcao(icao: String): IO[ApiResult[List[AirlineRoute]]] =
+    def outboundRoutesByAirportIcao(icao: String): IO[ApiResult[Nel[AirlineRoute]]] =
       repo.getAirlineRoutesByAirport("icao", Nel.one(icao), Operator.Equals, Some(false))
 
     forAll(airportIdMap) {

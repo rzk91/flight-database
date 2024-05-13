@@ -8,8 +8,9 @@ import flightdatabase.domain.EntryListEmpty
 import flightdatabase.domain.city.City
 import flightdatabase.domain.country.Country
 import flightdatabase.testutils.RepositoryCheck
+import flightdatabase.testutils.implicits._
 import flightdatabase.utils.FieldValues
-import flightdatabase.utils.implicits.enrichConnectionIO
+import flightdatabase.utils.implicits._
 
 final class GenericRepositoryIT extends RepositoryCheck {
 
@@ -23,7 +24,6 @@ final class GenericRepositoryIT extends RepositoryCheck {
       .value
       .value
 
-    countryNames should not be empty
     countryNames should contain only ("India", "Germany", "Sweden", "United Arab Emirates", "Netherlands", "United States of America")
   }
 
@@ -38,7 +38,6 @@ final class GenericRepositoryIT extends RepositoryCheck {
         .value
         .value
 
-    cityNames should not be empty
     cityNames should contain only ("Berlin", "Frankfurt am Main")
   }
 
@@ -53,7 +52,6 @@ final class GenericRepositoryIT extends RepositoryCheck {
         .value
         .value
 
-    cityNames should not be empty
     cityNames should contain only ("Bangalore", "Berlin", "Frankfurt am Main")
   }
 

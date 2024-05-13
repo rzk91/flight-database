@@ -7,21 +7,21 @@ import flightdatabase.domain.ApiResult
 
 trait AirlineAlgebra[F[_]] {
   def doesAirlineExist(id: Long): F[Boolean]
-  def getAirlines: F[ApiResult[List[Airline]]]
-  def getAirlinesOnlyNames: F[ApiResult[List[String]]]
+  def getAirlines: F[ApiResult[Nel[Airline]]]
+  def getAirlinesOnlyNames: F[ApiResult[Nel[String]]]
   def getAirline(id: Long): F[ApiResult[Airline]]
 
   def getAirlinesBy[V: Put](
     field: String,
     values: Nel[V],
     operator: Operator
-  ): F[ApiResult[List[Airline]]]
+  ): F[ApiResult[Nel[Airline]]]
 
   def getAirlinesByCountry[V: Put](
     field: String,
     values: Nel[V],
     operator: Operator
-  ): F[ApiResult[List[Airline]]]
+  ): F[ApiResult[Nel[Airline]]]
 
   def createAirline(airline: AirlineCreate): F[ApiResult[Long]]
   def updateAirline(airline: Airline): F[ApiResult[Long]]

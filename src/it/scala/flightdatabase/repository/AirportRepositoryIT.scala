@@ -17,14 +17,14 @@ import flightdatabase.domain.airport.Airport
 import flightdatabase.domain.airport.AirportCreate
 import flightdatabase.domain.airport.AirportPatch
 import flightdatabase.testutils.RepositoryCheck
-import flightdatabase.testutils.implicits.enrichIOOperation
+import flightdatabase.testutils.implicits._
 import org.scalatest.Inspectors.forAll
 
 final class AirportRepositoryIT extends RepositoryCheck {
 
   lazy val repo: AirportRepository[IO] = AirportRepository.make[IO].unsafeRunSync()
 
-  val originalAirports: List[Airport] = List(
+  val originalAirports: Nel[Airport] = Nel.of(
     Airport(
       1,
       "Frankfurt am Main Airport",
@@ -99,16 +99,11 @@ final class AirportRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting all airports" should "return the correct detailed list" in {
-    val airports = repo.getAirports.value
-
-    airports should not be empty
-    airports should contain only (originalAirports: _*)
+    repo.getAirports.value should contain only (originalAirports.toList: _*)
   }
 
   it should "return only names if so required" in {
-    val airportsOnlyNames = repo.getAirportsOnlyNames.value
-    airportsOnlyNames should not be empty
-    airportsOnlyNames should contain only (originalAirports.map(_.name): _*)
+    repo.getAirportsOnlyNames.value should contain only (originalAirports.map(_.name).toList: _*)
   }
 
   "Selecting an airport by id" should "return the correct entry" in {
@@ -118,13 +113,13 @@ final class AirportRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting airports by other fields" should "return the corresponding entries" in {
-    def airportByName(name: String): IO[ApiResult[List[Airport]]] =
+    def airportByName(name: String): IO[ApiResult[Nel[Airport]]] =
       repo.getAirportsBy("name", Nel.one(name), Operator.Equals)
-    def airportByIcao(icao: String): IO[ApiResult[List[Airport]]] =
+    def airportByIcao(icao: String): IO[ApiResult[Nel[Airport]]] =
       repo.getAirportsBy("icao", Nel.one(icao), Operator.Equals)
-    def airportByIata(iata: String): IO[ApiResult[List[Airport]]] =
+    def airportByIata(iata: String): IO[ApiResult[Nel[Airport]]] =
       repo.getAirportsBy("iata", Nel.one(iata), Operator.Equals)
-    def airportByCityId(id: Long): IO[ApiResult[List[Airport]]] =
+    def airportByCityId(id: Long): IO[ApiResult[Nel[Airport]]] =
       repo.getAirportsBy("city_id", Nel.one(id), Operator.Equals)
 
     val distinctCityIds = originalAirports.map(_.cityId).distinct
@@ -148,7 +143,7 @@ final class AirportRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting airports by city name" should "return the corresponding entries" in {
-    def airportByCity(city: String): IO[ApiResult[List[Airport]]] =
+    def airportByCity(city: String): IO[ApiResult[Nel[Airport]]] =
       repo.getAirportsByCity("name", Nel.one(city), Operator.Equals)
 
     forAll(cityToIdMap) {
@@ -162,7 +157,7 @@ final class AirportRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting airport by country" should "also return the corresponding entries" in {
-    def airportByCountry(country: String): IO[ApiResult[List[Airport]]] =
+    def airportByCountry(country: String): IO[ApiResult[Nel[Airport]]] =
       repo.getAirportsByCountry("name", Nel.one(country), Operator.Equals)
 
     forAll(countryToCityIdMap) {

@@ -8,7 +8,7 @@ import flightdatabase.domain.TableBase
 
 trait AirlineAirplaneAlgebra[F[_]] {
   def doesAirlineAirplaneExist(id: Long): F[Boolean]
-  def getAirlineAirplanes: F[ApiResult[List[AirlineAirplane]]]
+  def getAirlineAirplanes: F[ApiResult[Nel[AirlineAirplane]]]
   def getAirlineAirplane(id: Long): F[ApiResult[AirlineAirplane]]
   def getAirlineAirplane(airlineId: Long, airplaneId: Long): F[ApiResult[AirlineAirplane]]
 
@@ -16,25 +16,25 @@ trait AirlineAirplaneAlgebra[F[_]] {
     field: String,
     values: Nel[V],
     operator: Operator
-  ): F[ApiResult[List[AirlineAirplane]]]
+  ): F[ApiResult[Nel[AirlineAirplane]]]
 
   def getAirlineAirplanesByExternal[ET: TableBase, EV: Put](
     field: String,
     values: Nel[EV],
     operator: Operator
-  ): F[ApiResult[List[AirlineAirplane]]]
+  ): F[ApiResult[Nel[AirlineAirplane]]]
 
   def getAirlineAirplanesByAirplane[V: Put](
     field: String,
     values: Nel[V],
     operator: Operator
-  ): F[ApiResult[List[AirlineAirplane]]]
+  ): F[ApiResult[Nel[AirlineAirplane]]]
 
   def getAirlineAirplanesByAirline[V: Put](
     field: String,
     values: Nel[V],
     operator: Operator
-  ): F[ApiResult[List[AirlineAirplane]]]
+  ): F[ApiResult[Nel[AirlineAirplane]]]
 
   def createAirlineAirplane(airlineAirplane: AirlineAirplaneCreate): F[ApiResult[Long]]
   def updateAirlineAirplane(airlineAirplane: AirlineAirplane): F[ApiResult[Long]]

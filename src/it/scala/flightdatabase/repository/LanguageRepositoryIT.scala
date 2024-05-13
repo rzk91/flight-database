@@ -16,14 +16,14 @@ import flightdatabase.domain.language.Language
 import flightdatabase.domain.language.LanguageCreate
 import flightdatabase.domain.language.LanguagePatch
 import flightdatabase.testutils.RepositoryCheck
-import flightdatabase.testutils.implicits.enrichIOOperation
+import flightdatabase.testutils.implicits._
 import org.scalatest.Inspectors.forAll
 
 final class LanguageRepositoryIT extends RepositoryCheck {
 
   lazy val repo: LanguageRepository[IO] = LanguageRepository.make[IO].unsafeRunSync()
 
-  val originalLanguages: List[Language] = List(
+  val originalLanguages: Nel[Language] = Nel.of(
     Language(1, "English", "EN", Some("ENG"), "English"),
     Language(2, "German", "DE", Some("DEU"), "Deutsch"),
     Language(3, "Tamil", "TA", Some("TAM"), "Tamil"),
@@ -55,17 +55,11 @@ final class LanguageRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting all languages" should "return the correct detailed list" in {
-    val languages = repo.getLanguages.value
-
-    languages should not be empty
-    languages should contain only (originalLanguages: _*)
+    repo.getLanguages.value should contain only (originalLanguages.toList: _*)
   }
 
   it should "only return names if so required" in {
-    val languageNames = repo.getLanguagesOnlyNames.value
-
-    languageNames should not be empty
-    languageNames should contain only (originalLanguages.map(_.name): _*)
+    repo.getLanguagesOnlyNames.value should contain only (originalLanguages.map(_.name).toList: _*)
   }
 
   "Selecting a language by ID" should "return the correct language" in {
@@ -75,16 +69,16 @@ final class LanguageRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting a language by other fields" should "return the corresponding entries" in {
-    def languageByName(name: String): IO[ApiResult[List[Language]]] =
+    def languageByName(name: String): IO[ApiResult[Nel[Language]]] =
       repo.getLanguagesBy("name", Nel.one(name), Operator.Equals)
 
-    def languageByIso2(iso2: String): IO[ApiResult[List[Language]]] =
+    def languageByIso2(iso2: String): IO[ApiResult[Nel[Language]]] =
       repo.getLanguagesBy("iso2", Nel.one(iso2), Operator.Equals)
 
-    def languageByIso3(iso3: String): IO[ApiResult[List[Language]]] =
+    def languageByIso3(iso3: String): IO[ApiResult[Nel[Language]]] =
       repo.getLanguagesBy("iso3", Nel.one(iso3), Operator.Equals)
 
-    def languageByOriginalName(name: String): IO[ApiResult[List[Language]]] =
+    def languageByOriginalName(name: String): IO[ApiResult[Nel[Language]]] =
       repo.getLanguagesBy("original_name", Nel.one(name), Operator.Equals)
 
     forAll(originalLanguages) { language =>

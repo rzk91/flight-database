@@ -18,14 +18,14 @@ import flightdatabase.domain.manufacturer.Manufacturer
 import flightdatabase.domain.manufacturer.ManufacturerCreate
 import flightdatabase.domain.manufacturer.ManufacturerPatch
 import flightdatabase.testutils.RepositoryCheck
-import flightdatabase.testutils.implicits.enrichIOOperation
+import flightdatabase.testutils.implicits._
 import org.scalatest.Inspectors.forAll
 
 final class ManufacturerRepositoryIT extends RepositoryCheck {
 
   lazy val repo: ManufacturerRepository[IO] = ManufacturerRepository.make[IO].unsafeRunSync()
 
-  val originalManufacturers: List[Manufacturer] = List(
+  val originalManufacturers: Nel[Manufacturer] = Nel.of(
     Manufacturer(1, "Airbus", 5),
     Manufacturer(2, "Boeing", 6)
   )
@@ -56,17 +56,13 @@ final class ManufacturerRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting all manufacturers" should "return the correct detailed list" in {
-    val manufacturers = repo.getManufacturers.value
-
-    manufacturers should not be empty
-    manufacturers should contain only (originalManufacturers: _*)
+    repo.getManufacturers.value should contain only (originalManufacturers.toList: _*)
   }
 
   it should "return only names if so required" in {
-    val manufacturers = repo.getManufacturersOnlyNames.value
-
-    manufacturers should not be empty
-    manufacturers should contain only (originalManufacturers.map(_.name): _*)
+    repo.getManufacturersOnlyNames.value should contain only (
+      originalManufacturers.map(_.name).toList: _*
+    )
   }
 
   "Selecting a manufacturer by ID" should "return the correct manufacturer" in {
@@ -76,10 +72,10 @@ final class ManufacturerRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting a manufacturer by other fields" should "return the correct manufacturer(s)" in {
-    def manufacturerByName(name: String): IO[ApiResult[List[Manufacturer]]] =
+    def manufacturerByName(name: String): IO[ApiResult[Nel[Manufacturer]]] =
       repo.getManufacturersBy("name", Nel.one(name), Operator.Equals)
 
-    def manufacturerByCity(cityId: Long): IO[ApiResult[List[Manufacturer]]] =
+    def manufacturerByCity(cityId: Long): IO[ApiResult[Nel[Manufacturer]]] =
       repo.getManufacturersBy("base_city_id", Nel.one(cityId), Operator.Equals)
 
     val distinctCityIds = originalManufacturers.map(_.baseCityId).distinct
@@ -94,10 +90,10 @@ final class ManufacturerRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting a manufacturer by city/country name" should "return the correct list of manufacturers" in {
-    def manufacturerByCity(city: String): IO[ApiResult[List[Manufacturer]]] =
+    def manufacturerByCity(city: String): IO[ApiResult[Nel[Manufacturer]]] =
       repo.getManufacturersByCity("name", Nel.one(city), Operator.Equals)
 
-    def manufacturerByCountry(country: String): IO[ApiResult[List[Manufacturer]]] =
+    def manufacturerByCountry(country: String): IO[ApiResult[Nel[Manufacturer]]] =
       repo.getManufacturersByCountry("name", Nel.one(country), Operator.Equals)
 
     forAll(cityIdMap) {

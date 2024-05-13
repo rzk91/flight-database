@@ -8,7 +8,7 @@ import flightdatabase.domain.TableBase
 
 trait AirlineCityAlgebra[F[_]] {
   def doesAirlineCityExist(id: Long): F[Boolean]
-  def getAirlineCities: F[ApiResult[List[AirlineCity]]]
+  def getAirlineCities: F[ApiResult[Nel[AirlineCity]]]
   def getAirlineCity(id: Long): F[ApiResult[AirlineCity]]
   def getAirlineCity(airlineId: Long, cityId: Long): F[ApiResult[AirlineCity]]
 
@@ -16,25 +16,25 @@ trait AirlineCityAlgebra[F[_]] {
     field: String,
     values: Nel[V],
     operator: Operator
-  ): F[ApiResult[List[AirlineCity]]]
+  ): F[ApiResult[Nel[AirlineCity]]]
 
   def getAirlineCitiesByExternal[ET: TableBase, EV: Put](
     field: String,
     values: Nel[EV],
     operator: Operator
-  ): F[ApiResult[List[AirlineCity]]]
+  ): F[ApiResult[Nel[AirlineCity]]]
 
   def getAirlineCitiesByCity[V: Put](
     field: String,
     values: Nel[V],
     operator: Operator
-  ): F[ApiResult[List[AirlineCity]]]
+  ): F[ApiResult[Nel[AirlineCity]]]
 
   def getAirlineCitiesByAirline[V: Put](
     field: String,
     values: Nel[V],
     operator: Operator
-  ): F[ApiResult[List[AirlineCity]]]
+  ): F[ApiResult[Nel[AirlineCity]]]
 
   def createAirlineCity(airlineCity: AirlineCityCreate): F[ApiResult[Long]]
   def updateAirlineCity(airlineCity: AirlineCity): F[ApiResult[Long]]

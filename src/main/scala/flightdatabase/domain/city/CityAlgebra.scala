@@ -8,21 +8,21 @@ import flightdatabase.domain.ApiResult
 trait CityAlgebra[F[_]] {
 
   def doesCityExist(id: Long): F[Boolean]
-  def getCities: F[ApiResult[List[City]]]
-  def getCitiesOnlyNames: F[ApiResult[List[String]]]
+  def getCities: F[ApiResult[Nel[City]]]
+  def getCitiesOnlyNames: F[ApiResult[Nel[String]]]
   def getCity(id: Long): F[ApiResult[City]]
 
   def getCitiesBy[V: Put](
     field: String,
     values: Nel[V],
     operator: Operator
-  ): F[ApiResult[List[City]]]
+  ): F[ApiResult[Nel[City]]]
 
   def getCitiesByCountry[V: Put](
     field: String,
     values: Nel[V],
     operator: Operator
-  ): F[ApiResult[List[City]]]
+  ): F[ApiResult[Nel[City]]]
 
   def createCity(city: CityCreate): F[ApiResult[Long]]
   def updateCity(city: City): F[ApiResult[Long]]

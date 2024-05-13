@@ -6,10 +6,11 @@ import doobie.ConnectionIO
 import doobie.Query0
 import doobie.enumerated.SqlState
 import doobie.implicits._
+import doobie.util.invariant.UnexpectedEnd
 import flightdatabase.domain.ApiResult
+import flightdatabase.domain.EntryListEmpty
 import flightdatabase.domain.EntryNotFound
 import flightdatabase.domain.UnknownDbError
-import flightdatabase.domain.listToApiResult
 import flightdatabase.domain.toApiResult
 import flightdatabase.repository.sqlStateToApiError
 import fs2.Stream
@@ -18,13 +19,17 @@ import java.sql.SQLException
 
 class RichQuery[A](private val q: Query0[A]) extends AnyVal {
 
-  def asList(
+  def asNel(
     invalidField: Option[String] = None,
     invalidValues: Option[Nel[_]] = None
-  ): ConnectionIO[ApiResult[List[A]]] =
-    q.to[List].attemptSqlState.map {
-      case Right(list) => listToApiResult(list)
-      case Left(error) => sqlStateToApiError(error, invalidField, invalidValues).asResult[List[A]]
+  ): ConnectionIO[ApiResult[Nel[A]]] =
+    q.nel.attempt.map {
+      case Right(nel) => toApiResult(nel)
+      case Left(error: SQLException) =>
+        sqlStateToApiError(SqlState(error.getSQLState), invalidField, invalidValues)
+          .asResult[Nel[A]]
+      case Left(UnexpectedEnd) => EntryListEmpty.asResult[Nel[A]]
+      case Left(error)         => UnknownDbError(error.getLocalizedMessage).asResult[Nel[A]]
     }
 
   def asSingle[E](entry: E): ConnectionIO[ApiResult[A]] =

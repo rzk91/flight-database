@@ -22,9 +22,9 @@ class AirlineRepository[F[_]: Concurrent] private (
 
   override def doesAirlineExist(id: Long): F[Boolean] = airlineExists(id).unique.execute
 
-  override def getAirlines: F[ApiResult[List[Airline]]] = selectAllAirlines.asList().execute
+  override def getAirlines: F[ApiResult[Nel[Airline]]] = selectAllAirlines.asNel().execute
 
-  override def getAirlinesOnlyNames: F[ApiResult[List[String]]] =
+  override def getAirlinesOnlyNames: F[ApiResult[Nel[String]]] =
     getFieldList[Airline, String]("name").execute
 
   override def getAirline(id: Long): F[ApiResult[Airline]] =
@@ -34,15 +34,15 @@ class AirlineRepository[F[_]: Concurrent] private (
     field: String,
     values: Nel[V],
     operator: Operator
-  ): F[ApiResult[List[Airline]]] =
-    selectAirlineBy(field, values, operator).asList(Some(field), Some(values)).execute
+  ): F[ApiResult[Nel[Airline]]] =
+    selectAirlineBy(field, values, operator).asNel(Some(field), Some(values)).execute
 
   override def getAirlinesByCountry[V: Put](
     field: String,
     values: Nel[V],
     operator: Operator
-  ): F[ApiResult[List[Airline]]] =
-    selectAirlineByCountry[V](field, values, operator).asList(Some(field), Some(values)).execute
+  ): F[ApiResult[Nel[Airline]]] =
+    selectAirlineByCountry[V](field, values, operator).asNel(Some(field), Some(values)).execute
 
   override def createAirline(airline: AirlineCreate): F[ApiResult[Long]] =
     insertAirline(airline).attemptInsert.execute

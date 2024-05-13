@@ -11,7 +11,4 @@ package object domain {
 
   // Lift to API Result
   def toApiResult[A](value: A): ApiResult[A] = Got[A](value).asResult
-
-  def listToApiResult[A](list: List[A]): ApiResult[List[A]] =
-    if (list.isEmpty) EntryListEmpty.asResult else toApiResult(list)
 }

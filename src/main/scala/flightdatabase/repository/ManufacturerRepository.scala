@@ -5,12 +5,10 @@ import cats.data.{NonEmptyList => Nel}
 import cats.effect.Concurrent
 import cats.effect.Resource
 import cats.implicits._
-import doobie.ConnectionIO
 import doobie.Put
 import doobie.Transactor
 import flightdatabase.api.Operator
 import flightdatabase.domain.ApiResult
-import flightdatabase.domain.EntryListEmpty
 import flightdatabase.domain.city.City
 import flightdatabase.domain.country.Country
 import flightdatabase.domain.manufacturer.Manufacturer
@@ -28,10 +26,10 @@ class ManufacturerRepository[F[_]: Concurrent] private (
   override def doesManufacturerExist(id: Long): F[Boolean] =
     manufacturerExists(id).unique.execute
 
-  override def getManufacturers: F[ApiResult[List[Manufacturer]]] =
-    selectAllManufacturers.asList().execute
+  override def getManufacturers: F[ApiResult[Nel[Manufacturer]]] =
+    selectAllManufacturers.asNel().execute
 
-  override def getManufacturersOnlyNames: F[ApiResult[List[String]]] =
+  override def getManufacturersOnlyNames: F[ApiResult[Nel[String]]] =
     getFieldList[Manufacturer, String]("name").execute
 
   override def getManufacturer(id: Long): F[ApiResult[Manufacturer]] =
@@ -41,31 +39,27 @@ class ManufacturerRepository[F[_]: Concurrent] private (
     field: String,
     values: Nel[V],
     operator: Operator
-  ): F[ApiResult[List[Manufacturer]]] =
-    selectManufacturersBy(field, values, operator).asList(Some(field), Some(values)).execute
+  ): F[ApiResult[Nel[Manufacturer]]] =
+    selectManufacturersBy(field, values, operator).asNel(Some(field), Some(values)).execute
 
   override def getManufacturersByCity[V: Put](
     field: String,
     values: Nel[V],
     operator: Operator
-  ): F[ApiResult[List[Manufacturer]]] =
+  ): F[ApiResult[Nel[Manufacturer]]] =
     selectManufacturersByCity[City, V](field, values, operator)
-      .asList(Some(field), Some(values))
+      .asNel(Some(field), Some(values))
       .execute
 
   override def getManufacturersByCountry[V: Put](
     field: String,
     values: Nel[V],
     operator: Operator
-  ): F[ApiResult[List[Manufacturer]]] =
+  ): F[ApiResult[Nel[Manufacturer]]] =
     EitherT(getFieldList[City, Long, Country, V]("id", FieldValues(field, values), operator))
       .flatMapF { cityIds =>
-        Nel.fromList(cityIds.value) match {
-          case Some(ids) =>
-            selectManufacturersByCity[City, Long]("id", ids, Operator.In)
-              .asList(Some(field), Some(ids))
-          case None => EntryListEmpty.elevate[ConnectionIO, List[Manufacturer]]
-        }
+        val ids = cityIds.value
+        selectManufacturersByCity[City, Long]("id", ids, Operator.In).asNel(Some(field), Some(ids))
       }
       .value
       .execute

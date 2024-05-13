@@ -17,14 +17,14 @@ import flightdatabase.domain.airline.Airline
 import flightdatabase.domain.airline.AirlineCreate
 import flightdatabase.domain.airline.AirlinePatch
 import flightdatabase.testutils.RepositoryCheck
-import flightdatabase.testutils.implicits.enrichIOOperation
+import flightdatabase.testutils.implicits._
 import org.scalatest.Inspectors.forAll
 
 final class AirlineRepositoryIT extends RepositoryCheck {
 
   lazy val repo: AirlineRepository[IO] = AirlineRepository.make[IO].unsafeRunSync()
 
-  val originalAirlines: List[Airline] = List(
+  val originalAirlines: Nel[Airline] = Nel.of(
     Airline(1, "Lufthansa", "LH", "DLH", "LUFTHANSA", 2),
     Airline(2, "Emirates", "EK", "UAE", "EMIRATES", 4)
   )
@@ -58,16 +58,12 @@ final class AirlineRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting all airlines" should "return the correct detailed list" in {
-    val airlines = repo.getAirlines.value
-
-    airlines should not be empty
-    airlines should contain only (originalAirlines: _*)
+    repo.getAirlines.value should contain only (originalAirlines.toList: _*)
   }
 
   it should "only return names if so required" in {
     val airlineNames = repo.getAirlinesOnlyNames.value
-    airlineNames should not be empty
-    airlineNames should contain only (originalAirlines.map(_.name): _*)
+    airlineNames should contain only (originalAirlines.map(_.name).toList: _*)
   }
 
   "Selecting an airline by ID" should "return the correct airline" in {
@@ -77,15 +73,15 @@ final class AirlineRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting an airline by other fields" should "return the corresponding airlines" in {
-    def airlinesByName(name: String): IO[ApiResult[List[Airline]]] =
+    def airlinesByName(name: String): IO[ApiResult[Nel[Airline]]] =
       repo.getAirlinesBy("name", Nel.one(name), Operator.Equals)
-    def airlinesByIata(iata: String): IO[ApiResult[List[Airline]]] =
+    def airlinesByIata(iata: String): IO[ApiResult[Nel[Airline]]] =
       repo.getAirlinesBy("iata", Nel.one(iata), Operator.Equals)
-    def airlinesByIcao(icao: String): IO[ApiResult[List[Airline]]] =
+    def airlinesByIcao(icao: String): IO[ApiResult[Nel[Airline]]] =
       repo.getAirlinesBy("icao", Nel.one(icao), Operator.Equals)
-    def airlinesByCallSign(callSign: String): IO[ApiResult[List[Airline]]] =
+    def airlinesByCallSign(callSign: String): IO[ApiResult[Nel[Airline]]] =
       repo.getAirlinesBy("call_sign", Nel.one(callSign), Operator.Equals)
-    def airlinesByCountryId(id: Long): IO[ApiResult[List[Airline]]] =
+    def airlinesByCountryId(id: Long): IO[ApiResult[Nel[Airline]]] =
       repo.getAirlinesBy("country_id", Nel.one(id), Operator.Equals)
 
     val distinctNames = originalAirlines.map(_.name).distinct
@@ -116,16 +112,16 @@ final class AirlineRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting an airline by country field" should "return the corresponding entries" in {
-    def airlineByCountryName(name: String): IO[ApiResult[List[Airline]]] =
+    def airlineByCountryName(name: String): IO[ApiResult[Nel[Airline]]] =
       repo.getAirlinesByCountry("name", Nel.one(name), Operator.Equals)
 
-    def airlineByCountryIso2(iso2: String): IO[ApiResult[List[Airline]]] =
+    def airlineByCountryIso2(iso2: String): IO[ApiResult[Nel[Airline]]] =
       repo.getAirlinesByCountry("iso2", Nel.one(iso2), Operator.Equals)
 
-    def airlineByCountryIso3(iso3: String): IO[ApiResult[List[Airline]]] =
+    def airlineByCountryIso3(iso3: String): IO[ApiResult[Nel[Airline]]] =
       repo.getAirlinesByCountry("iso3", Nel.one(iso3), Operator.Equals)
 
-    def airlineByCountryCode(code: Int): IO[ApiResult[List[Airline]]] =
+    def airlineByCountryCode(code: Int): IO[ApiResult[Nel[Airline]]] =
       repo.getAirlinesByCountry("country_code", Nel.one(code), Operator.Equals)
 
     forAll(countryIdMap) {

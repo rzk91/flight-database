@@ -27,10 +27,10 @@ class CountryRepository[F[_]: Concurrent] private (
   override def doesCountryExist(id: Long): F[Boolean] =
     countryExists(id).unique.execute
 
-  override def getCountries: F[ApiResult[List[Country]]] =
-    selectAllCountries.asList().execute
+  override def getCountries: F[ApiResult[Nel[Country]]] =
+    selectAllCountries.asNel().execute
 
-  override def getCountriesOnlyNames: F[ApiResult[List[String]]] =
+  override def getCountriesOnlyNames: F[ApiResult[Nel[String]]] =
     getFieldList[Country, String]("name").execute
 
   override def getCountry(id: Long): F[ApiResult[Country]] =
@@ -40,14 +40,14 @@ class CountryRepository[F[_]: Concurrent] private (
     field: String,
     values: Nel[V],
     operator: Operator
-  ): F[ApiResult[List[Country]]] =
-    selectCountriesBy(field, values, operator).asList(Some(field), Some(values)).execute
+  ): F[ApiResult[Nel[Country]]] =
+    selectCountriesBy(field, values, operator).asNel(Some(field), Some(values)).execute
 
   override def getCountriesByLanguage[V: Put](
     field: String,
     values: Nel[V],
     operator: Operator
-  ): F[ApiResult[List[Country]]] = {
+  ): F[ApiResult[Nel[Country]]] = {
     def q(idField: String): Fragment =
       selectCountriesByExternal[Language, V](field, values, operator, Some(idField)).toFragment
 
@@ -55,16 +55,16 @@ class CountryRepository[F[_]: Concurrent] private (
       q("main_language_id") ++ fr"UNION" ++
       q("secondary_language_id") ++ fr"UNION" ++
       q("tertiary_language_id")
-    }.query[Country].asList(Some(field), Some(values)).execute
+    }.query[Country].asNel(Some(field), Some(values)).execute
   }
 
   override def getCountriesByCurrency[V: Put](
     field: String,
     values: Nel[V],
     operator: Operator
-  ): F[ApiResult[List[Country]]] =
+  ): F[ApiResult[Nel[Country]]] =
     selectCountriesByExternal[Currency, V](field, values, operator)
-      .asList(Some(field), Some(values))
+      .asNel(Some(field), Some(values))
       .execute
 
   override def createCountry(country: CountryCreate): F[ApiResult[Long]] =

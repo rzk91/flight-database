@@ -13,7 +13,7 @@ import flightdatabase.domain.airline_city.AirlineCity
 import flightdatabase.domain.airline_city.AirlineCityCreate
 import flightdatabase.domain.airline_city.AirlineCityPatch
 import flightdatabase.testutils.RepositoryCheck
-import flightdatabase.testutils.implicits.enrichIOOperation
+import flightdatabase.testutils.implicits._
 import flightdatabase.utils.implicits.iterableToRichIterable
 import org.scalatest.Inspectors.forAll
 
@@ -21,7 +21,7 @@ final class AirlineCityRepositoryIT extends RepositoryCheck {
 
   lazy val repo: AirlineCityRepository[IO] = AirlineCityRepository.make[IO].unsafeRunSync()
 
-  val originalAirlineCities: List[AirlineCity] = List(
+  val originalAirlineCities: Nel[AirlineCity] = Nel.of(
     AirlineCity(1, 1, 2),
     AirlineCity(2, 2, 4)
   )
@@ -53,8 +53,7 @@ final class AirlineCityRepositoryIT extends RepositoryCheck {
 
   "Selecting all airline-city combinations" should "return the correct detailed list" in {
     val airlineCities = repo.getAirlineCities.value
-    airlineCities should not be empty
-    airlineCities should contain only (originalAirlineCities: _*)
+    airlineCities should contain only (originalAirlineCities.toList: _*)
   }
 
   "Selecting an airline-city by ID" should "return the correct detailed entry" in {
@@ -77,9 +76,9 @@ final class AirlineCityRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting airline-city combinations by other fields" should "return the corresponding entries" in {
-    def entriesByAirlineId(id: Long): IO[ApiResult[List[AirlineCity]]] =
+    def entriesByAirlineId(id: Long): IO[ApiResult[Nel[AirlineCity]]] =
       repo.getAirlineCitiesBy("airline_id", Nel.one(id), Operator.Equals)
-    def entriesByCityId(id: Long): IO[ApiResult[List[AirlineCity]]] =
+    def entriesByCityId(id: Long): IO[ApiResult[Nel[AirlineCity]]] =
       repo.getAirlineCitiesBy("city_id", Nel.one(id), Operator.Equals)
 
     val distinctAirlineIds = originalAirlineCities.map(_.airlineId).distinct
@@ -104,19 +103,19 @@ final class AirlineCityRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting airline-city combinations by external fields" should "return the corresponding entries" in {
-    def entryByAirlineName(name: String): IO[ApiResult[List[AirlineCity]]] =
+    def entryByAirlineName(name: String): IO[ApiResult[Nel[AirlineCity]]] =
       repo.getAirlineCitiesByAirline("name", Nel.one(name), Operator.Equals)
 
-    def entryByAirlineIata(iata: String): IO[ApiResult[List[AirlineCity]]] =
+    def entryByAirlineIata(iata: String): IO[ApiResult[Nel[AirlineCity]]] =
       repo.getAirlineCitiesByAirline("iata", Nel.one(iata), Operator.Equals)
 
-    def entryByAirlineIcao(icao: String): IO[ApiResult[List[AirlineCity]]] =
+    def entryByAirlineIcao(icao: String): IO[ApiResult[Nel[AirlineCity]]] =
       repo.getAirlineCitiesByAirline("icao", Nel.one(icao), Operator.Equals)
 
-    def entryByCityName(name: String): IO[ApiResult[List[AirlineCity]]] =
+    def entryByCityName(name: String): IO[ApiResult[Nel[AirlineCity]]] =
       repo.getAirlineCitiesByCity("name", Nel.one(name), Operator.Equals)
 
-    def entryByCityPop(pop: Long): IO[ApiResult[List[AirlineCity]]] =
+    def entryByCityPop(pop: Long): IO[ApiResult[Nel[AirlineCity]]] =
       repo.getAirlineCitiesByCity("population", Nel.one(pop), Operator.LessThanOrEqualTo)
 
     forAll(airlineIdMap) {

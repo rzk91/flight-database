@@ -11,7 +11,6 @@ import doobie.Transactor
 import doobie.implicits._
 import flightdatabase.api.Operator
 import flightdatabase.domain.ApiResult
-import flightdatabase.domain.EntryListEmpty
 import flightdatabase.domain.airline.Airline
 import flightdatabase.domain.airline_airplane.AirlineAirplane
 import flightdatabase.domain.airline_route.AirlineRoute
@@ -31,10 +30,10 @@ class AirlineRouteRepository[F[_]: Concurrent] private (
   override def doesAirlineRouteExist(id: Long): F[Boolean] =
     airlineRouteExists(id).unique.execute
 
-  override def getAirlineRoutes: F[ApiResult[List[AirlineRoute]]] =
-    selectAllAirlineRoutes.asList().execute
+  override def getAirlineRoutes: F[ApiResult[Nel[AirlineRoute]]] =
+    selectAllAirlineRoutes.asNel().execute
 
-  override def getAirlineRoutesOnlyRoutes: F[ApiResult[List[String]]] =
+  override def getAirlineRoutesOnlyRoutes: F[ApiResult[Nel[String]]] =
     getFieldList[AirlineRoute, String]("route_number").execute
 
   override def getAirlineRoute(id: Long): F[ApiResult[AirlineRoute]] =
@@ -44,38 +43,48 @@ class AirlineRouteRepository[F[_]: Concurrent] private (
     field: String,
     values: Nel[V],
     operator: Operator
-  ): F[ApiResult[List[AirlineRoute]]] =
-    selectAirlineRouteBy(field, values, operator).asList(Some(field), Some(values)).execute
+  ): F[ApiResult[Nel[AirlineRoute]]] =
+    selectAirlineRouteBy(field, values, operator).asNel(Some(field), Some(values)).execute
 
   override def getAirlineRoutesByAirline[V: Put](
     field: String,
     values: Nel[V],
     operator: Operator
-  ): F[ApiResult[List[AirlineRoute]]] =
+  ): F[ApiResult[Nel[AirlineRoute]]] =
     // Get airline IDs for given airline field values
     EitherT(
       selectWhereQuery[Airline, Long, V]("id", field, values, operator)
-        .asList(Some(field), Some(values))
-        .execute
-    ).flatMapF(aIds => getAirlineRoutesByAirlineIds(aIds.value)).value
+        .asNel(Some(field), Some(values))
+    ).flatMapF { airlineIds =>
+        val ids = airlineIds.value
+        selectAirlineRoutesByExternal[AirlineAirplane, Long]("airline_id", ids, Operator.In)
+          .asNel(invalidValues = Some(ids))
+      }
+      .value
+      .execute
 
   override def getAirlineRoutesByAirplane[V: Put](
     field: String,
     values: Nel[V],
     operator: Operator
-  ): F[ApiResult[List[AirlineRoute]]] =
+  ): F[ApiResult[Nel[AirlineRoute]]] =
     EitherT(
       selectWhereQuery[Airplane, Long, V]("id", field, values, operator)
-        .asList(Some(field), Some(values))
-        .execute
-    ).flatMapF(aIds => getAirlineRoutesByAirplaneIds(aIds.value)).value
+        .asNel(Some(field), Some(values))
+    ).flatMapF { airplaneIds =>
+        val ids = airplaneIds.value
+        selectAirlineRoutesByExternal[AirlineAirplane, Long]("airplane_id", ids, Operator.In)
+          .asNel(invalidValues = Some(ids))
+      }
+      .value
+      .execute
 
   override def getAirlineRoutesByAirport[V: Put](
     field: String,
     values: Nel[V],
     operator: Operator,
     inbound: Option[Boolean] // None for both inbound and outbound
-  ): F[ApiResult[List[AirlineRoute]]] = {
+  ): F[ApiResult[Nel[AirlineRoute]]] = {
     def q(f: String): Query0[AirlineRoute] =
       selectAirlineRoutesByExternal[Airport, V](field, values, operator, Some(f))
     inbound.fold {
@@ -83,7 +92,7 @@ class AirlineRouteRepository[F[_]: Concurrent] private (
       val destinationQuery = q("destination_airport_id")
       (startQuery.toFragment ++ fr"UNION" ++ destinationQuery.toFragment).query[AirlineRoute]
     }(in => q(if (in) "destination_airport_id" else "start_airport_id"))
-  }.asList(Some(field), Some(values)).execute
+  }.asNel(Some(field), Some(values)).execute
 
   override def createAirlineRoute(airlineRoute: AirlineRouteCreate): F[ApiResult[Long]] =
     insertAirlineRoute(airlineRoute).attemptInsert.execute
@@ -103,28 +112,6 @@ class AirlineRouteRepository[F[_]: Concurrent] private (
 
   override def removeAirlineRoute(id: Long): F[ApiResult[Unit]] =
     deleteAirlineRoute(id).attemptDelete(id).execute
-
-  private def getAirlineRoutesByAirlineIds(
-    airlineIds: List[Long]
-  ): F[ApiResult[List[AirlineRoute]]] =
-    Nel.fromList(airlineIds) match {
-      case Some(ids) =>
-        selectAirlineRoutesByExternal[AirlineAirplane, Long]("airline_id", ids, Operator.In)
-          .asList(invalidValues = Some(ids))
-          .execute
-      case None => EntryListEmpty.elevate[F, List[AirlineRoute]]
-    }
-
-  private def getAirlineRoutesByAirplaneIds(
-    airplaneIds: List[Long]
-  ): F[ApiResult[List[AirlineRoute]]] =
-    Nel.fromList(airplaneIds) match {
-      case Some(ids) =>
-        selectAirlineRoutesByExternal[AirlineAirplane, Long]("airplane_id", ids, Operator.In)
-          .asList(invalidValues = Some(ids))
-          .execute
-      case None => EntryListEmpty.elevate[F, List[AirlineRoute]]
-    }
 }
 
 object AirlineRouteRepository {
