@@ -23,6 +23,7 @@ abstract class Endpoints[F[_]: Monad](prefix: String) extends Http4sDsl[F] {
   object FullOutputFlagMatcher extends FlagQueryParamMatcher("full-output")
   object ValueMatcher extends QueryParamDecoderMatcher[String]("value")
   object FieldMatcher extends QueryParamDecoderMatcher[String]("field")
+  object ReturnOnlyMatcher extends OptionalQueryParamDecoderMatcher[String]("return-only")
 
   implicit val operatorQueryParamDecoder: QueryParamDecoder[Operator] =
     QueryParamDecoder[String].emap { s =>
@@ -46,18 +47,18 @@ abstract class Endpoints[F[_]: Monad](prefix: String) extends Http4sDsl[F] {
         f
       )
 
-  final protected type L[V, T] = (String, Nel[V], Operator) => F[ApiResult[Nel[T]]]
+  final protected type λ[V, T] = (String, Nel[V], Operator) => F[ApiResult[Nel[T]]]
 
   final protected def processFilter[IN: TableBase, OUT](
     field: String,
     operator: Operator,
     values: String
   )(
-    stringF: L[String, OUT],
-    intF: L[Int, OUT],
-    longF: L[Long, OUT],
-    boolF: L[Boolean, OUT],
-    bigDecimalF: L[BigDecimal, OUT]
+    stringF: λ[String, OUT],
+    intF: λ[Int, OUT],
+    longF: λ[Long, OUT],
+    boolF: λ[Boolean, OUT],
+    bigDecimalF: λ[BigDecimal, OUT]
   )(implicit enc: EntityEncoder[F, Nel[OUT]]): F[Response[F]] =
     implicitly[TableBase[IN]].fieldTypeMap.get(field) match {
       case Some(StringType) if StringType.operators(operator) =>

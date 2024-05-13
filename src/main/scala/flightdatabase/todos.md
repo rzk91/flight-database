@@ -40,7 +40,7 @@ TODO list
   not needed for now.
 - ~~Change all `List` output to `NonEmptyList` output. This will make the API more robust and will allow for better
   error handling.~~ DONE!
-- Make it possible to select a set of fields and not only one or all.
+- Make it possible to select a set of fields and not only one or all. And that for all endpoints.
 - All `endpoints` should return URI of the output resource in the `Location` header. Basically, the `id` field should be
   a JSON object with a `uri` field. This will allow for easy navigation of the API.
 - Add a URI to all foreign key fields in the response (maybe use something similar to `TableBase`).

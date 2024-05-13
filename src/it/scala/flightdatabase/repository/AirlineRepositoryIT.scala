@@ -61,9 +61,12 @@ final class AirlineRepositoryIT extends RepositoryCheck {
     repo.getAirlines.value should contain only (originalAirlines.toList: _*)
   }
 
-  it should "only return names if so required" in {
-    val airlineNames = repo.getAirlinesOnlyNames.value
+  it should "only return the requested fields if so required" in {
+    val airlineNames = repo.getAirlinesOnly[String]("name").value
     airlineNames should contain only (originalAirlines.map(_.name).toList: _*)
+
+    val airlineCountryIds = repo.getAirlinesOnly[Int]("country_id").value
+    airlineCountryIds should contain only (originalAirlines.map(_.countryId).toList: _*)
   }
 
   "Selecting an airline by ID" should "return the correct airline" in {

@@ -22,8 +22,10 @@ final class GenericQueryIT extends DbChecker {
   }
 
   "A simple get query with an `equals` where clause" should "not fail" in {
-    check(selectWhereQuery[Country, Long, String]("id", "name", Nel.one("Germany")))
-    check(selectWhereQuery[City, String, Long]("name", "country_id", Nel.one(1)))
+    check(
+      selectWhereQuery[Country, Long, String]("id", "name", Nel.one("Germany"), Operator.Equals)
+    )
+    check(selectWhereQuery[City, String, Long]("name", "country_id", Nel.one(1), Operator.Equals))
   }
 
   "A simple get query with an `in` where clause" should "not fail" in {

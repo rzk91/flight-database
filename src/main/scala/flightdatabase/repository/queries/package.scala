@@ -20,13 +20,20 @@ package object queries {
   }.query[Boolean]
 
   def selectWhereQuery[ST: TableBase, SV: Read, W: Put](
+    selectFields: Nel[String],
+    whereField: String,
+    whereValues: Nel[W],
+    operator: Operator
+  ): Query0[SV] = {
+    selectFragment[ST](selectFields) ++ whereFragment(whereField, whereValues, operator)
+  }.query[SV]
+
+  def selectWhereQuery[ST: TableBase, SV: Read, W: Put](
     selectField: String,
     whereField: String,
     whereValues: Nel[W],
-    operator: Operator = Operator.Equals
-  ): Query0[SV] = {
-    selectFragment[ST](selectField) ++ whereFragment(whereField, whereValues, operator)
-  }.query[SV]
+    operator: Operator
+  ): Query0[SV] = selectWhereQuery(Nel.one(selectField), whereField, whereValues, operator)
 
   def deleteWhereId[T](id: Long)(implicit table: TableBase[T]): Update0 =
     (fr"DELETE FROM" ++ Fragment.const(table.asString) ++ fr"WHERE id = $id").update
