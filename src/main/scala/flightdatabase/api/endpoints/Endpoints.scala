@@ -50,7 +50,6 @@ abstract class Endpoints[F[_]: Monad](prefix: String) extends Http4sDsl[F] {
       )
 
   final protected type λ1[V, T] = (String, Nel[V], Operator) => F[ApiResult[Nel[T]]]
-  final protected type λ2[V] = String => F[ApiResult[Nel[V]]]
 
   final protected def processFilter[IN: TableBase, OUT](
     field: String,
@@ -78,6 +77,8 @@ abstract class Endpoints[F[_]: Monad](prefix: String) extends Http4sDsl[F] {
       case None    => BadRequest(InvalidField(field).error)
     }
 
+  final protected type λ2[V] = String => F[ApiResult[Nel[V]]]
+
   final protected def processReturnOnly[IN: TableBase](field: Option[String])(
     stringF: λ2[String],
     intF: λ2[Int],
@@ -88,12 +89,14 @@ abstract class Endpoints[F[_]: Monad](prefix: String) extends Http4sDsl[F] {
   )(implicit allEnc: EntityEncoder[F, Nel[IN]]): F[Response[F]] =
     field match {
       case Some(field) =>
-        implicitly[TableBase[IN]].fieldTypeMap.get(field) match {
-          case Some(StringType)     => stringF(field).flatMap(_.toResponse[F])
-          case Some(IntType)        => intF(field).flatMap(_.toResponse[F])
-          case Some(LongType)       => longF(field).flatMap(_.toResponse[F])
-          case Some(BooleanType)    => boolF(field).flatMap(_.toResponse[F])
-          case Some(BigDecimalType) => bigDecimalF(field).flatMap(_.toResponse[F])
+        val table = implicitly[TableBase[IN]]
+        val tableField = s"${table.asString}.$field"
+        table.fieldTypeMap.get(field) match {
+          case Some(StringType)     => stringF(tableField).flatMap(_.toResponse[F])
+          case Some(IntType)        => intF(tableField).flatMap(_.toResponse[F])
+          case Some(LongType)       => longF(tableField).flatMap(_.toResponse[F])
+          case Some(BooleanType)    => boolF(tableField).flatMap(_.toResponse[F])
+          case Some(BigDecimalType) => bigDecimalF(tableField).flatMap(_.toResponse[F])
           case None                 => BadRequest(InvalidField(field).error)
         }
       case None => allF.flatMap(_.toResponse[F])

@@ -23,8 +23,8 @@ class AirlineEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airli
       }
 
     // GET /airlines?return-only={field}
-    case GET -> Root :? ReturnOnlyMatcher(onlyField) =>
-      processReturnOnly[Airline](onlyField)(
+    case GET -> Root :? ReturnOnlyMatcher(returnOnly) =>
+      processReturnOnly[Airline](returnOnly)(
         stringF = algebra.getAirlinesOnly,
         intF = algebra.getAirlinesOnly,
         longF = algebra.getAirlinesOnly,
