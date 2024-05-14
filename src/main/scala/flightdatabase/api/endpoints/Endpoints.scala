@@ -2,11 +2,13 @@ package flightdatabase.api.endpoints
 
 import cats.Monad
 import cats.data.{NonEmptyList => Nel}
-import cats.implicits.toBifunctorOps
+import cats.syntax.bifunctor._
+import cats.syntax.flatMap._
 import flightdatabase.api.Operator
 import flightdatabase.api.Operator.StringOperatorOps
 import flightdatabase.domain._
 import org.http4s._
+import org.http4s.circe.CirceEntityCodec._
 import org.http4s.dsl.Http4sDsl
 import org.http4s.dsl.RequestDslBinCompat
 import org.http4s.server.Router
@@ -47,18 +49,19 @@ abstract class Endpoints[F[_]: Monad](prefix: String) extends Http4sDsl[F] {
         f
       )
 
-  final protected type λ[V, T] = (String, Nel[V], Operator) => F[ApiResult[Nel[T]]]
+  final protected type λ1[V, T] = (String, Nel[V], Operator) => F[ApiResult[Nel[T]]]
+  final protected type λ2[V] = String => F[ApiResult[Nel[V]]]
 
   final protected def processFilter[IN: TableBase, OUT](
     field: String,
     operator: Operator,
     values: String
   )(
-    stringF: λ[String, OUT],
-    intF: λ[Int, OUT],
-    longF: λ[Long, OUT],
-    boolF: λ[Boolean, OUT],
-    bigDecimalF: λ[BigDecimal, OUT]
+    stringF: λ1[String, OUT],
+    intF: λ1[Int, OUT],
+    longF: λ1[Long, OUT],
+    boolF: λ1[Boolean, OUT],
+    bigDecimalF: λ1[BigDecimal, OUT]
   )(implicit enc: EntityEncoder[F, Nel[OUT]]): F[Response[F]] =
     implicitly[TableBase[IN]].fieldTypeMap.get(field) match {
       case Some(StringType) if StringType.operators(operator) =>
@@ -73,5 +76,26 @@ abstract class Endpoints[F[_]: Monad](prefix: String) extends Http4sDsl[F] {
         values.asBigDecimalToResponse(field, operator)(bigDecimalF(field, _, operator))
       case Some(_) => BadRequest(InvalidOperator(operator).error)
       case None    => BadRequest(InvalidField(field).error)
+    }
+
+  final protected def processReturnOnly[IN: TableBase](field: Option[String])(
+    stringF: λ2[String],
+    intF: λ2[Int],
+    longF: λ2[Long],
+    boolF: λ2[Boolean],
+    bigDecimalF: λ2[BigDecimal],
+    allF: => F[ApiResult[Nel[IN]]]
+  )(implicit allEnc: EntityEncoder[F, Nel[IN]]): F[Response[F]] =
+    field match {
+      case Some(field) =>
+        implicitly[TableBase[IN]].fieldTypeMap.get(field) match {
+          case Some(StringType)     => stringF(field).flatMap(_.toResponse[F])
+          case Some(IntType)        => intF(field).flatMap(_.toResponse[F])
+          case Some(LongType)       => longF(field).flatMap(_.toResponse[F])
+          case Some(BooleanType)    => boolF(field).flatMap(_.toResponse[F])
+          case Some(BigDecimalType) => bigDecimalF(field).flatMap(_.toResponse[F])
+          case None                 => BadRequest(InvalidField(field).error)
+        }
+      case None => allF.flatMap(_.toResponse[F])
     }
 }

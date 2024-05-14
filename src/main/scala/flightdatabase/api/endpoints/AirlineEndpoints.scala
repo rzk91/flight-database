@@ -23,21 +23,15 @@ class AirlineEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airli
       }
 
     // GET /airlines?return-only={field}
-    case GET -> Root :? ReturnOnlyMatcher(onlyField) => {
-        for {
-          field     <- onlyField
-          fieldType <- implicitly[TableBase[Airline]].fieldTypeMap.get(field)
-        } yield {
-          fieldType match {
-            case StringType  => algebra.getAirlinesOnly[String](field).flatMap(_.toResponse[F])
-            case IntType     => algebra.getAirlinesOnly[Int](field).flatMap(_.toResponse[F])
-            case LongType    => algebra.getAirlinesOnly[Long](field).flatMap(_.toResponse[F])
-            case BooleanType => algebra.getAirlinesOnly[Boolean](field).flatMap(_.toResponse[F])
-            case BigDecimalType =>
-              algebra.getAirlinesOnly[BigDecimal](field).flatMap(_.toResponse[F])
-          }
-        }
-      }.getOrElse(algebra.getAirlines.flatMap(_.toResponse[F]))
+    case GET -> Root :? ReturnOnlyMatcher(onlyField) =>
+      processReturnOnly[Airline](onlyField)(
+        stringF = algebra.getAirlinesOnly,
+        intF = algebra.getAirlinesOnly,
+        longF = algebra.getAirlinesOnly,
+        boolF = algebra.getAirlinesOnly,
+        bigDecimalF = algebra.getAirlinesOnly,
+        allF = algebra.getAirlines
+      )
 
     // GET /airlines/filter?field={airline_field}&operator={operator, default: eq}&value={values}
     case GET -> Root / "filter" :?
