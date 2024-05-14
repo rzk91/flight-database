@@ -2,6 +2,7 @@ package flightdatabase.domain.country
 
 import cats.data.{NonEmptyList => Nel}
 import doobie.Put
+import doobie.Read
 import flightdatabase.api.Operator
 import flightdatabase.domain.ApiResult
 
@@ -9,7 +10,7 @@ trait CountryAlgebra[F[_]] {
 
   def doesCountryExist(id: Long): F[Boolean]
   def getCountries: F[ApiResult[Nel[Country]]]
-  def getCountriesOnlyNames: F[ApiResult[Nel[String]]]
+  def getCountriesOnly[V: Read](field: String): F[ApiResult[Nel[V]]]
   def getCountry(id: Long): F[ApiResult[Country]]
 
   def getCountriesBy[V: Put](

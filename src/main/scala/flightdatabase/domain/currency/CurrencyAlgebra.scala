@@ -2,13 +2,14 @@ package flightdatabase.domain.currency
 
 import cats.data.{NonEmptyList => Nel}
 import doobie.Put
+import doobie.Read
 import flightdatabase.api.Operator
 import flightdatabase.domain.ApiResult
 
 trait CurrencyAlgebra[F[_]] {
   def doesCurrencyExist(id: Long): F[Boolean]
   def getCurrencies: F[ApiResult[Nel[Currency]]]
-  def getCurrenciesOnlyNames: F[ApiResult[Nel[String]]]
+  def getCurrenciesOnly[V: Read](field: String): F[ApiResult[Nel[V]]]
   def getCurrency(id: Long): F[ApiResult[Currency]]
 
   def getCurrenciesBy[V: Put](

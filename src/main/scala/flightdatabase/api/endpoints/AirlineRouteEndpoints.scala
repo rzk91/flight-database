@@ -18,7 +18,6 @@ class AirlineRouteEndpoints[F[_]: Concurrent] private (
   algebra: AirlineRouteAlgebra[F]
 ) extends Endpoints[F](prefix) {
 
-  private object OnlyNumbersFlagMatcher extends FlagQueryParamMatcher("only-routes")
   private object InboundFlagMatcher extends FlagQueryParamMatcher("inbound")
   private object OutboundFlagMatcher extends FlagQueryParamMatcher("outbound")
 
@@ -30,13 +29,16 @@ class AirlineRouteEndpoints[F[_]: Concurrent] private (
         case false => NotFound()
       }
 
-    // GET /airline-routes?only-routes
-    case GET -> Root :? OnlyNumbersFlagMatcher(onlyRoutes) =>
-      if (onlyRoutes) {
-        algebra.getAirlineRoutesOnlyRoutes.flatMap(_.toResponse)
-      } else {
-        algebra.getAirlineRoutes.flatMap(_.toResponse)
-      }
+    // GET /airline-routes?return-only={airline-route-field}
+    case GET -> Root :? ReturnOnlyMatcher(returnOnly) =>
+      processReturnOnly[AirlineRoute](returnOnly)(
+        stringF = algebra.getAirlineRoutesOnly,
+        intF = algebra.getAirlineRoutesOnly,
+        longF = algebra.getAirlineRoutesOnly,
+        boolF = algebra.getAirlineRoutesOnly,
+        bigDecimalF = algebra.getAirlineRoutesOnly,
+        allF = algebra.getAirlineRoutes
+      )
 
     // GET /airline-routes/filter?field={airline-route-field}&operator={operator; default: eq}&value={value}
     case GET -> Root / "filter" :?

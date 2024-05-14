@@ -23,13 +23,16 @@ class AirportEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airpo
         case false => NotFound()
       }
 
-    // GET /airports?only-names
-    case GET -> Root :? OnlyNamesFlagMatcher(onlyNames) =>
-      if (onlyNames) {
-        algebra.getAirportsOnlyNames.flatMap(_.toResponse)
-      } else {
-        algebra.getAirports.flatMap(_.toResponse)
-      }
+    // GET /airports?return-only={airport_field}
+    case GET -> Root :? ReturnOnlyMatcher(returnOnly) =>
+      processReturnOnly[Airport](returnOnly)(
+        stringF = algebra.getAirportsOnly,
+        intF = algebra.getAirportsOnly,
+        longF = algebra.getAirportsOnly,
+        boolF = algebra.getAirportsOnly,
+        bigDecimalF = algebra.getAirportsOnly,
+        allF = algebra.getAirports
+      )
 
     // GET /airports/filter?field={airport_field}&operator={operator; default: eq}&value={value}
     case GET -> Root / "filter" :?

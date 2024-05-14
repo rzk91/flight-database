@@ -60,8 +60,12 @@ final class ManufacturerRepositoryIT extends RepositoryCheck {
   }
 
   it should "return only names if so required" in {
-    repo.getManufacturersOnlyNames.value should contain only (
+    repo.getManufacturersOnly[String]("name").value should contain only (
       originalManufacturers.map(_.name).toList: _*
+    )
+
+    repo.getManufacturersOnly[Long]("base_city_id").value should contain only (
+      originalManufacturers.map(_.baseCityId).toList: _*
     )
   }
 

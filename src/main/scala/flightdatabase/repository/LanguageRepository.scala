@@ -6,6 +6,7 @@ import cats.effect.Concurrent
 import cats.effect.Resource
 import cats.syntax.all._
 import doobie.Put
+import doobie.Read
 import doobie.Transactor
 import flightdatabase.api.Operator
 import flightdatabase.domain.ApiResult
@@ -30,8 +31,8 @@ class LanguageRepository[F[_]: Concurrent] private (
   override def getLanguages: F[ApiResult[Nel[Language]]] =
     selectAllLanguages.asNel().execute
 
-  override def getLanguagesOnlyNames: F[ApiResult[Nel[String]]] =
-    getFieldList[Language, String]("name").execute
+  override def getLanguagesOnly[V: Read](field: String): F[ApiResult[Nel[V]]] =
+    getFieldList[Language, V](field).execute
 
   override def getLanguage(id: Long): F[ApiResult[Language]] =
     selectLanguageBy("id", Nel.one(id), Operator.Equals).asSingle(id).execute

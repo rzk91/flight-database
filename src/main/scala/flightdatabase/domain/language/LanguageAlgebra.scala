@@ -2,13 +2,14 @@ package flightdatabase.domain.language
 
 import cats.data.{NonEmptyList => Nel}
 import doobie.Put
+import doobie.Read
 import flightdatabase.api.Operator
 import flightdatabase.domain.ApiResult
 
 trait LanguageAlgebra[F[_]] {
   def doesLanguageExist(id: Long): F[Boolean]
   def getLanguages: F[ApiResult[Nel[Language]]]
-  def getLanguagesOnlyNames: F[ApiResult[Nel[String]]]
+  def getLanguagesOnly[V: Read](field: String): F[ApiResult[Nel[V]]]
   def getLanguage(id: Long): F[ApiResult[Language]]
 
   def getLanguagesBy[V: Put](

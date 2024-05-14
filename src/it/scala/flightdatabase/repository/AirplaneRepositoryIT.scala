@@ -56,8 +56,11 @@ final class AirplaneRepositoryIT extends RepositoryCheck {
   }
 
   it should "return only names if so required" in {
-    val airplanesOnlyNames = repo.getAirplanesOnlyNames.value
+    val airplanesOnlyNames = repo.getAirplanesOnly[String]("name").value
     airplanesOnlyNames should contain only (originalAirplanes.map(_.name).toList: _*)
+
+    val airplanesOnlyCapacity = repo.getAirplanesOnly[Int]("capacity").value
+    airplanesOnlyCapacity should contain only (originalAirplanes.map(_.capacity).toList: _*)
   }
 
   "Selecting an airplane by id" should "return the correct entry" in {

@@ -2,13 +2,14 @@ package flightdatabase.domain.airport
 
 import cats.data.{NonEmptyList => Nel}
 import doobie.Put
+import doobie.Read
 import flightdatabase.api.Operator
 import flightdatabase.domain.ApiResult
 
 trait AirportAlgebra[F[_]] {
   def doesAirportExist(id: Long): F[Boolean]
   def getAirports: F[ApiResult[Nel[Airport]]]
-  def getAirportsOnlyNames: F[ApiResult[Nel[String]]]
+  def getAirportsOnly[V: Read](field: String): F[ApiResult[Nel[V]]]
   def getAirport(id: Long): F[ApiResult[Airport]]
 
   def getAirportsBy[V: Put](

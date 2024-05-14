@@ -24,13 +24,16 @@ class CountryEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Count
         case false => NotFound()
       }
 
-    // GET /countries?onlyNames
-    case GET -> Root :? OnlyNamesFlagMatcher(onlyNames) =>
-      if (onlyNames) {
-        algebra.getCountriesOnlyNames.flatMap(_.toResponse)
-      } else {
-        algebra.getCountries.flatMap(_.toResponse)
-      }
+    // GET /countries?return-only={country_field}
+    case GET -> Root :? ReturnOnlyMatcher(returnOnly) =>
+      processReturnOnly[Country](returnOnly)(
+        stringF = algebra.getCountriesOnly,
+        intF = algebra.getCountriesOnly,
+        longF = algebra.getCountriesOnly,
+        boolF = algebra.getCountriesOnly,
+        bigDecimalF = algebra.getCountriesOnly,
+        allF = algebra.getCountries
+      )
 
     // GET /countries/filter?field={country_field}&operator={operator; default: eq}&value={value}
     case GET -> Root / "filter" :?

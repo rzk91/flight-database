@@ -6,6 +6,7 @@ import cats.effect.Concurrent
 import cats.effect.Resource
 import cats.implicits._
 import doobie.Put
+import doobie.Read
 import doobie.Transactor
 import flightdatabase.api.Operator
 import flightdatabase.domain.ApiResult
@@ -29,8 +30,8 @@ class ManufacturerRepository[F[_]: Concurrent] private (
   override def getManufacturers: F[ApiResult[Nel[Manufacturer]]] =
     selectAllManufacturers.asNel().execute
 
-  override def getManufacturersOnlyNames: F[ApiResult[Nel[String]]] =
-    getFieldList[Manufacturer, String]("name").execute
+  override def getManufacturersOnly[V: Read](field: String): F[ApiResult[Nel[V]]] =
+    getFieldList[Manufacturer, V](field).execute
 
   override def getManufacturer(id: Long): F[ApiResult[Manufacturer]] =
     selectManufacturersBy("id", Nel.one(id), Operator.Equals).asSingle(id).execute

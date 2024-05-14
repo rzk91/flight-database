@@ -56,8 +56,12 @@ final class CurrencyRepositoryIT extends RepositoryCheck {
   }
 
   it should "only return names if so required" in {
-    repo.getCurrenciesOnlyNames.value should contain only (
+    repo.getCurrenciesOnly[String]("name").value should contain only (
       originalCurrencies.map(_.name).toList: _*
+    )
+
+    repo.getCurrenciesOnly[String]("iso").value should contain only (
+      originalCurrencies.map(_.iso).toList: _*
     )
   }
 

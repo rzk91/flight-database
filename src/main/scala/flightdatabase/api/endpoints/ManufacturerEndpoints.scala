@@ -25,13 +25,16 @@ class ManufacturerEndpoints[F[_]: Concurrent] private (
         case false => NotFound()
       }
 
-    // GET /manufacturers?only-names
-    case GET -> Root :? OnlyNamesFlagMatcher(onlyNames) =>
-      if (onlyNames) {
-        algebra.getManufacturersOnlyNames.flatMap(_.toResponse)
-      } else {
-        algebra.getManufacturers.flatMap(_.toResponse)
-      }
+    // GET /manufacturers?return-only={manufacturer_field}
+    case GET -> Root :? ReturnOnlyMatcher(returnOnly) =>
+      processReturnOnly[Manufacturer](returnOnly)(
+        stringF = algebra.getManufacturersOnly,
+        intF = algebra.getManufacturersOnly,
+        longF = algebra.getManufacturersOnly,
+        boolF = algebra.getManufacturersOnly,
+        bigDecimalF = algebra.getManufacturersOnly,
+        allF = algebra.getManufacturers
+      )
 
     // GET /manufacturers/filter?field={manufacturer_field}&operator={operator; default: eq}&value={value}
     case GET -> Root / "filter" :?

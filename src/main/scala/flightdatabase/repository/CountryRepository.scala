@@ -7,6 +7,7 @@ import cats.effect.Resource
 import cats.implicits._
 import doobie.Fragment
 import doobie.Put
+import doobie.Read
 import doobie.Transactor
 import doobie.implicits._
 import flightdatabase.api.Operator
@@ -30,8 +31,8 @@ class CountryRepository[F[_]: Concurrent] private (
   override def getCountries: F[ApiResult[Nel[Country]]] =
     selectAllCountries.asNel().execute
 
-  override def getCountriesOnlyNames: F[ApiResult[Nel[String]]] =
-    getFieldList[Country, String]("name").execute
+  def getCountriesOnly[V: Read](field: String): F[ApiResult[Nel[V]]] =
+    getFieldList[Country, V](field).execute
 
   override def getCountry(id: Long): F[ApiResult[Country]] =
     selectCountriesBy("id", Nel.one(id), Operator.Equals).asSingle(id).execute

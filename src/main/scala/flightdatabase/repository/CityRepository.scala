@@ -7,6 +7,7 @@ import cats.effect.Resource
 import cats.implicits._
 import com.ibm.icu.util.TimeZone
 import doobie.Put
+import doobie.Read
 import doobie.Transactor
 import flightdatabase.api.Operator
 import flightdatabase.domain._
@@ -27,8 +28,8 @@ class CityRepository[F[_]: Concurrent] private (
 
   override def getCities: F[ApiResult[Nel[City]]] = selectAllCities.asNel().execute
 
-  override def getCitiesOnlyNames: F[ApiResult[Nel[String]]] =
-    getFieldList[City, String]("name").execute
+  def getCitiesOnly[V: Read](field: String): F[ApiResult[Nel[V]]] =
+    getFieldList[City, V](field).execute
 
   override def getCity(id: Long): F[ApiResult[City]] =
     selectCitiesBy("id", Nel.one(id), Operator.Equals).asSingle(id).execute

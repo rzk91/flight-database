@@ -103,7 +103,13 @@ final class AirportRepositoryIT extends RepositoryCheck {
   }
 
   it should "return only names if so required" in {
-    repo.getAirportsOnlyNames.value should contain only (originalAirports.map(_.name).toList: _*)
+    repo
+      .getAirportsOnly[String]("name")
+      .value should contain only (originalAirports.map(_.name).toList: _*)
+
+    repo
+      .getAirportsOnly[Boolean]("international")
+      .value should contain allElementsOf originalAirports.map(_.international).toList
   }
 
   "Selecting an airport by id" should "return the correct entry" in {

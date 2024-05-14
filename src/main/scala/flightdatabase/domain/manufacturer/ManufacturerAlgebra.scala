@@ -2,13 +2,14 @@ package flightdatabase.domain.manufacturer
 
 import cats.data.{NonEmptyList => Nel}
 import doobie.Put
+import doobie.Read
 import flightdatabase.api.Operator
 import flightdatabase.domain.ApiResult
 
 trait ManufacturerAlgebra[F[_]] {
   def doesManufacturerExist(id: Long): F[Boolean]
   def getManufacturers: F[ApiResult[Nel[Manufacturer]]]
-  def getManufacturersOnlyNames: F[ApiResult[Nel[String]]]
+  def getManufacturersOnly[V: Read](field: String): F[ApiResult[Nel[V]]]
   def getManufacturer(id: Long): F[ApiResult[Manufacturer]]
 
   def getManufacturersBy[V: Put](

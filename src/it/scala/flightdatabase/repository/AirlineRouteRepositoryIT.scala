@@ -78,9 +78,13 @@ final class AirlineRouteRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting all airline routes with only route numbers" should "return the correct list" in {
-    repo.getAirlineRoutesOnlyRoutes.value should contain only (
+    repo.getAirlineRoutesOnly[String]("route_number").value should contain only (
       originalAirlineRoutes.map(_.route).toList: _*
     )
+
+    repo
+      .getAirlineRoutesOnly[Long]("start_airport_id")
+      .value should contain allElementsOf originalAirlineRoutes.map(_.start).toList
   }
 
   "Selecting an airline route by ID" should "return the correct route" in {

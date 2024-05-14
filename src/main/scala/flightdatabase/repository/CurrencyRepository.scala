@@ -6,6 +6,7 @@ import cats.effect.Concurrent
 import cats.effect.Resource
 import cats.implicits._
 import doobie.Put
+import doobie.Read
 import doobie.Transactor
 import flightdatabase.api.Operator
 import flightdatabase.domain.ApiResult
@@ -25,8 +26,8 @@ class CurrencyRepository[F[_]: Concurrent] private (
   override def getCurrencies: F[ApiResult[Nel[Currency]]] =
     selectAllCurrencies.asNel().execute
 
-  override def getCurrenciesOnlyNames: F[ApiResult[Nel[String]]] =
-    getFieldList[Currency, String]("name").execute
+  def getCurrenciesOnly[V: Read](field: String): F[ApiResult[Nel[V]]] =
+    getFieldList[Currency, V](field).execute
 
   override def getCurrency(id: Long): F[ApiResult[Currency]] =
     selectCurrencyBy("id", Nel.one(id), Operator.Equals).asSingle(id).execute

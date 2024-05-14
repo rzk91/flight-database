@@ -21,7 +21,6 @@ abstract class Endpoints[F[_]: Monad](prefix: String) extends Http4sDsl[F] {
   def endpoints: HttpRoutes[F]
 
   // Support matcher objects
-  object OnlyNamesFlagMatcher extends FlagQueryParamMatcher("only-names")
   object FullOutputFlagMatcher extends FlagQueryParamMatcher("full-output")
   object ValueMatcher extends QueryParamDecoderMatcher[String]("value")
   object FieldMatcher extends QueryParamDecoderMatcher[String]("field")

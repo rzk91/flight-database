@@ -140,7 +140,12 @@ final class CityRepositoryIT extends RepositoryCheck {
   }
 
   it should "return only names if so required" in {
-    repo.getCitiesOnlyNames.value should contain only (originalCities.map(_.name).toList: _*)
+    repo
+      .getCitiesOnly[String]("name")
+      .value should contain only (originalCities.map(_.name).toList: _*)
+    repo
+      .getCitiesOnly[Long]("population")
+      .value should contain only (originalCities.map(_.population).toList: _*)
   }
 
   "Selecting a city by id" should "return the correct entry" in {

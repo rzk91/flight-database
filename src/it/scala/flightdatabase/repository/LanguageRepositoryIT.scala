@@ -59,7 +59,12 @@ final class LanguageRepositoryIT extends RepositoryCheck {
   }
 
   it should "only return names if so required" in {
-    repo.getLanguagesOnlyNames.value should contain only (originalLanguages.map(_.name).toList: _*)
+    repo
+      .getLanguagesOnly[String]("name")
+      .value should contain only (originalLanguages.map(_.name).toList: _*)
+    repo
+      .getLanguagesOnly[String]("iso2")
+      .value should contain only (originalLanguages.map(_.iso2).toList: _*)
   }
 
   "Selecting a language by ID" should "return the correct language" in {

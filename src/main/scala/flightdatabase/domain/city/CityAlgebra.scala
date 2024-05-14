@@ -2,6 +2,7 @@ package flightdatabase.domain.city
 
 import cats.data.{NonEmptyList => Nel}
 import doobie.Put
+import doobie.Read
 import flightdatabase.api.Operator
 import flightdatabase.domain.ApiResult
 
@@ -9,7 +10,7 @@ trait CityAlgebra[F[_]] {
 
   def doesCityExist(id: Long): F[Boolean]
   def getCities: F[ApiResult[Nel[City]]]
-  def getCitiesOnlyNames: F[ApiResult[Nel[String]]]
+  def getCitiesOnly[V: Read](field: String): F[ApiResult[Nel[V]]]
   def getCity(id: Long): F[ApiResult[City]]
 
   def getCitiesBy[V: Put](

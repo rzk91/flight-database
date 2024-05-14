@@ -22,13 +22,16 @@ class CurrencyEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Curr
         case false => NotFound()
       }
 
-    // GET /currencies?only-names
-    case GET -> Root :? OnlyNamesFlagMatcher(onlyNames) =>
-      if (onlyNames) {
-        algebra.getCurrenciesOnlyNames.flatMap(_.toResponse)
-      } else {
-        algebra.getCurrencies.flatMap(_.toResponse)
-      }
+    // GET /currencies?return-only={currency_field}
+    case GET -> Root :? ReturnOnlyMatcher(returnOnly) =>
+      processReturnOnly[Currency](returnOnly)(
+        stringF = algebra.getCurrenciesOnly,
+        intF = algebra.getCurrenciesOnly,
+        longF = algebra.getCurrenciesOnly,
+        boolF = algebra.getCurrenciesOnly,
+        bigDecimalF = algebra.getCurrenciesOnly,
+        allF = algebra.getCurrencies
+      )
 
     // GET /currencies/filter?field={currency_field}&operator={operator; default: eq}&value={value}
     case GET -> Root / "filter" :?

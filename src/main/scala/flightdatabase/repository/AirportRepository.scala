@@ -6,6 +6,7 @@ import cats.effect.Concurrent
 import cats.effect.Resource
 import cats.implicits._
 import doobie.Put
+import doobie.Read
 import doobie.Transactor
 import flightdatabase.api.Operator
 import flightdatabase.domain.ApiResult
@@ -28,8 +29,8 @@ class AirportRepository[F[_]: Concurrent] private (
   override def getAirports: F[ApiResult[Nel[Airport]]] =
     selectAllAirports.asNel().execute
 
-  override def getAirportsOnlyNames: F[ApiResult[Nel[String]]] =
-    getFieldList[Airport, String]("name").execute
+  override def getAirportsOnly[V: Read](field: String): F[ApiResult[Nel[V]]] =
+    getFieldList[Airport, V](field).execute
 
   override def getAirport(id: Long): F[ApiResult[Airport]] =
     selectAirportsBy("id", Nel.one(id), Operator.Equals).asSingle(id).execute

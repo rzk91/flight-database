@@ -102,7 +102,12 @@ final class CountryRepositoryIT extends RepositoryCheck {
   }
 
   it should "return only names if so required" in {
-    repo.getCountriesOnlyNames.value should contain only (originalCountries.map(_.name).toList: _*)
+    repo
+      .getCountriesOnly[String]("name")
+      .value should contain only (originalCountries.map(_.name).toList: _*)
+    repo
+      .getCountriesOnly[Int]("country_code")
+      .value should contain only (originalCountries.map(_.countryCode).toList: _*)
   }
 
   "Selecting a country by ID" should "return the correct country" in {

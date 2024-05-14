@@ -7,6 +7,7 @@ import cats.effect.Resource
 import cats.implicits._
 import doobie.Put
 import doobie.Query0
+import doobie.Read
 import doobie.Transactor
 import doobie.implicits._
 import flightdatabase.api.Operator
@@ -33,8 +34,8 @@ class AirlineRouteRepository[F[_]: Concurrent] private (
   override def getAirlineRoutes: F[ApiResult[Nel[AirlineRoute]]] =
     selectAllAirlineRoutes.asNel().execute
 
-  override def getAirlineRoutesOnlyRoutes: F[ApiResult[Nel[String]]] =
-    getFieldList[AirlineRoute, String]("route_number").execute
+  override def getAirlineRoutesOnly[V: Read](field: String): F[ApiResult[Nel[V]]] =
+    getFieldList[AirlineRoute, V](field).execute
 
   override def getAirlineRoute(id: Long): F[ApiResult[AirlineRoute]] =
     selectAirlineRouteBy("id", Nel.one(id), Operator.Equals).asSingle(id).execute

@@ -21,13 +21,16 @@ class LanguageEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Lang
         case false => NotFound()
       }
 
-    // GET /languages?only-names
-    case GET -> Root :? OnlyNamesFlagMatcher(onlyNames) =>
-      if (onlyNames) {
-        algebra.getLanguagesOnlyNames.flatMap(_.toResponse)
-      } else {
-        algebra.getLanguages.flatMap(_.toResponse)
-      }
+    // GET /languages?return-only={language_field}
+    case GET -> Root :? ReturnOnlyMatcher(returnOnly) =>
+      processReturnOnly[Language](returnOnly)(
+        stringF = algebra.getLanguagesOnly,
+        intF = algebra.getLanguagesOnly,
+        longF = algebra.getLanguagesOnly,
+        boolF = algebra.getLanguagesOnly,
+        bigDecimalF = algebra.getLanguagesOnly,
+        allF = algebra.getLanguages
+      )
 
     // GET /languages/filter?field={language_field}&operator={operator; default: eq}&value={value}
     case GET -> Root / "filter" :?

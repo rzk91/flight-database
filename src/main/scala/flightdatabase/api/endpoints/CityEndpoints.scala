@@ -23,13 +23,16 @@ class CityEndpoints[F[_]: Concurrent] private (prefix: String, algebra: CityAlge
         case false => NotFound()
       }
 
-    // GET /cities?only-names
-    case GET -> Root :? OnlyNamesFlagMatcher(onlyNames) =>
-      if (onlyNames) {
-        algebra.getCitiesOnlyNames.flatMap(_.toResponse)
-      } else {
-        algebra.getCities.flatMap(_.toResponse)
-      }
+    // GET /cities?return-only={city_field}
+    case GET -> Root :? ReturnOnlyMatcher(returnOnly) =>
+      processReturnOnly[City](returnOnly)(
+        stringF = algebra.getCitiesOnly,
+        intF = algebra.getCitiesOnly,
+        longF = algebra.getCitiesOnly,
+        boolF = algebra.getCitiesOnly,
+        bigDecimalF = algebra.getCitiesOnly,
+        allF = algebra.getCities
+      )
 
     // GET /cities/filter?field={city_field}&operator={operator; default: eq}&value={value}
     case GET -> Root / "filter" :?
