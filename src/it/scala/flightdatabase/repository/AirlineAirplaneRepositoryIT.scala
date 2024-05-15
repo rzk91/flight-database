@@ -85,6 +85,9 @@ final class AirlineAirplaneRepositoryIT extends RepositoryCheck {
     def airlineAirplaneByAirplaneId(id: Long): IO[ApiResult[Nel[AirlineAirplane]]] =
       repo.getAirlineAirplanesBy("airplane_id", Nel.one(id), Operator.Equals)
 
+    def airlineAirplaneByAirlineIds(ids: Nel[Long]): IO[ApiResult[Nel[AirlineAirplane]]] =
+      repo.getAirlineAirplanesBy("airline_id", ids, Operator.In)
+
     val distinctAirlineIds = originalAirlineAirplanes.map(_.airlineId).distinct
     val distinctAirplaneIds = originalAirlineAirplanes.map(_.airplaneId).distinct
 
@@ -99,6 +102,8 @@ final class AirlineAirplaneRepositoryIT extends RepositoryCheck {
         originalAirlineAirplanes.filter(_.airplaneId == airplaneId): _*
       )
     }
+
+    airlineAirplaneByAirlineIds(distinctAirlineIds).value should contain only (originalAirlineAirplanes.toList: _*)
 
     airlineAirplaneByAirlineId(idNotPresent).error shouldBe EntryListEmpty
     airlineAirplaneByAirlineId(veryLongIdNotPresent).error shouldBe EntryListEmpty

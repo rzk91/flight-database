@@ -41,6 +41,8 @@ TODO list
 - ~~Change all `List` output to `NonEmptyList` output. This will make the API more robust and will allow for better
   error handling.~~ DONE!
 - ~~Make it possible to select any field for the general queries (i.e., GET ALL?only).~~ DONE!
+- Add option to sort the output.
+- Add option to limit the output.
 - All `endpoints` should return URI of the output resource in the `Location` header. Basically, the `id` field should be
   a JSON object with a `uri` field. This will allow for easy navigation of the API.
 - Add a URI to all foreign key fields in the response (maybe use something similar to `TableBase`).
