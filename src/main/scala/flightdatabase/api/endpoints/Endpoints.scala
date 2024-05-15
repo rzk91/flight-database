@@ -6,6 +6,7 @@ import cats.syntax.bifunctor._
 import cats.syntax.flatMap._
 import flightdatabase.api.Operator
 import flightdatabase.api.Operator.StringOperatorOps
+import flightdatabase.api.endpoints.ResultOrder.StringOrderOps
 import flightdatabase.domain._
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
@@ -25,6 +26,14 @@ abstract class Endpoints[F[_]: Monad](prefix: String) extends Http4sDsl[F] {
   object ValueMatcher extends QueryParamDecoderMatcher[String]("value")
   object FieldMatcher extends QueryParamDecoderMatcher[String]("field")
   object ReturnOnlyMatcher extends OptionalQueryParamDecoderMatcher[String]("return-only")
+  object SortByMatcher extends OptionalQueryParamDecoderMatcher[String]("sort-by")
+
+  implicit val resultOrderQueryParamDecoder: QueryParamDecoder[ResultOrder] =
+    QueryParamDecoder[String].emap { s =>
+      s.toOrder.leftMap(error => ParseFailure(error.getMessage(), ""))
+    }
+
+  object OrderMatcher extends OptionalQueryParamDecoderMatcher[ResultOrder]("order")
 
   implicit val operatorQueryParamDecoder: QueryParamDecoder[Operator] =
     QueryParamDecoder[String].emap { s =>
