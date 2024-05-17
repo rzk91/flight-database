@@ -1,16 +1,83 @@
 package flightdatabase.api
 
 import cats.Monad
+import cats.data.ValidatedNel
 import cats.data.{NonEmptyList => Nel}
-import cats.implicits.toTraverseOps
+import cats.implicits.catsSyntaxOption
+import cats.implicits.catsSyntaxTuple4Semigroupal
+import cats.syntax.bifunctor._
 import cats.syntax.flatMap._
+import cats.syntax.traverse._
+import flightdatabase.api.Operator.StringOperatorOps
+import flightdatabase.api.endpoints.ResultOrder.StringOrderOps
 import flightdatabase.domain._
 import flightdatabase.utils.implicits.enrichString
 import org.http4s._
 import org.http4s.dsl.Http4sDsl
+import org.http4s.dsl.impl.FlagQueryParamMatcher
+import org.http4s.dsl.impl.OptionalQueryParamDecoderMatcher
+import org.http4s.dsl.impl.QueryParamDecoderMatcher
+import org.http4s.dsl.impl.QueryParamDecoderMatcherWithDefault
 
 package object endpoints {
 
+  // All matcher objects
+  object FullOutputFlagMatcher extends FlagQueryParamMatcher("full-output")
+  object ValueMatcher extends QueryParamDecoderMatcher[String]("value")
+  object FieldMatcher extends QueryParamDecoderMatcher[String]("field")
+  object ReturnOnlyMatcher extends OptionalQueryParamDecoderMatcher[String]("return-only")
+
+  case class SortAndLimit(
+    sortBy: Option[String],
+    order: Option[ResultOrder],
+    limit: Option[Int],
+    offset: Option[Int]
+  ) {
+
+    def validated[T: TableBase]: ValidatedNel[ParseFailure, SortAndLimit] = {
+      val sortByValidated = sortBy
+        .flatMap(implicitly[TableBase[T]].fieldTypeMap.get)
+        .toValidNel(ParseFailure("Invalid entry in field", "sort-by"))
+
+      val orderValidated = order.toValidNel(ParseFailure("Invalid entry in field", "order"))
+      val limitValidated =
+        limit.filter(_ >= 0).toValidNel(ParseFailure("Invalid entry in field", "limit"))
+      val offsetValidated =
+        offset.filter(_ >= 0).toValidNel(ParseFailure("Invalid entry in field", "offset"))
+
+      (sortByValidated, orderValidated, limitValidated, offsetValidated).mapN((_, _, _, _) => this)
+    }
+  }
+
+  object SortAndLimit {
+    private object SortByMatcher extends OptionalQueryParamDecoderMatcher[String]("sort-by")
+    private object OrderMatcher extends OptionalQueryParamDecoderMatcher[ResultOrder]("order")
+    private object LimitMatcher extends OptionalQueryParamDecoderMatcher[Int]("limit")
+    private object OffsetMatcher extends OptionalQueryParamDecoderMatcher[Int]("offset")
+
+    implicit private val resultOrderQueryParamDecoder: QueryParamDecoder[ResultOrder] =
+      QueryParamDecoder[String].emap { s =>
+        s.toOrder.leftMap(error => ParseFailure(error.getMessage(), ""))
+      }
+
+    def unapply(params: Map[String, collection.Seq[String]]): Option[SortAndLimit] =
+      for {
+        sortBy <- SortByMatcher.unapply(params)
+        order  <- OrderMatcher.unapply(params)
+        limit  <- LimitMatcher.unapply(params)
+        offset <- OffsetMatcher.unapply(params)
+      } yield SortAndLimit(sortBy, order, limit, offset)
+  }
+
+  implicit val operatorQueryParamDecoder: QueryParamDecoder[Operator] =
+    QueryParamDecoder[String].emap { s =>
+      s.toOperator.leftMap(error => ParseFailure(error.getMessage(), ""))
+    }
+
+  object OperatorMatcherEqDefault
+      extends QueryParamDecoderMatcherWithDefault[Operator]("operator", Operator.Equals)
+
+  // Extension methods for various API-related functions
   implicit class RichApiResult[A](private val result: ApiResult[A]) extends AnyVal {
 
     def toResponse[F[_]: Monad](

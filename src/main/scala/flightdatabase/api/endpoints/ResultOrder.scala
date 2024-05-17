@@ -7,8 +7,8 @@ sealed abstract class ResultOrder(override val entryName: String) extends EnumEn
 object ResultOrder extends Enum[ResultOrder] {
   val values = findValues
 
-  case object Asc extends ResultOrder("asc")
-  case object Desc extends ResultOrder("desc")
+  case object Ascending extends ResultOrder("asc")
+  case object Descending extends ResultOrder("desc")
 
   implicit class StringOrderOps(private val s: String) extends AnyVal {
     def toOrder: Either[NoSuchMember[ResultOrder], ResultOrder] = withNameInsensitiveEither(s)

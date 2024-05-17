@@ -2,11 +2,9 @@ package flightdatabase.api.endpoints
 
 import cats.Monad
 import cats.data.{NonEmptyList => Nel}
-import cats.syntax.bifunctor._
 import cats.syntax.flatMap._
+import cats.syntax.foldable._
 import flightdatabase.api.Operator
-import flightdatabase.api.Operator.StringOperatorOps
-import flightdatabase.api.endpoints.ResultOrder.StringOrderOps
 import flightdatabase.domain._
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
@@ -21,35 +19,20 @@ abstract class Endpoints[F[_]: Monad](prefix: String) extends Http4sDsl[F] {
   lazy val routes: HttpRoutes[F] = Router(prefix -> endpoints)
   def endpoints: HttpRoutes[F]
 
-  // Support matcher objects
-  object FullOutputFlagMatcher extends FlagQueryParamMatcher("full-output")
-  object ValueMatcher extends QueryParamDecoderMatcher[String]("value")
-  object FieldMatcher extends QueryParamDecoderMatcher[String]("field")
-  object ReturnOnlyMatcher extends OptionalQueryParamDecoderMatcher[String]("return-only")
-  object SortByMatcher extends OptionalQueryParamDecoderMatcher[String]("sort-by")
-
-  implicit val resultOrderQueryParamDecoder: QueryParamDecoder[ResultOrder] =
-    QueryParamDecoder[String].emap { s =>
-      s.toOrder.leftMap(error => ParseFailure(error.getMessage(), ""))
-    }
-
-  object OrderMatcher extends OptionalQueryParamDecoderMatcher[ResultOrder]("order")
-
-  implicit val operatorQueryParamDecoder: QueryParamDecoder[Operator] =
-    QueryParamDecoder[String].emap { s =>
-      s.toOperator.leftMap(error => ParseFailure(error.getMessage(), ""))
-    }
-
-  object OperatorMatcherEqDefault
-      extends QueryParamDecoderMatcherWithDefault[Operator]("operator", Operator.Equals)
-
   // Support functions
+  protected def withSortAndLimitValidation[IN: TableBase](sortAndLimit: SortAndLimit)(
+    f: SortAndLimit => F[Response[F]]
+  ): F[Response[F]] =
+    sortAndLimit
+      .validated[IN]
+      .fold(
+        errors => BadRequest(errors.map(_.message).mkString_("", ", ", "")),
+        f
+      )
+
   final protected def processRequestBody[IN, OUT](
     req: Request[F]
-  )(f: IN => F[ApiResult[OUT]])(
-    implicit dec: EntityDecoder[F, IN],
-    enc: EntityEncoder[F, OUT]
-  ): F[ApiResult[OUT]] =
+  )(f: IN => F[ApiResult[OUT]])(implicit dec: EntityDecoder[F, IN]): F[ApiResult[OUT]] =
     req
       .attemptAs[IN]
       .foldF[ApiResult[OUT]](
@@ -57,18 +40,18 @@ abstract class Endpoints[F[_]: Monad](prefix: String) extends Http4sDsl[F] {
         f
       )
 
-  final protected type λ1[V, T] = (String, Nel[V], Operator) => F[ApiResult[Nel[T]]]
+  final protected type G[V, T] = (String, Nel[V], Operator) => F[ApiResult[Nel[T]]]
 
   final protected def processFilter[IN: TableBase, OUT](
     field: String,
     operator: Operator,
     values: String
   )(
-    stringF: λ1[String, OUT],
-    intF: λ1[Int, OUT],
-    longF: λ1[Long, OUT],
-    boolF: λ1[Boolean, OUT],
-    bigDecimalF: λ1[BigDecimal, OUT]
+    stringF: G[String, OUT],
+    intF: G[Int, OUT],
+    longF: G[Long, OUT],
+    boolF: G[Boolean, OUT],
+    bigDecimalF: G[BigDecimal, OUT]
   )(implicit enc: EntityEncoder[F, Nel[OUT]]): F[Response[F]] =
     implicitly[TableBase[IN]].fieldTypeMap.get(field) match {
       case Some(StringType) if StringType.operators(operator) =>
@@ -85,14 +68,40 @@ abstract class Endpoints[F[_]: Monad](prefix: String) extends Http4sDsl[F] {
       case None    => BadRequest(InvalidField(field).error)
     }
 
-  final protected type λ2[V] = String => F[ApiResult[Nel[V]]]
+  final protected type R[V] = String => F[ApiResult[Nel[V]]]
 
   final protected def processReturnOnly[IN: TableBase](field: Option[String])(
-    stringF: λ2[String],
-    intF: λ2[Int],
-    longF: λ2[Long],
-    boolF: λ2[Boolean],
-    bigDecimalF: λ2[BigDecimal],
+    stringF: R[String],
+    intF: R[Int],
+    longF: R[Long],
+    boolF: R[Boolean],
+    bigDecimalF: R[BigDecimal],
+    allF: => F[ApiResult[Nel[IN]]]
+  )(implicit allEnc: EntityEncoder[F, Nel[IN]]): F[Response[F]] =
+    field match {
+      case Some(field) =>
+        val table = implicitly[TableBase[IN]]
+        val tableField = s"${table.asString}.$field"
+        table.fieldTypeMap.get(field) match {
+          case Some(StringType)     => stringF(tableField).flatMap(_.toResponse[F])
+          case Some(IntType)        => intF(tableField).flatMap(_.toResponse[F])
+          case Some(LongType)       => longF(tableField).flatMap(_.toResponse[F])
+          case Some(BooleanType)    => boolF(tableField).flatMap(_.toResponse[F])
+          case Some(BigDecimalType) => bigDecimalF(tableField).flatMap(_.toResponse[F])
+          case None                 => BadRequest(InvalidField(field).error)
+        }
+      case None => allF.flatMap(_.toResponse[F])
+    }
+
+  final protected def processReturnOnly2[IN: TableBase](
+    sortAndLimit: SortAndLimit,
+    field: Option[String]
+  )(
+    stringF: R[String],
+    intF: R[Int],
+    longF: R[Long],
+    boolF: R[Boolean],
+    bigDecimalF: R[BigDecimal],
     allF: => F[ApiResult[Nel[IN]]]
   )(implicit allEnc: EntityEncoder[F, Nel[IN]]): F[Response[F]] =
     field match {

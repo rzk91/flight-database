@@ -22,18 +22,18 @@ class AirlineEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airli
         case false => NotFound()
       }
 
-    // GET /airlines?return-only={field}&sort-by={field}&order={asc, desc}
-    case GET -> Root :? ReturnOnlyMatcher(returnOnly) +& SortByMatcher(sortBy) +& OrderMatcher(
-          order
-        ) =>
-      processReturnOnly[Airline](returnOnly)(
-        stringF = algebra.getAirlinesOnly,
-        intF = algebra.getAirlinesOnly,
-        longF = algebra.getAirlinesOnly,
-        boolF = algebra.getAirlinesOnly,
-        bigDecimalF = algebra.getAirlinesOnly,
-        allF = algebra.getAirlines
-      )
+    // GET /airlines?return-only={field}&sort-by={field}&order={asc, desc}&limit={number}&offset={number}
+    case GET -> Root :? SortAndLimit(sortAndLimit) +& ReturnOnlyMatcher(returnOnly) =>
+      withSortAndLimitValidation[Airline](sortAndLimit) {
+        processReturnOnly2[Airline](_, returnOnly)(
+          stringF = algebra.getAirlinesOnly,
+          intF = algebra.getAirlinesOnly,
+          longF = algebra.getAirlinesOnly,
+          boolF = algebra.getAirlinesOnly,
+          bigDecimalF = algebra.getAirlinesOnly,
+          allF = algebra.getAirlines
+        )
+      }
 
     // GET /airlines/filter?field={airline_field}&operator={operator, default: eq}&value={values}
     case GET -> Root / "filter" :?
