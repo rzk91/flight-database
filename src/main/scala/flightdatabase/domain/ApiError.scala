@@ -61,10 +61,11 @@ case class InvalidValueType(value: String) extends ApiError {
 }
 
 case class SqlError(sqlState: String) extends ApiError {
+
   override val error: String =
-		s"Encountered PostgreSQL error: '$sqlState'.\n" +
-		"Here is a link to all SQL state error codes: " +
-		"https://www.postgresql.org/docs/current/errcodes-appendix.html"
+    s"Encountered PostgreSQL error: '$sqlState'.\n" +
+      "Here is a link to all SQL state error codes: " +
+      "https://www.postgresql.org/docs/current/errcodes-appendix.html"
 }
 
 case class UnknownDbError(error: String) extends ApiError
