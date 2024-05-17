@@ -21,14 +21,11 @@ abstract class Endpoints[F[_]: Monad](prefix: String) extends Http4sDsl[F] {
 
   // Support functions
   protected def withSortAndLimitValidation[IN: TableBase](sortAndLimit: SortAndLimit)(
-    f: SortAndLimit => F[Response[F]]
+    f: ValidatedSortAndLimit => F[Response[F]]
   ): F[Response[F]] =
     sortAndLimit
-      .validated[IN]
-      .fold(
-        errors => BadRequest(errors.map(_.message).mkString_("", ", ", "")),
-        f
-      )
+      .validate[IN]
+      .fold(errors => BadRequest(errors.mkString_(",\n")), f)
 
   final protected def processRequestBody[IN, OUT](
     req: Request[F]
@@ -94,7 +91,7 @@ abstract class Endpoints[F[_]: Monad](prefix: String) extends Http4sDsl[F] {
     }
 
   final protected def processReturnOnly2[IN: TableBase](
-    sortAndLimit: SortAndLimit,
+    validatedSortAndLimit: ValidatedSortAndLimit,
     field: Option[String]
   )(
     stringF: R[String],

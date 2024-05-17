@@ -1,4 +1,4 @@
-package flightdatabase.api.endpoints
+package flightdatabase.domain
 
 import enumeratum._
 

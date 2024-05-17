@@ -1,16 +1,14 @@
 package flightdatabase.api
 
 import cats.Monad
+import cats.data.Validated
 import cats.data.ValidatedNel
 import cats.data.{NonEmptyList => Nel}
-import cats.implicits.catsSyntaxOption
-import cats.implicits.catsSyntaxTuple4Semigroupal
-import cats.syntax.bifunctor._
-import cats.syntax.flatMap._
-import cats.syntax.traverse._
+import cats.syntax.all._
 import flightdatabase.api.Operator.StringOperatorOps
-import flightdatabase.api.endpoints.ResultOrder.StringOrderOps
+import flightdatabase.domain.ResultOrder.StringOrderOps
 import flightdatabase.domain._
+import flightdatabase.utils.implicits.enrichOption
 import flightdatabase.utils.implicits.enrichString
 import org.http4s._
 import org.http4s.dsl.Http4sDsl
@@ -29,36 +27,41 @@ package object endpoints {
 
   case class SortAndLimit(
     sortBy: Option[String],
-    order: Option[ResultOrder],
+    order: Option[String],
     limit: Option[Int],
     offset: Option[Int]
   ) {
 
-    def validated[T: TableBase]: ValidatedNel[ParseFailure, SortAndLimit] = {
-      val sortByValidated = sortBy
-        .flatMap(implicitly[TableBase[T]].fieldTypeMap.get)
-        .toValidNel(ParseFailure("Invalid entry in field", "sort-by"))
+    def validate[T: TableBase]: ValidatedNel[String, ValidatedSortAndLimit] = {
+      val sortByValidated = Validated.condNel(
+        sortBy.forall(implicitly[TableBase[T]].fieldTypeMap.contains),
+        sortBy,
+        s"Invalid entry in 'sort-by': ${sortBy.debug}"
+      )
 
-      val orderValidated = order.toValidNel(ParseFailure("Invalid entry in field", "order"))
+      val orderValidated = order
+        .traverse(_.toOrder.leftMap(err => s"Invalid entry in 'order': ${err.getMessage()}"))
+        .toValidatedNel
+
       val limitValidated =
-        limit.filter(_ >= 0).toValidNel(ParseFailure("Invalid entry in field", "limit"))
-      val offsetValidated =
-        offset.filter(_ >= 0).toValidNel(ParseFailure("Invalid entry in field", "offset"))
+        Validated.condNel(limit.forall(_ >= 0), limit, s"Invalid entry in 'limit': ${limit.debug}")
 
-      (sortByValidated, orderValidated, limitValidated, offsetValidated).mapN((_, _, _, _) => this)
+      val offsetValidated =
+        Validated.condNel(
+          offset.forall(_ >= 0),
+          offset,
+          s"Invalid entry in 'offset': ${offset.debug}"
+        )
+
+      (sortByValidated, orderValidated, limitValidated, offsetValidated).mapN(ValidatedSortAndLimit)
     }
   }
 
   object SortAndLimit {
     private object SortByMatcher extends OptionalQueryParamDecoderMatcher[String]("sort-by")
-    private object OrderMatcher extends OptionalQueryParamDecoderMatcher[ResultOrder]("order")
+    private object OrderMatcher extends OptionalQueryParamDecoderMatcher[String]("order")
     private object LimitMatcher extends OptionalQueryParamDecoderMatcher[Int]("limit")
     private object OffsetMatcher extends OptionalQueryParamDecoderMatcher[Int]("offset")
-
-    implicit private val resultOrderQueryParamDecoder: QueryParamDecoder[ResultOrder] =
-      QueryParamDecoder[String].emap { s =>
-        s.toOrder.leftMap(error => ParseFailure(error.getMessage(), ""))
-      }
 
     def unapply(params: Map[String, collection.Seq[String]]): Option[SortAndLimit] =
       for {
