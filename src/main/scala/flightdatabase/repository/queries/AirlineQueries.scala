@@ -7,6 +7,7 @@ import doobie.Query0
 import doobie.Update0
 import doobie.implicits._
 import flightdatabase.api.Operator
+import flightdatabase.domain.ValidatedSortAndLimit
 import flightdatabase.domain.airline.Airline
 import flightdatabase.domain.airline.AirlineCreate
 import flightdatabase.domain.country.Country
@@ -15,7 +16,8 @@ private[repository] object AirlineQueries {
 
   def airlineExists(id: Long): Query0[Boolean] = idExistsQuery[Airline](id)
 
-  def selectAllAirlines: Query0[Airline] = selectAll.query[Airline]
+  def selectAllAirlines(sortAndLimit: ValidatedSortAndLimit): Query0[Airline] =
+    (selectAll ++ sortAndLimit.fragment).query[Airline]
 
   def selectAirlineBy[V: Put](field: String, values: Nel[V], operator: Operator): Query0[Airline] =
     (selectAll ++ whereFragment(s"airline.$field", values, operator)).query[Airline]

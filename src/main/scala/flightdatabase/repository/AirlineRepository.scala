@@ -10,6 +10,7 @@ import doobie.Read
 import doobie.Transactor
 import flightdatabase.api.Operator
 import flightdatabase.domain.ApiResult
+import flightdatabase.domain.ValidatedSortAndLimit
 import flightdatabase.domain.airline.Airline
 import flightdatabase.domain.airline.AirlineAlgebra
 import flightdatabase.domain.airline.AirlineCreate
@@ -23,10 +24,14 @@ class AirlineRepository[F[_]: Concurrent] private (
 
   override def doesAirlineExist(id: Long): F[Boolean] = airlineExists(id).unique.execute
 
-  override def getAirlines: F[ApiResult[Nel[Airline]]] = selectAllAirlines.asNel().execute
+  override def getAirlines(sortAndLimit: ValidatedSortAndLimit): F[ApiResult[Nel[Airline]]] =
+    selectAllAirlines(sortAndLimit).asNel().execute
 
-  override def getAirlinesOnly[V: Read](field: String): F[ApiResult[Nel[V]]] =
-    getFieldList[Airline, V](field).execute
+  override def getAirlinesOnly[V: Read](
+    sortAndLimit: ValidatedSortAndLimit,
+    returnField: String
+  ): F[ApiResult[Nel[V]]] =
+    getFieldList2[Airline, V](sortAndLimit, returnField).execute
 
   override def getAirline(id: Long): F[ApiResult[Airline]] =
     selectAirlineBy("id", Nel.one(id), Operator.Equals).asSingle(id).execute

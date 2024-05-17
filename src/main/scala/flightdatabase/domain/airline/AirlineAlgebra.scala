@@ -5,11 +5,16 @@ import doobie.Put
 import doobie.Read
 import flightdatabase.api.Operator
 import flightdatabase.domain.ApiResult
+import flightdatabase.domain.ValidatedSortAndLimit
 
 trait AirlineAlgebra[F[_]] {
   def doesAirlineExist(id: Long): F[Boolean]
-  def getAirlines: F[ApiResult[Nel[Airline]]]
-  def getAirlinesOnly[V: Read](field: String): F[ApiResult[Nel[V]]]
+  def getAirlines(sortAndLimit: ValidatedSortAndLimit): F[ApiResult[Nel[Airline]]]
+
+  def getAirlinesOnly[V: Read](
+    sortAndLimit: ValidatedSortAndLimit,
+    returnField: String
+  ): F[ApiResult[Nel[V]]]
   def getAirline(id: Long): F[ApiResult[Airline]]
 
   def getAirlinesBy[V: Put](

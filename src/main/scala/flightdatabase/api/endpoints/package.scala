@@ -33,9 +33,11 @@ package object endpoints {
   ) {
 
     def validate[T: TableBase]: ValidatedNel[String, ValidatedSortAndLimit] = {
+      val table = implicitly[TableBase[T]]
+
       val sortByValidated = Validated.condNel(
-        sortBy.forall(implicitly[TableBase[T]].fieldTypeMap.contains),
-        sortBy,
+        sortBy.forall(table.fieldTypeMap.contains),
+        sortBy.map(f => s"${table.asString}.$f"),
         s"Invalid entry in 'sort-by': ${sortBy.debug}"
       )
 
@@ -53,7 +55,9 @@ package object endpoints {
           s"Invalid entry in 'offset': ${offset.debug}"
         )
 
-      (sortByValidated, orderValidated, limitValidated, offsetValidated).mapN(ValidatedSortAndLimit)
+      (sortByValidated, orderValidated, limitValidated, offsetValidated).mapN(
+        ValidatedSortAndLimit.apply
+      )
     }
   }
 

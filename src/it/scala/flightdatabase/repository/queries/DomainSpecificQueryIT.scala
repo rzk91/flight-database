@@ -2,6 +2,8 @@ package flightdatabase.repository.queries
 
 import cats.data.{NonEmptyList => Nel}
 import flightdatabase.api.Operator
+import flightdatabase.domain.ResultOrder
+import flightdatabase.domain.ValidatedSortAndLimit
 import flightdatabase.domain.airplane.AirplaneCreate
 import flightdatabase.domain.city.City
 import flightdatabase.domain.country.Country
@@ -10,6 +12,11 @@ import flightdatabase.testutils.DbChecker
 
 // TODO: Checks are incomplete (e.g. insert, update, failure checks, etc. are missing)
 final class DomainSpecificQueryIT extends DbChecker {
+
+  val emptySortAndLimit: ValidatedSortAndLimit = ValidatedSortAndLimit.empty
+
+  val someSortAndLimit: ValidatedSortAndLimit =
+    ValidatedSortAndLimit(Some("name"), Some(ResultOrder.Ascending), Some(1), Some(0))
 
   // Airplane checks
   "All airplane queries" should "work correctly" in {
@@ -58,7 +65,8 @@ final class DomainSpecificQueryIT extends DbChecker {
 
   // Airline checks
   "All airline queries" should "work correctly" in {
-    check(AirlineQueries.selectAllAirlines)
+    check(AirlineQueries.selectAllAirlines(emptySortAndLimit))
+    check(AirlineQueries.selectAllAirlines(someSortAndLimit))
     check(AirlineQueries.deleteAirline(1))
   }
 

@@ -13,6 +13,7 @@ import flightdatabase.domain.EntryNotFound
 import flightdatabase.domain.InvalidField
 import flightdatabase.domain.InvalidValueType
 import flightdatabase.domain.SqlError
+import flightdatabase.domain.ValidatedSortAndLimit
 import flightdatabase.domain.airline.Airline
 import flightdatabase.domain.airline.AirlineCreate
 import flightdatabase.domain.airline.AirlinePatch
@@ -37,6 +38,7 @@ final class AirlineRepositoryIT extends RepositoryCheck {
   val invalidFieldColumn: String = "non_existent_field"
   val invalidLongValue: String = "invalid"
   val invalidStringValue: Int = 1
+  val emptySortAndLimit: ValidatedSortAndLimit = ValidatedSortAndLimit.empty
 
   // ID -> (Name, ISO2, ISO3, Country [Phone] Code)
   val countryIdMap: Map[Long, (String, String, String, Int)] = Map(
@@ -58,15 +60,57 @@ final class AirlineRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting all airlines" should "return the correct detailed list" in {
-    repo.getAirlines.value should contain only (originalAirlines.toList: _*)
+    repo.getAirlines(emptySortAndLimit).value should contain only (originalAirlines.toList: _*)
+  }
+
+  it should "return a properly sorted list" in {
+    val sortedAirlines = repo.getAirlines(ValidatedSortAndLimit.sortAscending("name")).value
+    sortedAirlines shouldBe originalAirlines.sortBy(_.name)
+
+    val sortedAirlinesDesc = repo.getAirlines(ValidatedSortAndLimit.sortDescending("name")).value
+    sortedAirlinesDesc shouldBe originalAirlines.sortBy(_.name).reverse
+  }
+
+  it should "return only as many airlines as requested" in {
+    val limitedAirlines = repo.getAirlines(ValidatedSortAndLimit.limit(1)).value
+
+    limitedAirlines should have size 1
+    limitedAirlines should contain only originalAirlines.head
+
+    val limitedAirlinesWithOffset =
+      repo.getAirlines(ValidatedSortAndLimit.limitAndOffset(1, 1)).value
+
+    limitedAirlinesWithOffset should have size 1
+    limitedAirlinesWithOffset should contain only originalAirlines.tail.head
   }
 
   it should "only return the requested fields if so required" in {
-    val airlineNames = repo.getAirlinesOnly[String]("name").value
+    val airlineNames = repo.getAirlinesOnly[String](emptySortAndLimit, "name").value
     airlineNames should contain only (originalAirlines.map(_.name).toList: _*)
 
-    val airlineCountryIds = repo.getAirlinesOnly[Int]("country_id").value
+    val airlineCountryIds = repo.getAirlinesOnly[Int](emptySortAndLimit, "country_id").value
     airlineCountryIds should contain only (originalAirlines.map(_.countryId).toList: _*)
+  }
+
+  it should "sort and return the requested fields if so required" in {
+    val airlineNames =
+      repo.getAirlinesOnly[String](ValidatedSortAndLimit.sortAscending("name"), "name").value
+    airlineNames shouldBe originalAirlines.map(_.name).sorted
+
+    val airlineCountryIds = repo
+      .getAirlinesOnly[Int](ValidatedSortAndLimit.sortDescending("country_id"), "country_id")
+      .value
+    airlineCountryIds shouldBe originalAirlines.map(_.countryId).sorted.reverse
+
+    val airlineNamesCountrySort =
+      repo.getAirlinesOnly[String](ValidatedSortAndLimit.sortAscending("country_id"), "name").value
+
+    airlineNamesCountrySort shouldBe originalAirlines.sortBy(_.countryId).map(_.name)
+  }
+
+  it should "return an empty list if offset is too large" in {
+    val offsetTooLarge = repo.getAirlines(ValidatedSortAndLimit.offset(100)).error
+    offsetTooLarge shouldBe EntryListEmpty
   }
 
   "Selecting an airline by ID" should "return the correct airline" in {
