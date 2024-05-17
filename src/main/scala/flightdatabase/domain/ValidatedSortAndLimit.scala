@@ -12,7 +12,7 @@ case class ValidatedSortAndLimit(
 
   def fragment: Fragment = {
     val sort = sortBy.fold(fr"") { s =>
-      val ord = order.getOrElse(ResultOrder.Ascending).entryName.toUpperCase()
+      val ord = order.getOrElse(ResultOrder.Ascending).entryName
       fr"ORDER BY" ++ Fragment.const(s) ++ Fragment.const(ord)
     }
     val lim = limit.fold(fr"")(l => fr"LIMIT $l")
