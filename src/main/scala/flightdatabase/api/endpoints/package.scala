@@ -28,8 +28,8 @@ package object endpoints {
   case class SortAndLimit(
     sortBy: Option[String],
     order: Option[String],
-    limit: Option[Int],
-    offset: Option[Int]
+    limit: Option[Long],
+    offset: Option[Long]
   ) {
 
     def validate[T: TableBase]: ValidatedNel[String, ValidatedSortAndLimit] = {
@@ -64,8 +64,8 @@ package object endpoints {
   object SortAndLimit {
     private object SortByMatcher extends OptionalQueryParamDecoderMatcher[String]("sort-by")
     private object OrderMatcher extends OptionalQueryParamDecoderMatcher[String]("order")
-    private object LimitMatcher extends OptionalQueryParamDecoderMatcher[Int]("limit")
-    private object OffsetMatcher extends OptionalQueryParamDecoderMatcher[Int]("offset")
+    private object LimitMatcher extends OptionalQueryParamDecoderMatcher[Long]("limit")
+    private object OffsetMatcher extends OptionalQueryParamDecoderMatcher[Long]("offset")
 
     def unapply(params: Map[String, collection.Seq[String]]): Option[SortAndLimit] =
       for {

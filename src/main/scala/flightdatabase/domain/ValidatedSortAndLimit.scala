@@ -6,8 +6,8 @@ import doobie.implicits._
 case class ValidatedSortAndLimit(
   sortBy: Option[String],
   order: Option[ResultOrder],
-  limit: Option[Int],
-  offset: Option[Int]
+  limit: Option[Long],
+  offset: Option[Long]
 ) {
 
   def fragment: Fragment = {
@@ -15,8 +15,8 @@ case class ValidatedSortAndLimit(
       val ord = order.getOrElse(ResultOrder.Ascending).entryName
       fr"ORDER BY" ++ Fragment.const(s) ++ Fragment.const(ord)
     }
-    val lim = limit.fold(fr"")(l => fr"LIMIT $l")
-    val off = offset.fold(fr"")(o => fr"OFFSET $o")
+    val lim = limit.filter(_ > 0).fold(fr"")(l => fr"LIMIT $l")
+    val off = offset.filter(_ > 0).fold(fr"")(o => fr"OFFSET $o")
     sort ++ lim ++ off
   }
 }
@@ -31,12 +31,12 @@ object ValidatedSortAndLimit {
   def sortDescending(sortBy: String): ValidatedSortAndLimit =
     ValidatedSortAndLimit(Some(sortBy), Some(ResultOrder.Descending), None, None)
 
-  def limit(limit: Int): ValidatedSortAndLimit =
+  def limit(limit: Long): ValidatedSortAndLimit =
     ValidatedSortAndLimit(None, None, Some(limit), None)
 
-  def offset(offset: Int): ValidatedSortAndLimit =
+  def offset(offset: Long): ValidatedSortAndLimit =
     ValidatedSortAndLimit(None, None, None, Some(offset))
 
-  def limitAndOffset(limit: Int, offset: Int): ValidatedSortAndLimit =
+  def limitAndOffset(limit: Long, offset: Long): ValidatedSortAndLimit =
     ValidatedSortAndLimit(None, None, Some(limit), Some(offset))
 }

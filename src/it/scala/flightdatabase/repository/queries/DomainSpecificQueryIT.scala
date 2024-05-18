@@ -65,9 +65,8 @@ final class DomainSpecificQueryIT extends DbChecker {
 
   // Airline checks
   "All airline queries" should "work correctly" in {
-    // FixMe: these tests do not work although the queries are correct
-//    check(AirlineQueries.selectAllAirlines(emptySortAndLimit))
-//    check(AirlineQueries.selectAllAirlines(someSortAndLimit))
+    check(AirlineQueries.selectAllAirlines(emptySortAndLimit))
+    check(AirlineQueries.selectAllAirlines(someSortAndLimit))
     check(AirlineQueries.deleteAirline(1))
   }
 
