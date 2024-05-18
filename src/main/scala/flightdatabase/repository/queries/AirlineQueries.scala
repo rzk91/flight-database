@@ -19,19 +19,26 @@ private[repository] object AirlineQueries {
   def selectAllAirlines(sortAndLimit: ValidatedSortAndLimit): Query0[Airline] =
     (selectAll ++ sortAndLimit.fragment).query[Airline]
 
-  def selectAirlineBy[V: Put](field: String, values: Nel[V], operator: Operator): Query0[Airline] =
-    (selectAll ++ whereFragment(s"airline.$field", values, operator)).query[Airline]
+  def selectAirlineBy[V: Put](
+    field: String,
+    values: Nel[V],
+    operator: Operator,
+    sortAndLimit: ValidatedSortAndLimit
+  ): Query0[Airline] =
+    (selectAll ++ whereFragment(s"airline.$field", values, operator) ++ sortAndLimit.fragment)
+      .query[Airline]
 
   def selectAirlineByCountry[EV: Put](
     externalField: String,
     externalValues: Nel[EV],
-    operator: Operator
+    operator: Operator,
+    sortAndLimit: ValidatedSortAndLimit
   ): Query0[Airline] = {
     selectAll ++ innerJoinWhereFragment[Airline, Country, EV](
       externalField,
       externalValues,
       operator
-    )
+    ) ++ sortAndLimit.fragment
   }.query[Airline]
 
   def insertAirline(model: AirlineCreate): Update0 =

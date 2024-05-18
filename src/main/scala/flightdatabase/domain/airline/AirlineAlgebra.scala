@@ -20,13 +20,15 @@ trait AirlineAlgebra[F[_]] {
   def getAirlinesBy[V: Put](
     field: String,
     values: Nel[V],
-    operator: Operator
+    operator: Operator,
+    sortAndLimit: ValidatedSortAndLimit
   ): F[ApiResult[Nel[Airline]]]
 
   def getAirlinesByCountry[V: Put](
     field: String,
     values: Nel[V],
-    operator: Operator
+    operator: Operator,
+    sortAndLimit: ValidatedSortAndLimit
   ): F[ApiResult[Nel[Airline]]]
 
   def createAirline(airline: AirlineCreate): F[ApiResult[Long]]

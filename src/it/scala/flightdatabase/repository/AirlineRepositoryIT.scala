@@ -121,15 +121,15 @@ final class AirlineRepositoryIT extends RepositoryCheck {
 
   "Selecting an airline by other fields" should "return the corresponding airlines" in {
     def airlinesByName(name: String): IO[ApiResult[Nel[Airline]]] =
-      repo.getAirlinesBy("name", Nel.one(name), Operator.Equals)
+      repo.getAirlinesBy("name", Nel.one(name), Operator.Equals, emptySortAndLimit)
     def airlinesByIata(iata: String): IO[ApiResult[Nel[Airline]]] =
-      repo.getAirlinesBy("iata", Nel.one(iata), Operator.Equals)
+      repo.getAirlinesBy("iata", Nel.one(iata), Operator.Equals, emptySortAndLimit)
     def airlinesByIcao(icao: String): IO[ApiResult[Nel[Airline]]] =
-      repo.getAirlinesBy("icao", Nel.one(icao), Operator.Equals)
+      repo.getAirlinesBy("icao", Nel.one(icao), Operator.Equals, emptySortAndLimit)
     def airlinesByCallSign(callSign: String): IO[ApiResult[Nel[Airline]]] =
-      repo.getAirlinesBy("call_sign", Nel.one(callSign), Operator.Equals)
+      repo.getAirlinesBy("call_sign", Nel.one(callSign), Operator.Equals, emptySortAndLimit)
     def airlinesByCountryId(id: Long): IO[ApiResult[Nel[Airline]]] =
-      repo.getAirlinesBy("country_id", Nel.one(id), Operator.Equals)
+      repo.getAirlinesBy("country_id", Nel.one(id), Operator.Equals, emptySortAndLimit)
 
     val distinctNames = originalAirlines.map(_.name).distinct
     val distinctCountryIds = originalAirlines.map(_.countryId).distinct
@@ -158,18 +158,41 @@ final class AirlineRepositoryIT extends RepositoryCheck {
     airlinesByCountryId(veryLongIdNotPresent).error shouldBe EntryListEmpty
   }
 
+  it should "also sort and limit the results as per the request" in {
+    repo
+      .getAirlinesBy(
+        "country_id",
+        originalAirlines.map(_.countryId).distinct,
+        Operator.In,
+        ValidatedSortAndLimit.sortAscending("name")
+      )
+      .value shouldBe originalAirlines.sortBy(_.name)
+
+    val limitedAirlines = repo
+      .getAirlinesBy(
+        "country_id",
+        originalAirlines.map(_.countryId).distinct,
+        Operator.In,
+        ValidatedSortAndLimit.limitAndOffset(1, 1)
+      )
+      .value
+
+    limitedAirlines should have size 1
+    limitedAirlines should contain only originalAirlines.tail.head
+  }
+
   "Selecting an airline by country field" should "return the corresponding entries" in {
     def airlineByCountryName(name: String): IO[ApiResult[Nel[Airline]]] =
-      repo.getAirlinesByCountry("name", Nel.one(name), Operator.Equals)
+      repo.getAirlinesByCountry("name", Nel.one(name), Operator.Equals, emptySortAndLimit)
 
     def airlineByCountryIso2(iso2: String): IO[ApiResult[Nel[Airline]]] =
-      repo.getAirlinesByCountry("iso2", Nel.one(iso2), Operator.Equals)
+      repo.getAirlinesByCountry("iso2", Nel.one(iso2), Operator.Equals, emptySortAndLimit)
 
     def airlineByCountryIso3(iso3: String): IO[ApiResult[Nel[Airline]]] =
-      repo.getAirlinesByCountry("iso3", Nel.one(iso3), Operator.Equals)
+      repo.getAirlinesByCountry("iso3", Nel.one(iso3), Operator.Equals, emptySortAndLimit)
 
     def airlineByCountryCode(code: Int): IO[ApiResult[Nel[Airline]]] =
-      repo.getAirlinesByCountry("country_code", Nel.one(code), Operator.Equals)
+      repo.getAirlinesByCountry("country_code", Nel.one(code), Operator.Equals, emptySortAndLimit)
 
     forAll(countryIdMap) {
       case (id, (name, iso2, iso3, code)) =>
@@ -193,27 +216,65 @@ final class AirlineRepositoryIT extends RepositoryCheck {
     airlineByCountryCode(-1).error shouldBe EntryListEmpty
   }
 
+  it should "also sort and limit the results as per the request" in {
+    repo
+      .getAirlinesByCountry(
+        "iso2",
+        Nel.fromListUnsafe(countryIdMap.values.map(_._2).toList),
+        Operator.In,
+        ValidatedSortAndLimit.sortDescending("name")
+      )
+      .value shouldBe originalAirlines.sortBy(_.name).reverse
+
+    val limitedAirlines = repo
+      .getAirlinesByCountry(
+        "name",
+        Nel.fromListUnsafe(countryIdMap.values.map(_._1).toList),
+        Operator.In,
+        ValidatedSortAndLimit.sortAscending("iata").copy(limit = Some(1))
+      )
+      .value
+
+    limitedAirlines should have size 1
+    limitedAirlines should contain only originalAirlines.sortBy(_.iata).head
+  }
+
   "Selecting a non-existent field" should "return an error" in {
     repo
-      .getAirlinesBy(invalidFieldSyntax, Nel.one("value"), Operator.Equals)
+      .getAirlinesBy(invalidFieldSyntax, Nel.one("value"), Operator.Equals, emptySortAndLimit)
       .error shouldBe sqlErrorInvalidSyntax
     repo
-      .getAirlinesByCountry(invalidFieldSyntax, Nel.one("value"), Operator.Equals)
+      .getAirlinesByCountry(
+        invalidFieldSyntax,
+        Nel.one("value"),
+        Operator.Equals,
+        emptySortAndLimit
+      )
       .error shouldBe sqlErrorInvalidSyntax
     repo
-      .getAirlinesBy(invalidFieldColumn, Nel.one("value"), Operator.Equals)
+      .getAirlinesBy(invalidFieldColumn, Nel.one("value"), Operator.Equals, emptySortAndLimit)
       .error shouldBe InvalidField(invalidFieldColumn)
     repo
-      .getAirlinesByCountry(invalidFieldColumn, Nel.one("value"), Operator.Equals)
+      .getAirlinesByCountry(
+        invalidFieldColumn,
+        Nel.one("value"),
+        Operator.Equals,
+        emptySortAndLimit
+      )
       .error shouldBe InvalidField(invalidFieldColumn)
   }
 
   "Selecting an existing field with an invalid value type" should "return an error" in {
     repo
-      .getAirlinesBy("country_id", Nel.one(invalidLongValue), Operator.Equals)
+      .getAirlinesBy("country_id", Nel.one(invalidLongValue), Operator.Equals, emptySortAndLimit)
       .error shouldBe InvalidValueType(invalidLongValue)
     repo
-      .getAirlinesByCountry("domain_name", Nel.one(invalidStringValue), Operator.Equals)
+      .getAirlinesByCountry(
+        "domain_name",
+        Nel.one(invalidStringValue),
+        Operator.Equals,
+        emptySortAndLimit
+      )
       .error shouldBe InvalidValueType(invalidStringValue.toString)
   }
 
@@ -298,7 +359,10 @@ final class AirlineRepositoryIT extends RepositoryCheck {
 
   it should "work if all criteria are met" in {
     val existingAirline =
-      repo.getAirlinesBy("name", Nel.one(newAirline.name), Operator.Equals).value.head
+      repo
+        .getAirlinesBy("name", Nel.one(newAirline.name), Operator.Equals, emptySortAndLimit)
+        .value
+        .head
     val updated = existingAirline.copy(name = updatedName)
     repo.updateAirline(updated).value shouldBe updated.id
 
@@ -349,7 +413,10 @@ final class AirlineRepositoryIT extends RepositoryCheck {
 
   it should "work if all criteria are met" in {
     val existingAirline =
-      repo.getAirlinesBy("name", Nel.one(updatedName), Operator.Equals).value.head
+      repo
+        .getAirlinesBy("name", Nel.one(updatedName), Operator.Equals, emptySortAndLimit)
+        .value
+        .head
     val patch = AirlinePatch(name = Some(patchedName))
     val patched = existingAirline.copy(name = patchedName)
     repo.partiallyUpdateAirline(existingAirline.id, patch).value shouldBe patched
@@ -360,7 +427,10 @@ final class AirlineRepositoryIT extends RepositoryCheck {
 
   "Removing an airline" should "work correctly" in {
     val existingAirline =
-      repo.getAirlinesBy("name", Nel.one(patchedName), Operator.Equals).value.head
+      repo
+        .getAirlinesBy("name", Nel.one(patchedName), Operator.Equals, emptySortAndLimit)
+        .value
+        .head
     repo.removeAirline(existingAirline.id).value shouldBe ()
     repo.getAirline(existingAirline.id).error shouldBe EntryNotFound(existingAirline.id)
   }

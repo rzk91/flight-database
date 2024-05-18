@@ -34,21 +34,27 @@ class AirlineRepository[F[_]: Concurrent] private (
     getFieldList2[Airline, V](sortAndLimit, returnField).execute
 
   override def getAirline(id: Long): F[ApiResult[Airline]] =
-    selectAirlineBy("id", Nel.one(id), Operator.Equals).asSingle(id).execute
+    selectAirlineBy("id", Nel.one(id), Operator.Equals, ValidatedSortAndLimit.empty)
+      .asSingle(id)
+      .execute
 
   override def getAirlinesBy[V: Put](
     field: String,
     values: Nel[V],
-    operator: Operator
+    operator: Operator,
+    sortAndLimit: ValidatedSortAndLimit
   ): F[ApiResult[Nel[Airline]]] =
-    selectAirlineBy(field, values, operator).asNel(Some(field), Some(values)).execute
+    selectAirlineBy(field, values, operator, sortAndLimit).asNel(Some(field), Some(values)).execute
 
   override def getAirlinesByCountry[V: Put](
     field: String,
     values: Nel[V],
-    operator: Operator
+    operator: Operator,
+    sortAndLimit: ValidatedSortAndLimit
   ): F[ApiResult[Nel[Airline]]] =
-    selectAirlineByCountry[V](field, values, operator).asNel(Some(field), Some(values)).execute
+    selectAirlineByCountry[V](field, values, operator, sortAndLimit)
+      .asNel(Some(field), Some(values))
+      .execute
 
   override def createAirline(airline: AirlineCreate): F[ApiResult[Long]] =
     insertAirline(airline).attemptInsert.execute

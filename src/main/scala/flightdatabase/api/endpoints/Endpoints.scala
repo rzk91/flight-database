@@ -65,6 +65,38 @@ abstract class Endpoints[F[_]: Monad](prefix: String) extends Http4sDsl[F] {
       case None    => BadRequest(InvalidField(field).error)
     }
 
+  final protected type G2[V, T] =
+    (String, Nel[V], Operator, ValidatedSortAndLimit) => F[ApiResult[Nel[T]]]
+
+  final protected def processFilter2[IN: TableBase, OUT](
+    field: String,
+    operator: Operator,
+    values: String,
+    sortAndLimit: ValidatedSortAndLimit
+  )(
+    stringF: G2[String, OUT],
+    intF: G2[Int, OUT],
+    longF: G2[Long, OUT],
+    boolF: G2[Boolean, OUT],
+    bigDecimalF: G2[BigDecimal, OUT]
+  )(implicit enc: EntityEncoder[F, Nel[OUT]]): F[Response[F]] =
+    implicitly[TableBase[IN]].fieldTypeMap.get(field) match {
+      case Some(StringType) if StringType.operators(operator) =>
+        values.asStringToResponse(field, operator)(stringF(field, _, operator, sortAndLimit))
+      case Some(IntType) if IntType.operators(operator) =>
+        values.asIntToResponse(field, operator)(intF(field, _, operator, sortAndLimit))
+      case Some(LongType) if LongType.operators(operator) =>
+        values.asLongToResponse(field, operator)(longF(field, _, operator, sortAndLimit))
+      case Some(BooleanType) if BooleanType.operators(operator) =>
+        values.asBooleanToResponse(field, operator)(boolF(field, _, operator, sortAndLimit))
+      case Some(BigDecimalType) if BigDecimalType.operators(operator) =>
+        values.asBigDecimalToResponse(field, operator)(
+          bigDecimalF(field, _, operator, sortAndLimit)
+        )
+      case Some(_) => BadRequest(InvalidOperator(operator).error)
+      case None    => BadRequest(InvalidField(field).error)
+    }
+
   final protected type R[V] = String => F[ApiResult[Nel[V]]]
 
   final protected def processReturnOnly[IN: TableBase](field: Option[String])(
