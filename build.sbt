@@ -64,7 +64,8 @@ val otherDependencies = Seq(
 
 val testingDependencies = Seq(
   "org.scalactic" %% "scalactic" % scalaTestVersion,
-  "org.scalatest" %% "scalatest" % scalaTestVersion % "it,test"
+  "org.scalatest" %% "scalatest" % scalaTestVersion % "it,test",
+  "org.scalamock" %% "scalamock" % "6.0.0" % "test"
 )
 
 val itDependencies = Seq(
