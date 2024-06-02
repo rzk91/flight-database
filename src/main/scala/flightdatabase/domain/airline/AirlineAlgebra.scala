@@ -15,6 +15,7 @@ trait AirlineAlgebra[F[_]] {
     sortAndLimit: ValidatedSortAndLimit,
     returnField: String
   ): F[ApiResult[Nel[V]]]
+
   def getAirline(id: Long): F[ApiResult[Airline]]
 
   def getAirlinesBy[V: Put](
