@@ -4,7 +4,9 @@ import cats.data.{NonEmptyList => Nel}
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 import doobie.Read
-import flightdatabase.domain.{ApiResult, ResultOrder, ValidatedSortAndLimit}
+import flightdatabase.domain.ApiResult
+import flightdatabase.domain.ResultOrder
+import flightdatabase.domain.ValidatedSortAndLimit
 import flightdatabase.domain.airline.Airline
 import flightdatabase.domain.airline.AirlineAlgebra
 import flightdatabase.testutils._
