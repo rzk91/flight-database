@@ -4,6 +4,7 @@ import cats.data.{NonEmptyList => Nel}
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 import doobie.Read
+import flightdatabase.domain.ResultOrder
 import flightdatabase.domain.ValidatedSortAndLimit
 import flightdatabase.domain.airline.Airline
 import flightdatabase.domain.airline.AirlineAlgebra
@@ -39,7 +40,7 @@ final class AirlineEndpointsTest
 
       When("the airline is checked")
       val response = endpoints
-        .run(Request(method = Method.HEAD, uri = createUri(testId)))
+        .run(Request(method = Method.HEAD, uri = createIdUri(testId)))
         .unsafeRunSync()
 
       Then("a 200 status is returned")
@@ -55,7 +56,7 @@ final class AirlineEndpointsTest
 
       When("the airline is checked")
       val response = endpoints
-        .run(Request(method = Method.HEAD, uri = createUri(testId)))
+        .run(Request(method = Method.HEAD, uri = createIdUri(testId)))
         .unsafeRunSync()
 
       Then("a 404 status is returned")
@@ -70,7 +71,7 @@ final class AirlineEndpointsTest
 
       When("the airline is checked")
       val response = endpoints
-        .run(Request(method = Method.HEAD, uri = createUri(invalidTestId)))
+        .run(Request(method = Method.HEAD, uri = createIdUri(invalidTestId)))
         .unsafeRunSync()
 
       Then("a 404 status is returned")
@@ -82,10 +83,12 @@ final class AirlineEndpointsTest
   }
 
   Feature("Fetching airlines") {
+    val emptySortAndLimit = ValidatedSortAndLimit.empty
+
     Scenario("Fetching all airlines") {
       Given("no query parameters")
       (mockAlgebra.getAirlines _)
-        .when(ValidatedSortAndLimit.empty)
+        .when(emptySortAndLimit)
         .returns(IO.pure(toApiResult(originalAirlines)))
 
       When("all airlines are fetched")
@@ -98,43 +101,120 @@ final class AirlineEndpointsTest
       response.as[Nel[Airline]].unsafeRunSync() shouldBe originalAirlines
 
       And("the right method should be called only once")
-      (mockAlgebra.getAirlines _).verify(ValidatedSortAndLimit.empty).once()
+      (mockAlgebra.getAirlines _).verify(emptySortAndLimit).once()
       (mockAlgebra
         .getAirlinesOnly(_: ValidatedSortAndLimit, _: String)(_: Read[String]))
         .verify(*, *, *)
         .never()
     }
 
-    // FixMe: This test fails because of some unknown cats-effect issue
-    ignore("Fetching only name field for all airlines") {
+    Scenario("Fetching only name field for all airlines") {
+      val tableField = "airline.name"
+      val onlyAirlineNames = originalAirlines.map(_.name)
+
       Given("query parameters to return only the name field")
       val query = "return-only=name"
       (mockAlgebra
         .getAirlinesOnly(_: ValidatedSortAndLimit, _: String)(_: Read[String]))
-        .when(ValidatedSortAndLimit.empty, "name", Read[String])
-        .returns(IO.pure(toApiResult(originalAirlines.map(_.name))))
+        .when(emptySortAndLimit, tableField, *)
+        .returns(IO.pure(toApiResult(onlyAirlineNames)))
 
       When("all airlines are fetched")
       val response = endpoints
-        .run(Request(method = Method.GET, uri = createUri(query, None)))
+        .run(Request(method = Method.GET, uri = createQueryUri(query, None)))
         .unsafeRunSync()
 
       Then("a 200 status is returned")
       response.status shouldBe Ok
 
       And("the response body should contain only the name field")
-      response.as[Nel[String]].unsafeRunSync() shouldBe originalAirlines.map(_.name)
+      response.as[Nel[String]].unsafeRunSync() shouldBe onlyAirlineNames
 
       And("the right method should be called only once")
       (mockAlgebra
         .getAirlinesOnly(_: ValidatedSortAndLimit, _: String)(_: Read[String]))
-        .verify(ValidatedSortAndLimit.empty, "name", Read[String])
+        .verify(emptySortAndLimit, tableField, *)
         .once()
       (mockAlgebra
         .getAirlinesOnly(_: ValidatedSortAndLimit, _: String)(_: Read[Long]))
         .verify(*, *, *)
         .never()
 
+      (mockAlgebra.getAirlines _).verify(*).never()
+    }
+
+    Scenario("Fetching and sorting only name fields for all airlines") {
+      val tableField = "airline.name"
+      val sortByName = ValidatedSortAndLimit.sort(tableField)
+      val airlineNamesSorted = originalAirlines.map(_.name).sorted
+
+      Given("query parameters to return only the name field and sort by it")
+      val query = "return-only=name&sort-by=name"
+      (mockAlgebra
+        .getAirlinesOnly(_: ValidatedSortAndLimit, _: String)(_: Read[String]))
+        .when(sortByName, tableField, *)
+        .returns(IO.pure(toApiResult(airlineNamesSorted)))
+
+      When("all airlines are fetched")
+      val response = endpoints
+        .run(Request(method = Method.GET, uri = createQueryUri(query, None)))
+        .unsafeRunSync()
+
+      Then("a 200 status is returned")
+      response.status shouldBe Ok
+
+      And("the response body should contain only the name field sorted")
+      response.as[Nel[String]].unsafeRunSync() shouldBe airlineNamesSorted
+
+      And("the right method should be called only once")
+      (mockAlgebra
+        .getAirlinesOnly(_: ValidatedSortAndLimit, _: String)(_: Read[String]))
+        .verify(sortByName, tableField, *)
+        .once()
+      (mockAlgebra
+        .getAirlinesOnly(_: ValidatedSortAndLimit, _: String)(_: Read[BigDecimal]))
+        .verify(*, *, *)
+        .never()
+      (mockAlgebra.getAirlines _).verify(*).never()
+    }
+
+    Scenario("Fetching, sorting, and limiting only IATA fields for all airlines") {
+      val readField = "airline.iata"
+      val sortAndLimit = ValidatedSortAndLimit(
+        sortBy = Some("airline.name"),
+        order = Some(ResultOrder.Descending),
+        limit = Some(1),
+        offset = Some(1)
+      )
+      val airlineIataSorted = Nel.one(originalAirlines.map(_.iata).sorted.reverse.tail.head)
+
+      Given("query parameters to return only IATA, sort by name in reverse, and take second result")
+      val query = s"return-only=iata&sort-by=name&order=desc&limit=1&offset=1"
+      (mockAlgebra
+        .getAirlinesOnly(_: ValidatedSortAndLimit, _: String)(_: Read[String]))
+        .when(sortAndLimit, readField, *)
+        .returns(IO.pure(toApiResult(airlineIataSorted)))
+
+      When("all airlines are fetched")
+      val response = endpoints
+        .run(Request(method = Method.GET, uri = createQueryUri(query, None)))
+        .unsafeRunSync()
+
+      Then("a 200 status is returned")
+      response.status shouldBe Ok
+
+      And("the response body should contain only the IATA field sorted and limited")
+      response.as[Nel[String]].unsafeRunSync() shouldBe airlineIataSorted
+
+      And("the right method should be called only once")
+      (mockAlgebra
+        .getAirlinesOnly(_: ValidatedSortAndLimit, _: String)(_: Read[String]))
+        .verify(sortAndLimit, readField, *)
+        .once()
+      (mockAlgebra
+        .getAirlinesOnly(_: ValidatedSortAndLimit, _: String)(_: Read[BigDecimal]))
+        .verify(*, *, *)
+        .never()
       (mockAlgebra.getAirlines _).verify(*).never()
     }
   }

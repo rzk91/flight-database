@@ -25,6 +25,9 @@ object ValidatedSortAndLimit {
   // Test helpers
   def empty: ValidatedSortAndLimit = ValidatedSortAndLimit(None, None, None, None)
 
+  def sort(by: String): ValidatedSortAndLimit =
+    ValidatedSortAndLimit(Some(by), None, None, None)
+
   def sortAscending(sortBy: String): ValidatedSortAndLimit =
     ValidatedSortAndLimit(Some(sortBy), Some(ResultOrder.Ascending), None, None)
 
