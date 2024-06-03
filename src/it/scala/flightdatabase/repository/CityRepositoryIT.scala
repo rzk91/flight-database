@@ -17,8 +17,8 @@ import flightdatabase.domain.SqlError
 import flightdatabase.domain.city.City
 import flightdatabase.domain.city.CityCreate
 import flightdatabase.domain.city.CityPatch
-import flightdatabase.testutils.RepositoryCheck
-import flightdatabase.testutils.implicits._
+import flightdatabase.itutils.RepositoryCheck
+import flightdatabase.itutils.implicits._
 import org.scalatest.Inspectors.forAll
 
 final class CityRepositoryIT extends RepositoryCheck {

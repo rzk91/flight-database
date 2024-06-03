@@ -1,4 +1,4 @@
-package flightdatabase.testutils.implicits
+package flightdatabase.itutils.implicits
 
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global

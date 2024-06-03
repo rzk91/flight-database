@@ -12,8 +12,8 @@ import flightdatabase.domain.EntryNotFound
 import flightdatabase.domain.airline_airplane.AirlineAirplane
 import flightdatabase.domain.airline_airplane.AirlineAirplaneCreate
 import flightdatabase.domain.airline_airplane.AirlineAirplanePatch
-import flightdatabase.testutils.RepositoryCheck
-import flightdatabase.testutils.implicits._
+import flightdatabase.itutils.RepositoryCheck
+import flightdatabase.itutils.implicits._
 import flightdatabase.utils.implicits.iterableToRichIterable
 import org.scalatest.Inspectors.forAll
 

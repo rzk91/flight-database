@@ -8,7 +8,7 @@ import flightdatabase.domain.airplane.AirplaneCreate
 import flightdatabase.domain.city.City
 import flightdatabase.domain.country.Country
 import flightdatabase.domain.manufacturer.Manufacturer
-import flightdatabase.testutils.DbChecker
+import flightdatabase.itutils.DbChecker
 
 // TODO: Checks are incomplete (e.g. insert, update, failure checks, etc. are missing)
 final class DomainSpecificQueryIT extends DbChecker {

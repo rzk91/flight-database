@@ -17,8 +17,8 @@ import flightdatabase.domain.SqlError
 import flightdatabase.domain.manufacturer.Manufacturer
 import flightdatabase.domain.manufacturer.ManufacturerCreate
 import flightdatabase.domain.manufacturer.ManufacturerPatch
-import flightdatabase.testutils.RepositoryCheck
-import flightdatabase.testutils.implicits._
+import flightdatabase.itutils.RepositoryCheck
+import flightdatabase.itutils.implicits._
 import org.scalatest.Inspectors.forAll
 
 final class ManufacturerRepositoryIT extends RepositoryCheck {

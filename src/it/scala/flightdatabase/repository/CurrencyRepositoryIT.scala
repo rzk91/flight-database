@@ -15,8 +15,8 @@ import flightdatabase.domain.SqlError
 import flightdatabase.domain.currency.Currency
 import flightdatabase.domain.currency.CurrencyCreate
 import flightdatabase.domain.currency.CurrencyPatch
-import flightdatabase.testutils.RepositoryCheck
-import flightdatabase.testutils.implicits._
+import flightdatabase.itutils.RepositoryCheck
+import flightdatabase.itutils.implicits._
 import org.scalatest.Inspectors.forAll
 
 final class CurrencyRepositoryIT extends RepositoryCheck {

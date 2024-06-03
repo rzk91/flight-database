@@ -7,8 +7,8 @@ import flightdatabase.api.Operator
 import flightdatabase.domain.EntryListEmpty
 import flightdatabase.domain.city.City
 import flightdatabase.domain.country.Country
-import flightdatabase.testutils.RepositoryCheck
-import flightdatabase.testutils.implicits._
+import flightdatabase.itutils.RepositoryCheck
+import flightdatabase.itutils.implicits._
 import flightdatabase.utils.FieldValues
 import flightdatabase.utils.implicits._
 

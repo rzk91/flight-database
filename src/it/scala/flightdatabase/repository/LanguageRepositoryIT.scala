@@ -15,8 +15,8 @@ import flightdatabase.domain.SqlError
 import flightdatabase.domain.language.Language
 import flightdatabase.domain.language.LanguageCreate
 import flightdatabase.domain.language.LanguagePatch
-import flightdatabase.testutils.RepositoryCheck
-import flightdatabase.testutils.implicits._
+import flightdatabase.itutils.RepositoryCheck
+import flightdatabase.itutils.implicits._
 import org.scalatest.Inspectors.forAll
 
 final class LanguageRepositoryIT extends RepositoryCheck {
