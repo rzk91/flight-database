@@ -3,8 +3,13 @@ package flightdatabase.api.endpoints
 import cats.data.{NonEmptyList => Nel}
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
+import doobie.Put
 import doobie.Read
+import flightdatabase.api.Operator
 import flightdatabase.domain.ApiResult
+import flightdatabase.domain.EntryInvalidFormat
+import flightdatabase.domain.EntryListEmpty
+import flightdatabase.domain.EntryNotFound
 import flightdatabase.domain.ResultOrder
 import flightdatabase.domain.ValidatedSortAndLimit
 import flightdatabase.domain.airline.Airline
@@ -14,6 +19,7 @@ import flightdatabase.testutils.implicits._
 import org.http4s.Status._
 import org.http4s.circe.CirceEntityCodec._
 import org.scalamock.function.StubFunction3
+import org.scalamock.function.StubFunction5
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.GivenWhenThen
 import org.scalatest.featurespec.AnyFeatureSpecLike
@@ -24,6 +30,7 @@ final class AirlineEndpointsTest
     with AnyFeatureSpecLike
     with GivenWhenThen
     with Matchers
+    with CustomMatchers
     with MockFactory {
   val mockAlgebra: AirlineAlgebra[IO] = stub[AirlineAlgebra[IO]]
   override val api: Endpoints[IO] = AirlineEndpoints[IO]("/airlines", mockAlgebra)
@@ -180,6 +187,161 @@ final class AirlineEndpointsTest
       mockAirlinesOnly[String].verify(sortAndLimit, readField, *).once()
       mockAirlinesOnly[BigDecimal].verify(*, *, *).never()
       (mockAlgebra.getAirlines _).verify(*).never()
+    }
+
+    Scenario("An empty list is returned") {
+      Given("no airlines in the database")
+      (mockAlgebra.getAirlines _)
+        .when(emptySortAndLimit)
+        .returns(EntryListEmpty.elevate[IO, Nel[Airline]])
+
+      When("all airlines are fetched")
+      val response = getResponse().unsafeRunSync()
+
+      Then("a 200 status is returned")
+      response.status shouldBe Ok
+
+      And("the response body should indicate an empty list")
+      response.bodyText.compile.string.unsafeRunSync() shouldBe EntryListEmpty.error
+
+      And("the right method should be called only once")
+      (mockAlgebra.getAirlines _).verify(emptySortAndLimit).once()
+      mockAirlinesOnly[String].verify(*, *, *).never()
+    }
+
+    Scenario("An invalid return-only field is passed") {
+      Given("an invalid return-only field")
+      val query = "return-only=invalid"
+
+      When("all airlines are fetched")
+      val response = getResponse(createQueryUri(query)).unsafeRunSync()
+
+      Then("a 400 status is returned")
+      response.status shouldBe BadRequest
+
+      And("no algebra methods should be called")
+      (mockAlgebra.getAirlines _).verify(*).never()
+      mockAirlinesOnly[String].verify(*, *, *).never()
+    }
+
+    Scenario("Invalid sorting or limiting parameters are passed") {
+      Given("invalid sorting or limiting parameters")
+      val query = "sort-by=invalid&limit=-1"
+
+      When("all airlines are fetched")
+      val response = getResponse(createQueryUri(query)).unsafeRunSync()
+
+      Then("a 400 status is returned")
+      response.status shouldBe BadRequest
+
+      And("All invalid parameters must be mentioned in the response body")
+      response.bodyText.compile.string.unsafeRunSync() should includeAllOf(
+        query.split("[&=]").toIndexedSeq: _*
+      )
+
+      And("no algebra methods should be called")
+      (mockAlgebra.getAirlines _).verify(*).never()
+      mockAirlinesOnly[String].verify(*, *, *).never()
+    }
+  }
+
+  Feature("Fetching an airline by ID") {
+    Scenario("Fetching an existing airline") {
+      Given("an existing airline ID")
+      (mockAlgebra.getAirline _).when(testId).returns(originalAirlines.head.asResult[IO])
+
+      When("the airline is fetched")
+      val response = getResponse(createIdUri(testId)).unsafeRunSync()
+
+      Then("a 200 status is returned")
+      response.status shouldBe Ok
+
+      And("the response body should contain the airline")
+      response.as[Airline].unsafeRunSync() shouldBe originalAirlines.head
+
+      And("the right method should be called only once")
+      (mockAlgebra.getAirline _).verify(testId).once()
+    }
+
+    Scenario("Fetching a non-existing airline") {
+      val entryNotFound = EntryNotFound(testId)
+
+      Given("a non-existing airline ID")
+      (mockAlgebra.getAirline _).when(testId).returns(entryNotFound.elevate[IO, Airline])
+
+      When("the airline is fetched")
+      val response = getResponse(createIdUri(testId)).unsafeRunSync()
+
+      Then("a 404 status is returned")
+      response.status shouldBe NotFound
+
+      And("the response body should contain the error message")
+      response.bodyText.compile.string.unsafeRunSync() shouldBe entryNotFound.error
+
+      And("the right method should be called only once")
+      (mockAlgebra.getAirline _).verify(testId).once()
+    }
+
+    Scenario("An invalid airline ID") {
+      Given("an invalid airline ID")
+
+      When("the airline is fetched")
+      val response = getResponse(createIdUri(invalidTestId)).unsafeRunSync()
+
+      Then("a 400 status is returned")
+      response.status shouldBe BadRequest
+
+      And("the response body should contain the error message")
+      response.bodyText.compile.string.unsafeRunSync() shouldBe EntryInvalidFormat.error
+
+      And("no algebra methods should be called")
+      (mockAlgebra.getAirline _).verify(*).never()
+    }
+  }
+
+  Feature("Fetching airlines by some field") {
+    val emptySortAndLimit = ValidatedSortAndLimit.empty
+    val path = Some("filter")
+    def mockAirlinesBy[V]: StubFunction5[
+      String,
+      Nel[V],
+      Operator,
+      ValidatedSortAndLimit,
+      Put[V],
+      IO[ApiResult[Nel[Airline]]]
+    ] =
+      mockAlgebra.getAirlinesBy(
+        _: String,
+        _: Nel[V],
+        _: Operator,
+        _: ValidatedSortAndLimit
+      )(_: Put[V])
+
+    Scenario("Fetching airlines by IATA") {
+      val field = "iata"
+      val iata = "LH"
+      val airlinesByIata = Nel.fromListUnsafe(originalAirlines.filter(_.iata == iata))
+
+      Given("an IATA value")
+      mockAirlinesBy[String]
+        .when(field, Nel.one(iata), Operator.Equals, emptySortAndLimit, *)
+        .returns(airlinesByIata.asResult[IO])
+
+      When("the airlines are fetched")
+      val query = s"field=$field&value=$iata"
+      val response = getResponse(createQueryUri(query, path)).unsafeRunSync()
+
+      Then("a 200 status is returned")
+      response.status shouldBe Ok
+
+      And("the response body should contain the airlines with the given IATA")
+      response.as[Nel[Airline]].unsafeRunSync() shouldBe airlinesByIata
+
+      And("the right method should be called only once")
+      mockAirlinesBy[String]
+        .verify(field, Nel.one(iata), Operator.Equals, emptySortAndLimit, *)
+        .once()
+      mockAirlinesBy[Long].verify(*, *, *, *, *).never()
     }
   }
 }
