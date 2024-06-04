@@ -3,13 +3,15 @@ package flightdatabase.api.endpoints
 import cats.data.{NonEmptyList => Nel}
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
+import cats.syntax.foldable._
 import doobie.Put
 import doobie.Read
 import flightdatabase.api.Operator
 import flightdatabase.domain.ApiResult
-import flightdatabase.domain.EntryInvalidFormat
 import flightdatabase.domain.EntryListEmpty
 import flightdatabase.domain.EntryNotFound
+import flightdatabase.domain.InvalidField
+import flightdatabase.domain.InvalidOperator
 import flightdatabase.domain.ResultOrder
 import flightdatabase.domain.ValidatedSortAndLimit
 import flightdatabase.domain.airline.Airline
@@ -73,7 +75,7 @@ final class AirlineEndpointsTest
       Given("an invalid airline ID")
 
       When("the airline is checked")
-      val response = headResponse(createIdUri(invalidTestId)).unsafeRunSync()
+      val response = headResponse(createIdUri(invalid)).unsafeRunSync()
 
       Then("a 404 status is returned")
       response.status shouldBe NotFound
@@ -211,13 +213,16 @@ final class AirlineEndpointsTest
 
     Scenario("An invalid return-only field is passed") {
       Given("an invalid return-only field")
-      val query = "return-only=invalid"
+      val query = s"return-only=$invalid"
 
       When("all airlines are fetched")
       val response = getResponse(createQueryUri(query)).unsafeRunSync()
 
       Then("a 400 status is returned")
       response.status shouldBe BadRequest
+
+      And("the response body should contain the error message")
+      response.bodyText.compile.string.unsafeRunSync() shouldBe InvalidField(invalid).error
 
       And("no algebra methods should be called")
       (mockAlgebra.getAirlines _).verify(*).never()
@@ -226,7 +231,7 @@ final class AirlineEndpointsTest
 
     Scenario("Invalid sorting or limiting parameters are passed") {
       Given("invalid sorting or limiting parameters")
-      val query = "sort-by=invalid&limit=-1"
+      val query = s"sort-by=$invalid&limit=-1"
 
       When("all airlines are fetched")
       val response = getResponse(createQueryUri(query)).unsafeRunSync()
@@ -286,13 +291,10 @@ final class AirlineEndpointsTest
       Given("an invalid airline ID")
 
       When("the airline is fetched")
-      val response = getResponse(createIdUri(invalidTestId)).unsafeRunSync()
+      val response = getResponse(createIdUri(invalid)).unsafeRunSync()
 
-      Then("a 400 status is returned")
-      response.status shouldBe BadRequest
-
-      And("the response body should contain the error message")
-      response.bodyText.compile.string.unsafeRunSync() shouldBe EntryInvalidFormat.error
+      Then("a 404 status is returned")
+      response.status shouldBe NotFound
 
       And("no algebra methods should be called")
       (mockAlgebra.getAirline _).verify(*).never()
@@ -341,6 +343,151 @@ final class AirlineEndpointsTest
       mockAirlinesBy[String]
         .verify(field, Nel.one(iata), Operator.Equals, emptySortAndLimit, *)
         .once()
+      mockAirlinesBy[Long].verify(*, *, *, *, *).never()
+    }
+
+    Scenario("Fetching using the IN operator") {
+      val field = "id"
+      val ids = Nel.fromListUnsafe((1L to 5L).toList)
+      val airlinesByIds = Nel.fromListUnsafe(originalAirlines.filter(a => ids.exists(_ == a.id)))
+
+      Given("a list of IDs")
+      mockAirlinesBy[Long]
+        .when(field, ids, Operator.In, emptySortAndLimit, *)
+        .returns(airlinesByIds.asResult[IO])
+
+      When("the airlines are fetched")
+      val query = s"field=$field&operator=in&value=${ids.mkString_(",")}"
+      val response = getResponse(createQueryUri(query, path)).unsafeRunSync()
+
+      Then("a 200 status is returned")
+      response.status shouldBe Ok
+
+      And("the response body should contain the airlines with the given IDs")
+      response.as[Nel[Airline]].unsafeRunSync() shouldBe airlinesByIds
+
+      And("the right method should be called only once")
+      mockAirlinesBy[Long].verify(field, ids, Operator.In, emptySortAndLimit, *).once()
+      mockAirlinesBy[String].verify(*, *, *, *, *).never()
+    }
+
+    Scenario("Fetching and sorting airlines by ICAO") {
+      val field = "icao"
+      val notIcaos = Nel.of("QTR", "IDG")
+      val airlinesByIcao =
+        Nel
+          .fromListUnsafe(originalAirlines.filter(a => notIcaos.exists(_ != a.icao)))
+          .sortBy(_.icao)
+          .reverse
+      val sortAndLimit = ValidatedSortAndLimit.sortDescending("airline.icao")
+
+      Given("a list of ICAO values")
+      mockAirlinesBy[String]
+        .when(field, notIcaos, Operator.NotIn, sortAndLimit, *)
+        .returns(airlinesByIcao.asResult[IO])
+
+      When("the airlines are fetched")
+      val query =
+        s"field=$field&operator=not_in&value=${notIcaos.mkString_(",")}&sort-by=icao&order=desc"
+      val response = getResponse(createQueryUri(query, path)).unsafeRunSync()
+
+      Then("a 200 status is returned")
+      response.status shouldBe Ok
+
+      And("the response body should contain the airlines with the given ICAO sorted in reverse")
+      response.as[Nel[Airline]].unsafeRunSync() shouldBe airlinesByIcao
+
+      And("the right method should be called only once")
+      mockAirlinesBy[String].verify(field, notIcaos, Operator.NotIn, sortAndLimit, *).once()
+      mockAirlinesBy[Long].verify(*, *, *, *, *).never()
+    }
+
+    Scenario("Invalid field") {
+      Given("an invalid field")
+      val query = s"field=$invalid&value=1"
+
+      When("the airlines are fetched")
+      val response = getResponse(createQueryUri(query, path)).unsafeRunSync()
+
+      Then("a 400 status is returned")
+      response.status shouldBe BadRequest
+
+      And("the response body should contain the error message")
+      response.bodyText.compile.string.unsafeRunSync() shouldBe InvalidField(invalid).error
+
+      And("no algebra methods should be called")
+      mockAirlinesBy[String].verify(*, *, *, *, *).never()
+      mockAirlinesBy[Long].verify(*, *, *, *, *).never()
+    }
+
+    Scenario("Empty field") {
+      Given("an empty field")
+      val query = "field=&value=1"
+
+      When("the airlines are fetched")
+      val response = getResponse(createQueryUri(query, path)).unsafeRunSync()
+
+      Then("a 400 status is returned")
+      response.status shouldBe BadRequest
+
+      And("the response body should contain the error message")
+      response.bodyText.compile.string.unsafeRunSync() shouldBe InvalidField("").error
+
+      And("no algebra methods should be called")
+      mockAirlinesBy[String].verify(*, *, *, *, *).never()
+      mockAirlinesBy[Long].verify(*, *, *, *, *).never()
+    }
+
+    // FixMe: Should this be a 404 status? or a 400 status?
+    Scenario("Invalid operator") {
+      Given("an invalid operator")
+      val query = s"field=id&operator=$invalid&value=1"
+
+      When("the airlines are fetched")
+      val response = getResponse(createQueryUri(query, path)).unsafeRunSync()
+
+      Then("a 404 status is returned")
+      response.status shouldBe NotFound
+
+      And("no algebra methods should be called")
+      mockAirlinesBy[String].verify(*, *, *, *, *).never()
+      mockAirlinesBy[Long].verify(*, *, *, *, *).never()
+    }
+
+    Scenario("Invalid operator because of field type") {
+      val invalidOperator = Operator.StartsWith
+
+      Given("an invalid operator for the field type")
+      val query = s"field=id&operator=${invalidOperator.entryName}&value=1"
+
+      When("the airlines are fetched")
+      val response = getResponse(createQueryUri(query, path)).unsafeRunSync()
+
+      Then("a 400 status is returned")
+      response.status shouldBe BadRequest
+
+      And("the response body should contain the error message")
+      response.bodyText.compile.string
+        .unsafeRunSync() shouldBe InvalidOperator(invalidOperator).error
+
+      And("no algebra methods should be called")
+      mockAirlinesBy[String].verify(*, *, *, *, *).never()
+      mockAirlinesBy[Long].verify(*, *, *, *, *).never()
+    }
+
+    Scenario("Invalid filter path") {
+      Given("an invalid filter path")
+      val invalidPath = Some(invalid)
+
+      When("the airlines are fetched")
+      val query = "field=id&value=1"
+      val response = getResponse(createQueryUri(query, invalidPath)).unsafeRunSync()
+
+      Then("a 404 status is returned")
+      response.status shouldBe NotFound
+
+      And("no algebra methods should be called")
+      mockAirlinesBy[String].verify(*, *, *, *, *).never()
       mockAirlinesBy[Long].verify(*, *, *, *, *).never()
     }
   }

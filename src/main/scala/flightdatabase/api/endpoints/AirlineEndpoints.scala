@@ -50,8 +50,8 @@ class AirlineEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airli
       }
 
     // GET /airlines/{id}
-    case GET -> Root / id =>
-      id.asLong.toResponse(algebra.getAirline)
+    case GET -> Root / LongVar(id) =>
+      algebra.getAirline(id).flatMap(_.toResponse)
 
     // GET /airlines/country/filter?field={country_field}&operator={operator, default: eq}&value={value}&sort-by={country_field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root / "country" / "filter" :?
