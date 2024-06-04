@@ -11,24 +11,22 @@ import flightdatabase.domain.airline.Airline
 import flightdatabase.domain.airline.AirlineAlgebra
 import flightdatabase.testutils._
 import flightdatabase.testutils.implicits._
-import org.http4s.HttpApp
-import org.http4s.Method
-import org.http4s.Request
 import org.http4s.Status._
 import org.http4s.circe.CirceEntityCodec._
 import org.scalamock.function.StubFunction3
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.GivenWhenThen
-import org.scalatest.featurespec.AnyFeatureSpec
+import org.scalatest.featurespec.AnyFeatureSpecLike
 import org.scalatest.matchers.should.Matchers
 
 final class AirlineEndpointsTest
-    extends AnyFeatureSpec
+    extends EndpointsSpec[IO]
+    with AnyFeatureSpecLike
     with GivenWhenThen
     with Matchers
     with MockFactory {
   val mockAlgebra: AirlineAlgebra[IO] = stub[AirlineAlgebra[IO]]
-  val endpoints: HttpApp[IO] = AirlineEndpoints[IO]("/airlines", mockAlgebra).endpoints.orNotFound
+  override val api: Endpoints[IO] = AirlineEndpoints[IO]("/airlines", mockAlgebra)
 
   val originalAirlines: Nel[Airline] = Nel.of(
     Airline(1, "Lufthansa", "LH", "DLH", "LUFTHANSA", 2),
@@ -41,9 +39,7 @@ final class AirlineEndpointsTest
       (mockAlgebra.doesAirlineExist _).when(testId).returns(IO.pure(true))
 
       When("the airline is checked")
-      val response = endpoints
-        .run(Request(method = Method.HEAD, uri = createIdUri(testId)))
-        .unsafeRunSync()
+      val response = headResponse(createIdUri(testId)).unsafeRunSync()
 
       Then("a 200 status is returned")
       response.status shouldBe Ok
@@ -57,9 +53,7 @@ final class AirlineEndpointsTest
       (mockAlgebra.doesAirlineExist _).when(testId).returns(IO.pure(false))
 
       When("the airline is checked")
-      val response = endpoints
-        .run(Request(method = Method.HEAD, uri = createIdUri(testId)))
-        .unsafeRunSync()
+      val response = headResponse(createIdUri(testId)).unsafeRunSync()
 
       Then("a 404 status is returned")
       response.status shouldBe NotFound
@@ -72,9 +66,7 @@ final class AirlineEndpointsTest
       Given("an invalid airline ID")
 
       When("the airline is checked")
-      val response = endpoints
-        .run(Request(method = Method.HEAD, uri = createIdUri(invalidTestId)))
-        .unsafeRunSync()
+      val response = headResponse(createIdUri(invalidTestId)).unsafeRunSync()
 
       Then("a 404 status is returned")
       response.status shouldBe NotFound
@@ -95,7 +87,7 @@ final class AirlineEndpointsTest
       (mockAlgebra.getAirlines _).when(emptySortAndLimit).returns(originalAirlines.asResult[IO])
 
       When("all airlines are fetched")
-      val response = endpoints.run(Request(method = Method.GET)).unsafeRunSync()
+      val response = getResponse().unsafeRunSync()
 
       Then("a 200 status is returned")
       response.status shouldBe Ok
@@ -119,9 +111,7 @@ final class AirlineEndpointsTest
         .returns(onlyAirlineNames.asResult[IO])
 
       When("all airlines are fetched")
-      val response = endpoints
-        .run(Request(method = Method.GET, uri = createQueryUri(query, None)))
-        .unsafeRunSync()
+      val response = getResponse(createQueryUri(query)).unsafeRunSync()
 
       Then("a 200 status is returned")
       response.status shouldBe Ok
@@ -147,9 +137,7 @@ final class AirlineEndpointsTest
         .returns(airlineNamesSorted.asResult[IO])
 
       When("all airlines are fetched")
-      val response = endpoints
-        .run(Request(method = Method.GET, uri = createQueryUri(query, None)))
-        .unsafeRunSync()
+      val response = getResponse(createQueryUri(query)).unsafeRunSync()
 
       Then("a 200 status is returned")
       response.status shouldBe Ok
@@ -180,9 +168,7 @@ final class AirlineEndpointsTest
         .returns(airlineIataSorted.asResult[IO])
 
       When("all airlines are fetched")
-      val response = endpoints
-        .run(Request(method = Method.GET, uri = createQueryUri(query, None)))
-        .unsafeRunSync()
+      val response = getResponse(createQueryUri(query)).unsafeRunSync()
 
       Then("a 200 status is returned")
       response.status shouldBe Ok

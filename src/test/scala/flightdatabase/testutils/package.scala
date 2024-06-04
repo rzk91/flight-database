@@ -8,6 +8,6 @@ package object testutils {
   def createIdUri(id: String): Uri = Uri.unsafeFromString(s"/$id")
   def createIdUri(id: Long): Uri = createIdUri(id.toString)
 
-  def createQueryUri(q: String, pathParam: Option[String]): Uri =
+  def createQueryUri(q: String, pathParam: Option[String] = None): Uri =
     Uri.unsafeFromString(pathParam.fold(s"?$q")(p => s"/$p?$q"))
 }
