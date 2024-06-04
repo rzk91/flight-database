@@ -120,20 +120,16 @@ package object endpoints {
 
     def toResponse[F[_]: Monad, O](
       f: A => F[ApiResult[O]]
-    )(implicit dsl: Http4sDsl[F], enc: EntityEncoder[F, O]): F[Response[F]] = {
-      import dsl._
-      maybeField.fold(BadRequest(EntryInvalidFormat.error))(f(_).flatMap(_.toResponse))
-    }
+    )(implicit dsl: Http4sDsl[F], enc: EntityEncoder[F, O]): F[Response[F]] =
+      maybeField.fold(EntryInvalidFormat.elevate[F, O])(f(_)).flatMap(_.toResponse)
   }
 
   implicit class RichOptionTuple[A, B](private val maybeFields: Option[(A, B)]) extends AnyVal {
 
     def toResponse[F[_]: Monad, O](
       f: (A, B) => F[ApiResult[O]]
-    )(implicit dsl: Http4sDsl[F], enc: EntityEncoder[F, O]): F[Response[F]] = {
-      import dsl._
-      maybeFields.fold(BadRequest(EntryInvalidFormat.error))(f.tupled(_).flatMap(_.toResponse))
-    }
+    )(implicit dsl: Http4sDsl[F], enc: EntityEncoder[F, O]): F[Response[F]] =
+      maybeFields.fold(EntryInvalidFormat.elevate[F, O])(f.tupled(_)).flatMap(_.toResponse)
   }
 
   implicit class ValuesOps(private val values: String) extends AnyVal {

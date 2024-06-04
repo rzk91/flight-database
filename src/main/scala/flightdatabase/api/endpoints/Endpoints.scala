@@ -61,8 +61,8 @@ abstract class Endpoints[F[_]: Monad](prefix: String) extends Http4sDsl[F] {
         values.asBooleanToResponse(field, operator)(boolF(field, _, operator))
       case Some(BigDecimalType) if BigDecimalType.operators(operator) =>
         values.asBigDecimalToResponse(field, operator)(bigDecimalF(field, _, operator))
-      case Some(_) => BadRequest(InvalidOperator(operator).error)
-      case None    => BadRequest(InvalidField(field).error)
+      case Some(_) => InvalidOperator(operator).asResult[Nel[OUT]].toResponse[F]
+      case None    => InvalidField(field).asResult[Nel[OUT]].toResponse[F]
     }
 
   final protected type G2[V, T] =
@@ -93,8 +93,8 @@ abstract class Endpoints[F[_]: Monad](prefix: String) extends Http4sDsl[F] {
         values.asBigDecimalToResponse(field, operator)(
           bigDecimalF(field, _, operator, sortAndLimit)
         )
-      case Some(_) => BadRequest(InvalidOperator(operator).error)
-      case None    => BadRequest(InvalidField(field).error)
+      case Some(_) => InvalidOperator(operator).asResult[Nel[OUT]].toResponse[F]
+      case None    => InvalidField(field).asResult[Nel[OUT]].toResponse[F]
     }
 
   final protected type R[V] = String => F[ApiResult[Nel[V]]]
@@ -117,7 +117,7 @@ abstract class Endpoints[F[_]: Monad](prefix: String) extends Http4sDsl[F] {
           case Some(LongType)       => longF(tableField).flatMap(_.toResponse[F])
           case Some(BooleanType)    => boolF(tableField).flatMap(_.toResponse[F])
           case Some(BigDecimalType) => bigDecimalF(tableField).flatMap(_.toResponse[F])
-          case None                 => BadRequest(InvalidField(field).error)
+          case None                 => InvalidField(field).asResult[Nel[IN]].toResponse[F]
         }
       case None => allF.flatMap(_.toResponse[F])
     }
@@ -146,7 +146,7 @@ abstract class Endpoints[F[_]: Monad](prefix: String) extends Http4sDsl[F] {
           case Some(BooleanType) => boolF(sortAndLimit, tableField).flatMap(_.toResponse[F])
           case Some(BigDecimalType) =>
             bigDecimalF(sortAndLimit, tableField).flatMap(_.toResponse[F])
-          case None => BadRequest(InvalidField(field).error)
+          case None => InvalidField(field).asResult[Nel[IN]].toResponse[F]
         }
       case None => allF(sortAndLimit).flatMap(_.toResponse[F])
     }
