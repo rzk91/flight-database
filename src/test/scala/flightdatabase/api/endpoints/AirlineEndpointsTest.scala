@@ -12,6 +12,7 @@ import flightdatabase.domain.EntryNotFound
 import flightdatabase.domain.InvalidField
 import flightdatabase.domain.LongType
 import flightdatabase.domain.ResultOrder
+import flightdatabase.domain.StringType
 import flightdatabase.domain.ValidatedSortAndLimit
 import flightdatabase.domain.WrongOperator
 import flightdatabase.domain.airline.Airline
@@ -40,6 +41,14 @@ final class AirlineEndpointsTest
   val originalAirlines: Nel[Airline] = Nel.of(
     Airline(1, "Lufthansa", "LH", "DLH", "LUFTHANSA", 2),
     Airline(2, "Emirates", "EK", "UAE", "EMIRATES", 4)
+  )
+
+  case class CountryTest(name: String, iso2: String, code: Int)
+
+  // ID -> CountryTest(Name, ISO2, Country [Phone] Code)
+  val countryIdMap: Map[Long, CountryTest] = Map(
+    2L -> CountryTest("Germany", "DE", 49),
+    4L -> CountryTest("United Arab Emirates", "AE", 971)
   )
 
   Feature("Checking if an airline exists") {
@@ -301,7 +310,7 @@ final class AirlineEndpointsTest
     }
   }
 
-  Feature("Fetching airlines by some field") {
+  Feature("Fetching airlines by some airline field") {
     val emptySortAndLimit = ValidatedSortAndLimit.empty
     val path = Some("filter")
     def mockAirlinesBy[V]: StubFunction5[
@@ -491,6 +500,206 @@ final class AirlineEndpointsTest
       And("no algebra methods should be called")
       mockAirlinesBy[String].verify(*, *, *, *, *).never()
       mockAirlinesBy[Long].verify(*, *, *, *, *).never()
+    }
+  }
+
+  Feature("Fetching airlines by a country field") {
+    val emptySortAndLimit = ValidatedSortAndLimit.empty
+    val path = Some("country/filter")
+    def mockAirlinesByCountry[V]: StubFunction5[
+      String,
+      Nel[V],
+      Operator,
+      ValidatedSortAndLimit,
+      Put[V],
+      IO[ApiResult[Nel[Airline]]]
+    ] =
+      mockAlgebra.getAirlinesByCountry(
+        _: String,
+        _: Nel[V],
+        _: Operator,
+        _: ValidatedSortAndLimit
+      )(_: Put[V])
+
+    Scenario("Fetching airlines by country name") {
+      val field = "name"
+      val country = "Germany"
+      val airlinesByCountry = Nel.fromListUnsafe(
+        originalAirlines.filter(a => countryIdMap(a.countryId).name == country)
+      )
+
+      Given("a country name")
+      mockAirlinesByCountry[String]
+        .when(field, Nel.one(country), Operator.Equals, emptySortAndLimit, *)
+        .returns(airlinesByCountry.asResult[IO])
+
+      When("the airlines are fetched")
+      val query = s"field=$field&value=$country"
+      val response = getResponse(createQueryUri(query, path))
+
+      Then("a 200 status is returned")
+      response.status shouldBe Ok
+
+      And("the response body should contain the airlines with the given country")
+      response.extract[Nel[Airline]] shouldBe airlinesByCountry
+
+      And("the right method should be called only once")
+      mockAirlinesByCountry[String]
+        .verify(field, Nel.one(country), Operator.Equals, emptySortAndLimit, *)
+        .once()
+      mockAirlinesByCountry[Long].verify(*, *, *, *, *).never()
+    }
+
+    Scenario("Fetching and sorting airlines by country ISO") {
+      val field = "iso2"
+      val isos = Nel.of("AE", "DE")
+      val airlinesByIso =
+        Nel
+          .fromListUnsafe(
+            originalAirlines.filter(a => isos.exists(_ == countryIdMap(a.countryId).iso2))
+          )
+          .sortBy(a => countryIdMap(a.countryId).iso2)
+          .reverse
+      val sortAndLimit = ValidatedSortAndLimit.sortDescending("country.iso2")
+
+      Given("a list of ISO values")
+      mockAirlinesByCountry[String]
+        .when(field, isos, Operator.In, sortAndLimit, *)
+        .returns(airlinesByIso.asResult[IO])
+
+      When("the airlines are fetched")
+      val query = s"field=$field&operator=in&value=${isos.mkString_(",")}&sort-by=iso2&order=desc"
+      val response = getResponse(createQueryUri(query, path))
+
+      Then("a 200 status is returned")
+      response.status shouldBe Ok
+
+      And("the response body should contain the airlines for given country ISO2 sorted in reverse")
+      response.extract[Nel[Airline]] shouldBe airlinesByIso
+
+      And("the right method should be called only once")
+      mockAirlinesByCountry[String].verify(field, isos, Operator.In, sortAndLimit, *).once()
+      mockAirlinesByCountry[Long].verify(*, *, *, *, *).never()
+    }
+
+    Scenario("Fetching airlines by country code") {
+      val field = "country_code"
+      val code = 49
+      val airlinesByCode = Nel.fromListUnsafe(
+        originalAirlines.filter(a => countryIdMap(a.countryId).code == code)
+      )
+
+      Given("a country code")
+      mockAirlinesByCountry[Int]
+        .when(field, Nel.one(code), Operator.Equals, emptySortAndLimit, *)
+        .returns(airlinesByCode.asResult[IO])
+
+      When("the airlines are fetched")
+      val query = s"field=$field&value=$code"
+      val response = getResponse(createQueryUri(query, path))
+
+      Then("a 200 status is returned")
+      response.status shouldBe Ok
+
+      And("the response body should contain the airlines with the given country code")
+      response.extract[Nel[Airline]] shouldBe airlinesByCode
+
+      And("the right method should be called only once")
+      mockAirlinesByCountry[Int]
+        .verify(field, Nel.one(code), Operator.Equals, emptySortAndLimit, *)
+        .once()
+      mockAirlinesByCountry[String].verify(*, *, *, *, *).never()
+    }
+
+    Scenario("Invalid field") {
+      Given("an invalid field")
+      val query = s"field=$invalid&value=1"
+
+      When("the airlines are fetched")
+      val response = getResponse(createQueryUri(query, path))
+
+      Then("a 400 status is returned")
+      response.status shouldBe BadRequest
+
+      And("the response body should contain the error message")
+      response.string shouldBe InvalidField(invalid).error
+
+      And("no algebra methods should be called")
+      mockAirlinesByCountry[String].verify(*, *, *, *, *).never()
+      mockAirlinesByCountry[Int].verify(*, *, *, *, *).never()
+    }
+
+    Scenario("Empty field") {
+      Given("an empty field")
+      val query = "field=&value=1"
+
+      When("the airlines are fetched")
+      val response = getResponse(createQueryUri(query, path))
+
+      Then("a 400 status is returned")
+      response.status shouldBe BadRequest
+
+      And("the response body should contain the error message")
+      response.string shouldBe InvalidField("").error
+
+      And("no algebra methods should be called")
+      mockAirlinesByCountry[String].verify(*, *, *, *, *).never()
+      mockAirlinesByCountry[Int].verify(*, *, *, *, *).never()
+    }
+
+    Scenario("Invalid operator") {
+      Given("an invalid operator")
+      val query = s"field=name&operator=$invalid&value=1"
+
+      When("the airlines are fetched")
+      val response = getResponse(createQueryUri(query, path))
+
+      Then("a 400 status is returned")
+      response.status shouldBe BadRequest
+
+      And("the response body should contain the error message")
+      response.string should include(invalid)
+
+      And("no algebra methods should be called")
+      mockAirlinesByCountry[String].verify(*, *, *, *, *).never()
+      mockAirlinesByCountry[Int].verify(*, *, *, *, *).never()
+    }
+
+    Scenario("Invalid operator because of field type") {
+      val field = "name"
+      val invalidOperator = Operator.GreaterThan
+
+      Given("an invalid operator for the field type")
+      val query = s"field=$field&operator=${invalidOperator.entryName}&value=1"
+
+      When("the airlines are fetched")
+      val response = getResponse(createQueryUri(query, path))
+
+      Then("a 400 status is returned")
+      response.status shouldBe BadRequest
+
+      And("the response body should contain the error message")
+      response.string shouldBe WrongOperator(invalidOperator, field, StringType).error
+
+      And("no algebra methods should be called")
+      mockAirlinesByCountry[String].verify(*, *, *, *, *).never()
+      mockAirlinesByCountry[Int].verify(*, *, *, *, *).never()
+    }
+
+    Scenario("Invalid filter path") {
+      Given("an invalid filter path")
+      val invalidPath = Some(s"country/$invalid")
+
+      When("the airlines are fetched")
+      val query = "field=name&value=1"
+      val response = getResponse(createQueryUri(query, invalidPath))
+
+      Then("a 404 status is returned")
+      response.status shouldBe NotFound
+
+      And("no algebra methods should be called")
+      mockAirlinesByCountry[String].verify(*, *, *, *, *).never()
+      mockAirlinesByCountry[Int].verify(*, *, *, *, *).never()
     }
   }
 }
