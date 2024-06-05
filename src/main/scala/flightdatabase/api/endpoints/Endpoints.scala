@@ -5,6 +5,7 @@ import cats.data.{NonEmptyList => Nel}
 import cats.syntax.flatMap._
 import cats.syntax.foldable._
 import flightdatabase.api.Operator
+import flightdatabase.api.Operator.StringOperatorOps
 import flightdatabase.domain._
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
@@ -41,7 +42,7 @@ abstract class Endpoints[F[_]: Monad](prefix: String) extends Http4sDsl[F] {
 
   final protected def processFilter[IN: TableBase, OUT](
     field: String,
-    operator: Operator,
+    operatorStr: String,
     values: String
   )(
     stringF: G[String, OUT],
@@ -50,19 +51,21 @@ abstract class Endpoints[F[_]: Monad](prefix: String) extends Http4sDsl[F] {
     boolF: G[Boolean, OUT],
     bigDecimalF: G[BigDecimal, OUT]
   )(implicit enc: EntityEncoder[F, Nel[OUT]]): F[Response[F]] =
-    implicitly[TableBase[IN]].fieldTypeMap.get(field) match {
-      case Some(StringType) if StringType.operators(operator) =>
+    (operatorStr.toOperator, implicitly[TableBase[IN]].fieldTypeMap.get(field)) match {
+      case (Right(operator), Some(StringType)) if StringType.operators(operator) =>
         values.asStringToResponse(field, operator)(stringF(field, _, operator))
-      case Some(IntType) if IntType.operators(operator) =>
+      case (Right(operator), Some(IntType)) if IntType.operators(operator) =>
         values.asIntToResponse(field, operator)(intF(field, _, operator))
-      case Some(LongType) if LongType.operators(operator) =>
+      case (Right(operator), Some(LongType)) if LongType.operators(operator) =>
         values.asLongToResponse(field, operator)(longF(field, _, operator))
-      case Some(BooleanType) if BooleanType.operators(operator) =>
+      case (Right(operator), Some(BooleanType)) if BooleanType.operators(operator) =>
         values.asBooleanToResponse(field, operator)(boolF(field, _, operator))
-      case Some(BigDecimalType) if BigDecimalType.operators(operator) =>
+      case (Right(operator), Some(BigDecimalType)) if BigDecimalType.operators(operator) =>
         values.asBigDecimalToResponse(field, operator)(bigDecimalF(field, _, operator))
-      case Some(_) => InvalidOperator(operator).asResult[Nel[OUT]].toResponse[F]
-      case None    => InvalidField(field).asResult[Nel[OUT]].toResponse[F]
+      case (Left(parseError), _) => InvalidOperator(parseError).asResult[Nel[OUT]].toResponse[F]
+      case (Right(operator), Some(fieldType)) =>
+        WrongOperator(operator, field, fieldType).asResult[Nel[OUT]].toResponse[F]
+      case (_, None) => InvalidField(field).asResult[Nel[OUT]].toResponse[F]
     }
 
   final protected type G2[V, T] =
@@ -70,7 +73,7 @@ abstract class Endpoints[F[_]: Monad](prefix: String) extends Http4sDsl[F] {
 
   final protected def processFilter2[IN: TableBase, OUT](
     field: String,
-    operator: Operator,
+    operatorStr: String,
     values: String,
     sortAndLimit: ValidatedSortAndLimit
   )(
@@ -80,21 +83,23 @@ abstract class Endpoints[F[_]: Monad](prefix: String) extends Http4sDsl[F] {
     boolF: G2[Boolean, OUT],
     bigDecimalF: G2[BigDecimal, OUT]
   )(implicit enc: EntityEncoder[F, Nel[OUT]]): F[Response[F]] =
-    implicitly[TableBase[IN]].fieldTypeMap.get(field) match {
-      case Some(StringType) if StringType.operators(operator) =>
+    (operatorStr.toOperator, implicitly[TableBase[IN]].fieldTypeMap.get(field)) match {
+      case (Right(operator), Some(StringType)) if StringType.operators(operator) =>
         values.asStringToResponse(field, operator)(stringF(field, _, operator, sortAndLimit))
-      case Some(IntType) if IntType.operators(operator) =>
+      case (Right(operator), Some(IntType)) if IntType.operators(operator) =>
         values.asIntToResponse(field, operator)(intF(field, _, operator, sortAndLimit))
-      case Some(LongType) if LongType.operators(operator) =>
+      case (Right(operator), Some(LongType)) if LongType.operators(operator) =>
         values.asLongToResponse(field, operator)(longF(field, _, operator, sortAndLimit))
-      case Some(BooleanType) if BooleanType.operators(operator) =>
+      case (Right(operator), Some(BooleanType)) if BooleanType.operators(operator) =>
         values.asBooleanToResponse(field, operator)(boolF(field, _, operator, sortAndLimit))
-      case Some(BigDecimalType) if BigDecimalType.operators(operator) =>
+      case (Right(operator), Some(BigDecimalType)) if BigDecimalType.operators(operator) =>
         values.asBigDecimalToResponse(field, operator)(
           bigDecimalF(field, _, operator, sortAndLimit)
         )
-      case Some(_) => InvalidOperator(operator).asResult[Nel[OUT]].toResponse[F]
-      case None    => InvalidField(field).asResult[Nel[OUT]].toResponse[F]
+      case (Left(parseError), _) => InvalidOperator(parseError).asResult[Nel[OUT]].toResponse[F]
+      case (Right(operator), Some(fieldType)) =>
+        WrongOperator(operator, field, fieldType).asResult[Nel[OUT]].toResponse[F]
+      case (_, None) => InvalidField(field).asResult[Nel[OUT]].toResponse[F]
     }
 
   final protected type R[V] = String => F[ApiResult[Nel[V]]]

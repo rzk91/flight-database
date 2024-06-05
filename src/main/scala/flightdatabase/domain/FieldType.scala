@@ -3,14 +3,14 @@ package flightdatabase.domain
 import flightdatabase.api.Operator
 import flightdatabase.api.Operator._
 
-sealed trait FieldType {
+sealed abstract class FieldType(val asString: String) {
   lazy val operators: Set[Operator] = FieldType.fieldTypeToOperators(this)
 }
-case object StringType extends FieldType
-case object IntType extends FieldType
-case object LongType extends FieldType
-case object BooleanType extends FieldType
-case object BigDecimalType extends FieldType
+case object StringType extends FieldType("String")
+case object IntType extends FieldType("Int")
+case object LongType extends FieldType("Long")
+case object BooleanType extends FieldType("Boolean")
+case object BigDecimalType extends FieldType("BigDecimal")
 
 object FieldType {
 

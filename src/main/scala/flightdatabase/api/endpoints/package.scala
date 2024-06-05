@@ -5,7 +5,6 @@ import cats.data.Validated
 import cats.data.ValidatedNel
 import cats.data.{NonEmptyList => Nel}
 import cats.syntax.all._
-import flightdatabase.api.Operator.StringOperatorOps
 import flightdatabase.domain.ResultOrder.StringOrderOps
 import flightdatabase.domain._
 import flightdatabase.utils.implicits.enrichOption
@@ -24,6 +23,9 @@ package object endpoints {
   object ValueMatcher extends QueryParamDecoderMatcher[String]("value")
   object FieldMatcher extends QueryParamDecoderMatcher[String]("field")
   object ReturnOnlyMatcher extends OptionalQueryParamDecoderMatcher[String]("return-only")
+
+  object OperatorMatcherEqDefault
+      extends QueryParamDecoderMatcherWithDefault[String]("operator", "eq")
 
   case class SortAndLimit(
     sortBy: Option[String],
@@ -76,14 +78,6 @@ package object endpoints {
       } yield SortAndLimit(sortBy, order, limit, offset)
   }
 
-  implicit val operatorQueryParamDecoder: QueryParamDecoder[Operator] =
-    QueryParamDecoder[String].emap { s =>
-      s.toOperator.leftMap(error => ParseFailure(error.getMessage(), ""))
-    }
-
-  object OperatorMatcherEqDefault
-      extends QueryParamDecoderMatcherWithDefault[Operator]("operator", Operator.Equals)
-
   // Extension methods for various API-related functions
   implicit class RichApiResult[A](private val result: ApiResult[A]) extends AnyVal {
 
@@ -106,6 +100,7 @@ package object endpoints {
         case Left(value: InvalidTimezone)            => BadRequest(value.error)
         case Left(value: InvalidField)               => BadRequest(value.error)
         case Left(value: InvalidOperator)            => BadRequest(value.error)
+        case Left(value: WrongOperator)              => BadRequest(value.error)
         case Left(value: InvalidValueType)           => BadRequest(value.error)
         case Left(value @ EntryAlreadyExists)        => Conflict(value.error)
         case Left(value @ FeatureNotImplemented)     => NotImplemented(value.error)

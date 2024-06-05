@@ -11,9 +11,10 @@ import flightdatabase.domain.ApiResult
 import flightdatabase.domain.EntryListEmpty
 import flightdatabase.domain.EntryNotFound
 import flightdatabase.domain.InvalidField
-import flightdatabase.domain.InvalidOperator
+import flightdatabase.domain.LongType
 import flightdatabase.domain.ResultOrder
 import flightdatabase.domain.ValidatedSortAndLimit
+import flightdatabase.domain.WrongOperator
 import flightdatabase.domain.airline.Airline
 import flightdatabase.domain.airline.AirlineAlgebra
 import flightdatabase.testutils._
@@ -438,7 +439,6 @@ final class AirlineEndpointsTest
       mockAirlinesBy[Long].verify(*, *, *, *, *).never()
     }
 
-    // FixMe: Should this be a 404 status? or a 400 status?
     Scenario("Invalid operator") {
       Given("an invalid operator")
       val query = s"field=id&operator=$invalid&value=1"
@@ -446,8 +446,11 @@ final class AirlineEndpointsTest
       When("the airlines are fetched")
       val response = getResponse(createQueryUri(query, path)).unsafeRunSync()
 
-      Then("a 404 status is returned")
-      response.status shouldBe NotFound
+      Then("a 400 status is returned")
+      response.status shouldBe BadRequest
+
+      And("the response body should contain the error message")
+      response.bodyText.compile.string.unsafeRunSync() should include(invalid)
 
       And("no algebra methods should be called")
       mockAirlinesBy[String].verify(*, *, *, *, *).never()
@@ -455,10 +458,11 @@ final class AirlineEndpointsTest
     }
 
     Scenario("Invalid operator because of field type") {
+      val field = "id"
       val invalidOperator = Operator.StartsWith
 
       Given("an invalid operator for the field type")
-      val query = s"field=id&operator=${invalidOperator.entryName}&value=1"
+      val query = s"field=$field&operator=${invalidOperator.entryName}&value=1"
 
       When("the airlines are fetched")
       val response = getResponse(createQueryUri(query, path)).unsafeRunSync()
@@ -468,7 +472,7 @@ final class AirlineEndpointsTest
 
       And("the response body should contain the error message")
       response.bodyText.compile.string
-        .unsafeRunSync() shouldBe InvalidOperator(invalidOperator).error
+        .unsafeRunSync() shouldBe WrongOperator(invalidOperator, field, LongType).error
 
       And("no algebra methods should be called")
       mockAirlinesBy[String].verify(*, *, *, *, *).never()
