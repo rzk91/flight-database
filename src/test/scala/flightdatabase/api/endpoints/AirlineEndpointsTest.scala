@@ -497,6 +497,21 @@ final class AirlineEndpointsTest
       mockAirlinesBy[String].verify(*, *, *, *, *).never()
       mockAirlinesBy[Long].verify(*, *, *, *, *).never()
     }
+
+    Scenario("No query parameters passed") {
+      Given("no query parameters")
+      val query = ""
+
+      When("the airlines are fetched")
+      val response = getResponse(createQueryUri(query, path))
+
+      Then("a 404 status is returned")
+      response.status shouldBe NotFound
+
+      And("no algebra methods should be called")
+      mockAirlinesBy[String].verify(*, *, *, *, *).never()
+      mockAirlinesBy[Long].verify(*, *, *, *, *).never()
+    }
   }
 
   Feature("Fetching airlines by a country field") {
@@ -689,6 +704,21 @@ final class AirlineEndpointsTest
       When("the airlines are fetched")
       val query = "field=name&value=1"
       val response = getResponse(createQueryUri(query, invalidPath))
+
+      Then("a 404 status is returned")
+      response.status shouldBe NotFound
+
+      And("no algebra methods should be called")
+      mockAirlinesByCountry[String].verify(*, *, *, *, *).never()
+      mockAirlinesByCountry[Int].verify(*, *, *, *, *).never()
+    }
+
+    Scenario("No query parameters passed") {
+      Given("no query parameters")
+      val query = ""
+
+      When("the airlines are fetched")
+      val response = getResponse(createQueryUri(query, path))
 
       Then("a 404 status is returned")
       response.status shouldBe NotFound
