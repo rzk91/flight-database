@@ -82,8 +82,11 @@ final class AirlineEndpointsTest
       When("the airline is checked")
       val response = headResponse(createIdUri(invalid))
 
-      Then("a 404 status is returned")
-      response.status shouldBe NotFound
+      Then("a 400 status is returned")
+      response.status shouldBe BadRequest
+
+      And("the response body should contain the right error message")
+      response.string shouldBe EntryInvalidFormat.error
 
       And("the method should not be called")
       (mockAlgebra.doesAirlineExist _).verify(*).never()
@@ -298,8 +301,11 @@ final class AirlineEndpointsTest
       When("the airline is fetched")
       val response = getResponse(createIdUri(invalid))
 
-      Then("a 404 status is returned")
-      response.status shouldBe NotFound
+      Then("a 400 status is returned")
+      response.status shouldBe BadRequest
+
+      And("the response body should contain the right error message")
+      response.string shouldBe EntryInvalidFormat.error
 
       And("no algebra methods should be called")
       (mockAlgebra.getAirline _).verify(*).never()
@@ -490,8 +496,11 @@ final class AirlineEndpointsTest
       val query = "field=id&value=1"
       val response = getResponse(createQueryUri(query, invalidPath))
 
-      Then("a 404 status is returned")
-      response.status shouldBe NotFound
+      Then("a 400 status is returned")
+      response.status shouldBe BadRequest
+
+      And("the response body should contain the right error message")
+      response.string shouldBe EntryInvalidFormat.error
 
       And("no algebra methods should be called")
       mockAirlinesBy[String].verify(*, *, *, *, *).never()
@@ -505,8 +514,11 @@ final class AirlineEndpointsTest
       When("the airlines are fetched")
       val response = getResponse(createQueryUri(query, path))
 
-      Then("a 404 status is returned")
-      response.status shouldBe NotFound
+      Then("a 400 status is returned")
+      response.status shouldBe BadRequest
+
+      And("the response body should contain the right error message")
+      response.string shouldBe EntryInvalidFormat.error
 
       And("no algebra methods should be called")
       mockAirlinesBy[String].verify(*, *, *, *, *).never()
@@ -705,8 +717,11 @@ final class AirlineEndpointsTest
       val query = "field=name&value=1"
       val response = getResponse(createQueryUri(query, invalidPath))
 
-      Then("a 404 status is returned")
-      response.status shouldBe NotFound
+      Then("a 400 status is returned")
+      response.status shouldBe BadRequest
+
+      And("the response body should contain the right error message")
+      response.string shouldBe EntryInvalidFormat.error
 
       And("no algebra methods should be called")
       mockAirlinesByCountry[String].verify(*, *, *, *, *).never()
@@ -720,8 +735,11 @@ final class AirlineEndpointsTest
       When("the airlines are fetched")
       val response = getResponse(createQueryUri(query, path))
 
-      Then("a 404 status is returned")
-      response.status shouldBe NotFound
+      Then("a 400 status is returned")
+      response.status shouldBe BadRequest
+
+      And("the response body should contain the right error message")
+      response.string shouldBe EntryInvalidFormat.error
 
       And("no algebra methods should be called")
       mockAirlinesByCountry[String].verify(*, *, *, *, *).never()

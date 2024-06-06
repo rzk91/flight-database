@@ -3,6 +3,7 @@ package flightdatabase.testutils
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 import flightdatabase.api.endpoints.Endpoints
+import flightdatabase.utils.implicits.enrichKleisliResponse
 import org.http4s.EntityEncoder
 import org.http4s.HttpApp
 import org.http4s.Method
@@ -12,7 +13,7 @@ import org.http4s.Uri
 
 abstract class IOEndpointsSpec {
   def api: Endpoints[IO]
-  final protected lazy val endpoints: HttpApp[IO] = api.endpoints.orNotFound
+  final protected lazy val endpoints: HttpApp[IO] = api.endpoints.orBadRequest
 
   // Helper method to get responses from the endpoints
   def headResponse(uri: Uri): Response[IO] =

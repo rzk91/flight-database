@@ -83,6 +83,7 @@ lazy val root = (project in file("."))
   )
 
 addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
+addCompilerPlugin("org.typelevel" % "kind-projector" % "0.13.3" cross CrossVersion.full)
 
 // Run integration tests in a separate JVM from sbt
 IntegrationTest / fork := true

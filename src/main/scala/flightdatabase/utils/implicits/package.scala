@@ -1,8 +1,12 @@
 package flightdatabase.utils
 
+import cats.Monad
+import cats.data.Kleisli
+import cats.data.OptionT
 import doobie.ConnectionIO
 import doobie.Query0
 import doobie.Update0
+import org.http4s.Response
 
 import java.nio.file.Path
 import scala.util.Try
@@ -24,4 +28,9 @@ package object implicits {
     new RichConnectionIOOps(stmt)
   @inline implicit def enrichQuery[A](q: Query0[A]): RichQuery[A] = new RichQuery(q)
   @inline implicit def enrichUpdate(update: Update0): RichUpdate = new RichUpdate(update)
+
+  @inline implicit def enrichKleisliResponse[F[_]: Monad, A](
+    self: Kleisli[OptionT[F, *], A, Response[F]]
+  ): RichKleisliResponse[F, A] =
+    new RichKleisliResponse(self)
 }

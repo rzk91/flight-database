@@ -6,7 +6,9 @@ import cats.implicits._
 import doobie.Transactor
 import flightdatabase.api.endpoints._
 import flightdatabase.config.Configuration.ApiConfig
+import flightdatabase.domain.FlightDbTable._
 import flightdatabase.repository._
+import flightdatabase.utils.implicits.enrichKleisliResponse
 import org.http4s.HttpApp
 import org.http4s.HttpRoutes
 import org.http4s.server.Router
@@ -17,26 +19,50 @@ class FlightDbApi[F[_]: Async] private (
   repos: RepositoryContainer[F]
 )(implicit transactor: Transactor[F]) {
 
-  private val helloWorldEndpoints = HelloWorldEndpoints[F]("/hello", apiConfig.flightDbBaseUri)
-  private val airplaneEndpoints = AirplaneEndpoints[F]("/airplanes", repos.airplaneRepository)
-  private val airportEndpoints = AirportEndpoints[F]("/airports", repos.airportRepository)
-  private val cityEndpoints = CityEndpoints[F]("/cities", repos.cityRepository)
-  private val countryEndpoints = CountryEndpoints[F]("/countries", repos.countryRepository)
-  private val currencyEndpoints = CurrencyEndpoints[F]("/currencies", repos.currencyRepository)
-  private val airlineEndpoints = AirlineEndpoints[F]("/airlines", repos.airlineRepository)
+  private val prefixMap: Map[Table, String] = Map(
+    AIRPLANE         -> "/airplanes",
+    AIRLINE          -> "/airlines",
+    AIRLINE_AIRPLANE -> "/airline-airplanes",
+    AIRLINE_CITY     -> "/airline-cities",
+    AIRLINE_ROUTE    -> "/airline-routes",
+    AIRPORT          -> "/airports",
+    CITY             -> "/cities",
+    COUNTRY          -> "/countries",
+    CURRENCY         -> "/currencies",
+    LANGUAGE         -> "/languages",
+    MANUFACTURER     -> "/manufacturers",
+    HELLO_WORLD      -> "/hello"
+  )
+
+  private val helloWorldEndpoints =
+    HelloWorldEndpoints[F](prefixMap(HELLO_WORLD), apiConfig.flightDbBaseUri)
+
+  private val airplaneEndpoints =
+    AirplaneEndpoints[F](prefixMap(AIRPLANE), repos.airplaneRepository)
+
+  private val airlineEndpoints = AirlineEndpoints[F](prefixMap(AIRLINE), repos.airlineRepository)
 
   private val airlineAirplaneEndpoints =
-    AirlineAirplaneEndpoints[F]("/airline-airplanes", repos.airlineAirplaneRepository)
+    AirlineAirplaneEndpoints[F](prefixMap(AIRLINE_AIRPLANE), repos.airlineAirplaneRepository)
 
   private val airlineCityEndpoints =
-    AirlineCityEndpoints[F]("/airline-cities", repos.airlineCityRepository)
+    AirlineCityEndpoints[F](prefixMap(AIRLINE_CITY), repos.airlineCityRepository)
 
   private val airlineRouteEndpoints =
-    AirlineRouteEndpoints[F]("/airline-routes", repos.airlineRouteRepository)
-  private val languageEndpoints = LanguageEndpoints[F]("/languages", repos.languageRepository)
+    AirlineRouteEndpoints[F](prefixMap(AIRLINE_ROUTE), repos.airlineRouteRepository)
+
+  private val airportEndpoints = AirportEndpoints[F](prefixMap(AIRPORT), repos.airportRepository)
+  private val cityEndpoints = CityEndpoints[F](prefixMap(CITY), repos.cityRepository)
+  private val countryEndpoints = CountryEndpoints[F](prefixMap(COUNTRY), repos.countryRepository)
+
+  private val currencyEndpoints =
+    CurrencyEndpoints[F](prefixMap(CURRENCY), repos.currencyRepository)
+
+  private val languageEndpoints =
+    LanguageEndpoints[F](prefixMap(LANGUAGE), repos.languageRepository)
 
   private val manufacturerEndpoints =
-    ManufacturerEndpoints[F]("/manufacturers", repos.manufacturerRepository)
+    ManufacturerEndpoints[F](prefixMap(MANUFACTURER), repos.manufacturerRepository)
 
   val flightDbServices: HttpRoutes[F] =
     List(
@@ -55,7 +81,11 @@ class FlightDbApi[F[_]: Async] private (
     ).foldLeft(HttpRoutes.empty[F])(_ <+> _.routes)
 
   def flightDbApp(): F[HttpApp[F]] = {
-    val app = Router(apiConfig.entryPoint -> flightDbServices).orNotFound
+    val validEntryPoints =
+      prefixMap.values.toList.map(p => apiConfig.flightDbBaseUri.addPath(p.tail))
+    val app = Router(apiConfig.entryPoint -> flightDbServices)
+      .orNotFoundIf(req => !validEntryPoints.exists(u => req.uri.path.startsWith(u.path)))
+      .orBadRequest
     val logging = apiConfig.logging
     Sync[F].delay(
       if (logging.active) Logger.httpApp(logging.withHeaders, logging.withBody)(app) else app
