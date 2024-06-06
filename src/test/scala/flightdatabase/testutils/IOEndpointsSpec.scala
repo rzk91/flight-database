@@ -29,6 +29,9 @@ abstract class IOEndpointsSpec {
   def putResponse[A](body: A, uri: Uri)(implicit enc: EntityEncoder[IO, A]): Response[IO] =
     endpoints.run(Request(method = Method.PUT, uri = uri).withEntity(body)).unsafeRunSync()
 
+  def patchResponse[A](body: A, uri: Uri)(implicit enc: EntityEncoder[IO, A]): Response[IO] =
+    endpoints.run(Request(method = Method.PATCH, uri = uri).withEntity(body)).unsafeRunSync()
+
   def deleteResponse(uri: Uri): Response[IO] =
     endpoints.run(Request(method = Method.DELETE, uri = uri)).unsafeRunSync()
 }
