@@ -7,8 +7,10 @@ import doobie.Put
 import doobie.Read
 import flightdatabase.api.Operator
 import flightdatabase.domain.ApiResult
+import flightdatabase.domain.Created
 import flightdatabase.domain.EntryListEmpty
 import flightdatabase.domain.EntryNotFound
+import flightdatabase.domain.Got
 import flightdatabase.domain.InvalidField
 import flightdatabase.domain.LongType
 import flightdatabase.domain.ResultOrder
@@ -19,7 +21,7 @@ import flightdatabase.domain.airline.Airline
 import flightdatabase.domain.airline.AirlineAlgebra
 import flightdatabase.testutils._
 import flightdatabase.testutils.implicits._
-import org.http4s.Status._
+import org.http4s.Status.{Created => CreatedStatus, _}
 import org.http4s.circe.CirceEntityCodec._
 import org.scalamock.function.StubFunction3
 import org.scalamock.function.StubFunction5
@@ -102,7 +104,7 @@ final class AirlineEndpointsTest
 
     Scenario("Fetching all airlines") {
       Given("no query parameters")
-      (mockAlgebra.getAirlines _).when(emptySortAndLimit).returns(originalAirlines.asResult[IO])
+      (mockAlgebra.getAirlines _).when(emptySortAndLimit).returns(Got(originalAirlines).elevate[IO])
 
       When("all airlines are fetched")
       val response = getResponse()
@@ -126,7 +128,7 @@ final class AirlineEndpointsTest
       val query = "return-only=name"
       mockAirlinesOnly[String]
         .when(emptySortAndLimit, tableField, *)
-        .returns(onlyAirlineNames.asResult[IO])
+        .returns(Got(onlyAirlineNames).elevate[IO])
 
       When("all airlines are fetched")
       val response = getResponse(createQueryUri(query))
@@ -152,7 +154,7 @@ final class AirlineEndpointsTest
       val query = "return-only=name&sort-by=name"
       mockAirlinesOnly[String]
         .when(sortByName, tableField, *)
-        .returns(airlineNamesSorted.asResult[IO])
+        .returns(Got(airlineNamesSorted).elevate[IO])
 
       When("all airlines are fetched")
       val response = getResponse(createQueryUri(query))
@@ -183,7 +185,7 @@ final class AirlineEndpointsTest
       val query = s"return-only=iata&sort-by=name&order=desc&limit=1&offset=1"
       mockAirlinesOnly[String]
         .when(sortAndLimit, readField, *)
-        .returns(airlineIataSorted.asResult[IO])
+        .returns(Got(airlineIataSorted).elevate[IO])
 
       When("all airlines are fetched")
       val response = getResponse(createQueryUri(query))
@@ -262,7 +264,7 @@ final class AirlineEndpointsTest
   Feature("Fetching an airline by ID") {
     Scenario("Fetching an existing airline") {
       Given("an existing airline ID")
-      (mockAlgebra.getAirline _).when(testId).returns(originalAirlines.head.asResult[IO])
+      (mockAlgebra.getAirline _).when(testId).returns(Got(originalAirlines.head).elevate[IO])
 
       When("the airline is fetched")
       val response = getResponse(createIdUri(testId))
@@ -336,7 +338,7 @@ final class AirlineEndpointsTest
       Given("an IATA value")
       mockAirlinesBy[String]
         .when(field, Nel.one(iata), Operator.Equals, emptySortAndLimit, *)
-        .returns(airlinesByIata.asResult[IO])
+        .returns(Got(airlinesByIata).elevate[IO])
 
       When("the airlines are fetched")
       val query = s"field=$field&value=$iata"
@@ -363,7 +365,7 @@ final class AirlineEndpointsTest
       Given("a list of IDs")
       mockAirlinesBy[Long]
         .when(field, ids, Operator.In, emptySortAndLimit, *)
-        .returns(airlinesByIds.asResult[IO])
+        .returns(Got(airlinesByIds).elevate[IO])
 
       When("the airlines are fetched")
       val query = s"field=$field&operator=in&value=${ids.mkString_(",")}"
@@ -393,7 +395,7 @@ final class AirlineEndpointsTest
       Given("a list of ICAO values")
       mockAirlinesBy[String]
         .when(field, notIcaos, Operator.NotIn, sortAndLimit, *)
-        .returns(airlinesByIcao.asResult[IO])
+        .returns(Got(airlinesByIcao).elevate[IO])
 
       When("the airlines are fetched")
       val query =
@@ -531,7 +533,7 @@ final class AirlineEndpointsTest
       Given("a country name")
       mockAirlinesByCountry[String]
         .when(field, Nel.one(country), Operator.Equals, emptySortAndLimit, *)
-        .returns(airlinesByCountry.asResult[IO])
+        .returns(Got(airlinesByCountry).elevate[IO])
 
       When("the airlines are fetched")
       val query = s"field=$field&value=$country"
@@ -565,7 +567,7 @@ final class AirlineEndpointsTest
       Given("a list of ISO values")
       mockAirlinesByCountry[String]
         .when(field, isos, Operator.In, sortAndLimit, *)
-        .returns(airlinesByIso.asResult[IO])
+        .returns(Got(airlinesByIso).elevate[IO])
 
       When("the airlines are fetched")
       val query = s"field=$field&operator=in&value=${isos.mkString_(",")}&sort-by=iso2&order=desc"
@@ -592,7 +594,7 @@ final class AirlineEndpointsTest
       Given("a country code")
       mockAirlinesByCountry[Int]
         .when(field, Nel.one(code), Operator.Equals, emptySortAndLimit, *)
-        .returns(airlinesByCode.asResult[IO])
+        .returns(Got(airlinesByCode).elevate[IO])
 
       When("the airlines are fetched")
       val query = s"field=$field&value=$code"
@@ -700,6 +702,27 @@ final class AirlineEndpointsTest
       And("no algebra methods should be called")
       mockAirlinesByCountry[String].verify(*, *, *, *, *).never()
       mockAirlinesByCountry[Int].verify(*, *, *, *, *).never()
+    }
+  }
+
+  Feature("Creating an airline") {
+    Scenario("A valid airline is created") {
+      Given("a valid airline")
+      val airline = originalAirlines.head
+      val toCreate = airline.toCreate
+      (mockAlgebra.createAirline _).when(toCreate).returns(Created(airline.id).elevate[IO])
+
+      When("the airline is created")
+      val response = postResponse(toCreate)
+
+      Then("a 201 status is returned")
+      response.status shouldBe CreatedStatus
+
+      And("the response body should only contain the created airline's ID")
+      response.extract[Long] shouldBe airline.id
+
+      And("the create method should be called only once")
+      (mockAlgebra.createAirline _).verify(toCreate).once()
     }
   }
 }

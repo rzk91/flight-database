@@ -11,7 +11,11 @@ import io.circe.generic.extras._
   icao: String,
   callSign: String,
   countryId: Long
-)
+) {
+
+  def toCreate: AirlineCreate =
+    AirlineCreate(name, iata, icao, callSign, countryId)
+}
 
 object Airline {
 

@@ -18,10 +18,12 @@ abstract class IOEndpointsSpec {
   def headResponse(uri: Uri): Response[IO] =
     endpoints.run(Request(method = Method.HEAD, uri = uri)).unsafeRunSync()
 
-  def getResponse(uri: Uri = Uri(path = Uri.Path.Root)): Response[IO] =
+  def getResponse(uri: Uri = rootUri): Response[IO] =
     endpoints.run(Request(method = Method.GET, uri = uri)).unsafeRunSync()
 
-  def postResponse[A](body: A, uri: Uri)(implicit enc: EntityEncoder[IO, A]): Response[IO] =
+  def postResponse[A](body: A, uri: Uri = rootUri)(
+    implicit enc: EntityEncoder[IO, A]
+  ): Response[IO] =
     endpoints.run(Request(method = Method.POST, uri = uri).withEntity(body)).unsafeRunSync()
 
   def putResponse[A](body: A, uri: Uri)(implicit enc: EntityEncoder[IO, A]): Response[IO] =

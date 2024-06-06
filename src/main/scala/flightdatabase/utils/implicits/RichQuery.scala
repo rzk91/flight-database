@@ -10,8 +10,8 @@ import doobie.util.invariant.UnexpectedEnd
 import flightdatabase.domain.ApiResult
 import flightdatabase.domain.EntryListEmpty
 import flightdatabase.domain.EntryNotFound
+import flightdatabase.domain.Got
 import flightdatabase.domain.UnknownDbError
-import flightdatabase.domain.toApiResult
 import flightdatabase.repository.sqlStateToApiError
 import fs2.Stream
 
@@ -24,7 +24,7 @@ class RichQuery[A](private val q: Query0[A]) extends AnyVal {
     invalidValues: Option[Nel[_]] = None
   ): ConnectionIO[ApiResult[Nel[A]]] =
     q.nel.attempt.map {
-      case Right(nel) => toApiResult(nel)
+      case Right(nel) => Got(nel).asResult
       case Left(error: SQLException) =>
         sqlStateToApiError(SqlState(error.getSQLState), invalidField, invalidValues)
           .asResult[Nel[A]]
@@ -34,7 +34,7 @@ class RichQuery[A](private val q: Query0[A]) extends AnyVal {
 
   def asSingle[E](entry: E): ConnectionIO[ApiResult[A]] =
     q.option.attempt.map {
-      case Right(Some(a)) => toApiResult(a)
+      case Right(Some(a)) => Got(a).asResult
       case Right(None)    => EntryNotFound(entry).asResult[A]
       case Left(error: SQLException) =>
         sqlStateToApiError(SqlState(error.getSQLState), invalidValues = Some(Nel.one(entry)))
@@ -42,5 +42,5 @@ class RichQuery[A](private val q: Query0[A]) extends AnyVal {
       case Left(error) => UnknownDbError(error.getLocalizedMessage).asResult[A]
     }
 
-  def asStream: Stream[ConnectionIO, ApiResult[A]] = q.stream.map(toApiResult)
+  def asStream: Stream[ConnectionIO, ApiResult[A]] = q.stream.map(Got(_).asResult)
 }

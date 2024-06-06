@@ -24,7 +24,7 @@ class RichUpdate(private val update: Update0) extends AnyVal {
 
   def attemptDelete[E](entry: E): ConnectionIO[ApiResult[Unit]] =
     update.run.map {
-      case 1 => Deleted.asRight[ApiError]
+      case 1 => Deleted.asResult
       case _ => EntryNotFound(entry).asResult[Unit]
     }
 

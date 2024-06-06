@@ -8,7 +8,4 @@ package object domain {
 
   // Define the type alias for the API result
   type ApiResult[O] = Either[ApiError, ApiOutput[O]]
-
-  // Lift to API Result
-  def toApiResult[A](value: A): ApiResult[A] = Got[A](value).asResult
 }
