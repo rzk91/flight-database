@@ -6,6 +6,7 @@ import cats.implicits._
 import doobie.Transactor
 import flightdatabase.api.endpoints._
 import flightdatabase.config.Configuration.ApiConfig
+import flightdatabase.domain.FlightDbTable
 import flightdatabase.domain.FlightDbTable._
 import flightdatabase.repository._
 import flightdatabase.utils.implicits.enrichKleisliResponse
@@ -19,50 +20,29 @@ class FlightDbApi[F[_]: Async] private (
   repos: RepositoryContainer[F]
 )(implicit transactor: Transactor[F]) {
 
-  private val prefixMap: Map[Table, String] = Map(
-    AIRPLANE         -> "/airplanes",
-    AIRLINE          -> "/airlines",
-    AIRLINE_AIRPLANE -> "/airline-airplanes",
-    AIRLINE_CITY     -> "/airline-cities",
-    AIRLINE_ROUTE    -> "/airline-routes",
-    AIRPORT          -> "/airports",
-    CITY             -> "/cities",
-    COUNTRY          -> "/countries",
-    CURRENCY         -> "/currencies",
-    LANGUAGE         -> "/languages",
-    MANUFACTURER     -> "/manufacturers",
-    HELLO_WORLD      -> "/hello"
-  )
-
   private val helloWorldEndpoints =
-    HelloWorldEndpoints[F](prefixMap(HELLO_WORLD), apiConfig.flightDbBaseUri)
+    HelloWorldEndpoints[F](HELLO_WORLD.prefix, apiConfig.flightDbBaseUri)
 
-  private val airplaneEndpoints =
-    AirplaneEndpoints[F](prefixMap(AIRPLANE), repos.airplaneRepository)
-
-  private val airlineEndpoints = AirlineEndpoints[F](prefixMap(AIRLINE), repos.airlineRepository)
+  private val airplaneEndpoints = AirplaneEndpoints[F](AIRPLANE.prefix, repos.airplaneRepository)
+  private val airlineEndpoints = AirlineEndpoints[F](AIRLINE.prefix, repos.airlineRepository)
 
   private val airlineAirplaneEndpoints =
-    AirlineAirplaneEndpoints[F](prefixMap(AIRLINE_AIRPLANE), repos.airlineAirplaneRepository)
+    AirlineAirplaneEndpoints[F](AIRLINE_AIRPLANE.prefix, repos.airlineAirplaneRepository)
 
   private val airlineCityEndpoints =
-    AirlineCityEndpoints[F](prefixMap(AIRLINE_CITY), repos.airlineCityRepository)
+    AirlineCityEndpoints[F](AIRLINE_CITY.prefix, repos.airlineCityRepository)
 
   private val airlineRouteEndpoints =
-    AirlineRouteEndpoints[F](prefixMap(AIRLINE_ROUTE), repos.airlineRouteRepository)
+    AirlineRouteEndpoints[F](AIRLINE_ROUTE.prefix, repos.airlineRouteRepository)
 
-  private val airportEndpoints = AirportEndpoints[F](prefixMap(AIRPORT), repos.airportRepository)
-  private val cityEndpoints = CityEndpoints[F](prefixMap(CITY), repos.cityRepository)
-  private val countryEndpoints = CountryEndpoints[F](prefixMap(COUNTRY), repos.countryRepository)
-
-  private val currencyEndpoints =
-    CurrencyEndpoints[F](prefixMap(CURRENCY), repos.currencyRepository)
-
-  private val languageEndpoints =
-    LanguageEndpoints[F](prefixMap(LANGUAGE), repos.languageRepository)
+  private val airportEndpoints = AirportEndpoints[F](AIRPORT.prefix, repos.airportRepository)
+  private val cityEndpoints = CityEndpoints[F](CITY.prefix, repos.cityRepository)
+  private val countryEndpoints = CountryEndpoints[F](COUNTRY.prefix, repos.countryRepository)
+  private val currencyEndpoints = CurrencyEndpoints[F](CURRENCY.prefix, repos.currencyRepository)
+  private val languageEndpoints = LanguageEndpoints[F](LANGUAGE.prefix, repos.languageRepository)
 
   private val manufacturerEndpoints =
-    ManufacturerEndpoints[F](prefixMap(MANUFACTURER), repos.manufacturerRepository)
+    ManufacturerEndpoints[F](MANUFACTURER.prefix, repos.manufacturerRepository)
 
   val flightDbServices: HttpRoutes[F] =
     List(
@@ -81,7 +61,7 @@ class FlightDbApi[F[_]: Async] private (
     ).foldLeft(HttpRoutes.empty[F])(_ <+> _.routes)
 
   def flightDbApp(): F[HttpApp[F]] = {
-    val validEntryPoints = prefixMap.values.map(p => apiConfig.flightDbBaseUri.addPath(p.tail).path)
+    val validEntryPoints = FlightDbTable.validEntryPoints(apiConfig.flightDbBaseUri)
     val app = Router(apiConfig.entryPoint -> flightDbServices)
       .orNotFoundIf(req => !validEntryPoints.exists(req.uri.path.startsWith)) // Not found for invalid entry points
       .orBadRequest                                                           // Bad request for invalid requests
