@@ -1,37 +1,15 @@
 package flightdatabase.domain.airline
 
-import cats.data.{NonEmptyList => Nel}
-import doobie.Put
-import doobie.Read
-import flightdatabase.api.Operator
 import flightdatabase.domain.ApiResult
-import flightdatabase.domain.ValidatedSortAndLimit
+import flightdatabase.domain.partial.PartiallyAppliedGetAll
+import flightdatabase.domain.partial.PartiallyAppliedGetBy
 
 trait AirlineAlgebra[F[_]] {
   def doesAirlineExist(id: Long): F[Boolean]
-  def getAirlines(sortAndLimit: ValidatedSortAndLimit): F[ApiResult[Nel[Airline]]]
-
-  def getAirlinesOnly[V: Read](
-    sortAndLimit: ValidatedSortAndLimit,
-    returnField: String
-  ): F[ApiResult[Nel[V]]]
-
+  def getAirlines: PartiallyAppliedGetAll[F, Airline]
   def getAirline(id: Long): F[ApiResult[Airline]]
-
-  def getAirlinesBy[V: Put](
-    field: String,
-    values: Nel[V],
-    operator: Operator,
-    sortAndLimit: ValidatedSortAndLimit
-  ): F[ApiResult[Nel[Airline]]]
-
-  def getAirlinesByCountry[V: Put](
-    field: String,
-    values: Nel[V],
-    operator: Operator,
-    sortAndLimit: ValidatedSortAndLimit
-  ): F[ApiResult[Nel[Airline]]]
-
+  def getAirlinesBy: PartiallyAppliedGetBy[F, Airline]
+  def getAirlinesByCountry: PartiallyAppliedGetBy[F, Airline]
   def createAirline(airline: AirlineCreate): F[ApiResult[Long]]
   def updateAirline(airline: Airline): F[ApiResult[Long]]
   def partiallyUpdateAirline(id: Long, patch: AirlinePatch): F[ApiResult[Airline]]

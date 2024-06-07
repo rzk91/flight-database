@@ -25,14 +25,7 @@ class AirlineEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airli
     // GET /airlines?return-only={field}&sort-by={field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root :? SortAndLimit(sortAndLimit) +& ReturnOnlyMatcher(returnOnly) =>
       withSortAndLimitValidation[Airline](sortAndLimit) {
-        processReturnOnly2[Airline](_, returnOnly)(
-          stringF = algebra.getAirlinesOnly,
-          intF = algebra.getAirlinesOnly,
-          longF = algebra.getAirlinesOnly,
-          boolF = algebra.getAirlinesOnly,
-          bigDecimalF = algebra.getAirlinesOnly,
-          allF = algebra.getAirlines
-        )
+        processReturnOnly2[Airline](_, returnOnly)(algebra.getAirlines)
       }
 
     // GET /airlines/filter?field={airline_field}&operator={operator, default: eq}&value={values}&sort-by={airline_field}&order={asc, desc}&limit={number}&offset={number}
@@ -40,13 +33,7 @@ class AirlineEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airli
           FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
             ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
       withSortAndLimitValidation[Airline](sortAndLimit) {
-        processFilter2[Airline, Airline](field, operator, values, _)(
-          stringF = algebra.getAirlinesBy,
-          intF = algebra.getAirlinesBy,
-          longF = algebra.getAirlinesBy,
-          boolF = algebra.getAirlinesBy,
-          bigDecimalF = algebra.getAirlinesBy
-        )
+        processFilter2[Airline, Airline](field, operator, values, _)(algebra.getAirlinesBy)
       }
 
     // GET /airlines/{id}
@@ -58,13 +45,7 @@ class AirlineEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airli
           FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
             ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
       withSortAndLimitValidation[Country](sortAndLimit) {
-        processFilter2[Country, Airline](field, operator, values, _)(
-          stringF = algebra.getAirlinesByCountry,
-          intF = algebra.getAirlinesByCountry,
-          longF = algebra.getAirlinesByCountry,
-          boolF = algebra.getAirlinesByCountry,
-          bigDecimalF = algebra.getAirlinesByCountry
-        )
+        processFilter2[Country, Airline](field, operator, values, _)(algebra.getAirlinesByCountry)
       }
 
     // POST /airlines

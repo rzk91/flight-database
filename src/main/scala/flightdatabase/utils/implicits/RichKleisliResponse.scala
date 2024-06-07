@@ -16,7 +16,9 @@ import org.http4s.Status
 import org.http4s.headers.`Content-Length`
 import org.http4s.headers.`Content-Type`
 
-final class RichKleisliResponse[F[_]: Monad](self: Kleisli[OptionT[F, *], Request[F], Response[F]]) {
+final class RichKleisliResponse[F[_]: Monad](
+  self: Kleisli[OptionT[F, *], Request[F], Response[F]]
+) {
 
   private val badRequest: Response[F] = {
     val error = EntryInvalidFormat.error

@@ -10,11 +10,14 @@ import flightdatabase.domain._
 import flightdatabase.domain.airline.Airline
 import flightdatabase.domain.airline.AirlineAlgebra
 import flightdatabase.domain.airline.AirlinePatch
+import flightdatabase.domain.partial.PartiallyAppliedGetAll
+import flightdatabase.domain.partial.PartiallyAppliedGetBy
 import flightdatabase.testutils._
 import flightdatabase.testutils.implicits._
 import io.circe.generic.extras.ConfiguredJsonCodec
 import org.http4s.Status.{Created => CreatedStatus, _}
 import org.http4s.circe.CirceEntityCodec._
+import org.scalamock.function.StubFunction1
 import org.scalamock.function.StubFunction3
 import org.scalamock.function.StubFunction5
 import org.scalamock.scalatest.MockFactory
@@ -31,6 +34,9 @@ final class AirlineEndpointsTest
     with MockFactory {
   val mockAlgebra: AirlineAlgebra[IO] = stub[AirlineAlgebra[IO]]
   override val api: Endpoints[IO] = AirlineEndpoints[IO]("/airlines", mockAlgebra)
+
+  val mockGetAll: PartiallyAppliedGetAll[IO, Airline] = stub[PartiallyAppliedGetAll[IO, Airline]]
+  val mockGetBy: PartiallyAppliedGetBy[IO, Airline] = stub[PartiallyAppliedGetBy[IO, Airline]]
 
   val originalAirlines: Nel[Airline] = Nel.of(
     Airline(1, "Lufthansa", "LH", "DLH", "LUFTHANSA", 2),
@@ -95,13 +101,17 @@ final class AirlineEndpointsTest
 
   Feature("Fetching airlines") {
     val emptySortAndLimit = ValidatedSortAndLimit.empty
+    val mockAirlines: StubFunction1[ValidatedSortAndLimit, IO[ApiResult[Nel[Airline]]]] =
+      mockGetAll.apply(_: ValidatedSortAndLimit)
     def mockAirlinesOnly[V]
       : StubFunction3[ValidatedSortAndLimit, String, Read[V], IO[ApiResult[Nel[V]]]] =
-      mockAlgebra.getAirlinesOnly(_: ValidatedSortAndLimit, _: String)(_: Read[V])
+      mockGetAll.apply(_: ValidatedSortAndLimit, _: String)(_: Read[V])
 
     Scenario("Fetching all airlines") {
+      (() => mockAlgebra.getAirlines).when().returns(mockGetAll)
+
       Given("no query parameters")
-      (mockAlgebra.getAirlines _).when(emptySortAndLimit).returns(Got(originalAirlines).elevate[IO])
+      mockAirlines.when(emptySortAndLimit).returns(Got(originalAirlines).elevate[IO])
 
       When("all airlines are fetched")
       val response = getResponse()
@@ -113,13 +123,14 @@ final class AirlineEndpointsTest
       response.extract[Nel[Airline]] shouldBe originalAirlines
 
       And("the right method should be called only once")
-      (mockAlgebra.getAirlines _).verify(emptySortAndLimit).once()
+      mockAirlines.verify(emptySortAndLimit).once()
       mockAirlinesOnly[String].verify(*, *, *).never()
     }
 
     Scenario("Fetching only name field for all airlines") {
       val tableField = "airline.name"
       val onlyAirlineNames = originalAirlines.map(_.name)
+      (() => mockAlgebra.getAirlines).when().returns(mockGetAll)
 
       Given("query parameters to return only the name field")
       val query = "return-only=name"
@@ -139,13 +150,14 @@ final class AirlineEndpointsTest
       And("the right method should be called only once")
       mockAirlinesOnly[String].verify(emptySortAndLimit, tableField, *).once()
       mockAirlinesOnly[Long].verify(*, *, *).never()
-      (mockAlgebra.getAirlines _).verify(*).never()
+      mockAirlines.verify(*).never()
     }
 
     Scenario("Fetching and sorting only name fields for all airlines") {
       val tableField = "airline.name"
       val sortByName = ValidatedSortAndLimit.sort(tableField)
       val airlineNamesSorted = originalAirlines.map(_.name).sorted
+      (() => mockAlgebra.getAirlines).when().returns(mockGetAll)
 
       Given("query parameters to return only the name field and sort by it")
       val query = "return-only=name&sort-by=name"
@@ -165,7 +177,7 @@ final class AirlineEndpointsTest
       And("the right method should be called only once")
       mockAirlinesOnly[String].verify(sortByName, tableField, *).once()
       mockAirlinesOnly[BigDecimal].verify(*, *, *).never()
-      (mockAlgebra.getAirlines _).verify(*).never()
+      mockAirlines.verify(*).never()
     }
 
     Scenario("Fetching, sorting, and limiting only IATA fields for all airlines") {
@@ -177,6 +189,7 @@ final class AirlineEndpointsTest
         offset = Some(1)
       )
       val airlineIataSorted = Nel.one(originalAirlines.map(_.iata).sorted.reverse.tail.head)
+      (() => mockAlgebra.getAirlines).when().returns(mockGetAll)
 
       Given("query parameters to return only IATA, sort by name in reverse, and take second result")
       val query = s"return-only=iata&sort-by=name&order=desc&limit=1&offset=1"
@@ -196,14 +209,14 @@ final class AirlineEndpointsTest
       And("the right method should be called only once")
       mockAirlinesOnly[String].verify(sortAndLimit, readField, *).once()
       mockAirlinesOnly[BigDecimal].verify(*, *, *).never()
-      (mockAlgebra.getAirlines _).verify(*).never()
+      mockAirlines.verify(*).never()
     }
 
     Scenario("An empty list is returned") {
+      (() => mockAlgebra.getAirlines).when().returns(mockGetAll)
+
       Given("no airlines in the database")
-      (mockAlgebra.getAirlines _)
-        .when(emptySortAndLimit)
-        .returns(EntryListEmpty.elevate[IO, Nel[Airline]])
+      mockAirlines.when(emptySortAndLimit).returns(EntryListEmpty.elevate[IO, Nel[Airline]])
 
       When("all airlines are fetched")
       val response = getResponse()
@@ -215,7 +228,7 @@ final class AirlineEndpointsTest
       response.string shouldBe EntryListEmpty.error
 
       And("the right method should be called only once")
-      (mockAlgebra.getAirlines _).verify(emptySortAndLimit).once()
+      mockAirlines.verify(emptySortAndLimit).once()
       mockAirlinesOnly[String].verify(*, *, *).never()
     }
 
@@ -233,7 +246,7 @@ final class AirlineEndpointsTest
       response.string shouldBe InvalidField(invalid).error
 
       And("no algebra methods should be called")
-      (mockAlgebra.getAirlines _).verify(*).never()
+      mockAirlines.verify(*).never()
       mockAirlinesOnly[String].verify(*, *, *).never()
     }
 
@@ -253,7 +266,7 @@ final class AirlineEndpointsTest
       )
 
       And("no algebra methods should be called")
-      (mockAlgebra.getAirlines _).verify(*).never()
+      mockAirlines.verify(*).never()
       mockAirlinesOnly[String].verify(*, *, *).never()
     }
   }
@@ -323,7 +336,7 @@ final class AirlineEndpointsTest
       Put[V],
       IO[ApiResult[Nel[Airline]]]
     ] =
-      mockAlgebra.getAirlinesBy(
+      mockGetBy.apply(
         _: String,
         _: Nel[V],
         _: Operator,
@@ -334,6 +347,7 @@ final class AirlineEndpointsTest
       val field = "iata"
       val iata = "LH"
       val airlinesByIata = Nel.fromListUnsafe(originalAirlines.filter(_.iata == iata))
+      (() => mockAlgebra.getAirlinesBy).when().returns(mockGetBy)
 
       Given("an IATA value")
       mockAirlinesBy[String]
@@ -361,6 +375,7 @@ final class AirlineEndpointsTest
       val field = "id"
       val ids = Nel.fromListUnsafe((1L to 5L).toList)
       val airlinesByIds = Nel.fromListUnsafe(originalAirlines.filter(a => ids.exists(_ == a.id)))
+      (() => mockAlgebra.getAirlinesBy).when().returns(mockGetBy)
 
       Given("a list of IDs")
       mockAirlinesBy[Long]
@@ -391,6 +406,7 @@ final class AirlineEndpointsTest
           .sortBy(_.icao)
           .reverse
       val sortAndLimit = ValidatedSortAndLimit.sortDescending("airline.icao")
+      (() => mockAlgebra.getAirlinesBy).when().returns(mockGetBy)
 
       Given("a list of ICAO values")
       mockAirlinesBy[String]
@@ -537,7 +553,7 @@ final class AirlineEndpointsTest
       Put[V],
       IO[ApiResult[Nel[Airline]]]
     ] =
-      mockAlgebra.getAirlinesByCountry(
+      mockGetBy.apply(
         _: String,
         _: Nel[V],
         _: Operator,
@@ -550,6 +566,7 @@ final class AirlineEndpointsTest
       val airlinesByCountry = Nel.fromListUnsafe(
         originalAirlines.filter(a => countryIdMap(a.countryId).name == country)
       )
+      (() => mockAlgebra.getAirlinesByCountry).when().returns(mockGetBy)
 
       Given("a country name")
       mockAirlinesByCountry[String]
@@ -584,6 +601,7 @@ final class AirlineEndpointsTest
           .sortBy(a => countryIdMap(a.countryId).iso2)
           .reverse
       val sortAndLimit = ValidatedSortAndLimit.sortDescending("country.iso2")
+      (() => mockAlgebra.getAirlinesByCountry).when().returns(mockGetBy)
 
       Given("a list of ISO values")
       mockAirlinesByCountry[String]
@@ -611,6 +629,7 @@ final class AirlineEndpointsTest
       val airlinesByCode = Nel.fromListUnsafe(
         originalAirlines.filter(a => countryIdMap(a.countryId).code == code)
       )
+      (() => mockAlgebra.getAirlinesByCountry).when().returns(mockGetBy)
 
       Given("a country code")
       mockAirlinesByCountry[Int]

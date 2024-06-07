@@ -85,25 +85,25 @@ final class AirlineRepositoryIT extends RepositoryCheck {
   }
 
   it should "only return the requested fields if so required" in {
-    val airlineNames = repo.getAirlinesOnly[String](emptySortAndLimit, "name").value
+    val airlineNames = repo.getAirlines[String](emptySortAndLimit, "name").value
     airlineNames should contain only (originalAirlines.map(_.name).toList: _*)
 
-    val airlineCountryIds = repo.getAirlinesOnly[Int](emptySortAndLimit, "country_id").value
+    val airlineCountryIds = repo.getAirlines[Int](emptySortAndLimit, "country_id").value
     airlineCountryIds should contain only (originalAirlines.map(_.countryId).toList: _*)
   }
 
   it should "sort and return the requested fields if so required" in {
     val airlineNames =
-      repo.getAirlinesOnly[String](ValidatedSortAndLimit.sortAscending("name"), "name").value
+      repo.getAirlines[String](ValidatedSortAndLimit.sortAscending("name"), "name").value
     airlineNames shouldBe originalAirlines.map(_.name).sorted
 
     val airlineCountryIds = repo
-      .getAirlinesOnly[Int](ValidatedSortAndLimit.sortDescending("country_id"), "country_id")
+      .getAirlines[Int](ValidatedSortAndLimit.sortDescending("country_id"), "country_id")
       .value
     airlineCountryIds shouldBe originalAirlines.map(_.countryId).sorted.reverse
 
     val airlineNamesCountrySort =
-      repo.getAirlinesOnly[String](ValidatedSortAndLimit.sortAscending("country_id"), "name").value
+      repo.getAirlines[String](ValidatedSortAndLimit.sortAscending("country_id"), "name").value
 
     airlineNamesCountrySort shouldBe originalAirlines.sortBy(_.countryId).map(_.name)
   }
