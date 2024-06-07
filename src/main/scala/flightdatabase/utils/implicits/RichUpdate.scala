@@ -7,7 +7,7 @@ import doobie.implicits._
 import flightdatabase.domain._
 import flightdatabase.repository.sqlStateToApiError
 
-class RichUpdate(private val update: Update0) extends AnyVal {
+final class RichUpdate(private val update: Update0) extends AnyVal {
 
   def attemptInsert: ConnectionIO[ApiResult[Long]] =
     update

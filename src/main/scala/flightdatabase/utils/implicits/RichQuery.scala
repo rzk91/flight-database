@@ -17,7 +17,7 @@ import fs2.Stream
 
 import java.sql.SQLException
 
-class RichQuery[A](private val q: Query0[A]) extends AnyVal {
+final class RichQuery[A](private val q: Query0[A]) extends AnyVal {
 
   def asNel(
     invalidField: Option[String] = None,
