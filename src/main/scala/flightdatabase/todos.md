@@ -36,17 +36,20 @@ TODO list
   return all cities with
   a population greater than 1 million. Convention slightly based
   on https://developer.adobe.com/commerce/webapi/rest/use-rest/performing-searches/)~~ DONE!
-- ~~Introduce ~~fuzzy search? Or at least~~ case-insensitive search?~~ Case-insensitive search is done! Fuzzy search is
+- ~~Introduce ~~fuzzy search? Or at least~~ case-insensitive search?~~ Case-insensitive search is partially done! Fuzzy search is
   not needed for now.
 - ~~Change all `List` output to `NonEmptyList` output. This will make the API more robust and will allow for better
   error handling.~~ DONE!
 - ~~Make it possible to select any field for the general queries (i.e., GET ALL?only).~~ DONE!
 - Add option to sort the output.
 - Add option to limit the output.
+- Write unit ~~/ integration / both~~ tests for all endpoints.
+- Make search case-insensitive everywhere (not just for `LIKE` queries).
+- Add aggregate queries for all endpoints (e.g., `GET /cities/count?field=population&operator=gt&value=1000000` should
+  return the number of cities with a population greater than 1 million).
 - All `endpoints` should return URI of the output resource in the `Location` header. Basically, the `id` field should be
   a JSON object with a `uri` field. This will allow for easy navigation of the API.
 - Add a URI to all foreign key fields in the response (maybe use something similar to `TableBase`).
-- Write unit/integration/both tests for all endpoints.
 - Expand API endpoint list to include more complex operations.
 - Move domain to a separate module and rename `src` to `core`.
 - Update the `README.md` to reflect the changes in the project structure and the new features.

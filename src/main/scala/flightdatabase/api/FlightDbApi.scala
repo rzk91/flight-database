@@ -81,11 +81,10 @@ class FlightDbApi[F[_]: Async] private (
     ).foldLeft(HttpRoutes.empty[F])(_ <+> _.routes)
 
   def flightDbApp(): F[HttpApp[F]] = {
-    val validEntryPoints =
-      prefixMap.values.toList.map(p => apiConfig.flightDbBaseUri.addPath(p.tail))
+    val validEntryPoints = prefixMap.values.map(p => apiConfig.flightDbBaseUri.addPath(p.tail).path)
     val app = Router(apiConfig.entryPoint -> flightDbServices)
-      .orNotFoundIf(req => !validEntryPoints.exists(u => req.uri.path.startsWith(u.path)))
-      .orBadRequest
+      .orNotFoundIf(req => !validEntryPoints.exists(req.uri.path.startsWith)) // Not found for invalid entry points
+      .orBadRequest                                                           // Bad request for invalid requests
     val logging = apiConfig.logging
     Sync[F].delay(
       if (logging.active) Logger.httpApp(logging.withHeaders, logging.withBody)(app) else app
