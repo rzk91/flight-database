@@ -25,52 +25,49 @@ class AirlineAirplaneEndpoints[F[_]: Concurrent] private (
         case false => NotFound()
       }
 
-    // GET /airline-airplanes
-    case GET -> Root =>
-      algebra.getAirlineAirplanes.flatMap(_.toResponse)
-
-    // All methods are the same but for the type of object which is only determined based on `field`
-    // I can not seem to figure out how to make this more DRY
-    // GET /airline-airplanes/filter?field={airline_airplane_field}&operator={operator; default: eq}&value={value}
-    case GET -> Root / "filter" :?
-          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +& ValueMatcher(values) =>
-      processFilter[AirlineAirplane, AirlineAirplane](field, operator, values)(
-        stringF = algebra.getAirlineAirplanesBy,
-        intF = algebra.getAirlineAirplanesBy,
-        longF = algebra.getAirlineAirplanesBy,
-        boolF = algebra.getAirlineAirplanesBy,
-        bigDecimalF = algebra.getAirlineAirplanesBy
-      )
+    // GET /airline-airplanes?return-only={field}&sort-by={field}&order={asc, desc}&limit={number}&offset={number}
+    case GET -> Root :? SortAndLimit(sortAndLimit) +& ReturnOnlyMatcher(returnOnly) =>
+      withSortAndLimitValidation[AirlineAirplane](sortAndLimit) {
+        processReturnOnly2[AirlineAirplane](_, returnOnly)(algebra.getAirlineAirplanes)
+      }
 
     // GET /airline-airplanes/{id}
-    case GET -> Root / id =>
-      id.asLong.toResponse(algebra.getAirlineAirplane)
+    case GET -> Root / LongVar(id) =>
+      algebra.getAirlineAirplane(id).flatMap(_.toResponse)
 
     // GET /airline-airplanes/airline/{airline_id}/airplane/{airplane_id}
-    case GET -> Root / "airline" / airlineId / "airplane" / airplaneId =>
-      (airlineId.asLong, airplaneId.asLong).tupled.toResponse(algebra.getAirlineAirplane)
+    case GET -> Root / "airline" / LongVar(airlineId) / "airplane" / LongVar(airplaneId) =>
+      algebra.getAirlineAirplane(airlineId, airplaneId).flatMap(_.toResponse)
 
-    // GET /airline-airplanes/airline/filter?field={airline_field}&operator={operator; default: eq}&value={value}
+    // GET /airline-airplanes/filter?field={airline_airplane_field}&operator={operator; default: eq}&value={value}&sort-by={airline_airplane_field}&order={asc, desc}&limit={number}&offset={number}
+    case GET -> Root / "filter" :?
+          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
+            ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
+      withSortAndLimitValidation[AirlineAirplane](sortAndLimit) {
+        processFilter2[AirlineAirplane, AirlineAirplane](field, operator, values, _)(
+          algebra.getAirlineAirplanesBy
+        )
+      }
+
+    // GET /airline-airplanes/airline/filter?field={airline_field}&operator={operator; default: eq}&value={value}&sort-by={airline_field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root / "airline" / "filter" :?
-          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +& ValueMatcher(values) =>
-      processFilter[Airline, AirlineAirplane](field, operator, values)(
-        stringF = algebra.getAirlineAirplanesByAirline,
-        intF = algebra.getAirlineAirplanesByAirline,
-        longF = algebra.getAirlineAirplanesByAirline,
-        boolF = algebra.getAirlineAirplanesByAirline,
-        bigDecimalF = algebra.getAirlineAirplanesByAirline
-      )
+          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
+            ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
+      withSortAndLimitValidation[Airline](sortAndLimit) {
+        processFilter2[Airline, AirlineAirplane](field, operator, values, _)(
+          algebra.getAirlineAirplanesByAirline
+        )
+      }
 
-    // GET /airline-airplanes/airplane/filter?field={airplane_field}&operator={operator; default: eq}&value={value}
+    // GET /airline-airplanes/airplane/filter?field={airplane_field}&operator={operator; default: eq}&value={value}&sort-by={airplane_field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root / "airplane" / value :?
-          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +& ValueMatcher(values) =>
-      processFilter[Airplane, AirlineAirplane](field, operator, values)(
-        stringF = algebra.getAirlineAirplanesByAirplane,
-        intF = algebra.getAirlineAirplanesByAirplane,
-        longF = algebra.getAirlineAirplanesByAirplane,
-        boolF = algebra.getAirlineAirplanesByAirplane,
-        bigDecimalF = algebra.getAirlineAirplanesByAirplane
-      )
+          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
+            ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
+      withSortAndLimitValidation[Airplane](sortAndLimit) {
+        processFilter2[Airplane, AirlineAirplane](field, operator, values, _)(
+          algebra.getAirlineAirplanesByAirplane
+        )
+      }
 
     // POST /airline-airplanes
     case req @ POST -> Root =>

@@ -28,6 +28,10 @@ class AirlineEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airli
         processReturnOnly2[Airline](_, returnOnly)(algebra.getAirlines)
       }
 
+    // GET /airlines/{id}
+    case GET -> Root / LongVar(id) =>
+      algebra.getAirline(id).flatMap(_.toResponse)
+
     // GET /airlines/filter?field={airline_field}&operator={operator, default: eq}&value={values}&sort-by={airline_field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root / "filter" :?
           FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
@@ -35,10 +39,6 @@ class AirlineEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airli
       withSortAndLimitValidation[Airline](sortAndLimit) {
         processFilter2[Airline, Airline](field, operator, values, _)(algebra.getAirlinesBy)
       }
-
-    // GET /airlines/{id}
-    case GET -> Root / LongVar(id) =>
-      algebra.getAirline(id).flatMap(_.toResponse)
 
     // GET /airlines/country/filter?field={country_field}&operator={operator, default: eq}&value={value}&sort-by={country_field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root / "country" / "filter" :?
