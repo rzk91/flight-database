@@ -38,7 +38,6 @@ final class AirlineRepositoryIT extends RepositoryCheck {
   val invalidFieldColumn: String = "non_existent_field"
   val invalidLongValue: String = "invalid"
   val invalidStringValue: Int = 1
-  val emptySortAndLimit: ValidatedSortAndLimit = ValidatedSortAndLimit.empty
 
   // ID -> (Name, ISO2, ISO3, Country [Phone] Code)
   val countryIdMap: Map[Long, (String, String, String, Int)] = Map(

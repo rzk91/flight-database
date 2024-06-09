@@ -7,7 +7,8 @@ import doobie.Query0
 import doobie.Update0
 import doobie.implicits._
 import flightdatabase.api.Operator
-import flightdatabase.domain.{TableBase, ValidatedSortAndLimit}
+import flightdatabase.domain.TableBase
+import flightdatabase.domain.ValidatedSortAndLimit
 import flightdatabase.domain.airline_airplane.AirlineAirplane
 import flightdatabase.domain.airline_airplane.AirlineAirplaneCreate
 

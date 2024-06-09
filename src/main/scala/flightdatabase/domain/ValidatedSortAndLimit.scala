@@ -13,7 +13,8 @@ case class ValidatedSortAndLimit(
   def fragment: Fragment = {
     val sort = sortBy.fold(fr"") { s =>
       val ord = order.getOrElse(ResultOrder.Ascending).entryName
-      fr"ORDER BY" ++ Fragment.const(s) ++ Fragment.const(ord)
+      fr"ORDER BY" ++ Fragment.const(s) ++ Fragment.const(ord) ++
+      fr"," ++ Fragment.const("id") ++ Fragment.const(ord) // Make sorting stable
     }
     val lim = limit.filter(_ > 0).fold(fr"")(l => fr"LIMIT $l")
     val off = offset.filter(_ > 0).fold(fr"")(o => fr"OFFSET $o")

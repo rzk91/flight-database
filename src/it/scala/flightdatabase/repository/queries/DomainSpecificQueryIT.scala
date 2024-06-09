@@ -72,7 +72,7 @@ final class DomainSpecificQueryIT extends DbChecker {
 
   // AirlineAirplane checks
   "All airline airplane queries" should "work correctly" in {
-    check(AirlineAirplaneQueries.selectAllAirlineAirplanes)
+    check(AirlineAirplaneQueries.selectAllAirlineAirplanes(emptySortAndLimit))
     check(AirlineAirplaneQueries.deleteAirlineAirplane(1))
   }
 

@@ -9,6 +9,7 @@ import flightdatabase.domain.EntryAlreadyExists
 import flightdatabase.domain.EntryHasInvalidForeignKey
 import flightdatabase.domain.EntryListEmpty
 import flightdatabase.domain.EntryNotFound
+import flightdatabase.domain.ValidatedSortAndLimit
 import flightdatabase.domain.airline_airplane.AirlineAirplane
 import flightdatabase.domain.airline_airplane.AirlineAirplaneCreate
 import flightdatabase.domain.airline_airplane.AirlineAirplanePatch
@@ -55,7 +56,36 @@ final class AirlineAirplaneRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting all airline airplanes" should "return the correct detailed list" in {
-    repo.getAirlineAirplanes.value should contain only (originalAirlineAirplanes.toList: _*)
+    repo
+      .getAirlineAirplanes(emptySortAndLimit)
+      .value should contain only (originalAirlineAirplanes.toList: _*)
+  }
+
+  it should "return a properly sorted list" in {
+    val sortedAirlineAirplanes =
+      repo.getAirlineAirplanes(ValidatedSortAndLimit.sortAscending("airline_id")).value
+
+    sortedAirlineAirplanes shouldBe originalAirlineAirplanes.sortBy(_.airlineId)
+
+    val sortedAirlineAirplanesDesc =
+      repo.getAirlineAirplanes(ValidatedSortAndLimit.sortDescending("airplane_id")).value
+    sortedAirlineAirplanesDesc shouldBe originalAirlineAirplanes.sortBy(_.airplaneId).reverse
+  }
+
+  it should "return only as many airline-airplanes as requested" in {
+    val limit = 2
+    val limitedAirlineAirplanes = repo.getAirlineAirplanes(ValidatedSortAndLimit.limit(limit)).value
+
+    limitedAirlineAirplanes should have size limit
+    limitedAirlineAirplanes should contain only (originalAirlineAirplanes.take(limit): _*)
+
+    val offset = 2
+    val offsetAirlineAirplanes =
+      repo.getAirlineAirplanes(ValidatedSortAndLimit.limitAndOffset(limit, offset)).value
+
+    offsetAirlineAirplanes should have size limit
+    offsetAirlineAirplanes should contain only (originalAirlineAirplanes.toList
+      .slice(offset, offset + limit): _*)
   }
 
   "Selecting a airline airplane by id" should "return the correct detailed airline airplane" in {
@@ -80,13 +110,13 @@ final class AirlineAirplaneRepositoryIT extends RepositoryCheck {
 
   "Selecting airline airplanes by other fields" should "return the corresponding entries" in {
     def airlineAirplaneByAirlineId(id: Long): IO[ApiResult[Nel[AirlineAirplane]]] =
-      repo.getAirlineAirplanesBy("airline_id", Nel.one(id), Operator.Equals)
+      repo.getAirlineAirplanesBy("airline_id", Nel.one(id), Operator.Equals, emptySortAndLimit)
 
     def airlineAirplaneByAirplaneId(id: Long): IO[ApiResult[Nel[AirlineAirplane]]] =
-      repo.getAirlineAirplanesBy("airplane_id", Nel.one(id), Operator.Equals)
+      repo.getAirlineAirplanesBy("airplane_id", Nel.one(id), Operator.Equals, emptySortAndLimit)
 
     def airlineAirplaneByAirlineIds(ids: Nel[Long]): IO[ApiResult[Nel[AirlineAirplane]]] =
-      repo.getAirlineAirplanesBy("airline_id", ids, Operator.In)
+      repo.getAirlineAirplanesBy("airline_id", ids, Operator.In, emptySortAndLimit)
 
     val distinctAirlineIds = originalAirlineAirplanes.map(_.airlineId).distinct
     val distinctAirplaneIds = originalAirlineAirplanes.map(_.airplaneId).distinct
@@ -113,19 +143,20 @@ final class AirlineAirplaneRepositoryIT extends RepositoryCheck {
 
   "Selecting airline airplanes by external fields" should "return the corresponding entries" in {
     def airlineAirplanesByAirlineName(name: String): IO[ApiResult[Nel[AirlineAirplane]]] =
-      repo.getAirlineAirplanesByAirline("name", Nel.one(name), Operator.Equals)
+      repo.getAirlineAirplanesByAirline("name", Nel.one(name), Operator.Equals, emptySortAndLimit)
 
     def airlineAirplanesByAirplaneName(name: String): IO[ApiResult[Nel[AirlineAirplane]]] =
-      repo.getAirlineAirplanesByAirplane("name", Nel.one(name), Operator.Equals)
+      repo.getAirlineAirplanesByAirplane("name", Nel.one(name), Operator.Equals, emptySortAndLimit)
 
     def airlineAirplanesByAirlineIata(iata: String): IO[ApiResult[Nel[AirlineAirplane]]] =
-      repo.getAirlineAirplanesByAirline("iata", Nel.one(iata), Operator.Equals)
+      repo.getAirlineAirplanesByAirline("iata", Nel.one(iata), Operator.Equals, emptySortAndLimit)
 
     def airlineAirplanesByAirplaneCapacity(capacity: Int): IO[ApiResult[Nel[AirlineAirplane]]] =
       repo.getAirlineAirplanesByAirplane(
         "capacity",
         Nel.one(capacity),
-        Operator.GreaterThanOrEqualTo
+        Operator.GreaterThanOrEqualTo,
+        emptySortAndLimit
       )
 
     forAll(airlineIdMap) {

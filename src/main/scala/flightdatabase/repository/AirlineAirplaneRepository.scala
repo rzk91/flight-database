@@ -5,20 +5,21 @@ import cats.data.{NonEmptyList => Nel}
 import cats.effect.Concurrent
 import cats.effect.Resource
 import cats.implicits._
-import doobie.{Put, Read, Transactor}
+import doobie.Put
+import doobie.Read
+import doobie.Transactor
 import flightdatabase.api.Operator
 import flightdatabase.domain._
 import flightdatabase.domain.airline.Airline
 import flightdatabase.domain.airline_airplane._
 import flightdatabase.domain.airplane.Airplane
-import flightdatabase.domain.partial.{PartiallyAppliedGetAll, PartiallyAppliedGetBy}
+import flightdatabase.domain.partial.PartiallyAppliedGetAll
+import flightdatabase.domain.partial.PartiallyAppliedGetBy
+import flightdatabase.repository.AirlineAirplaneRepository.PartiallyAppliedGetAllAirlineAirplanes
+import flightdatabase.repository.AirlineAirplaneRepository.PartiallyAppliedGetByAirline
+import flightdatabase.repository.AirlineAirplaneRepository.PartiallyAppliedGetByAirlineAirplane
+import flightdatabase.repository.AirlineAirplaneRepository.PartiallyAppliedGetByAirplane
 import flightdatabase.repository.queries.AirlineAirplaneQueries._
-import flightdatabase.repository.AirlineAirplaneRepository.{
-  PartiallyAppliedGetAllAirlineAirplanes,
-  PartiallyAppliedGetByAirline,
-  PartiallyAppliedGetByAirlineAirplane,
-  PartiallyAppliedGetByAirplane
-}
 import flightdatabase.utils.implicits._
 
 class AirlineAirplaneRepository[F[_]: Concurrent] private (

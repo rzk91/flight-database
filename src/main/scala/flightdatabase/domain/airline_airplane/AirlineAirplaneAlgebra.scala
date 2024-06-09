@@ -1,7 +1,8 @@
 package flightdatabase.domain.airline_airplane
 
 import flightdatabase.domain.ApiResult
-import flightdatabase.domain.partial.{PartiallyAppliedGetAll, PartiallyAppliedGetBy}
+import flightdatabase.domain.partial.PartiallyAppliedGetAll
+import flightdatabase.domain.partial.PartiallyAppliedGetBy
 
 trait AirlineAirplaneAlgebra[F[_]] {
   def doesAirlineAirplaneExist(id: Long): F[Boolean]

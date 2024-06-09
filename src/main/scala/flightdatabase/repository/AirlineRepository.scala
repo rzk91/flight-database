@@ -75,7 +75,7 @@ object AirlineRepository {
   // Partially applied algebra
   private class PartiallyAppliedGetAllAirlines[F[_]: Concurrent](
     implicit transactor: Transactor[F]
-  ) extends PartiallyAppliedGetAll[F, Airline]  {
+  ) extends PartiallyAppliedGetAll[F, Airline] {
 
     override def apply(sortAndLimit: ValidatedSortAndLimit): F[ApiResult[Nel[Airline]]] =
       selectAllAirlines(sortAndLimit).asNel().execute
