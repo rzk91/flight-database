@@ -28,7 +28,7 @@ abstract class Endpoints[F[_]: Monad](prefix: String) extends Http4sDsl[F] {
   ): F[Response[F]] =
     sortAndLimit
       .validate[IN]
-      .fold(errors => BadRequest(errors.mkString_("Error: ", ",\n", "")), f)
+      .fold(errors => BadRequest(errors.mkString_("Error: ", "; ", "")), f)
 
   final protected def processRequestBody[IN, OUT](
     req: Request[F]
