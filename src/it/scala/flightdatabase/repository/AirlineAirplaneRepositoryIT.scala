@@ -9,6 +9,8 @@ import flightdatabase.domain.EntryAlreadyExists
 import flightdatabase.domain.EntryHasInvalidForeignKey
 import flightdatabase.domain.EntryListEmpty
 import flightdatabase.domain.EntryNotFound
+import flightdatabase.domain.InvalidField
+import flightdatabase.domain.InvalidValueType
 import flightdatabase.domain.ValidatedSortAndLimit
 import flightdatabase.domain.airline_airplane.AirlineAirplane
 import flightdatabase.domain.airline_airplane.AirlineAirplaneCreate
@@ -33,6 +35,9 @@ final class AirlineAirplaneRepositoryIT extends RepositoryCheck {
   val idNotPresent: Long = 100
   val valueNotPresent: String = "Not Present"
   val veryLongIdNotPresent: Long = 1000000000000000000L
+  val invalidFieldSyntax: String = "Field with spaces"
+  val invalidFieldColumn: String = "non_existent_field"
+  val invalidLongValue: String = "invalid"
 
   // airlineId -> (name, iata)
   val airlineIdMap: Map[Long, (String, String)] = Map(
@@ -84,8 +89,37 @@ final class AirlineAirplaneRepositoryIT extends RepositoryCheck {
       repo.getAirlineAirplanes(ValidatedSortAndLimit.limitAndOffset(limit, offset)).value
 
     offsetAirlineAirplanes should have size limit
-    offsetAirlineAirplanes should contain only (originalAirlineAirplanes.toList
-      .slice(offset, offset + limit): _*)
+    offsetAirlineAirplanes should contain only (
+      originalAirlineAirplanes.toList.slice(offset, offset + limit): _*
+    )
+  }
+
+  it should "only return the requested fields if so required" in {
+    val airlineIds = repo.getAirlineAirplanes[Long](emptySortAndLimit, "airline_id").value.distinct
+    airlineIds should contain only (originalAirlineAirplanes.map(_.airlineId).distinct.toList: _*)
+
+    val airplaneIds =
+      repo.getAirlineAirplanes[Long](emptySortAndLimit, "airplane_id").value.distinct
+    airplaneIds should contain only (originalAirlineAirplanes.map(_.airplaneId).distinct.toList: _*)
+  }
+
+  it should "sort and return the requested fields if so required" in {
+    val airlineIds = repo
+      .getAirlineAirplanes[Long](ValidatedSortAndLimit.sortAscending("airline_id"), "airline_id")
+      .value
+      .distinct
+    airlineIds should contain only (
+      originalAirlineAirplanes.map(_.airlineId).distinct.toList.sorted: _*
+    )
+
+    val airplaneIds = repo
+      .getAirlineAirplanes[Long](ValidatedSortAndLimit.sortDescending("airplane_id"), "airline_id")
+      .value
+      .distinct
+
+    airplaneIds should contain only (
+      originalAirlineAirplanes.sortBy(_.airplaneId).reverse.map(_.airlineId).distinct.toList: _*
+    )
   }
 
   "Selecting a airline airplane by id" should "return the correct detailed airline airplane" in {
@@ -106,6 +140,11 @@ final class AirlineAirplaneRepositoryIT extends RepositoryCheck {
 
     f(idNotPresent, 1).error shouldBe EntryListEmpty
     f(1, veryLongIdNotPresent).error shouldBe EntryListEmpty
+  }
+
+  it should "return an empty list if offset is too large" in {
+    val offsetTooLarge = repo.getAirlineAirplanes(ValidatedSortAndLimit.offset(100)).error
+    offsetTooLarge shouldBe EntryListEmpty
   }
 
   "Selecting airline airplanes by other fields" should "return the corresponding entries" in {
@@ -139,6 +178,34 @@ final class AirlineAirplaneRepositoryIT extends RepositoryCheck {
     airlineAirplaneByAirlineId(veryLongIdNotPresent).error shouldBe EntryListEmpty
     airlineAirplaneByAirplaneId(idNotPresent).error shouldBe EntryListEmpty
     airlineAirplaneByAirplaneId(veryLongIdNotPresent).error shouldBe EntryListEmpty
+  }
+
+  it should "also sort and limit the results as per the request" in {
+    repo
+      .getAirlineAirplanesBy(
+        "airline_id",
+        originalAirlineAirplanes.map(_.airlineId).distinct,
+        Operator.In,
+        ValidatedSortAndLimit.sortAscending("airline_id")
+      )
+      .value should contain only (originalAirlineAirplanes.sortBy(_.airlineId).toList: _*)
+
+    val limit = 2
+    val offset = 2
+
+    val limitedAirlineAirplanes = repo
+      .getAirlineAirplanesBy(
+        "airplane_id",
+        originalAirlineAirplanes.map(_.airplaneId).distinct,
+        Operator.In,
+        ValidatedSortAndLimit.limitAndOffset(limit, offset)
+      )
+      .value
+
+    limitedAirlineAirplanes should have size limit
+    limitedAirlineAirplanes should contain only (
+      originalAirlineAirplanes.toList.slice(offset, offset + limit): _*
+    )
   }
 
   "Selecting airline airplanes by external fields" should "return the corresponding entries" in {
@@ -190,6 +257,133 @@ final class AirlineAirplaneRepositoryIT extends RepositoryCheck {
     airlineAirplanesByAirlineName(valueNotPresent).error shouldBe EntryListEmpty
     airlineAirplanesByAirlineIata(valueNotPresent).error shouldBe EntryListEmpty
     airlineAirplanesByAirplaneName(valueNotPresent).error shouldBe EntryListEmpty
+  }
+
+  it should "also sort and limit the results as per the request" in {
+    val airlineNames = Nel.of("Lufthansa", "Emirates")
+
+    repo
+      .getAirlineAirplanesByAirline(
+        "name",
+        airlineNames,
+        Operator.In,
+        ValidatedSortAndLimit.sortAscending("airline_id")
+      )
+      .value should contain only (
+      originalAirlineAirplanes.filter(aa =>
+        airlineIdMap
+          .withFilter { case (_, (name, _)) => airlineNames.exists(_ == name) }
+          .map { case (id, _) => id }
+          .containsElement(aa.airlineId)
+      ): _*
+    )
+
+    val limit = 2
+    val offset = 2
+    val maxCapacity = 450
+
+    repo
+      .getAirlineAirplanesByAirplane(
+        "capacity",
+        Nel.one(maxCapacity),
+        Operator.LessThanOrEqualTo,
+        ValidatedSortAndLimit.limitAndOffset(limit, offset)
+      )
+      .value should contain only (
+      originalAirlineAirplanes
+        .filter(aa =>
+          airplaneIdMap
+            .withFilter { case (_, (_, capacity)) => capacity <= maxCapacity }
+            .map { case (id, _) => id }
+            .containsElement(aa.airplaneId)
+        )
+        .slice(offset, limit + offset): _*
+    )
+  }
+
+  "Selecting a non-existing field" should "return an error" in {
+    repo
+      .getAirlineAirplanesBy(
+        invalidFieldSyntax,
+        Nel.one("value"),
+        Operator.Equals,
+        emptySortAndLimit
+      )
+      .error shouldBe sqlErrorInvalidSyntax
+
+    repo
+      .getAirlineAirplanesByAirline(
+        invalidFieldSyntax,
+        Nel.one("value"),
+        Operator.Equals,
+        emptySortAndLimit
+      )
+      .error shouldBe sqlErrorInvalidSyntax
+
+    repo
+      .getAirlineAirplanesByAirplane(
+        invalidFieldSyntax,
+        Nel.one("value"),
+        Operator.Equals,
+        emptySortAndLimit
+      )
+      .error shouldBe sqlErrorInvalidSyntax
+
+    repo
+      .getAirlineAirplanesBy(
+        invalidFieldColumn,
+        Nel.one("value"),
+        Operator.Equals,
+        emptySortAndLimit
+      )
+      .error shouldBe InvalidField(invalidFieldColumn)
+
+    repo
+      .getAirlineAirplanesByAirline(
+        invalidFieldColumn,
+        Nel.one("value"),
+        Operator.Equals,
+        emptySortAndLimit
+      )
+      .error shouldBe InvalidField(invalidFieldColumn)
+
+    repo
+      .getAirlineAirplanesByAirplane(
+        invalidFieldColumn,
+        Nel.one("value"),
+        Operator.Equals,
+        emptySortAndLimit
+      )
+      .error shouldBe InvalidField(invalidFieldColumn)
+  }
+
+  "Selecting an existing field with an invalid value type" should "return an error" in {
+    repo
+      .getAirlineAirplanesBy(
+        "airline_id",
+        Nel.one(invalidLongValue),
+        Operator.Equals,
+        emptySortAndLimit
+      )
+      .error shouldBe InvalidValueType(invalidLongValue)
+
+    repo
+      .getAirlineAirplanesByAirline(
+        "country_id",
+        Nel.one(invalidLongValue),
+        Operator.Equals,
+        emptySortAndLimit
+      )
+      .error shouldBe InvalidValueType(invalidLongValue)
+
+    repo
+      .getAirlineAirplanesByAirplane(
+        "capacity",
+        Nel.one(invalidLongValue),
+        Operator.Equals,
+        emptySortAndLimit
+      )
+      .error shouldBe InvalidValueType(invalidLongValue)
   }
 
   "Creating a new airline-airplane" should "not work if the airline or airplane does not exist" in {

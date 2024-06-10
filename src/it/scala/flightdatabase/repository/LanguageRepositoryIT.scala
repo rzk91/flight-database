@@ -38,7 +38,6 @@ final class LanguageRepositoryIT extends RepositoryCheck {
   val veryLongIdNotPresent: Long = 1000000000000000000L
   val sqlErrorStringTooLong: SqlError = SqlError("22001")
   val invalidFieldSyntax: String = "Field with spaces"
-  val sqlErrorInvalidSyntax: SqlError = SqlError("42601")
   val invalidFieldColumn: String = "non_existent_field"
   val invalidStringValue: Int = 1
 

@@ -12,7 +12,6 @@ import flightdatabase.domain.EntryListEmpty
 import flightdatabase.domain.EntryNotFound
 import flightdatabase.domain.InvalidField
 import flightdatabase.domain.InvalidValueType
-import flightdatabase.domain.SqlError
 import flightdatabase.domain.country.Country
 import flightdatabase.domain.country.CountryCreate
 import flightdatabase.domain.country.CountryPatch
@@ -61,7 +60,6 @@ final class CountryRepositoryIT extends RepositoryCheck {
   val valueNotPresent: String = "NotPresent"
   val veryLongIdNotPresent: Long = 1039495454540034858L
   val invalidFieldSyntax: String = "Field with spaces"
-  val sqlErrorInvalidSyntax: SqlError = SqlError("42601")
   val invalidFieldColumn: String = "non_existent_field"
   val invalidLongValue: String = "invalid"
   val invalidStringValue: Int = 1

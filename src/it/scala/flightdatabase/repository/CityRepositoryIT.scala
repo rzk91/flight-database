@@ -13,7 +13,6 @@ import flightdatabase.domain.EntryNotFound
 import flightdatabase.domain.InvalidField
 import flightdatabase.domain.InvalidTimezone
 import flightdatabase.domain.InvalidValueType
-import flightdatabase.domain.SqlError
 import flightdatabase.domain.city.City
 import flightdatabase.domain.city.CityCreate
 import flightdatabase.domain.city.CityPatch
@@ -100,7 +99,6 @@ final class CityRepositoryIT extends RepositoryCheck {
   val valueNotPresent: String = "Not present"
   val veryLongIdNotPresent: Long = 1039495454540034858L
   val invalidFieldSyntax: String = "Field with spaces"
-  val sqlErrorInvalidSyntax: SqlError = SqlError("42601")
   val invalidFieldColumn: String = "non_existent_field"
   val invalidLongValue: String = "invalid"
   val invalidStringValue: Int = 1

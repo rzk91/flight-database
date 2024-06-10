@@ -40,7 +40,6 @@ final class CurrencyRepositoryIT extends RepositoryCheck {
   val updatedName: String = "Updated Currency"
   val patchedName: String = "Patched Currency"
   val invalidFieldSyntax: String = "Field with spaces"
-  val sqlErrorInvalidSyntax: SqlError = SqlError("42601")
   val invalidFieldColumn: String = "non_existent_field"
   val invalidStringValue: Int = 1
 

@@ -9,6 +9,8 @@ import flightdatabase.domain.EntryAlreadyExists
 import flightdatabase.domain.EntryHasInvalidForeignKey
 import flightdatabase.domain.EntryListEmpty
 import flightdatabase.domain.EntryNotFound
+import flightdatabase.domain.InvalidField
+import flightdatabase.domain.InvalidValueType
 import flightdatabase.domain.airline_city.AirlineCity
 import flightdatabase.domain.airline_city.AirlineCityCreate
 import flightdatabase.domain.airline_city.AirlineCityPatch
@@ -29,6 +31,9 @@ final class AirlineCityRepositoryIT extends RepositoryCheck {
   val idNotPresent: Long = 100
   val valueNotPresent: String = "Not Present"
   val veryLongIdNotPresent: Long = 1000000000000000000L
+  val invalidFieldSyntax: String = "Field with spaces"
+  val invalidFieldColumn: String = "non_existent_field"
+  val invalidLongValue: String = "invalid"
 
   // airlineId -> (name, iata, icao)
   val airlineIdMap: Map[Long, (String, String, String)] = Map(
@@ -153,6 +158,46 @@ final class AirlineCityRepositoryIT extends RepositoryCheck {
     entryByAirlineIata(valueNotPresent).error shouldBe EntryListEmpty
     entryByAirlineIcao(valueNotPresent).error shouldBe EntryListEmpty
     entryByCityName(valueNotPresent).error shouldBe EntryListEmpty
+  }
+
+  "Selecting a non-existent field" should "return an error" in {
+    repo
+      .getAirlineCitiesBy(invalidFieldSyntax, Nel.one(valueNotPresent), Operator.Equals)
+      .error shouldBe sqlErrorInvalidSyntax
+
+    repo
+      .getAirlineCitiesByCity(invalidFieldSyntax, Nel.one(valueNotPresent), Operator.Equals)
+      .error shouldBe sqlErrorInvalidSyntax
+
+    repo
+      .getAirlineCitiesByAirline(invalidFieldSyntax, Nel.one(valueNotPresent), Operator.Equals)
+      .error shouldBe sqlErrorInvalidSyntax
+
+    repo
+      .getAirlineCitiesBy(invalidFieldColumn, Nel.one(valueNotPresent), Operator.Equals)
+      .error shouldBe InvalidField(invalidFieldColumn)
+
+    repo
+      .getAirlineCitiesByCity(invalidFieldColumn, Nel.one(valueNotPresent), Operator.Equals)
+      .error shouldBe InvalidField(invalidFieldColumn)
+
+    repo
+      .getAirlineCitiesByAirline(invalidFieldColumn, Nel.one(valueNotPresent), Operator.Equals)
+      .error shouldBe InvalidField(invalidFieldColumn)
+  }
+
+  "Selecting an existing field with an invalid value type" should "return an error" in {
+    repo
+      .getAirlineCitiesBy("airline_id", Nel.one(invalidLongValue), Operator.Equals)
+      .error shouldBe InvalidValueType(invalidLongValue)
+
+    repo
+      .getAirlineCitiesByCity("population", Nel.one(invalidLongValue), Operator.LessThanOrEqualTo)
+      .error shouldBe InvalidValueType(invalidLongValue)
+
+    repo
+      .getAirlineCitiesByAirline("country_id", Nel.one(invalidLongValue), Operator.Equals)
+      .error shouldBe InvalidValueType(invalidLongValue)
   }
 
   "Creating a new airplane-city" should "not work if the airline or city does not exist" in {
