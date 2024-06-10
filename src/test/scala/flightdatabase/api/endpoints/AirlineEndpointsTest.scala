@@ -14,7 +14,6 @@ import flightdatabase.domain.partial.PartiallyAppliedGetAll
 import flightdatabase.domain.partial.PartiallyAppliedGetBy
 import flightdatabase.testutils._
 import flightdatabase.testutils.implicits._
-import io.circe.generic.extras.ConfiguredJsonCodec
 import org.http4s.Status.{Created => CreatedStatus, _}
 import org.http4s.circe.CirceEntityCodec._
 import org.scalamock.function.StubFunction1
@@ -42,8 +41,6 @@ final class AirlineEndpointsTest
     Airline(1, "Lufthansa", "LH", "DLH", "LUFTHANSA", 2),
     Airline(2, "Emirates", "EK", "UAE", "EMIRATES", 4)
   )
-
-  @ConfiguredJsonCodec case class InvalidAirline(name: String, iata: String, icao: String)
 
   case class CountryTest(name: String, iso2: String, code: Int)
 
@@ -788,7 +785,7 @@ final class AirlineEndpointsTest
 
     Scenario("An invalid airline is created") {
       Given("an invalid airline")
-      val invalidAirline = InvalidAirline("", "", "")
+      val invalidAirline = InvalidFlightDbObject.instance
 
       When("the airline is created")
       val response = postResponse(invalidAirline)
@@ -845,7 +842,7 @@ final class AirlineEndpointsTest
 
     Scenario("An invalid update is attempted") {
       Given("an invalid airline")
-      val invalidAirline = InvalidAirline("", "", "")
+      val invalidAirline = InvalidFlightDbObject.instance
 
       When("the airline is updated")
       val response = putResponse(invalidAirline, createIdUri(testId))
