@@ -36,7 +36,7 @@ class AirlineCityRepository[F[_]: Concurrent] private (implicit transactor: Tran
         val airlineCities = output.value
         airlineCities.find(_.cityId == cityId) match {
           case Some(airlineCity) => Right(Got(airlineCity))
-          case None              => Left(EntryListEmpty)
+          case None              => Left(EntryNotFound((airlineId, cityId)))
         }
       }
       .value

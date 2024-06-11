@@ -6,6 +6,7 @@ import doobie.Read
 import flightdatabase.domain.ApiResult
 import flightdatabase.domain.EntryInvalidFormat
 import flightdatabase.domain.EntryListEmpty
+import flightdatabase.domain.EntryNotFound
 import flightdatabase.domain.Got
 import flightdatabase.domain.InvalidField
 import flightdatabase.domain.ResultOrder
@@ -286,6 +287,149 @@ final class AirlineAirplaneEndpointsTest
       And("no algebra methods should be called")
       mockAirlineAirplanes.verify(*).never()
       mockAirlineAirplanesOnly[Long].verify(*, *, *).never()
+    }
+  }
+
+  Feature("Fetching an airline-airplane by IDs") {
+    Scenario("Fetching an existing airline-airplane by primary ID") {
+      Given("an existing airline-airplane ID")
+      (mockAlgebra
+        .getAirlineAirplane(_: Long))
+        .when(testId)
+        .returns(Got(originalAirlineAirplanes.head).elevate[IO])
+
+      When("the airline-airplane is fetched")
+      val response = getResponse(createIdUri(testId))
+
+      Then("a 200 status is returned")
+      response.status shouldBe Ok
+
+      And("the response body should contain the right airline-airplane")
+      response.extract[AirlineAirplane] shouldBe originalAirlineAirplanes.head
+
+      And("the right method should be called only once")
+      (mockAlgebra.getAirlineAirplane(_: Long)).verify(testId).once()
+    }
+
+    Scenario("Fetching an existing airline-airplane by airline and airplane IDs") {
+      Given("an existing airline and airplane ID")
+      val airlineAirplane = originalAirlineAirplanes.head
+      (mockAlgebra
+        .getAirlineAirplane(_: Long, _: Long))
+        .when(airlineAirplane.airlineId, airlineAirplane.airplaneId)
+        .returns(Got(airlineAirplane).elevate[IO])
+
+      When("the airline-airplane is fetched")
+      val response = getResponse(
+        createIdUri(s"airline/${airlineAirplane.airlineId}/airplane/${airlineAirplane.airplaneId}")
+      )
+
+      Then("a 200 status is returned")
+      response.status shouldBe Ok
+
+      And("the response body should contain the right airline-airplane")
+      response.extract[AirlineAirplane] shouldBe airlineAirplane
+
+      And("the right method should be called only once")
+      (mockAlgebra
+        .getAirlineAirplane(_: Long, _: Long))
+        .verify(airlineAirplane.airlineId, airlineAirplane.airplaneId)
+        .once()
+    }
+
+    Scenario("Fetching a non-existing airline-airplane by primary ID") {
+      val entryNotFound = EntryNotFound(testId)
+
+      Given("a non-existing airline-airplane ID")
+      (mockAlgebra
+        .getAirlineAirplane(_: Long))
+        .when(testId)
+        .returns(entryNotFound.elevate[IO, AirlineAirplane])
+
+      When("the airline-airplane is fetched")
+      val response = getResponse(createIdUri(testId))
+
+      Then("a 404 status is returned")
+      response.status shouldBe NotFound
+
+      And("the response body should contain the right error message")
+      response.string shouldBe entryNotFound.error
+
+      And("the right method should be called only once")
+      (mockAlgebra.getAirlineAirplane(_: Long)).verify(testId).once()
+    }
+
+    Scenario("Fetching a non-existing airline-airplane by airline and airplane IDs") {
+      val entryNotFound = EntryNotFound((testId, testId))
+
+      Given("a non-existing airline and airplane ID")
+      (mockAlgebra
+        .getAirlineAirplane(_: Long, _: Long))
+        .when(testId, testId)
+        .returns(entryNotFound.elevate[IO, AirlineAirplane])
+
+      When("the airline-airplane is fetched")
+      val response = getResponse(createIdUri(s"airline/$testId/airplane/$testId"))
+
+      Then("a 404 status is returned")
+      response.status shouldBe NotFound
+
+      And("the response body should contain the right error message")
+      response.string shouldBe entryNotFound.error
+
+      And("the right method should be called only once")
+      (mockAlgebra.getAirlineAirplane(_: Long, _: Long)).verify(testId, testId).once()
+    }
+
+    Scenario("Fetching an airline-airplane with invalid primary ID") {
+      Given("an invalid airline-airplane ID")
+
+      When("the airline-airplane is fetched")
+      val response = getResponse(createIdUri(invalid))
+
+      Then("a 400 status is returned")
+      response.status shouldBe BadRequest
+
+      And("the response body should contain the right error message")
+      response.string shouldBe EntryInvalidFormat.error
+
+      And("no algebra methods should be called")
+      (mockAlgebra.getAirlineAirplane(_: Long)).verify(*).never()
+      (mockAlgebra.getAirlineAirplane(_: Long, _: Long)).verify(*, *).never()
+    }
+
+    Scenario("Fetching an airline-airplane with an invalid airline ID") {
+      Given("an invalid airline ID")
+
+      When("the airline-airplane is fetched")
+      val response = getResponse(createIdUri(s"airline/$invalid/airplane/$testId"))
+
+      Then("a 400 status is returned")
+      response.status shouldBe BadRequest
+
+      And("the response body should contain the right error message")
+      response.string shouldBe EntryInvalidFormat.error
+
+      And("no algebra methods should be called")
+      (mockAlgebra.getAirlineAirplane(_: Long)).verify(*).never()
+      (mockAlgebra.getAirlineAirplane(_: Long, _: Long)).verify(*, *).never()
+    }
+
+    Scenario("Fetching an airline-airplane with an invalid airplane ID") {
+      Given("an invalid airplane ID")
+
+      When("the airline-airplane is fetched")
+      val response = getResponse(createIdUri(s"airline/$testId/airplane/$invalid"))
+
+      Then("a 400 status is returned")
+      response.status shouldBe BadRequest
+
+      And("the response body should contain the right error message")
+      response.string shouldBe EntryInvalidFormat.error
+
+      And("no algebra methods should be called")
+      (mockAlgebra.getAirlineAirplane(_: Long)).verify(*).never()
+      (mockAlgebra.getAirlineAirplane(_: Long, _: Long)).verify(*, *).never()
     }
   }
 }

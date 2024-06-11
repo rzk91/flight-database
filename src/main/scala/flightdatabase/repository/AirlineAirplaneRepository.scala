@@ -49,7 +49,7 @@ class AirlineAirplaneRepository[F[_]: Concurrent] private (
         val airlineAirplanes = output.value
         airlineAirplanes.find(_.airplaneId == airplaneId) match {
           case Some(airlineAirplane) => Right(Got(airlineAirplane))
-          case None                  => Left(EntryListEmpty)
+          case None                  => Left(EntryNotFound((airlineId, airplaneId)))
         }
       }
       .value
