@@ -2,15 +2,20 @@ package flightdatabase.api.endpoints
 
 import cats.data.{NonEmptyList => Nel}
 import cats.effect.IO
+import cats.syntax.foldable._
+import doobie.Put
 import doobie.Read
+import flightdatabase.api.Operator
 import flightdatabase.domain.ApiResult
 import flightdatabase.domain.EntryInvalidFormat
 import flightdatabase.domain.EntryListEmpty
 import flightdatabase.domain.EntryNotFound
 import flightdatabase.domain.Got
 import flightdatabase.domain.InvalidField
+import flightdatabase.domain.LongType
 import flightdatabase.domain.ResultOrder
 import flightdatabase.domain.ValidatedSortAndLimit
+import flightdatabase.domain.WrongOperator
 import flightdatabase.domain.airline_airplane.AirlineAirplane
 import flightdatabase.domain.airline_airplane.AirlineAirplaneAlgebra
 import flightdatabase.domain.partial.PartiallyAppliedGetAll
@@ -21,6 +26,7 @@ import org.http4s.Status._
 import org.http4s.circe.CirceEntityCodec._
 import org.scalamock.function.StubFunction1
 import org.scalamock.function.StubFunction3
+import org.scalamock.function.StubFunction5
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.GivenWhenThen
 import org.scalatest.featurespec.AnyFeatureSpecLike
@@ -430,6 +436,227 @@ final class AirlineAirplaneEndpointsTest
       And("no algebra methods should be called")
       (mockAlgebra.getAirlineAirplane(_: Long)).verify(*).never()
       (mockAlgebra.getAirlineAirplane(_: Long, _: Long)).verify(*, *).never()
+    }
+  }
+
+  Feature("Fetching airline-airplanes by an internal field") {
+    val emptySortAndLimit = ValidatedSortAndLimit.empty
+    val path = Some("filter")
+    def mockAirlineAirplanesBy[V]: StubFunction5[
+      String,
+      Nel[V],
+      Operator,
+      ValidatedSortAndLimit,
+      Put[V],
+      IO[ApiResult[Nel[AirlineAirplane]]]
+    ] = mockGetBy.apply(_: String, _: Nel[V], _: Operator, _: ValidatedSortAndLimit)(_: Put[V])
+
+    Scenario("Fetching airline-airplanes by airline ID") {
+      val field = "airline_id"
+      val airlineId = testId
+      val selectedAirlineAirplanes =
+        Nel.fromListUnsafe(originalAirlineAirplanes.filter(_.airlineId == airlineId))
+      (() => mockAlgebra.getAirlineAirplanesBy).when().returns(mockGetBy)
+
+      Given("an existing airline ID")
+      mockAirlineAirplanesBy[Long]
+        .when(field, Nel.of(airlineId), Operator.Equals, emptySortAndLimit, *)
+        .returns(Got(selectedAirlineAirplanes).elevate[IO])
+
+      When("airline-airplanes are fetched by airline ID")
+      val query = s"field=$field&value=$airlineId"
+      val response = getResponse(createQueryUri(query, path))
+
+      Then("a 200 status is returned")
+      response.status shouldBe Ok
+
+      And("the response body should contain the right airline-airplanes")
+      response.extract[Nel[AirlineAirplane]] shouldBe selectedAirlineAirplanes
+
+      And("the right method should be called only once")
+      mockAirlineAirplanesBy[Long]
+        .verify(field, Nel.of(airlineId), Operator.Equals, emptySortAndLimit, *)
+        .once()
+      mockAirlineAirplanesBy[String].verify(*, *, *, *, *).never()
+    }
+
+    Scenario("Fetching airline-airplanes by a set of airplane IDs") {
+      val field = "airplane_id"
+      val airplaneIds = Nel.of(testId, testId + 1)
+      val selectedAirlineAirplanes =
+        Nel.fromListUnsafe(
+          originalAirlineAirplanes.filter(aa => airplaneIds.exists(_ == aa.airplaneId))
+        )
+      (() => mockAlgebra.getAirlineAirplanesBy).when().returns(mockGetBy)
+
+      Given("an existing airplane ID")
+      mockAirlineAirplanesBy[Long]
+        .when(field, airplaneIds, Operator.In, emptySortAndLimit, *)
+        .returns(Got(selectedAirlineAirplanes).elevate[IO])
+
+      When("airline-airplanes are fetched by airplane ID")
+      val query = s"field=$field&operator=in&value=${airplaneIds.mkString_(",")}"
+      val response = getResponse(createQueryUri(query, path))
+
+      Then("a 200 status is returned")
+      response.status shouldBe Ok
+
+      And("the response body should contain the right airline-airplanes")
+      response.extract[Nel[AirlineAirplane]] shouldBe selectedAirlineAirplanes
+
+      And("the right method should be called only once")
+      mockAirlineAirplanesBy[Long]
+        .verify(field, airplaneIds, Operator.In, emptySortAndLimit, *)
+        .once()
+      mockAirlineAirplanesBy[String].verify(*, *, *, *, *).never()
+    }
+
+    Scenario("Fetching by airplane ID and sorting by airline ID") {
+      val field = "airplane_id"
+      val filterOutAirplaneIds = Nel.of(testId, testId + 1)
+      val sortedAirlineAirplanes =
+        Nel.fromListUnsafe(
+          originalAirlineAirplanes
+            .filterNot(aa => filterOutAirplaneIds.exists(_ == aa.airplaneId))
+            .sortBy(_.airlineId)
+            .reverse
+        )
+
+      val sortAndLimit = ValidatedSortAndLimit.sortDescending("airline_airplane.airline_id")
+      (() => mockAlgebra.getAirlineAirplanesBy).when().returns(mockGetBy)
+
+      Given("a set of airplane IDs to filter out")
+      mockAirlineAirplanesBy[Long]
+        .when(field, filterOutAirplaneIds, Operator.NotIn, sortAndLimit, *)
+        .returns(Got(sortedAirlineAirplanes).elevate[IO])
+
+      When("airline-airplanes are fetched by airplane ID and sorted by airline ID")
+      val query =
+        s"field=$field&operator=not_in&value=${filterOutAirplaneIds.mkString_(",")}&sort-by=airline_id&order=desc"
+      val response = getResponse(createQueryUri(query, path))
+
+      Then("a 200 status is returned")
+      response.status shouldBe Ok
+
+      And("the response body should contain the right airline-airplanes")
+      response.extract[Nel[AirlineAirplane]] shouldBe sortedAirlineAirplanes
+
+      And("the right method should be called only once")
+      mockAirlineAirplanesBy[Long]
+        .verify(field, filterOutAirplaneIds, Operator.NotIn, sortAndLimit, *)
+        .once()
+      mockAirlineAirplanesBy[String].verify(*, *, *, *, *).never()
+    }
+
+    Scenario("Invalid field") {
+      Given("an invalid field")
+      val query = s"field=$invalid&value=1"
+
+      When("airline-airplanes are fetched")
+      val response = getResponse(createQueryUri(query, path))
+
+      Then("a 400 status is returned")
+      response.status shouldBe BadRequest
+
+      And("the response body should contain the right error message")
+      response.string shouldBe InvalidField(invalid).error
+
+      And("no algebra methods should be called")
+      mockAirlineAirplanesBy[Long].verify(*, *, *, *, *).never()
+      mockAirlineAirplanesBy[String].verify(*, *, *, *, *).never()
+    }
+
+    Scenario("Empty field") {
+      Given("an empty field")
+      val query = "field=&value=1"
+
+      When("airline-airplanes are fetched")
+      val response = getResponse(createQueryUri(query, path))
+
+      Then("a 400 status is returned")
+      response.status shouldBe BadRequest
+
+      And("the response body should contain the right error message")
+      response.string shouldBe InvalidField("").error
+
+      And("no algebra methods should be called")
+      mockAirlineAirplanesBy[Long].verify(*, *, *, *, *).never()
+    }
+
+    Scenario("Invalid operator") {
+      Given("an invalid operator")
+      val query = s"field=airline_id&operator=$invalid&value=1"
+
+      When("airline-airplanes are fetched")
+      val response = getResponse(createQueryUri(query, path))
+
+      Then("a 400 status is returned")
+      response.status shouldBe BadRequest
+
+      And("the response body should contain the right error message")
+      response.string should include(invalid)
+
+      And("no algebra methods should be called")
+      mockAirlineAirplanesBy[Long].verify(*, *, *, *, *).never()
+      mockAirlineAirplanesBy[String].verify(*, *, *, *, *).never()
+    }
+
+    Scenario("Invalid operator for given field type") {
+      val field = "airline_id"
+      val invalidOperator = Operator.EndsWith
+
+      Given("an invalid operator for the given field type")
+      val query = s"field=$field&operator=${invalidOperator.entryName}&value=1"
+
+      When("airline-airplanes are fetched")
+      val response = getResponse(createQueryUri(query, path))
+
+      Then("a 400 status is returned")
+      response.status shouldBe BadRequest
+
+      And("the response body should contain the right error message")
+      response.string shouldBe WrongOperator(invalidOperator, field, LongType).error
+
+      And("no algebra methods should be called")
+      mockAirlineAirplanesBy[Long].verify(*, *, *, *, *).never()
+      mockAirlineAirplanesBy[String].verify(*, *, *, *, *).never()
+    }
+
+    Scenario("Invalid filter path") {
+      Given("an invalid filter path")
+      val invalidPath = Some(invalid)
+
+      When("airline-airplanes are fetched")
+      val query = "field=id&value=1"
+      val response = getResponse(createQueryUri(query, invalidPath))
+
+      Then("a 400 status is returned")
+      response.status shouldBe BadRequest
+
+      And("the response body should contain the right error message")
+      response.string shouldBe EntryInvalidFormat.error
+
+      And("no algebra methods should be called")
+      mockAirlineAirplanesBy[Long].verify(*, *, *, *, *).never()
+      mockAirlineAirplanesBy[String].verify(*, *, *, *, *).never()
+    }
+
+    Scenario("No query parameters passed") {
+      Given("no query parameters")
+      val query = ""
+
+      When("airline-airplanes are fetched")
+      val response = getResponse(createQueryUri(query, path))
+
+      Then("a 400 status is returned")
+      response.status shouldBe BadRequest
+
+      And("the response body should contain the right error message")
+      response.string shouldBe EntryInvalidFormat.error
+
+      And("no algebra methods should be called")
+      mockAirlineAirplanesBy[Long].verify(*, *, *, *, *).never()
+      mockAirlineAirplanesBy[String].verify(*, *, *, *, *).never()
     }
   }
 }
