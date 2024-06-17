@@ -60,16 +60,20 @@ final class AirlineAirplaneEndpointsTest
   case class AirlineTest(name: String, iata: String)
 
   // airlineId -> AirlineTest(name, iata)
-  val airlineIdMap: Map[Long, (String, String)] = Map(
-    1L -> ("Lufthansa", "LH"),
-    2L -> ("Emirates", "EK")
+  val airlineIdMap: Map[Long, AirlineTest] = Map(
+    1L -> AirlineTest("Lufthansa", "LH"),
+    2L -> AirlineTest("Emirates", "EK")
   )
 
   case class AirplaneTest(name: String, capacity: Int)
 
   // airplaneId -> AirplaneTest(name, capacity)
-  val airplaneIdMap: Map[Long, (String, Int)] =
-    Map(1L -> ("A380", 853), 2L -> ("747-8", 410), 3L -> ("A320neo", 194))
+  val airplaneIdMap: Map[Long, AirplaneTest] =
+    Map(
+      1L -> AirplaneTest("A380", 853),
+      2L -> AirplaneTest("747-8", 410),
+      3L -> AirplaneTest("A320neo", 194)
+    )
 
   Feature("Checking if an airline-airplane exists") {
     Scenario("An airline-airplane exists") {
@@ -657,6 +661,50 @@ final class AirlineAirplaneEndpointsTest
       And("no algebra methods should be called")
       mockAirlineAirplanesBy[Long].verify(*, *, *, *, *).never()
       mockAirlineAirplanesBy[String].verify(*, *, *, *, *).never()
+    }
+  }
+
+  Feature("Fetching airline-airplanes by an external field") {
+    val emptySortAndLimit = ValidatedSortAndLimit.empty
+    def path(table: String): Option[String] = Some(s"$table/filter")
+    def mockAirlinesByExternal[V]: StubFunction5[
+      String,
+      Nel[V],
+      Operator,
+      ValidatedSortAndLimit,
+      Put[V],
+      IO[ApiResult[Nel[AirlineAirplane]]]
+    ] =
+      mockGetBy.apply(_: String, _: Nel[V], _: Operator, _: ValidatedSortAndLimit)(_: Put[V])
+
+    Scenario("Fetching airline-airplanes by airline name") {
+      val field = "name"
+      val airline = "Lufthansa"
+      val airlineAirplanesByAirline = Nel.fromListUnsafe(
+        originalAirlineAirplanes.filter(aa => airlineIdMap(aa.airlineId).name == airline)
+      )
+      (() => mockAlgebra.getAirlineAirplanesByAirline).when().returns(mockGetBy)
+
+      Given("an airline name")
+      mockAirlinesByExternal[String]
+        .when(field, Nel.of(airline), Operator.Equals, emptySortAndLimit, *)
+        .returns(Got(airlineAirplanesByAirline).elevate[IO])
+
+      When("airline-airplanes are fetched by airline name")
+      val query = s"field=$field&value=$airline"
+      val response = getResponse(createQueryUri(query, path("airline")))
+
+      Then("a 200 status is returned")
+      response.status shouldBe Ok
+
+      And("the response body should contain the right airline-airplanes")
+      response.extract[Nel[AirlineAirplane]] shouldBe airlineAirplanesByAirline
+
+      And("the right method should be called only once")
+      mockAirlinesByExternal[String]
+        .verify(field, Nel.of(airline), Operator.Equals, emptySortAndLimit, *)
+        .once()
+      mockAirlinesByExternal[Long].verify(*, *, *, *, *).never()
     }
   }
 }
