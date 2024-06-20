@@ -14,6 +14,7 @@ import flightdatabase.domain.Got
 import flightdatabase.domain.InvalidField
 import flightdatabase.domain.LongType
 import flightdatabase.domain.ResultOrder
+import flightdatabase.domain.StringType
 import flightdatabase.domain.ValidatedSortAndLimit
 import flightdatabase.domain.WrongOperator
 import flightdatabase.domain.airline_airplane.AirlineAirplane
@@ -705,6 +706,154 @@ final class AirlineAirplaneEndpointsTest
         .verify(field, Nel.of(airline), Operator.Equals, emptySortAndLimit, *)
         .once()
       mockAirlinesByExternal[Long].verify(*, *, *, *, *).never()
+    }
+
+    Scenario("Fetching airline-airplanes by airplane capacity and sorting by airplane name") {
+      val field = "capacity"
+      val minCapacity = 400
+      val airlineAirplanesByCapacity = Nel
+        .fromListUnsafe(
+          originalAirlineAirplanes.filter(aa =>
+            airplaneIdMap(aa.airplaneId).capacity >= minCapacity
+          )
+        )
+        .sortBy(aa => airplaneIdMap(aa.airplaneId).name)
+        .reverse
+      val sortAndLimit = ValidatedSortAndLimit.sortDescending("airplane.name")
+      (() => mockAlgebra.getAirlineAirplanesByAirplane).when().returns(mockGetBy)
+
+      Given("a minimum airplane capacity")
+      mockAirlinesByExternal[Int]
+        .when(field, Nel.of(minCapacity), Operator.GreaterThanOrEqualTo, sortAndLimit, *)
+        .returns(Got(airlineAirplanesByCapacity).elevate[IO])
+
+      When("airline-airplanes are fetched by airplane capacity and sorted by airplane name")
+      val query = s"field=$field&operator=gteq&value=$minCapacity&sort-by=name&order=desc"
+      val response = getResponse(createQueryUri(query, path("airplane")))
+
+      Then("a 200 status is returned")
+      response.status shouldBe Ok
+
+      And("the response body should contain the right airline-airplanes")
+      response.extract[Nel[AirlineAirplane]] shouldBe airlineAirplanesByCapacity
+
+      And("the right method should be called only once")
+      mockAirlinesByExternal[Int]
+        .verify(field, Nel.of(minCapacity), Operator.GreaterThanOrEqualTo, sortAndLimit, *)
+        .once()
+      mockAirlinesByExternal[String].verify(*, *, *, *, *).never()
+    }
+
+    Scenario("Invalid field") {
+      Given("an invalid airline field")
+      val query = s"field=$invalid&value=1"
+
+      When("airline-airplanes are fetched by an airline field")
+      val response = getResponse(createQueryUri(query, path("airline")))
+
+      Then("a 400 status is returned")
+      response.status shouldBe BadRequest
+
+      And("the response body should contain the right error message")
+      response.string shouldBe InvalidField(invalid).error
+
+      And("no algebra methods should be called")
+      mockAirlinesByExternal[Long].verify(*, *, *, *, *).never()
+      mockAirlinesByExternal[String].verify(*, *, *, *, *).never()
+    }
+
+    Scenario("Empty field") {
+      Given("an empty airplane field")
+      val query = "field=&value=1"
+
+      When("airline-airplanes are fetched by an airplane field")
+      val response = getResponse(createQueryUri(query, path("airplane")))
+
+      Then("a 400 status is returned")
+      response.status shouldBe BadRequest
+
+      And("the response body should contain the right error message")
+      response.string shouldBe InvalidField("").error
+
+      And("no algebra methods should be called")
+      mockAirlinesByExternal[Long].verify(*, *, *, *, *).never()
+      mockAirlinesByExternal[String].verify(*, *, *, *, *).never()
+    }
+
+    Scenario("Invalid operator") {
+      Given("an invalid operator")
+      val query = s"field=name&operator=$invalid&value=1"
+
+      When("airline-airplanes are fetched by an airline field")
+      val response = getResponse(createQueryUri(query, path("airline")))
+
+      Then("a 400 status is returned")
+      response.status shouldBe BadRequest
+
+      And("the response body should contain the right error message")
+      response.string should include(invalid)
+
+      And("no algebra methods should be called")
+      mockAirlinesByExternal[Long].verify(*, *, *, *, *).never()
+      mockAirlinesByExternal[String].verify(*, *, *, *, *).never()
+    }
+
+    Scenario("Invalid operator because of field type") {
+      val field = "name"
+      val invalidOperator = Operator.GreaterThan
+
+      Given("an invalid operator for the given field type")
+      val query = s"field=$field&operator=${invalidOperator.entryName}&value=1"
+
+      When("airline-airplanes are fetched by an airline field")
+      val response = getResponse(createQueryUri(query, path("airline")))
+
+      Then("a 400 status is returned")
+      response.status shouldBe BadRequest
+
+      And("the response body should contain the right error message")
+      response.string shouldBe WrongOperator(invalidOperator, field, StringType).error
+
+      And("no algebra methods should be called")
+      mockAirlinesByExternal[Long].verify(*, *, *, *, *).never()
+      mockAirlinesByExternal[String].verify(*, *, *, *, *).never()
+    }
+
+    Scenario("Invalid filter path") {
+      Given("an invalid filter path")
+      val invalidPath = Some(s"airline/$invalid")
+
+      When("airline-airplanes are fetched")
+      val query = "field=id&value=1"
+      val response = getResponse(createQueryUri(query, invalidPath))
+
+      Then("a 400 status is returned")
+      response.status shouldBe BadRequest
+
+      And("the response body should contain the right error message")
+      response.string shouldBe EntryInvalidFormat.error
+
+      And("no algebra methods should be called")
+      mockAirlinesByExternal[Long].verify(*, *, *, *, *).never()
+      mockAirlinesByExternal[String].verify(*, *, *, *, *).never()
+    }
+
+    Scenario("No query parameters passed") {
+      Given("no query parameters")
+      val query = ""
+
+      When("airline-airplanes are fetched")
+      val response = getResponse(createQueryUri(query, path("airline")))
+
+      Then("a 400 status is returned")
+      response.status shouldBe BadRequest
+
+      And("the response body should contain the right error message")
+      response.string shouldBe EntryInvalidFormat.error
+
+      And("no algebra methods should be called")
+      mockAirlinesByExternal[Long].verify(*, *, *, *, *).never()
+      mockAirlinesByExternal[String].verify(*, *, *, *, *).never()
     }
   }
 }
