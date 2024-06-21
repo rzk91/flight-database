@@ -7,23 +7,30 @@ import doobie.Put
 import doobie.Read
 import flightdatabase.api.Operator
 import flightdatabase.domain.ApiResult
+import flightdatabase.domain.Created
+import flightdatabase.domain.Deleted
+import flightdatabase.domain.EntryAlreadyExists
+import flightdatabase.domain.EntryHasInvalidForeignKey
 import flightdatabase.domain.EntryInvalidFormat
 import flightdatabase.domain.EntryListEmpty
 import flightdatabase.domain.EntryNotFound
 import flightdatabase.domain.Got
+import flightdatabase.domain.InconsistentIds
 import flightdatabase.domain.InvalidField
 import flightdatabase.domain.LongType
 import flightdatabase.domain.ResultOrder
 import flightdatabase.domain.StringType
+import flightdatabase.domain.Updated
 import flightdatabase.domain.ValidatedSortAndLimit
 import flightdatabase.domain.WrongOperator
 import flightdatabase.domain.airline_airplane.AirlineAirplane
 import flightdatabase.domain.airline_airplane.AirlineAirplaneAlgebra
+import flightdatabase.domain.airline_airplane.AirlineAirplanePatch
 import flightdatabase.domain.partial.PartiallyAppliedGetAll
 import flightdatabase.domain.partial.PartiallyAppliedGetBy
 import flightdatabase.testutils._
 import flightdatabase.testutils.implicits._
-import org.http4s.Status._
+import org.http4s.Status.{Created => CreatedStatus, _}
 import org.http4s.circe.CirceEntityCodec._
 import org.scalamock.function.StubFunction1
 import org.scalamock.function.StubFunction3
@@ -854,6 +861,290 @@ final class AirlineAirplaneEndpointsTest
       And("no algebra methods should be called")
       mockAirlinesByExternal[Long].verify(*, *, *, *, *).never()
       mockAirlinesByExternal[String].verify(*, *, *, *, *).never()
+    }
+  }
+
+  Feature("Creating an airline-airplane") {
+    Scenario("A valid airline-airplane is created") {
+      Given("a valid airline-airplane")
+      val airlineAirplane = originalAirlineAirplanes.head
+      val create = airlineAirplane.toCreate
+      (mockAlgebra.createAirlineAirplane _).when(create).returns(Created(testId).elevate[IO])
+
+      When("the airline-airplane is created")
+      val response = postResponse(create)
+
+      Then("a 201 status is returned")
+      response.status shouldBe CreatedStatus
+
+      And("the response body should contain the right ID")
+      response.extract[Long] shouldBe testId
+
+      And("the create method should be called only once")
+      (mockAlgebra.createAirlineAirplane _).verify(create).once()
+    }
+
+    Scenario("An invalid airline-airplane is created") {
+      Given("an invalid airline-airplane")
+      val invalidAirlineAirplane = InvalidFlightDbObject.instance
+
+      When("the airline-airplane is created")
+      val response = postResponse(invalidAirlineAirplane)
+
+      Then("a 400 status is returned")
+      response.status shouldBe BadRequest
+
+      And("the response body should contain the right error message")
+      response.string shouldBe EntryInvalidFormat.error
+
+      And("no algebra methods should be called")
+      (mockAlgebra.createAirlineAirplane _).verify(*).never()
+    }
+
+    Scenario("An existing airline-airplane is created") {
+      Given("an existing airline-airplane")
+      val airlineAirplane = originalAirlineAirplanes.head.toCreate
+      (mockAlgebra.createAirlineAirplane _)
+        .when(airlineAirplane)
+        .returns(EntryAlreadyExists.elevate[IO, Long])
+
+      When("the airline-airplane is created")
+      val response = postResponse(airlineAirplane)
+
+      Then("a 409 status is returned")
+      response.status shouldBe Conflict
+
+      And("the response body should contain the right error message")
+      response.string shouldBe EntryAlreadyExists.error
+
+      And("the create method should be called only once")
+      (mockAlgebra.createAirlineAirplane _).verify(airlineAirplane).once()
+    }
+  }
+
+  Feature("Updating an airline-airplane") {
+    val airlineAirplane = originalAirlineAirplanes.head
+    val update = airlineAirplane.toCreate
+
+    Scenario("A valid airline-airplane is updated properly") {
+      Given("an existing airline-airplane ID and a valid airline-airplane")
+      (mockAlgebra.updateAirlineAirplane _)
+        .when(airlineAirplane)
+        .returns(Updated(testId).elevate[IO])
+
+      When("the airline-airplane is updated")
+      val response = putResponse(update, createIdUri(testId))
+
+      Then("a 200 status is returned")
+      response.status shouldBe Ok
+
+      And("the response body should contain the right ID")
+      response.extract[Long] shouldBe testId
+
+      And("the update method should be called only once")
+      (mockAlgebra.updateAirlineAirplane _).verify(airlineAirplane).once()
+    }
+
+    Scenario("An invalid update is attempted") {
+      Given("an invalid airline-airplane")
+      val invalidAirlineAirplane = InvalidFlightDbObject.instance
+
+      When("the airline-airplane is updated")
+      val response = putResponse(invalidAirlineAirplane, createIdUri(testId))
+
+      Then("a 400 status is returned")
+      response.status shouldBe BadRequest
+
+      And("the response body should contain the right error message")
+      response.string shouldBe EntryInvalidFormat.error
+
+      And("no algebra methods should be called")
+      (mockAlgebra.updateAirlineAirplane _).verify(*).never()
+    }
+
+    Scenario("An invalid ID is passed") {
+      Given("an invalid airline-airplane ID")
+
+      When("the airline-airplane is updated")
+      val response = putResponse(update, createIdUri(invalid))
+
+      Then("a 400 status is returned")
+      response.status shouldBe BadRequest
+
+      And("the response body should contain the right error message")
+      response.string shouldBe EntryInvalidFormat.error
+
+      And("no algebra methods should be called")
+      (mockAlgebra.updateAirlineAirplane _).verify(*).never()
+    }
+
+    Scenario("Inconsistent IDs are passed") {
+      Given("an inconsistent airline-airplane ID")
+      val invalidId = testId + 1
+      val airlineAirplaneWithInconsistentId = update.copy(id = Some(invalidId))
+
+      When("the airline-airplane is updated")
+      val response = putResponse(airlineAirplaneWithInconsistentId, createIdUri(testId))
+
+      Then("a 400 status is returned")
+      response.status shouldBe BadRequest
+
+      And("the response body should contain the right error message")
+      response.string shouldBe InconsistentIds(testId, invalidId).error
+
+      And("no algebra methods should be called")
+      (mockAlgebra.updateAirlineAirplane _).verify(*).never()
+    }
+
+    Scenario("A non-existing airline ID is passed") {
+      Given("a non-existing airline ID")
+      val airlineWithInvalidAirlineID = update.copy(airlineId = 1000)
+      val newAirlineAirplane = AirlineAirplane.fromCreate(testId, airlineWithInvalidAirlineID)
+      (mockAlgebra.updateAirlineAirplane _)
+        .when(newAirlineAirplane)
+        .returns(EntryHasInvalidForeignKey.elevate[IO, Long])
+
+      When("the airline-airplane is updated")
+      val response = putResponse(airlineWithInvalidAirlineID, createIdUri(testId))
+
+      Then("a 400 status is returned")
+      response.status shouldBe BadRequest
+
+      And("the response body should contain the right error message")
+      response.string shouldBe EntryHasInvalidForeignKey.error
+
+      And("the update method should be called only once")
+      (mockAlgebra.updateAirlineAirplane _).verify(newAirlineAirplane).once()
+    }
+  }
+
+  Feature("Patching an airline-airplane") {
+    val airlineAirplane = originalAirlineAirplanes.head.copy(id = testId)
+    val patch = AirlineAirplanePatch(airlineId = Some(airlineAirplane.airlineId))
+
+    Scenario("A valid patch is passed") {
+      Given("an existing airline-airplane ID and a valid patch")
+      (mockAlgebra.partiallyUpdateAirlineAirplane _)
+        .when(testId, patch)
+        .returns(Updated(airlineAirplane).elevate[IO])
+
+      When("the airline-airplane is patched")
+      val response = patchResponse(patch, createIdUri(testId))
+
+      Then("a 200 status is returned")
+      response.status shouldBe Ok
+
+      And("the response body should contain the right airline-airplane")
+      response.extract[AirlineAirplane] shouldBe airlineAirplane
+
+      And("the patch method should be called only once")
+      (mockAlgebra.partiallyUpdateAirlineAirplane _).verify(testId, patch).once()
+    }
+
+    Scenario("An invalid patch is passed") {
+      Given("an invalid patch")
+
+      When("the airline-airplane is patched")
+      val response = patchResponse(invalid, createIdUri(testId))
+
+      Then("a 400 status is returned")
+      response.status shouldBe BadRequest
+
+      And("the response body should contain the right error message")
+      response.string shouldBe EntryInvalidFormat.error
+
+      And("no algebra methods should be called")
+      (mockAlgebra.partiallyUpdateAirlineAirplane _).verify(*, *).never()
+    }
+
+    Scenario("An invalid ID is passed") {
+      Given("an invalid airline-airplane ID")
+
+      When("the airline-airplane is patched")
+      val response = patchResponse(patch, createIdUri(invalid))
+
+      Then("a 400 status is returned")
+      response.status shouldBe BadRequest
+
+      And("the response body should contain the right error message")
+      response.string shouldBe EntryInvalidFormat.error
+
+      And("no algebra methods should be called")
+      (mockAlgebra.partiallyUpdateAirlineAirplane _).verify(*, *).never()
+    }
+
+    Scenario("An invalid airplane ID is passed") {
+      Given("an invalid airplane ID in the patch")
+      val invalidPatch = AirlineAirplanePatch(airplaneId = Some(-1))
+      (mockAlgebra.partiallyUpdateAirlineAirplane _)
+        .when(testId, invalidPatch)
+        .returns(EntryHasInvalidForeignKey.elevate[IO, AirlineAirplane])
+
+      When("the airline-airplane is patched")
+      val response = patchResponse(invalidPatch, createIdUri(testId))
+
+      Then("a 400 status is returned")
+      response.status shouldBe BadRequest
+
+      And("the response body should contain the right error message")
+      response.string shouldBe EntryHasInvalidForeignKey.error
+
+      And("no algebra methods should be called")
+      (mockAlgebra.partiallyUpdateAirlineAirplane _).verify(testId, invalidPatch).once()
+    }
+  }
+
+  Feature("Deleting an airline-airplane") {
+    Scenario("An existing airline-airplane is deleted") {
+      Given("an existing airline-airplane ID")
+      (mockAlgebra.removeAirlineAirplane _).when(testId).returns(Deleted.elevate[IO])
+
+      When("the airline-airplane is deleted")
+      val response = deleteResponse(createIdUri(testId))
+
+      Then("a 204 status is returned")
+      response.status shouldBe NoContent
+
+      And("the response body should be empty")
+      response.string shouldBe empty
+
+      And("the delete method should be called only once")
+      (mockAlgebra.removeAirlineAirplane _).verify(testId).once()
+    }
+
+    Scenario("An invalid ID is passed") {
+      Given("an invalid airline-airplane ID")
+
+      When("the airline-airplane is deleted")
+      val response = deleteResponse(createIdUri(invalid))
+
+      Then("a 400 status is returned")
+      response.status shouldBe BadRequest
+
+      And("the response body should contain the right error message")
+      response.string shouldBe EntryInvalidFormat.error
+
+      And("no algebra methods should be called")
+      (mockAlgebra.removeAirlineAirplane _).verify(*).never()
+    }
+
+    Scenario("A non-existing ID is passed") {
+      Given("a non-existing airline-airplane ID")
+      (mockAlgebra.removeAirlineAirplane _)
+        .when(testId)
+        .returns(EntryNotFound(testId).elevate[IO, Unit])
+
+      When("the airline-airplane is deleted")
+      val response = deleteResponse(createIdUri(testId))
+
+      Then("a 404 status is returned")
+      response.status shouldBe NotFound
+
+      And("the response body should contain the right error message")
+      response.string shouldBe EntryNotFound(testId).error
+
+      And("the delete method should be called only once")
+      (mockAlgebra.removeAirlineAirplane _).verify(testId).once()
     }
   }
 }
