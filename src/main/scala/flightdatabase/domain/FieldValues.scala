@@ -1,7 +1,6 @@
-package flightdatabase.utils
+package flightdatabase.domain
 
 import cats.data.{NonEmptyList => Nel}
-import flightdatabase.domain.TableBase
 
 case class FieldValues[T: TableBase, A](field: String, values: Nel[A]) {
   def table: String = implicitly[TableBase[T]].asString

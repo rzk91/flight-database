@@ -9,6 +9,7 @@ import doobie.Put
 import doobie.Read
 import doobie.Transactor
 import flightdatabase.domain.ApiResult
+import flightdatabase.domain.FieldValues
 import flightdatabase.domain.Operator
 import flightdatabase.domain.city.City
 import flightdatabase.domain.country.Country
@@ -17,7 +18,6 @@ import flightdatabase.domain.manufacturer.ManufacturerAlgebra
 import flightdatabase.domain.manufacturer.ManufacturerCreate
 import flightdatabase.domain.manufacturer.ManufacturerPatch
 import flightdatabase.repository.queries.ManufacturerQueries._
-import flightdatabase.utils.FieldValues
 import flightdatabase.utils.implicits._
 
 class ManufacturerRepository[F[_]: Concurrent] private (
