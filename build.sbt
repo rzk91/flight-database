@@ -26,7 +26,7 @@ val doobieVersion = "1.0.0-RC5"
 val http4sVersion = "0.23.26"
 val pureconfigVersion = "0.17.6"
 val flywayVersion = "10.11.0"
-val scalaTestVersion = "3.2.18"
+val scalaTestVersion = "3.2.19"
 val testcontainersVersion = "0.41.3"
 
 val circeDependencies = Seq(
@@ -79,11 +79,16 @@ lazy val root = (project in file("."))
     commonSettings,
     Defaults.itSettings,
     scalafixConfigSettings(IntegrationTest),
-    libraryDependencies ++= circeDependencies ++ doobieDependencies ++ http4sDependencies ++ otherDependencies ++ testingDependencies ++ itDependencies
+    libraryDependencies ++= circeDependencies ++
+      doobieDependencies ++
+      http4sDependencies ++
+      otherDependencies ++
+      testingDependencies ++
+      itDependencies
   )
 
 addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
-addCompilerPlugin("org.typelevel" % "kind-projector" % "0.13.3" cross CrossVersion.full)
+addCompilerPlugin(("org.typelevel" % "kind-projector" % "0.13.3").cross(CrossVersion.full))
 
 // Run integration tests in a separate JVM from sbt
 IntegrationTest / fork := true
