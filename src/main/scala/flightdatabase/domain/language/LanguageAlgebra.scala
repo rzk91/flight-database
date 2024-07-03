@@ -3,8 +3,8 @@ package flightdatabase.domain.language
 import cats.data.{NonEmptyList => Nel}
 import doobie.Put
 import doobie.Read
-import flightdatabase.api.Operator
 import flightdatabase.domain.ApiResult
+import flightdatabase.domain.Operator
 
 trait LanguageAlgebra[F[_]] {
   def doesLanguageExist(id: Long): F[Boolean]

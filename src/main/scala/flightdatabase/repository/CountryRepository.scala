@@ -10,8 +10,8 @@ import doobie.Put
 import doobie.Read
 import doobie.Transactor
 import doobie.implicits._
-import flightdatabase.api.Operator
 import flightdatabase.domain.ApiResult
+import flightdatabase.domain.Operator
 import flightdatabase.domain.country.Country
 import flightdatabase.domain.country.CountryAlgebra
 import flightdatabase.domain.country.CountryCreate

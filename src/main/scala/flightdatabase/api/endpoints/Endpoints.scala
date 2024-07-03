@@ -4,8 +4,8 @@ import cats.Monad
 import cats.data.{NonEmptyList => Nel}
 import cats.syntax.flatMap._
 import cats.syntax.foldable._
-import flightdatabase.api.Operator
-import flightdatabase.api.Operator.StringOperatorOps
+import flightdatabase.domain.Operator
+import flightdatabase.domain.Operator.StringOperatorOps
 import flightdatabase.domain._
 import flightdatabase.domain.partial.PartiallyAppliedGetAll
 import flightdatabase.domain.partial.PartiallyAppliedGetBy

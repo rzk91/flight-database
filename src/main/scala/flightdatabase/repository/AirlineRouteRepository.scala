@@ -10,8 +10,8 @@ import doobie.Query0
 import doobie.Read
 import doobie.Transactor
 import doobie.implicits._
-import flightdatabase.api.Operator
 import flightdatabase.domain.ApiResult
+import flightdatabase.domain.Operator
 import flightdatabase.domain.airline.Airline
 import flightdatabase.domain.airline_airplane.AirlineAirplane
 import flightdatabase.domain.airline_route.AirlineRoute

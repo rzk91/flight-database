@@ -3,7 +3,7 @@ package flightdatabase.repository
 import cats.data.{NonEmptyList => Nel}
 import doobie._
 import doobie.implicits._
-import flightdatabase.api.Operator
+import flightdatabase.domain.Operator
 import flightdatabase.domain.TableBase
 
 package object queries {

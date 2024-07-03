@@ -2,8 +2,8 @@ package flightdatabase.domain.airline_city
 
 import cats.data.{NonEmptyList => Nel}
 import doobie.Put
-import flightdatabase.api.Operator
 import flightdatabase.domain.ApiResult
+import flightdatabase.domain.Operator
 import flightdatabase.domain.TableBase
 
 trait AirlineCityAlgebra[F[_]] {

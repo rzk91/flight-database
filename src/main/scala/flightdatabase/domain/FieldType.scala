@@ -1,7 +1,6 @@
 package flightdatabase.domain
 
-import flightdatabase.api.Operator
-import flightdatabase.api.Operator._
+import flightdatabase.domain.Operator._
 
 sealed abstract class FieldType(val asString: String) {
   lazy val operators: Set[Operator] = FieldType.fieldTypeToOperators(this)

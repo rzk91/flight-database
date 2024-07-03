@@ -3,8 +3,8 @@ package flightdatabase.domain.currency
 import cats.data.{NonEmptyList => Nel}
 import doobie.Put
 import doobie.Read
-import flightdatabase.api.Operator
 import flightdatabase.domain.ApiResult
+import flightdatabase.domain.Operator
 
 trait CurrencyAlgebra[F[_]] {
   def doesCurrencyExist(id: Long): F[Boolean]

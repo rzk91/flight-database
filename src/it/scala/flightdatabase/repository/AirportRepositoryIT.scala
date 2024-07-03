@@ -3,7 +3,6 @@ package flightdatabase.repository
 import cats.data.{NonEmptyList => Nel}
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
-import flightdatabase.api.Operator
 import flightdatabase.domain.ApiResult
 import flightdatabase.domain.EntryAlreadyExists
 import flightdatabase.domain.EntryCheckFailed
@@ -12,6 +11,7 @@ import flightdatabase.domain.EntryListEmpty
 import flightdatabase.domain.EntryNotFound
 import flightdatabase.domain.InvalidField
 import flightdatabase.domain.InvalidValueType
+import flightdatabase.domain.Operator
 import flightdatabase.domain.airport.Airport
 import flightdatabase.domain.airport.AirportCreate
 import flightdatabase.domain.airport.AirportPatch

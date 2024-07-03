@@ -6,7 +6,7 @@ import doobie.Put
 import doobie.Query0
 import doobie.implicits._
 import doobie.util.update.Update0
-import flightdatabase.api.Operator
+import flightdatabase.domain.Operator
 import flightdatabase.domain.language.Language
 import flightdatabase.domain.language.LanguageCreate
 

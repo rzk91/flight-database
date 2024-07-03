@@ -1,4 +1,4 @@
-package flightdatabase.api
+package flightdatabase.domain
 
 import enumeratum.Enum
 import enumeratum.EnumEntry

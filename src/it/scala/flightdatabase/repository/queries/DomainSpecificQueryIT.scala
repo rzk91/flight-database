@@ -1,7 +1,7 @@
 package flightdatabase.repository.queries
 
 import cats.data.{NonEmptyList => Nel}
-import flightdatabase.api.Operator
+import flightdatabase.domain.Operator
 import flightdatabase.domain.ResultOrder
 import flightdatabase.domain.ValidatedSortAndLimit
 import flightdatabase.domain.airplane.AirplaneCreate

@@ -3,8 +3,8 @@ package flightdatabase.domain.manufacturer
 import cats.data.{NonEmptyList => Nel}
 import doobie.Put
 import doobie.Read
-import flightdatabase.api.Operator
 import flightdatabase.domain.ApiResult
+import flightdatabase.domain.Operator
 
 trait ManufacturerAlgebra[F[_]] {
   def doesManufacturerExist(id: Long): F[Boolean]

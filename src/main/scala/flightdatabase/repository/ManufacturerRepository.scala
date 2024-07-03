@@ -8,8 +8,8 @@ import cats.implicits._
 import doobie.Put
 import doobie.Read
 import doobie.Transactor
-import flightdatabase.api.Operator
 import flightdatabase.domain.ApiResult
+import flightdatabase.domain.Operator
 import flightdatabase.domain.city.City
 import flightdatabase.domain.country.Country
 import flightdatabase.domain.manufacturer.Manufacturer

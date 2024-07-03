@@ -5,7 +5,7 @@ import cats.effect.IO
 import cats.syntax.foldable._
 import doobie.Put
 import doobie.Read
-import flightdatabase.api.Operator
+import flightdatabase.domain.Operator
 import flightdatabase.domain._
 import flightdatabase.domain.airline.Airline
 import flightdatabase.domain.airline.AirlineAlgebra

@@ -9,7 +9,7 @@ import com.ibm.icu.util.TimeZone
 import doobie.Put
 import doobie.Read
 import doobie.Transactor
-import flightdatabase.api.Operator
+import flightdatabase.domain.Operator
 import flightdatabase.domain._
 import flightdatabase.domain.city.City
 import flightdatabase.domain.city.CityAlgebra

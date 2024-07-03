@@ -3,8 +3,8 @@ package flightdatabase.repository
 import cats.data.{NonEmptyList => Nel}
 import cats.effect.unsafe.implicits.global
 import doobie.implicits._
-import flightdatabase.api.Operator
 import flightdatabase.domain.EntryListEmpty
+import flightdatabase.domain.Operator
 import flightdatabase.domain.city.City
 import flightdatabase.domain.country.Country
 import flightdatabase.itutils.RepositoryCheck

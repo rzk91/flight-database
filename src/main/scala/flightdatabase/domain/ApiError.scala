@@ -3,7 +3,6 @@ package flightdatabase.domain
 import cats.Applicative
 import cats.syntax.either._
 import enumeratum.NoSuchMember
-import flightdatabase.api.Operator
 
 sealed trait ApiError {
   def error: String

@@ -6,7 +6,7 @@ import cats.data.{NonEmptyList => Nel}
 import doobie._
 import doobie.implicits._
 import doobie.postgres.sqlstate._
-import flightdatabase.api.Operator
+import flightdatabase.domain.Operator
 import flightdatabase.domain._
 import flightdatabase.repository.queries._
 import flightdatabase.utils.FieldValues

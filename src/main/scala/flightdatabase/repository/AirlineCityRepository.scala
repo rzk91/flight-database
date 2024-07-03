@@ -7,7 +7,7 @@ import cats.effect.Resource
 import cats.implicits._
 import doobie.Put
 import doobie.Transactor
-import flightdatabase.api.Operator
+import flightdatabase.domain.Operator
 import flightdatabase.domain._
 import flightdatabase.domain.airline.Airline
 import flightdatabase.domain.airline_city._

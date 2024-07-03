@@ -3,8 +3,8 @@ package flightdatabase.domain.airport
 import cats.data.{NonEmptyList => Nel}
 import doobie.Put
 import doobie.Read
-import flightdatabase.api.Operator
 import flightdatabase.domain.ApiResult
+import flightdatabase.domain.Operator
 
 trait AirportAlgebra[F[_]] {
   def doesAirportExist(id: Long): F[Boolean]

@@ -8,8 +8,8 @@ import cats.syntax.all._
 import doobie.Put
 import doobie.Read
 import doobie.Transactor
-import flightdatabase.api.Operator
 import flightdatabase.domain.ApiResult
+import flightdatabase.domain.Operator
 import flightdatabase.domain.language.Language
 import flightdatabase.domain.language.LanguageAlgebra
 import flightdatabase.domain.language.LanguageCreate

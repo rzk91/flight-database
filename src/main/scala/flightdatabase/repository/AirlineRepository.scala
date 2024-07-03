@@ -8,8 +8,8 @@ import cats.implicits._
 import doobie.Put
 import doobie.Read
 import doobie.Transactor
-import flightdatabase.api.Operator
 import flightdatabase.domain.ApiResult
+import flightdatabase.domain.Operator
 import flightdatabase.domain.ValidatedSortAndLimit
 import flightdatabase.domain.airline.Airline
 import flightdatabase.domain.airline.AirlineAlgebra

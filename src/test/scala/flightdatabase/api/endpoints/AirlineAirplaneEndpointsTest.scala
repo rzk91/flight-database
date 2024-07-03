@@ -5,7 +5,6 @@ import cats.effect.IO
 import cats.syntax.foldable._
 import doobie.Put
 import doobie.Read
-import flightdatabase.api.Operator
 import flightdatabase.domain.ApiResult
 import flightdatabase.domain.Created
 import flightdatabase.domain.Deleted
@@ -18,6 +17,7 @@ import flightdatabase.domain.Got
 import flightdatabase.domain.InconsistentIds
 import flightdatabase.domain.InvalidField
 import flightdatabase.domain.LongType
+import flightdatabase.domain.Operator
 import flightdatabase.domain.ResultOrder
 import flightdatabase.domain.StringType
 import flightdatabase.domain.Updated
