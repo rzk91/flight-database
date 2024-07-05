@@ -24,8 +24,8 @@ lazy val commonSettings = Seq(
 val circeVersion = "0.14.3"
 val doobieVersion = "1.0.0-RC5"
 val http4sVersion = "0.23.26"
-val pureconfigVersion = "0.17.6"
-val flywayVersion = "10.11.0"
+val pureconfigVersion = "0.17.7"
+val flywayVersion = "10.14.0"
 val scalaTestVersion = "3.2.19"
 val testcontainersVersion = "0.41.3"
 
