@@ -1,7 +1,6 @@
 val scalaV = "2.13.13"
 
 lazy val commonSettings = Seq(
-  name         := "flight-database",
   organization := "rzk.scala",
   version      := "1.0-SNAPSHOT",
   scalaVersion := scalaV,
@@ -18,7 +17,8 @@ lazy val commonSettings = Seq(
     "-language:existentials",
     "-language:postfixOps",
     "-Wunused:imports"
-  )
+  ),
+  scalafixScalaBinaryVersion := scalaV.split('.').take(2).mkString(".")
 )
 
 val circeVersion = "0.14.3"
@@ -50,10 +50,13 @@ val http4sDependencies = Seq(
   "org.http4s" %% "http4s-circe"        % http4sVersion
 )
 
+val enumerationDependencies = Seq(
+  "com.beachape" %% "enumeratum" % "1.7.3"
+)
+
 val otherDependencies = Seq(
   "com.github.pureconfig"      %% "pureconfig"                % pureconfigVersion,
   "com.github.pureconfig"      %% "pureconfig-cats-effect"    % pureconfigVersion,
-  "com.beachape"               %% "enumeratum"                % "1.7.3",
   "org.slf4j"                  % "slf4j-log4j12"              % "2.0.13",
   "com.typesafe.scala-logging" %% "scala-logging"             % "3.9.5",
   "commons-io"                 % "commons-io"                 % "2.16.1",
@@ -62,33 +65,65 @@ val otherDependencies = Seq(
   "com.ibm.icu"                % "icu4j"                      % "75.1"
 )
 
+val allCoreDependencies =
+  circeDependencies ++
+    doobieDependencies ++
+    http4sDependencies ++
+    enumerationDependencies ++
+    otherDependencies
+
 val testingDependencies = Seq(
   "org.scalactic" %% "scalactic" % scalaTestVersion,
-  "org.scalatest" %% "scalatest" % scalaTestVersion % "it,test",
+  "org.scalatest" %% "scalatest" % scalaTestVersion % "test",
   "org.scalamock" %% "scalamock" % "6.0.0" % "test"
 )
 
 val itDependencies = Seq(
-  "com.dimafeng" %% "testcontainers-scala-scalatest"  % testcontainersVersion % "it",
-  "com.dimafeng" %% "testcontainers-scala-postgresql" % testcontainersVersion % "it"
+  "org.scalatest" %% "scalatest"                       % scalaTestVersion      % "it",
+  "com.dimafeng"  %% "testcontainers-scala-scalatest"  % testcontainersVersion % "it",
+  "com.dimafeng"  %% "testcontainers-scala-postgresql" % testcontainersVersion % "it"
 )
 
-lazy val root = (project in file("."))
+lazy val core = project
+  .in(file("modules/core"))
+  .settings(
+    name := "flight-database-core",
+    commonSettings,
+    libraryDependencies ++= circeDependencies ++ doobieDependencies ++ enumerationDependencies ++ testingDependencies
+  )
+
+lazy val utils = project
+  .in(file("modules/utils"))
+  .dependsOn(core)
+  .settings(
+    name := "flight-database-utils",
+    commonSettings,
+    libraryDependencies ++= allCoreDependencies ++ testingDependencies,
+    addCompilerPlugin(("org.typelevel" % "kind-projector" % "0.13.3").cross(CrossVersion.full))
+  )
+
+lazy val backend = project
+  .in(file("modules/backend"))
+  .dependsOn(core, utils)
   .configs(IntegrationTest)
   .settings(
+    name := "flight-database-backend",
     commonSettings,
     Defaults.itSettings,
     scalafixConfigSettings(IntegrationTest),
-    libraryDependencies ++= circeDependencies ++
-      doobieDependencies ++
-      http4sDependencies ++
-      otherDependencies ++
-      testingDependencies ++
-      itDependencies
+    libraryDependencies ++= allCoreDependencies ++ testingDependencies ++ itDependencies,
+    addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"),
+    addCompilerPlugin(("org.typelevel" % "kind-projector" % "0.13.3").cross(CrossVersion.full))
   )
 
-addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
-addCompilerPlugin(("org.typelevel" % "kind-projector" % "0.13.3").cross(CrossVersion.full))
+// TODO: Add frontend module
+
+lazy val root = (project in file("."))
+  .aggregate(core, utils, backend)
+  .settings(
+    name := "flight-database",
+    commonSettings,
+  )
 
 // Run integration tests in a separate JVM from sbt
 IntegrationTest / fork := true
@@ -101,5 +136,3 @@ inThisBuild(
     semanticdbVersion := scalafixSemanticdb.revision
   )
 )
-
-scalafixScalaBinaryVersion := scalaV.split('.').take(2).mkString(".")
