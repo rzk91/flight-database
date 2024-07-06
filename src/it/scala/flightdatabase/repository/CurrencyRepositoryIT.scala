@@ -16,7 +16,7 @@ import flightdatabase.domain.currency.Currency
 import flightdatabase.domain.currency.CurrencyCreate
 import flightdatabase.domain.currency.CurrencyPatch
 import flightdatabase.itutils.RepositoryCheck
-import flightdatabase.itutils.implicits._
+import flightdatabase.utils.extensions.test._
 import org.scalatest.Inspectors.forAll
 
 final class CurrencyRepositoryIT extends RepositoryCheck {

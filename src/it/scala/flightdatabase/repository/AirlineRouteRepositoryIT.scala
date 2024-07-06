@@ -16,7 +16,7 @@ import flightdatabase.domain.airline_route.AirlineRoute
 import flightdatabase.domain.airline_route.AirlineRouteCreate
 import flightdatabase.domain.airline_route.AirlineRoutePatch
 import flightdatabase.itutils.RepositoryCheck
-import flightdatabase.itutils.implicits._
+import flightdatabase.utils.extensions.test._
 import org.scalatest.Inspectors.forAll
 
 final class AirlineRouteRepositoryIT extends RepositoryCheck {

@@ -13,7 +13,7 @@ import flightdatabase.domain.airline.Airline
 import flightdatabase.domain.airline_city._
 import flightdatabase.domain.city.City
 import flightdatabase.repository.queries.AirlineCityQueries._
-import flightdatabase.utils.implicits._
+import flightdatabase.utils.extensions.all._
 
 class AirlineCityRepository[F[_]: Concurrent] private (implicit transactor: Transactor[F])
     extends AirlineCityAlgebra[F] {

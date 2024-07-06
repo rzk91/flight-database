@@ -1,8 +1,6 @@
 package flightdatabase.domain
 
 import enumeratum._
-import org.http4s.Uri
-import org.http4s.Uri.Path
 
 sealed abstract class FlightDbTable(override val entryName: String) extends EnumEntry {
   def prefix: String
@@ -30,7 +28,4 @@ object FlightDbTable extends Enum[FlightDbTable] {
   case object LANGUAGE extends FlightDbTable("language") { val prefix = "/languages" }
   case object MANUFACTURER extends FlightDbTable("manufacturer") { val prefix = "/manufacturers" }
   case object HELLO_WORLD extends FlightDbTable("hello") { val prefix = "/hello" }
-
-  def validEntryPoints(mainEntryPoint: Uri): IndexedSeq[Path] =
-    values.map(p => mainEntryPoint.addPath(p.prefix.tail).path)
 }

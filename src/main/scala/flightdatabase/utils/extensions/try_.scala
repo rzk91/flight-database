@@ -1,8 +1,8 @@
-package flightdatabase.utils.implicits
+package flightdatabase.utils.extensions
 
 import scala.util.Try
 
-final class RichTry[A](private val tryA: Try[A]) extends AnyVal {
+final class TryOps[A](private val tryA: Try[A]) extends AnyVal {
   // Additional methods based on `Option` class
   def exists(f: A => Boolean): Boolean = tryA.isSuccess && f(tryA.get)
   def forall(f: A => Boolean): Boolean = tryA.isFailure || f(tryA.get)
@@ -10,3 +10,9 @@ final class RichTry[A](private val tryA: Try[A]) extends AnyVal {
   def toList: List[A] = tryA.toOption.toList
   def toSet: Set[A] = tryA.toOption.toSet
 }
+
+trait ToTryOps {
+  @inline implicit def toTryOps[A](tryA: Try[A]): TryOps[A] = new TryOps(tryA)
+}
+
+object try_ extends ToTryOps

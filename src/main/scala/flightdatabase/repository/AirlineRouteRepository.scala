@@ -9,7 +9,7 @@ import doobie.Put
 import doobie.Query0
 import doobie.Read
 import doobie.Transactor
-import doobie.implicits._
+import doobie.syntax.string._
 import flightdatabase.domain.ApiResult
 import flightdatabase.domain.Operator
 import flightdatabase.domain.airline.Airline
@@ -22,7 +22,7 @@ import flightdatabase.domain.airplane.Airplane
 import flightdatabase.domain.airport.Airport
 import flightdatabase.repository.queries.AirlineRouteQueries._
 import flightdatabase.repository.queries.selectWhereQuery
-import flightdatabase.utils.implicits._
+import flightdatabase.utils.extensions.all._
 
 class AirlineRouteRepository[F[_]: Concurrent] private (
   implicit transactor: Transactor[F]

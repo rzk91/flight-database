@@ -18,7 +18,7 @@ import flightdatabase.domain.airport.AirportPatch
 import flightdatabase.domain.city.City
 import flightdatabase.domain.country.Country
 import flightdatabase.repository.queries.AirportQueries._
-import flightdatabase.utils.implicits._
+import flightdatabase.utils.extensions.all._
 
 class AirportRepository[F[_]: Concurrent] private (
   implicit transactor: Transactor[F]

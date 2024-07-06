@@ -16,7 +16,7 @@ import flightdatabase.domain.country.Country
 import flightdatabase.domain.country.CountryCreate
 import flightdatabase.domain.country.CountryPatch
 import flightdatabase.itutils.RepositoryCheck
-import flightdatabase.itutils.implicits._
+import flightdatabase.utils.extensions.test._
 import org.scalatest.Inspectors.forAll
 
 final class CountryRepositoryIT extends RepositoryCheck {

@@ -29,7 +29,7 @@ import flightdatabase.domain.airline_airplane.AirlineAirplanePatch
 import flightdatabase.domain.partial.PartiallyAppliedGetAll
 import flightdatabase.domain.partial.PartiallyAppliedGetBy
 import flightdatabase.testutils._
-import flightdatabase.testutils.implicits._
+import flightdatabase.utils.extensions.test._
 import org.http4s.Status.{Created => CreatedStatus, _}
 import org.http4s.circe.CirceEntityCodec._
 import org.scalamock.function.StubFunction1

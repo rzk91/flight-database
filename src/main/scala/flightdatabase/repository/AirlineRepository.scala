@@ -21,7 +21,7 @@ import flightdatabase.repository.AirlineRepository.PartiallyAppliedGetAllAirline
 import flightdatabase.repository.AirlineRepository.PartiallyAppliedGetByAirline
 import flightdatabase.repository.AirlineRepository.PartiallyAppliedGetByCountry
 import flightdatabase.repository.queries.AirlineQueries._
-import flightdatabase.utils.implicits._
+import flightdatabase.utils.extensions.all._
 
 class AirlineRepository[F[_]: Concurrent] private (
   implicit transactor: Transactor[F]

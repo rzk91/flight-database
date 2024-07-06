@@ -20,7 +20,7 @@ import flightdatabase.repository.queries.LanguageQueries.languageExists
 import flightdatabase.repository.queries.LanguageQueries.modifyLanguage
 import flightdatabase.repository.queries.LanguageQueries.selectAllLanguages
 import flightdatabase.repository.queries.LanguageQueries.selectLanguageBy
-import flightdatabase.utils.implicits._
+import flightdatabase.utils.extensions.all._
 
 class LanguageRepository[F[_]: Concurrent] private (
   implicit transactor: Transactor[F]

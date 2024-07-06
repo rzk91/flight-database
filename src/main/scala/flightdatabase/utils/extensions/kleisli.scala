@@ -1,4 +1,4 @@
-package flightdatabase.utils.implicits
+package flightdatabase.utils.extensions
 
 import cats.Monad
 import cats.data.Kleisli
@@ -16,7 +16,7 @@ import org.http4s.Status
 import org.http4s.headers.`Content-Length`
 import org.http4s.headers.`Content-Type`
 
-final class RichKleisliResponse[F[_]: Monad](
+final class KleisliResponseOps[F[_]: Monad](
   self: Kleisli[OptionT[F, *], Request[F], Response[F]]
 ) {
 
@@ -38,3 +38,12 @@ final class RichKleisliResponse[F[_]: Monad](
   def orNotFoundIf(cond: Request[F] => Boolean): Kleisli[OptionT[F, *], Request[F], Response[F]] =
     Kleisli(req => OptionT.whenF(cond(req))(notFoundFor(req)).orElse(self.run(req)))
 }
+
+trait ToKleisliResponseOps {
+
+  @inline implicit def toKleisliResponseOps[F[_]: Monad](
+    self: Kleisli[OptionT[F, *], Request[F], Response[F]]
+  ): KleisliResponseOps[F] = new KleisliResponseOps(self)
+}
+
+object kleisli extends ToKleisliResponseOps

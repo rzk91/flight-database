@@ -8,7 +8,7 @@ import flightdatabase.domain.airline_city.AirlineCity
 import flightdatabase.domain.airline_city.AirlineCityAlgebra
 import flightdatabase.domain.airline_city.AirlineCityCreate
 import flightdatabase.domain.city.City
-import flightdatabase.utils.implicits.enrichString
+import flightdatabase.utils.extensions.string._
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
 

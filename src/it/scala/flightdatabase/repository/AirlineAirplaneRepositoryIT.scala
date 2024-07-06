@@ -16,8 +16,8 @@ import flightdatabase.domain.airline_airplane.AirlineAirplane
 import flightdatabase.domain.airline_airplane.AirlineAirplaneCreate
 import flightdatabase.domain.airline_airplane.AirlineAirplanePatch
 import flightdatabase.itutils.RepositoryCheck
-import flightdatabase.itutils.implicits._
-import flightdatabase.utils.implicits.iterableToRichIterable
+import flightdatabase.utils.extensions.iterable._
+import flightdatabase.utils.extensions.test._
 import org.scalatest.Inspectors.forAll
 
 final class AirlineAirplaneRepositoryIT extends RepositoryCheck {
@@ -139,7 +139,7 @@ final class AirlineAirplaneRepositoryIT extends RepositoryCheck {
     )
 
     f(idNotPresent, 1).error shouldBe EntryListEmpty
-    f(1, veryLongIdNotPresent).error shouldBe EntryListEmpty
+    f(1, veryLongIdNotPresent).error shouldBe EntryNotFound((1, veryLongIdNotPresent))
   }
 
   it should "return an empty list if offset is too large" in {

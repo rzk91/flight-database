@@ -15,8 +15,8 @@ import flightdatabase.domain.airline_city.AirlineCity
 import flightdatabase.domain.airline_city.AirlineCityCreate
 import flightdatabase.domain.airline_city.AirlineCityPatch
 import flightdatabase.itutils.RepositoryCheck
-import flightdatabase.itutils.implicits._
-import flightdatabase.utils.implicits.iterableToRichIterable
+import flightdatabase.utils.extensions.iterable._
+import flightdatabase.utils.extensions.test._
 import org.scalatest.Inspectors.forAll
 
 final class AirlineCityRepositoryIT extends RepositoryCheck {
@@ -77,7 +77,7 @@ final class AirlineCityRepositoryIT extends RepositoryCheck {
       f(airlineCity.airlineId, airlineCity.cityId).value shouldBe airlineCity
     }
     f(idNotPresent, 1).error shouldBe EntryListEmpty
-    f(1, veryLongIdNotPresent).error shouldBe EntryListEmpty
+    f(1, veryLongIdNotPresent).error shouldBe EntryNotFound((1, veryLongIdNotPresent))
   }
 
   "Selecting airline-city combinations by other fields" should "return the corresponding entries" in {

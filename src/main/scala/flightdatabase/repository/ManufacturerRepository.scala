@@ -18,7 +18,7 @@ import flightdatabase.domain.manufacturer.ManufacturerAlgebra
 import flightdatabase.domain.manufacturer.ManufacturerCreate
 import flightdatabase.domain.manufacturer.ManufacturerPatch
 import flightdatabase.repository.queries.ManufacturerQueries._
-import flightdatabase.utils.implicits._
+import flightdatabase.utils.extensions.all._
 
 class ManufacturerRepository[F[_]: Concurrent] private (
   implicit transactor: Transactor[F]

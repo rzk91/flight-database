@@ -8,7 +8,7 @@ import flightdatabase.domain.airline_airplane.AirlineAirplane
 import flightdatabase.domain.airline_airplane.AirlineAirplaneAlgebra
 import flightdatabase.domain.airline_airplane.AirlineAirplaneCreate
 import flightdatabase.domain.airplane.Airplane
-import flightdatabase.utils.implicits.enrichString
+import flightdatabase.utils.extensions.string._
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
 

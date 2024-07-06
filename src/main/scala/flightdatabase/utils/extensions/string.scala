@@ -1,10 +1,11 @@
-package flightdatabase.utils.implicits
+package flightdatabase.utils.extensions
 
 import cats.data.{NonEmptyList => Nel}
+import flightdatabase.utils.extensions.string._
 
 import scala.util.Try
 
-final class RichString(private val str: String) extends AnyVal {
+final class MoreStringOps(private val str: String) extends AnyVal {
   // Safe conversion methods
   def asInt: Option[Int] = Try(str.trim.toInt).toOption
   def asLong: Option[Long] = Try(str.trim.toLong).toOption
@@ -54,3 +55,10 @@ final class RichString(private val str: String) extends AnyVal {
     }
   }
 }
+
+trait ToStringOps {
+  @inline implicit def toStringOps(str: String): MoreStringOps = new MoreStringOps(str)
+  @inline implicit def stringToRichIterable(s: String): IterableOps[Char] = new IterableOps(s)
+}
+
+object string extends ToStringOps

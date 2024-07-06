@@ -6,7 +6,7 @@ import flightdatabase.domain._
 import flightdatabase.domain.currency.Currency
 import flightdatabase.domain.currency.CurrencyAlgebra
 import flightdatabase.domain.currency.CurrencyCreate
-import flightdatabase.utils.implicits.enrichString
+import flightdatabase.utils.extensions.string._
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
 

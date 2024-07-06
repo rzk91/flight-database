@@ -7,8 +7,7 @@ import cats.data.{NonEmptyList => Nel}
 import cats.syntax.all._
 import flightdatabase.domain.ResultOrder.StringOrderOps
 import flightdatabase.domain._
-import flightdatabase.utils.implicits.enrichOption
-import flightdatabase.utils.implicits.enrichString
+import flightdatabase.utils.extensions.all._
 import org.http4s._
 import org.http4s.dsl.Http4sDsl
 import org.http4s.dsl.impl.FlagQueryParamMatcher

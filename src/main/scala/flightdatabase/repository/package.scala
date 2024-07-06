@@ -5,13 +5,11 @@ import cats.data.EitherT
 import cats.data.{NonEmptyList => Nel}
 import doobie._
 import doobie.implicits._
-import doobie.postgres.sqlstate._
 import flightdatabase.domain.FieldValues
 import flightdatabase.domain.Operator
 import flightdatabase.domain._
 import flightdatabase.repository.queries._
-import flightdatabase.utils.implicits.enrichOption
-import flightdatabase.utils.implicits.enrichQuery
+import flightdatabase.utils.extensions.all._
 
 package object repository {
 
@@ -50,20 +48,4 @@ package object repository {
 
   def featureNotImplemented[F[_]: Applicative, A]: F[ApiResult[A]] =
     FeatureNotImplemented.elevate[F, A]
-
-  // SQL state to ApiError conversion
-  def sqlStateToApiError(
-    state: SqlState,
-    invalidField: Option[String] = None,
-    invalidValues: Option[Nel[_]] = None
-  ): ApiError = state match {
-    case class23.CHECK_VIOLATION       => EntryCheckFailed
-    case class23.NOT_NULL_VIOLATION    => EntryNullCheckFailed
-    case class23.UNIQUE_VIOLATION      => EntryAlreadyExists
-    case class23.FOREIGN_KEY_VIOLATION => EntryHasInvalidForeignKey
-    case class42.UNDEFINED_COLUMN      => InvalidField(invalidField.debug)
-    case class42.UNDEFINED_FUNCTION =>
-      InvalidValueType(invalidValues.map(_.toList.mkString(", ")).debug)
-    case _ => SqlError(state.value)
-  }
 }

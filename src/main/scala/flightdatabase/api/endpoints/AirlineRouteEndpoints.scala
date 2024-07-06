@@ -9,7 +9,7 @@ import flightdatabase.domain.airline_route.AirlineRouteAlgebra
 import flightdatabase.domain.airline_route.AirlineRouteCreate
 import flightdatabase.domain.airplane.Airplane
 import flightdatabase.domain.airport.Airport
-import flightdatabase.utils.implicits.enrichString
+import flightdatabase.utils.extensions.string._
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
 

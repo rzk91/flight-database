@@ -1,17 +1,10 @@
-package flightdatabase.itutils
+package flightdatabase.utils.extensions
 
 import cats.data.{NonEmptyList => Nel}
-import cats.effect.IO
-import flightdatabase.domain.ApiResult
 import org.scalactic.Equality
-import org.scalatest.enablers.Aggregating
-import org.scalatest.enablers.Collecting
-import org.scalatest.enablers.Containing
+import org.scalatest.enablers.{Aggregating, Collecting, Containing}
 
-package object implicits {
-
-  @inline implicit def enrichIOOperation[A](op: IO[ApiResult[A]]): RichIOOperation[A] =
-    new RichIOOperation(op)
+trait ToMatchersOps {
 
   implicit def collectingNel[A]: Collecting[A, Nel[A]] =
     new Collecting[A, Nel[A]] {
@@ -56,5 +49,6 @@ package object implicits {
       override def containsNoneOf(container: Nel[A], elements: collection.Seq[Any]): Boolean =
         !elements.exists(e => container.exists(equality.areEqual(_, e)))
     }
-
 }
+
+object matchers extends ToMatchersOps

@@ -15,7 +15,7 @@ import flightdatabase.domain.currency.CurrencyAlgebra
 import flightdatabase.domain.currency.CurrencyCreate
 import flightdatabase.domain.currency.CurrencyPatch
 import flightdatabase.repository.queries.CurrencyQueries._
-import flightdatabase.utils.implicits._
+import flightdatabase.utils.extensions.all._
 
 class CurrencyRepository[F[_]: Concurrent] private (
   implicit transactor: Transactor[F]

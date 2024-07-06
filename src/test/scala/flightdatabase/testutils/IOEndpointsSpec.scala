@@ -3,7 +3,7 @@ package flightdatabase.testutils
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 import flightdatabase.api.endpoints.Endpoints
-import flightdatabase.utils.implicits.enrichKleisliResponse
+import flightdatabase.utils.extensions.kleisli._
 import org.http4s.EntityEncoder
 import org.http4s.HttpApp
 import org.http4s.Method

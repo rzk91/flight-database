@@ -9,11 +9,11 @@ import flightdatabase.config.Configuration.ApiConfig
 import flightdatabase.domain.FlightDbTable
 import flightdatabase.domain.FlightDbTable._
 import flightdatabase.repository._
-import flightdatabase.utils.implicits.enrichKleisliResponse
-import org.http4s.HttpApp
-import org.http4s.HttpRoutes
+import flightdatabase.utils.extensions.kleisli._
+import org.http4s.{HttpApp, HttpRoutes, Uri}
 import org.http4s.server.Router
 import org.http4s.server.middleware.Logger
+import org.http4s.Uri.Path
 
 class FlightDbApi[F[_]: Async] private (
   apiConfig: ApiConfig,
@@ -61,7 +61,7 @@ class FlightDbApi[F[_]: Async] private (
     ).foldLeft(HttpRoutes.empty[F])(_ <+> _.routes)
 
   def flightDbApp(): F[HttpApp[F]] = {
-    val validEntryPoints = FlightDbTable.validEntryPoints(apiConfig.flightDbBaseUri)
+    val validEntryPoints = getValidEntryPoints(apiConfig.flightDbBaseUri)
     val app = Router(apiConfig.entryPoint -> flightDbServices)
       .orNotFoundIf(req => !validEntryPoints.exists(req.uri.path.startsWith)) // Not found for invalid entry points
       .orBadRequest                                                           // Bad request for invalid requests
@@ -70,6 +70,9 @@ class FlightDbApi[F[_]: Async] private (
       if (logging.active) Logger.httpApp(logging.withHeaders, logging.withBody)(app) else app
     )
   }
+
+  private def getValidEntryPoints(mainEntryPoint: Uri): IndexedSeq[Path] =
+    FlightDbTable.values.map(p => mainEntryPoint.addPath(p.prefix.tail).path)
 }
 
 object FlightDbApi {

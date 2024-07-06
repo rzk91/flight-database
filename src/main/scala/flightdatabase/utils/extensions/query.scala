@@ -1,4 +1,4 @@
-package flightdatabase.utils.implicits
+package flightdatabase.utils.extensions
 
 import cats.data.{NonEmptyList => Nel}
 import cats.syntax.applicativeError._
@@ -12,12 +12,12 @@ import flightdatabase.domain.EntryListEmpty
 import flightdatabase.domain.EntryNotFound
 import flightdatabase.domain.Got
 import flightdatabase.domain.UnknownDbError
-import flightdatabase.repository.sqlStateToApiError
+import flightdatabase.utils.extensions.sqlstate._
 import fs2.Stream
 
 import java.sql.SQLException
 
-final class RichQuery[A](private val q: Query0[A]) extends AnyVal {
+final class QueryOps[A](private val q: Query0[A]) extends AnyVal {
 
   def asNel(
     invalidField: Option[String] = None,
@@ -26,7 +26,8 @@ final class RichQuery[A](private val q: Query0[A]) extends AnyVal {
     q.nel.attempt.map {
       case Right(nel) => Got(nel).asResult
       case Left(error: SQLException) =>
-        sqlStateToApiError(SqlState(error.getSQLState), invalidField, invalidValues)
+        SqlState(error.getSQLState)
+          .toApiError(invalidField, invalidValues)
           .asResult[Nel[A]]
       case Left(UnexpectedEnd) => EntryListEmpty.asResult[Nel[A]]
       case Left(error)         => UnknownDbError(error.getLocalizedMessage).asResult[Nel[A]]
@@ -37,10 +38,17 @@ final class RichQuery[A](private val q: Query0[A]) extends AnyVal {
       case Right(Some(a)) => Got(a).asResult
       case Right(None)    => EntryNotFound(entry).asResult[A]
       case Left(error: SQLException) =>
-        sqlStateToApiError(SqlState(error.getSQLState), invalidValues = Some(Nel.one(entry)))
+        SqlState(error.getSQLState)
+          .toApiError(invalidValues = Some(Nel.one(entry)))
           .asResult[A]
       case Left(error) => UnknownDbError(error.getLocalizedMessage).asResult[A]
     }
 
   def asStream: Stream[ConnectionIO, ApiResult[A]] = q.stream.map(Got(_).asResult)
 }
+
+trait ToQueryOps {
+  @inline implicit def toQueryOps[A](q: Query0[A]): QueryOps[A] = new QueryOps(q)
+}
+
+object query extends ToQueryOps

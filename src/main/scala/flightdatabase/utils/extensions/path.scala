@@ -1,11 +1,12 @@
-package flightdatabase.utils.implicits
+package flightdatabase.utils.extensions
 
+import flightdatabase.utils.extensions.path._
 import org.apache.commons.io.FilenameUtils
 
 import java.io.File
 import java.nio.file.Path
 
-final class RichPath(val path: Path) extends AnyVal {
+final class PathOps(val path: Path) extends AnyVal {
   def fileName: String = path.getFileName.toString
   def folderName: String = path.getParent.fileName
   def fileStartsWith(prefix: String): Boolean = fileName.startsWith(prefix)
@@ -21,3 +22,9 @@ final class RichPath(val path: Path) extends AnyVal {
   def listContents(filterFunc: File => Boolean = _ => true): List[File] =
     path.toFile.listFiles.filter(filterFunc).toList
 }
+
+trait ToPathOps {
+  @inline implicit def enrichPath(path: Path): PathOps = new PathOps(path)
+}
+
+object path extends ToPathOps

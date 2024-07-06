@@ -8,7 +8,7 @@ import flightdatabase.domain.country.CountryAlgebra
 import flightdatabase.domain.country.CountryCreate
 import flightdatabase.domain.currency.Currency
 import flightdatabase.domain.language.Language
-import flightdatabase.utils.implicits.enrichString
+import flightdatabase.utils.extensions.string._
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
 

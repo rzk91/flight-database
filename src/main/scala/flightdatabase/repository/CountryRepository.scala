@@ -9,7 +9,7 @@ import doobie.Fragment
 import doobie.Put
 import doobie.Read
 import doobie.Transactor
-import doobie.implicits._
+import doobie.syntax.string._
 import flightdatabase.domain.ApiResult
 import flightdatabase.domain.Operator
 import flightdatabase.domain.country.Country
@@ -19,7 +19,7 @@ import flightdatabase.domain.country.CountryPatch
 import flightdatabase.domain.currency.Currency
 import flightdatabase.domain.language.Language
 import flightdatabase.repository.queries.CountryQueries._
-import flightdatabase.utils.implicits._
+import flightdatabase.utils.extensions.all._
 
 class CountryRepository[F[_]: Concurrent] private (
   implicit transactor: Transactor[F]

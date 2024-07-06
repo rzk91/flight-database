@@ -1,11 +1,14 @@
-package flightdatabase.utils.implicits
+package flightdatabase.utils.extensions
+
+import flightdatabase.utils.extensions.double._
+import flightdatabase.utils.extensions.iterable._
 
 import scala.annotation.tailrec
 import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
-final class RichIterable[A](private val iterable: Iterable[A]) {
+final class IterableOps[A](private val iterable: Iterable[A]) {
   def sumBy[B](f: A => B)(implicit num: Numeric[B]): B = iterable.map(f).sum
 
   def averageBy[B](f: A => B)(implicit num: Numeric[B]): Option[Double] =
@@ -86,3 +89,13 @@ final class RichIterable[A](private val iterable: Iterable[A]) {
     if (len < 0) 1 else loop(0, iterable)
   }
 }
+
+trait ToIterableOps {
+
+  @inline implicit def toIterableOps[A](iterable: Iterable[A]): IterableOps[A] =
+    new IterableOps(iterable)
+
+  @inline implicit def arrayToRichIterable[A](l: Array[A]): IterableOps[A] = new IterableOps(l)
+}
+
+object iterable extends ToIterableOps

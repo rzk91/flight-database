@@ -16,7 +16,7 @@ import flightdatabase.domain.airplane.AirplaneCreate
 import flightdatabase.domain.airplane.AirplanePatch
 import flightdatabase.domain.manufacturer.Manufacturer
 import flightdatabase.repository.queries.AirplaneQueries._
-import flightdatabase.utils.implicits._
+import flightdatabase.utils.extensions.all._
 
 class AirplaneRepository[F[_]: Concurrent] private (
   implicit transactor: Transactor[F]

@@ -2,15 +2,15 @@ package flightdatabase.repository
 
 import cats.data.{NonEmptyList => Nel}
 import cats.effect.unsafe.implicits.global
-import doobie.implicits._
+import doobie.syntax.string._
 import flightdatabase.domain.EntryListEmpty
 import flightdatabase.domain.FieldValues
 import flightdatabase.domain.Operator
 import flightdatabase.domain.city.City
 import flightdatabase.domain.country.Country
 import flightdatabase.itutils.RepositoryCheck
-import flightdatabase.itutils.implicits._
-import flightdatabase.utils.implicits._
+import flightdatabase.utils.extensions.test._
+import flightdatabase.utils.extensions.all._
 
 final class GenericRepositoryIT extends RepositoryCheck {
 

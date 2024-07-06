@@ -11,6 +11,7 @@ import flightdatabase.domain.TableBase
 import flightdatabase.domain.ValidatedSortAndLimit
 import flightdatabase.domain.airline_airplane.AirlineAirplane
 import flightdatabase.domain.airline_airplane.AirlineAirplaneCreate
+import flightdatabase.utils.extensions.sortandlimit._
 
 private[repository] object AirlineAirplaneQueries {
 
