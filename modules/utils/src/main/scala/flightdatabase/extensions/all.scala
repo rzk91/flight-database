@@ -8,7 +8,6 @@ trait AllExtensions
     with ToOptionOps
     with ToPathOps
     with ToQueryOps
-    with ToValidatedSortAndLimitOps
     with ToSqlStateOps
     with ToStringOps
     with ToTryOps

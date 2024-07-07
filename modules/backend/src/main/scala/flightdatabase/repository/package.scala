@@ -5,7 +5,7 @@ import cats.data.EitherT
 import cats.data.{NonEmptyList => Nel}
 import doobie._
 import doobie.implicits._
-import flightdatabase.extensions.all._
+import flightdatabase.extensions.query._
 import flightdatabase.repository.queries._
 
 package object repository {
