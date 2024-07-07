@@ -61,7 +61,7 @@ val enumerationDependencies = Seq(
 val otherDependencies = Seq(
   "com.github.pureconfig"      %% "pureconfig"                % pureconfigVersion,
   "com.github.pureconfig"      %% "pureconfig-cats-effect"    % pureconfigVersion,
-  "org.slf4j"                  % "slf4j-log4j12"              % "2.0.13",
+  "org.slf4j"                  % "slf4j-reload4j"             % "2.0.13",
   "com.typesafe.scala-logging" %% "scala-logging"             % "3.9.5",
   "commons-io"                 % "commons-io"                 % "2.16.1",
   "org.flywaydb"               % "flyway-core"                % flywayVersion,
@@ -77,7 +77,7 @@ val allCoreDependencies =
     otherDependencies
 
 val testingDependencies = Seq(
-  "org.scalactic" %% "scalactic" % scalaTestVersion,
+  "org.scalactic" %% "scalactic" % scalaTestVersion % "test",
   "org.scalatest" %% "scalatest" % scalaTestVersion % "test",
   "org.scalamock" %% "scalamock" % "6.0.0" % "test"
 )
@@ -85,7 +85,7 @@ val testingDependencies = Seq(
 val itDependencies = Seq(
   "org.scalatest" %% "scalatest"                       % scalaTestVersion      % "test",
   "com.dimafeng"  %% "testcontainers-scala-scalatest"  % testcontainersVersion % "test",
-  "com.dimafeng"  %% "testcontainers-scala-postgresql" % testcontainersVersion % "test",
+  "com.dimafeng"  %% "testcontainers-scala-postgresql" % testcontainersVersion % "test"
 )
 
 lazy val core = project
@@ -118,7 +118,7 @@ lazy val backendIt = project
   .in(file("modules/backend-it"))
   .dependsOn(backend)
   .settings(
-    name := "flight-database-backend-it",
+    name           := "flight-database-backend-it",
     publish / skip := true,
     commonSettings,
     libraryDependencies ++= allCoreDependencies ++ itDependencies,
