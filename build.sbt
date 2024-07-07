@@ -18,7 +18,11 @@ lazy val commonSettings = Seq(
     "-language:postfixOps",
     "-Wunused:imports"
   ),
-  scalafixScalaBinaryVersion := scalaV.split('.').take(2).mkString(".")
+  semanticdbEnabled          := true,
+  semanticdbVersion          := scalafixSemanticdb.revision,
+  scalafixScalaBinaryVersion := scalaV.split('.').take(2).mkString("."),
+  addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"),
+  addCompilerPlugin(("org.typelevel" % "kind-projector" % "0.13.3").cross(CrossVersion.full))
 )
 
 val circeVersion = "0.14.3"
@@ -79,9 +83,9 @@ val testingDependencies = Seq(
 )
 
 val itDependencies = Seq(
-  "org.scalatest" %% "scalatest"                       % scalaTestVersion      % "it",
-  "com.dimafeng"  %% "testcontainers-scala-scalatest"  % testcontainersVersion % "it",
-  "com.dimafeng"  %% "testcontainers-scala-postgresql" % testcontainersVersion % "it"
+  "org.scalatest" %% "scalatest"                       % scalaTestVersion      % "test",
+  "com.dimafeng"  %% "testcontainers-scala-scalatest"  % testcontainersVersion % "test",
+  "com.dimafeng"  %% "testcontainers-scala-postgresql" % testcontainersVersion % "test",
 )
 
 lazy val core = project
@@ -98,41 +102,34 @@ lazy val utils = project
   .settings(
     name := "flight-database-utils",
     commonSettings,
-    libraryDependencies ++= allCoreDependencies ++ testingDependencies,
-    addCompilerPlugin(("org.typelevel" % "kind-projector" % "0.13.3").cross(CrossVersion.full))
+    libraryDependencies ++= allCoreDependencies ++ testingDependencies
   )
 
 lazy val backend = project
   .in(file("modules/backend"))
   .dependsOn(core, utils)
-  .configs(IntegrationTest)
   .settings(
     name := "flight-database-backend",
     commonSettings,
-    Defaults.itSettings,
-    scalafixConfigSettings(IntegrationTest),
-    libraryDependencies ++= allCoreDependencies ++ testingDependencies ++ itDependencies,
-    addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"),
-    addCompilerPlugin(("org.typelevel" % "kind-projector" % "0.13.3").cross(CrossVersion.full))
+    libraryDependencies ++= allCoreDependencies ++ testingDependencies
+  )
+
+lazy val backendIt = project
+  .in(file("modules/backend-it"))
+  .dependsOn(backend)
+  .settings(
+    name := "flight-database-backend-it",
+    publish / skip := true,
+    commonSettings,
+    libraryDependencies ++= allCoreDependencies ++ itDependencies,
+    scalafixConfigSettings(Test)
   )
 
 // TODO: Add frontend module
 
 lazy val root = (project in file("."))
-  .aggregate(core, utils, backend)
+  .aggregate(core, utils, backend, backendIt)
   .settings(
     name := "flight-database",
-    commonSettings,
+    commonSettings
   )
-
-// Run integration tests in a separate JVM from sbt
-IntegrationTest / fork := true
-
-// For scalafix
-inThisBuild(
-  List(
-    scalaVersion      := scalaV,
-    semanticdbEnabled := true,
-    semanticdbVersion := scalafixSemanticdb.revision
-  )
-)

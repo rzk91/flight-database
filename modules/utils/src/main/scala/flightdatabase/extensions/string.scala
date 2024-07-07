@@ -2,8 +2,9 @@ package flightdatabase.extensions
 
 import cats.data.{NonEmptyList => Nel}
 import enumeratum.NoSuchMember
+import flightdatabase.Operator
+import flightdatabase.ResultOrder
 import flightdatabase.extensions.string._
-import flightdatabase.{Operator, ResultOrder}
 
 import scala.util.Try
 
@@ -58,7 +59,8 @@ final class MoreStringOps(private val str: String) extends AnyVal {
   }
 
   // Enum extension methods
-  def toOrder: Either[NoSuchMember[ResultOrder], ResultOrder] = ResultOrder.withNameInsensitiveEither(str)
+  def toOrder: Either[NoSuchMember[ResultOrder], ResultOrder] =
+    ResultOrder.withNameInsensitiveEither(str)
   def toOperator: Either[NoSuchMember[Operator], Operator] = Operator.withNameInsensitiveEither(str)
 }
 
