@@ -26,8 +26,4 @@ object Operator extends Enum[Operator] {
   case object EndsWith extends Operator("ends_with") { val inSql = "ILIKE" }
   case object Contains extends Operator("contains") { val inSql = "ILIKE" }
   case object NotContains extends Operator("not_contains") { val inSql = "NOT ILIKE" }
-
-  implicit class StringOperatorOps(private val s: String) extends AnyVal {
-    def toOperator: Either[NoSuchMember[Operator], Operator] = withNameInsensitiveEither(s)
-  }
 }

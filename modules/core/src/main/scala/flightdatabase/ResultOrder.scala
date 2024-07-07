@@ -9,8 +9,4 @@ object ResultOrder extends Enum[ResultOrder] {
 
   case object Ascending extends ResultOrder("ASC")
   case object Descending extends ResultOrder("DESC")
-
-  implicit class StringOrderOps(private val s: String) extends AnyVal {
-    def toOrder: Either[NoSuchMember[ResultOrder], ResultOrder] = withNameInsensitiveEither(s)
-  }
 }

@@ -5,7 +5,6 @@ import cats.data.Validated
 import cats.data.ValidatedNel
 import cats.data.{NonEmptyList => Nel}
 import cats.syntax.all._
-import flightdatabase.ResultOrder.StringOrderOps
 import flightdatabase._
 import flightdatabase.extensions.option._
 import flightdatabase.extensions.string._

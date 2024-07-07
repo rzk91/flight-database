@@ -1,7 +1,9 @@
 package flightdatabase.extensions
 
 import cats.data.{NonEmptyList => Nel}
+import enumeratum.NoSuchMember
 import flightdatabase.extensions.string._
+import flightdatabase.{Operator, ResultOrder}
 
 import scala.util.Try
 
@@ -54,11 +56,15 @@ final class MoreStringOps(private val str: String) extends AnyVal {
       case _    => s"\\$char"
     }
   }
+
+  // Enum extension methods
+  def toOrder: Either[NoSuchMember[ResultOrder], ResultOrder] = ResultOrder.withNameInsensitiveEither(str)
+  def toOperator: Either[NoSuchMember[Operator], Operator] = Operator.withNameInsensitiveEither(str)
 }
 
 trait ToStringOps {
   @inline implicit def toStringOps(str: String): MoreStringOps = new MoreStringOps(str)
-  @inline implicit def stringToRichIterable(s: String): IterableOps[Char] = new IterableOps(s)
+  @inline implicit def toIterableOps(str: String): IterableOps[Char] = new IterableOps(str)
 }
 
 object string extends ToStringOps
