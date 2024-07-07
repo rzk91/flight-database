@@ -41,8 +41,10 @@ TODO list
 - ~~Change all `List` output to `NonEmptyList` output. This will make the API more robust and will allow for better
   error handling.~~ DONE!
 - ~~Make it possible to select any field for the general queries (i.e., GET ALL?only).~~ DONE!
-- Add option to sort the output.
-- Add option to limit the output.
+- ~~Move domain to a separate module and rename `src` to `core`.~~ DONE!
+- ~~Upgrade to sbt 1.9.9 and restructure build.sbt to account for multiple modules.~~ DONE!
+- ~~Add option to sort the output.~~ DONE!
+- ~~Add option to limit the output.~~ DONE!
 - Write unit ~~/ integration / both~~ tests for all endpoints.
 - Make search case-insensitive everywhere (not just for `LIKE` queries).
 - Add aggregate queries for all endpoints (e.g., `GET /cities/count?field=population&operator=gt&value=1000000` should
@@ -51,8 +53,6 @@ TODO list
   a JSON object with a `uri` field. This will allow for easy navigation of the API.
 - Add a URI to all foreign key fields in the response (maybe use something similar to `TableBase`).
 - Expand API endpoint list to include more complex operations.
-- Move domain to a separate module and rename `src` to `core`.
 - Update the `README.md` to reflect the changes in the project structure and the new features.
-- Upgrade to sbt 1.9.9 and restructure build.sbt to account for multiple modules.
-- Add a `Dockerfile` and `docker-compose.yml` to run the application in a container.
 - Start working on the frontend using ScalaJS!
+- [Optional] Add a `Dockerfile` and `docker-compose.yml` to run the application in a container.
