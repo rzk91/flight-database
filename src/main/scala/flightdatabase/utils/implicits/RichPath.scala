@@ -5,7 +5,7 @@ import org.apache.commons.io.FilenameUtils
 import java.io.File
 import java.nio.file.Path
 
-class RichPath(val path: Path) extends AnyVal {
+final class RichPath(val path: Path) extends AnyVal {
   def fileName: String = path.getFileName.toString
   def folderName: String = path.getParent.fileName
   def fileStartsWith(prefix: String): Boolean = fileName.startsWith(prefix)

@@ -1,4 +1,4 @@
-package flightdatabase.testutils
+package flightdatabase.itutils
 
 import cats.data.{NonEmptyList => Nel}
 import cats.effect.IO

@@ -1,4 +1,4 @@
-package flightdatabase.testutils
+package flightdatabase.itutils
 
 import cats.effect.Async
 import cats.effect.IO

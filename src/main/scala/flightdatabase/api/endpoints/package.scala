@@ -1,16 +1,84 @@
 package flightdatabase.api
 
 import cats.Monad
+import cats.data.Validated
+import cats.data.ValidatedNel
 import cats.data.{NonEmptyList => Nel}
-import cats.implicits.toTraverseOps
-import cats.syntax.flatMap._
+import cats.syntax.all._
+import flightdatabase.domain.ResultOrder.StringOrderOps
 import flightdatabase.domain._
+import flightdatabase.utils.implicits.enrichOption
 import flightdatabase.utils.implicits.enrichString
 import org.http4s._
 import org.http4s.dsl.Http4sDsl
+import org.http4s.dsl.impl.FlagQueryParamMatcher
+import org.http4s.dsl.impl.OptionalQueryParamDecoderMatcher
+import org.http4s.dsl.impl.QueryParamDecoderMatcher
+import org.http4s.dsl.impl.QueryParamDecoderMatcherWithDefault
 
 package object endpoints {
 
+  // All matcher objects
+  object FullOutputFlagMatcher extends FlagQueryParamMatcher("full-output")
+  object ValueMatcher extends QueryParamDecoderMatcher[String]("value")
+  object FieldMatcher extends QueryParamDecoderMatcher[String]("field")
+  object ReturnOnlyMatcher extends OptionalQueryParamDecoderMatcher[String]("return-only")
+
+  object OperatorMatcherEqDefault
+      extends QueryParamDecoderMatcherWithDefault[String]("operator", "eq")
+
+  case class SortAndLimit(
+    sortBy: Option[String],
+    order: Option[String],
+    limit: Option[Long],
+    offset: Option[Long]
+  ) {
+
+    def validate[T: TableBase]: ValidatedNel[String, ValidatedSortAndLimit] = {
+      val table = implicitly[TableBase[T]]
+
+      val sortByValidated = Validated.condNel(
+        sortBy.forall(table.fieldTypeMap.contains),
+        sortBy.map(f => s"${table.asString}.$f"),
+        s"Invalid entry in 'sort-by': ${sortBy.debug}"
+      )
+
+      val orderValidated = order
+        .traverse(_.toOrder.leftMap(err => s"Invalid entry in 'order': ${err.getMessage()}"))
+        .toValidatedNel
+
+      val limitValidated =
+        Validated.condNel(limit.forall(_ >= 0), limit, s"Invalid entry in 'limit': ${limit.debug}")
+
+      val offsetValidated =
+        Validated.condNel(
+          offset.forall(_ >= 0),
+          offset,
+          s"Invalid entry in 'offset': ${offset.debug}"
+        )
+
+      (sortByValidated, orderValidated, limitValidated, offsetValidated).mapN(
+        ValidatedSortAndLimit.apply
+      )
+    }
+  }
+
+  object SortAndLimit {
+    private object SortByMatcher extends OptionalQueryParamDecoderMatcher[String]("sort-by")
+    private object OrderMatcher extends OptionalQueryParamDecoderMatcher[String]("order")
+    private object LimitMatcher extends OptionalQueryParamDecoderMatcher[Long]("limit")
+    private object OffsetMatcher extends OptionalQueryParamDecoderMatcher[Long]("offset")
+
+    def unapply(params: Map[String, collection.Seq[String]]): Option[SortAndLimit] =
+      for {
+        sortBy <- SortByMatcher.unapply(params)
+        order  <- OrderMatcher.unapply(params)
+        limit  <- LimitMatcher.unapply(params)
+        offset <- OffsetMatcher.unapply(params)
+      } yield SortAndLimit(sortBy, order, limit, offset)
+  }
+
+  // Extension methods for various API-related functions
   implicit class RichApiResult[A](private val result: ApiResult[A]) extends AnyVal {
 
     def toResponse[F[_]: Monad](
@@ -32,6 +100,7 @@ package object endpoints {
         case Left(value: InvalidTimezone)            => BadRequest(value.error)
         case Left(value: InvalidField)               => BadRequest(value.error)
         case Left(value: InvalidOperator)            => BadRequest(value.error)
+        case Left(value: WrongOperator)              => BadRequest(value.error)
         case Left(value: InvalidValueType)           => BadRequest(value.error)
         case Left(value @ EntryAlreadyExists)        => Conflict(value.error)
         case Left(value @ FeatureNotImplemented)     => NotImplemented(value.error)
@@ -46,20 +115,16 @@ package object endpoints {
 
     def toResponse[F[_]: Monad, O](
       f: A => F[ApiResult[O]]
-    )(implicit dsl: Http4sDsl[F], enc: EntityEncoder[F, O]): F[Response[F]] = {
-      import dsl._
-      maybeField.fold(BadRequest(EntryInvalidFormat.error))(f(_).flatMap(_.toResponse))
-    }
+    )(implicit dsl: Http4sDsl[F], enc: EntityEncoder[F, O]): F[Response[F]] =
+      maybeField.fold(EntryInvalidFormat.elevate[F, O])(f(_)).flatMap(_.toResponse)
   }
 
   implicit class RichOptionTuple[A, B](private val maybeFields: Option[(A, B)]) extends AnyVal {
 
     def toResponse[F[_]: Monad, O](
       f: (A, B) => F[ApiResult[O]]
-    )(implicit dsl: Http4sDsl[F], enc: EntityEncoder[F, O]): F[Response[F]] = {
-      import dsl._
-      maybeFields.fold(BadRequest(EntryInvalidFormat.error))(f.tupled(_).flatMap(_.toResponse))
-    }
+    )(implicit dsl: Http4sDsl[F], enc: EntityEncoder[F, O]): F[Response[F]] =
+      maybeFields.fold(EntryInvalidFormat.elevate[F, O])(f.tupled(_)).flatMap(_.toResponse)
   }
 
   implicit class ValuesOps(private val values: String) extends AnyVal {

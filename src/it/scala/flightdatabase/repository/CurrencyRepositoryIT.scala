@@ -15,8 +15,8 @@ import flightdatabase.domain.SqlError
 import flightdatabase.domain.currency.Currency
 import flightdatabase.domain.currency.CurrencyCreate
 import flightdatabase.domain.currency.CurrencyPatch
-import flightdatabase.testutils.RepositoryCheck
-import flightdatabase.testutils.implicits._
+import flightdatabase.itutils.RepositoryCheck
+import flightdatabase.itutils.implicits._
 import org.scalatest.Inspectors.forAll
 
 final class CurrencyRepositoryIT extends RepositoryCheck {
@@ -40,7 +40,6 @@ final class CurrencyRepositoryIT extends RepositoryCheck {
   val updatedName: String = "Updated Currency"
   val patchedName: String = "Patched Currency"
   val invalidFieldSyntax: String = "Field with spaces"
-  val sqlErrorInvalidSyntax: SqlError = SqlError("42601")
   val invalidFieldColumn: String = "non_existent_field"
   val invalidStringValue: Int = 1
 

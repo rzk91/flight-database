@@ -5,7 +5,7 @@ import scala.util.Failure
 import scala.util.Success
 import scala.util.Try
 
-class RichIterable[A](private val iterable: Iterable[A]) {
+final class RichIterable[A](private val iterable: Iterable[A]) {
   def sumBy[B](f: A => B)(implicit num: Numeric[B]): B = iterable.map(f).sum
 
   def averageBy[B](f: A => B)(implicit num: Numeric[B]): Option[Double] =

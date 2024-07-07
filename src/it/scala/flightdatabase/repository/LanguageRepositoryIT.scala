@@ -15,8 +15,8 @@ import flightdatabase.domain.SqlError
 import flightdatabase.domain.language.Language
 import flightdatabase.domain.language.LanguageCreate
 import flightdatabase.domain.language.LanguagePatch
-import flightdatabase.testutils.RepositoryCheck
-import flightdatabase.testutils.implicits._
+import flightdatabase.itutils.RepositoryCheck
+import flightdatabase.itutils.implicits._
 import org.scalatest.Inspectors.forAll
 
 final class LanguageRepositoryIT extends RepositoryCheck {
@@ -38,7 +38,6 @@ final class LanguageRepositoryIT extends RepositoryCheck {
   val veryLongIdNotPresent: Long = 1000000000000000000L
   val sqlErrorStringTooLong: SqlError = SqlError("22001")
   val invalidFieldSyntax: String = "Field with spaces"
-  val sqlErrorInvalidSyntax: SqlError = SqlError("42601")
   val invalidFieldColumn: String = "non_existent_field"
   val invalidStringValue: Int = 1
 

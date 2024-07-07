@@ -4,7 +4,7 @@ import cats.data.{NonEmptyList => Nel}
 
 import scala.util.Try
 
-class RichString(private val str: String) extends AnyVal {
+final class RichString(private val str: String) extends AnyVal {
   // Safe conversion methods
   def asInt: Option[Int] = Try(str.trim.toInt).toOption
   def asLong: Option[Long] = Try(str.trim.toLong).toOption

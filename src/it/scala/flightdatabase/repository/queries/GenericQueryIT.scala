@@ -7,7 +7,7 @@ import flightdatabase.domain.airplane.Airplane
 import flightdatabase.domain.city.City
 import flightdatabase.domain.country.Country
 import flightdatabase.domain.manufacturer.Manufacturer
-import flightdatabase.testutils.DbChecker
+import flightdatabase.itutils.DbChecker
 
 final class GenericQueryIT extends DbChecker {
 

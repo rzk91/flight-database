@@ -19,6 +19,12 @@ package object repository {
   def getFieldList[S: TableBase, V: Read](field: String): ConnectionIO[ApiResult[Nel[V]]] =
     selectFragment[S](field).query[V].asNel(Some(field))
 
+  def getFieldList2[S: TableBase, V: Read](
+    sortAndLimit: ValidatedSortAndLimit,
+    field: String
+  ): ConnectionIO[ApiResult[Nel[V]]] =
+    (selectFragment[S](field) ++ sortAndLimit.fragment).query[V].asNel(Some(field))
+
   def getFieldList[ST: TableBase, SV: Read, WT: TableBase, WV: Put](
     selectField: String,
     whereFieldValues: FieldValues[WT, WV],

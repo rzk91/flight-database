@@ -2,11 +2,13 @@ package flightdatabase.api.endpoints
 
 import cats.Monad
 import cats.data.{NonEmptyList => Nel}
-import cats.syntax.bifunctor._
 import cats.syntax.flatMap._
+import cats.syntax.foldable._
 import flightdatabase.api.Operator
 import flightdatabase.api.Operator.StringOperatorOps
 import flightdatabase.domain._
+import flightdatabase.domain.partial.PartiallyAppliedGetAll
+import flightdatabase.domain.partial.PartiallyAppliedGetBy
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec._
 import org.http4s.dsl.Http4sDsl
@@ -20,27 +22,17 @@ abstract class Endpoints[F[_]: Monad](prefix: String) extends Http4sDsl[F] {
   lazy val routes: HttpRoutes[F] = Router(prefix -> endpoints)
   def endpoints: HttpRoutes[F]
 
-  // Support matcher objects
-  object FullOutputFlagMatcher extends FlagQueryParamMatcher("full-output")
-  object ValueMatcher extends QueryParamDecoderMatcher[String]("value")
-  object FieldMatcher extends QueryParamDecoderMatcher[String]("field")
-  object ReturnOnlyMatcher extends OptionalQueryParamDecoderMatcher[String]("return-only")
-
-  implicit val operatorQueryParamDecoder: QueryParamDecoder[Operator] =
-    QueryParamDecoder[String].emap { s =>
-      s.toOperator.leftMap(error => ParseFailure(error.getMessage(), ""))
-    }
-
-  object OperatorMatcherEqDefault
-      extends QueryParamDecoderMatcherWithDefault[Operator]("operator", Operator.Equals)
-
   // Support functions
+  protected def withSortAndLimitValidation[IN: TableBase](sortAndLimit: SortAndLimit)(
+    f: ValidatedSortAndLimit => F[Response[F]]
+  ): F[Response[F]] =
+    sortAndLimit
+      .validate[IN]
+      .fold(errors => BadRequest(errors.mkString_("Error: ", "; ", "")), f)
+
   final protected def processRequestBody[IN, OUT](
     req: Request[F]
-  )(f: IN => F[ApiResult[OUT]])(
-    implicit dec: EntityDecoder[F, IN],
-    enc: EntityEncoder[F, OUT]
-  ): F[ApiResult[OUT]] =
+  )(f: IN => F[ApiResult[OUT]])(implicit dec: EntityDecoder[F, IN]): F[ApiResult[OUT]] =
     req
       .attemptAs[IN]
       .foldF[ApiResult[OUT]](
@@ -48,42 +40,67 @@ abstract class Endpoints[F[_]: Monad](prefix: String) extends Http4sDsl[F] {
         f
       )
 
-  final protected type λ1[V, T] = (String, Nel[V], Operator) => F[ApiResult[Nel[T]]]
+  final protected type G[V, T] = (String, Nel[V], Operator) => F[ApiResult[Nel[T]]]
 
   final protected def processFilter[IN: TableBase, OUT](
     field: String,
-    operator: Operator,
+    operatorStr: String,
     values: String
   )(
-    stringF: λ1[String, OUT],
-    intF: λ1[Int, OUT],
-    longF: λ1[Long, OUT],
-    boolF: λ1[Boolean, OUT],
-    bigDecimalF: λ1[BigDecimal, OUT]
+    stringF: G[String, OUT],
+    intF: G[Int, OUT],
+    longF: G[Long, OUT],
+    boolF: G[Boolean, OUT],
+    bigDecimalF: G[BigDecimal, OUT]
   )(implicit enc: EntityEncoder[F, Nel[OUT]]): F[Response[F]] =
-    implicitly[TableBase[IN]].fieldTypeMap.get(field) match {
-      case Some(StringType) if StringType.operators(operator) =>
+    (operatorStr.toOperator, implicitly[TableBase[IN]].fieldTypeMap.get(field)) match {
+      case (Right(operator), Some(StringType)) if StringType.operators(operator) =>
         values.asStringToResponse(field, operator)(stringF(field, _, operator))
-      case Some(IntType) if IntType.operators(operator) =>
+      case (Right(operator), Some(IntType)) if IntType.operators(operator) =>
         values.asIntToResponse(field, operator)(intF(field, _, operator))
-      case Some(LongType) if LongType.operators(operator) =>
+      case (Right(operator), Some(LongType)) if LongType.operators(operator) =>
         values.asLongToResponse(field, operator)(longF(field, _, operator))
-      case Some(BooleanType) if BooleanType.operators(operator) =>
+      case (Right(operator), Some(BooleanType)) if BooleanType.operators(operator) =>
         values.asBooleanToResponse(field, operator)(boolF(field, _, operator))
-      case Some(BigDecimalType) if BigDecimalType.operators(operator) =>
+      case (Right(operator), Some(BigDecimalType)) if BigDecimalType.operators(operator) =>
         values.asBigDecimalToResponse(field, operator)(bigDecimalF(field, _, operator))
-      case Some(_) => BadRequest(InvalidOperator(operator).error)
-      case None    => BadRequest(InvalidField(field).error)
+      case (Left(parseError), _) => InvalidOperator(parseError).asResult[Nel[OUT]].toResponse[F]
+      case (Right(operator), Some(fieldType)) =>
+        WrongOperator(operator, field, fieldType).asResult[Nel[OUT]].toResponse[F]
+      case (_, None) => InvalidField(field).asResult[Nel[OUT]].toResponse[F]
     }
 
-  final protected type λ2[V] = String => F[ApiResult[Nel[V]]]
+  final protected def processFilter2[IN: TableBase, OUT](
+    field: String,
+    operatorStr: String,
+    values: String,
+    sortAndLimit: ValidatedSortAndLimit
+  )(f: => PartiallyAppliedGetBy[F, OUT])(implicit enc: EntityEncoder[F, Nel[OUT]]): F[Response[F]] =
+    (operatorStr.toOperator, implicitly[TableBase[IN]].fieldTypeMap.get(field)) match {
+      case (Right(operator), Some(StringType)) if StringType.operators(operator) =>
+        values.asStringToResponse(field, operator)(f(field, _, operator, sortAndLimit))
+      case (Right(operator), Some(IntType)) if IntType.operators(operator) =>
+        values.asIntToResponse(field, operator)(f(field, _, operator, sortAndLimit))
+      case (Right(operator), Some(LongType)) if LongType.operators(operator) =>
+        values.asLongToResponse(field, operator)(f(field, _, operator, sortAndLimit))
+      case (Right(operator), Some(BooleanType)) if BooleanType.operators(operator) =>
+        values.asBooleanToResponse(field, operator)(f(field, _, operator, sortAndLimit))
+      case (Right(operator), Some(BigDecimalType)) if BigDecimalType.operators(operator) =>
+        values.asBigDecimalToResponse(field, operator)(f(field, _, operator, sortAndLimit))
+      case (Left(parseError), _) => InvalidOperator(parseError).asResult[Nel[OUT]].toResponse[F]
+      case (Right(operator), Some(fieldType)) =>
+        WrongOperator(operator, field, fieldType).asResult[Nel[OUT]].toResponse[F]
+      case (_, None) => InvalidField(field).asResult[Nel[OUT]].toResponse[F]
+    }
+
+  final protected type R[V] = String => F[ApiResult[Nel[V]]]
 
   final protected def processReturnOnly[IN: TableBase](field: Option[String])(
-    stringF: λ2[String],
-    intF: λ2[Int],
-    longF: λ2[Long],
-    boolF: λ2[Boolean],
-    bigDecimalF: λ2[BigDecimal],
+    stringF: R[String],
+    intF: R[Int],
+    longF: R[Long],
+    boolF: R[Boolean],
+    bigDecimalF: R[BigDecimal],
     allF: => F[ApiResult[Nel[IN]]]
   )(implicit allEnc: EntityEncoder[F, Nel[IN]]): F[Response[F]] =
     field match {
@@ -96,8 +113,30 @@ abstract class Endpoints[F[_]: Monad](prefix: String) extends Http4sDsl[F] {
           case Some(LongType)       => longF(tableField).flatMap(_.toResponse[F])
           case Some(BooleanType)    => boolF(tableField).flatMap(_.toResponse[F])
           case Some(BigDecimalType) => bigDecimalF(tableField).flatMap(_.toResponse[F])
-          case None                 => BadRequest(InvalidField(field).error)
+          case None                 => InvalidField(field).asResult[Nel[IN]].toResponse[F]
         }
       case None => allF.flatMap(_.toResponse[F])
+    }
+
+  final protected def processReturnOnly2[IN: TableBase](
+    sortAndLimit: ValidatedSortAndLimit,
+    field: Option[String]
+  )(
+    f: => PartiallyAppliedGetAll[F, IN]
+  )(implicit allEnc: EntityEncoder[F, Nel[IN]]): F[Response[F]] =
+    field match {
+      case Some(field) =>
+        val table = implicitly[TableBase[IN]]
+        val tableField = s"${table.asString}.$field"
+        table.fieldTypeMap.get(field) match {
+          case Some(StringType)  => f[String](sortAndLimit, tableField).flatMap(_.toResponse[F])
+          case Some(IntType)     => f[Int](sortAndLimit, tableField).flatMap(_.toResponse[F])
+          case Some(LongType)    => f[Long](sortAndLimit, tableField).flatMap(_.toResponse[F])
+          case Some(BooleanType) => f[Boolean](sortAndLimit, tableField).flatMap(_.toResponse[F])
+          case Some(BigDecimalType) =>
+            f[BigDecimal](sortAndLimit, tableField).flatMap(_.toResponse[F])
+          case None => InvalidField(field).asResult[Nel[IN]].toResponse[F]
+        }
+      case None => f(sortAndLimit).flatMap(_.toResponse[F])
     }
 }

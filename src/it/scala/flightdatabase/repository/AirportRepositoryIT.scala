@@ -12,12 +12,11 @@ import flightdatabase.domain.EntryListEmpty
 import flightdatabase.domain.EntryNotFound
 import flightdatabase.domain.InvalidField
 import flightdatabase.domain.InvalidValueType
-import flightdatabase.domain.SqlError
 import flightdatabase.domain.airport.Airport
 import flightdatabase.domain.airport.AirportCreate
 import flightdatabase.domain.airport.AirportPatch
-import flightdatabase.testutils.RepositoryCheck
-import flightdatabase.testutils.implicits._
+import flightdatabase.itutils.RepositoryCheck
+import flightdatabase.itutils.implicits._
 import org.scalatest.Inspectors.forAll
 
 final class AirportRepositoryIT extends RepositoryCheck {
@@ -71,7 +70,6 @@ final class AirportRepositoryIT extends RepositoryCheck {
   val valueNotPresent: String = "Not present"
   val veryLongIdNotPresent: Long = 1039495454540034858L
   val invalidFieldSyntax: String = "Field with spaces"
-  val sqlErrorInvalidSyntax: SqlError = SqlError("42601")
   val invalidFieldColumn: String = "non_existent_field"
   val invalidLongValue: String = "invalid"
   val invalidStringValue: Int = 1
