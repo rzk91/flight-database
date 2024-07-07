@@ -19,6 +19,7 @@ target/
 
 # intellij
 .idea
+*.iml
 
 # mac
 .DS_Store
@@ -31,6 +32,7 @@ target/
 *.txt
 null/
 src/main/resources/local*.conf
+.java-version
 
 #general
 *.class

@@ -1,7 +1,6 @@
 val scalaV = "2.13.13"
 
 lazy val commonSettings = Seq(
-  name         := "flight-database",
   organization := "rzk.scala",
   version      := "1.0-SNAPSHOT",
   scalaVersion := scalaV,
@@ -18,15 +17,20 @@ lazy val commonSettings = Seq(
     "-language:existentials",
     "-language:postfixOps",
     "-Wunused:imports"
-  )
+  ),
+  semanticdbEnabled          := true,
+  semanticdbVersion          := scalafixSemanticdb.revision,
+  scalafixScalaBinaryVersion := scalaV.split('.').take(2).mkString("."),
+  addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"),
+  addCompilerPlugin(("org.typelevel" % "kind-projector" % "0.13.3").cross(CrossVersion.full))
 )
 
 val circeVersion = "0.14.3"
 val doobieVersion = "1.0.0-RC5"
 val http4sVersion = "0.23.26"
-val pureconfigVersion = "0.17.6"
-val flywayVersion = "10.11.0"
-val scalaTestVersion = "3.2.18"
+val pureconfigVersion = "0.17.7"
+val flywayVersion = "10.14.0"
+val scalaTestVersion = "3.2.19"
 val testcontainersVersion = "0.41.3"
 
 val circeDependencies = Seq(
@@ -50,11 +54,14 @@ val http4sDependencies = Seq(
   "org.http4s" %% "http4s-circe"        % http4sVersion
 )
 
+val enumerationDependencies = Seq(
+  "com.beachape" %% "enumeratum" % "1.7.3"
+)
+
 val otherDependencies = Seq(
   "com.github.pureconfig"      %% "pureconfig"                % pureconfigVersion,
   "com.github.pureconfig"      %% "pureconfig-cats-effect"    % pureconfigVersion,
-  "com.beachape"               %% "enumeratum"                % "1.7.3",
-  "org.slf4j"                  % "slf4j-log4j12"              % "2.0.13",
+  "org.slf4j"                  % "slf4j-reload4j"             % "2.0.13",
   "com.typesafe.scala-logging" %% "scala-logging"             % "3.9.5",
   "commons-io"                 % "commons-io"                 % "2.16.1",
   "org.flywaydb"               % "flyway-core"                % flywayVersion,
@@ -62,39 +69,67 @@ val otherDependencies = Seq(
   "com.ibm.icu"                % "icu4j"                      % "75.1"
 )
 
+val allCoreDependencies =
+  circeDependencies ++
+    doobieDependencies ++
+    http4sDependencies ++
+    enumerationDependencies ++
+    otherDependencies
+
 val testingDependencies = Seq(
-  "org.scalactic" %% "scalactic" % scalaTestVersion,
-  "org.scalatest" %% "scalatest" % scalaTestVersion % "it,test",
+  "org.scalactic" %% "scalactic" % scalaTestVersion % "test",
+  "org.scalatest" %% "scalatest" % scalaTestVersion % "test",
   "org.scalamock" %% "scalamock" % "6.0.0" % "test"
 )
 
 val itDependencies = Seq(
-  "com.dimafeng" %% "testcontainers-scala-scalatest"  % testcontainersVersion % "it",
-  "com.dimafeng" %% "testcontainers-scala-postgresql" % testcontainersVersion % "it"
+  "org.scalatest" %% "scalatest"                       % scalaTestVersion      % "test",
+  "com.dimafeng"  %% "testcontainers-scala-scalatest"  % testcontainersVersion % "test",
+  "com.dimafeng"  %% "testcontainers-scala-postgresql" % testcontainersVersion % "test"
 )
+
+lazy val core = project
+  .in(file("modules/core"))
+  .settings(
+    name := "flight-database-core",
+    commonSettings,
+    libraryDependencies ++= circeDependencies ++ doobieDependencies ++ enumerationDependencies ++ testingDependencies
+  )
+
+lazy val utils = project
+  .in(file("modules/utils"))
+  .dependsOn(core)
+  .settings(
+    name := "flight-database-utils",
+    commonSettings,
+    libraryDependencies ++= allCoreDependencies ++ testingDependencies
+  )
+
+lazy val backend = project
+  .in(file("modules/backend"))
+  .dependsOn(core, utils)
+  .settings(
+    name := "flight-database-backend",
+    commonSettings,
+    libraryDependencies ++= allCoreDependencies ++ testingDependencies
+  )
+
+lazy val backendIt = project
+  .in(file("modules/backend-it"))
+  .dependsOn(backend)
+  .settings(
+    name           := "flight-database-backend-it",
+    publish / skip := true,
+    commonSettings,
+    libraryDependencies ++= allCoreDependencies ++ itDependencies,
+    scalafixConfigSettings(Test)
+  )
+
+// TODO: Add frontend module
 
 lazy val root = (project in file("."))
-  .configs(IntegrationTest)
+  .aggregate(core, utils, backend, backendIt)
   .settings(
-    commonSettings,
-    Defaults.itSettings,
-    scalafixConfigSettings(IntegrationTest),
-    libraryDependencies ++= circeDependencies ++ doobieDependencies ++ http4sDependencies ++ otherDependencies ++ testingDependencies ++ itDependencies
+    name := "flight-database",
+    commonSettings
   )
-
-addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1")
-addCompilerPlugin("org.typelevel" % "kind-projector" % "0.13.3" cross CrossVersion.full)
-
-// Run integration tests in a separate JVM from sbt
-IntegrationTest / fork := true
-
-// For scalafix
-inThisBuild(
-  List(
-    scalaVersion      := scalaV,
-    semanticdbEnabled := true,
-    semanticdbVersion := scalafixSemanticdb.revision
-  )
-)
-
-scalafixScalaBinaryVersion := scalaV.split('.').take(2).mkString(".")
