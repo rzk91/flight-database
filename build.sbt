@@ -25,13 +25,13 @@ lazy val commonSettings = Seq(
   addCompilerPlugin(("org.typelevel" % "kind-projector" % "0.13.3").cross(CrossVersion.full))
 )
 
-val circeVersion = "0.14.3"
-val doobieVersion = "1.0.0-RC5"
-val http4sVersion = "0.23.26"
-val pureconfigVersion = "0.17.7"
-val flywayVersion = "10.14.0"
+val circeVersion = "0.14.4"
+val doobieVersion = "1.0.0-RC8"
+val http4sVersion = "0.23.30"
+val pureconfigVersion = "0.17.8"
+val flywayVersion = "11.3.4"
 val scalaTestVersion = "3.2.19"
-val testcontainersVersion = "0.41.3"
+val testcontainersVersion = "0.41.8"
 
 val circeDependencies = Seq(
   "io.circe" %% "circe-core"           % circeVersion,
@@ -55,18 +55,18 @@ val http4sDependencies = Seq(
 )
 
 val enumerationDependencies = Seq(
-  "com.beachape" %% "enumeratum" % "1.7.3"
+  "com.beachape" %% "enumeratum" % "1.7.5"
 )
 
 val otherDependencies = Seq(
   "com.github.pureconfig"      %% "pureconfig"                % pureconfigVersion,
   "com.github.pureconfig"      %% "pureconfig-cats-effect"    % pureconfigVersion,
-  "org.slf4j"                  % "slf4j-reload4j"             % "2.0.13",
+  "org.slf4j"                  % "slf4j-reload4j"             % "2.0.17",
   "com.typesafe.scala-logging" %% "scala-logging"             % "3.9.5",
-  "commons-io"                 % "commons-io"                 % "2.16.1",
+  "commons-io"                 % "commons-io"                 % "2.18.0",
   "org.flywaydb"               % "flyway-core"                % flywayVersion,
   "org.flywaydb"               % "flyway-database-postgresql" % flywayVersion,
-  "com.ibm.icu"                % "icu4j"                      % "75.1"
+  "com.ibm.icu"                % "icu4j"                      % "76.1"
 )
 
 val allCoreDependencies =
@@ -79,7 +79,7 @@ val allCoreDependencies =
 val testingDependencies = Seq(
   "org.scalactic" %% "scalactic" % scalaTestVersion % "test",
   "org.scalatest" %% "scalatest" % scalaTestVersion % "test",
-  "org.scalamock" %% "scalamock" % "6.0.0" % "test"
+  "org.scalamock" %% "scalamock" % "6.2.0" % "test"
 )
 
 val itDependencies = Seq(

@@ -5,7 +5,7 @@ import doobie.Fragment
 import doobie.Put
 import doobie.Query0
 import doobie.Update0
-import doobie.implicits.toSqlInterpolator
+import doobie.implicits._
 import flightdatabase.Operator
 import flightdatabase.TableBase
 import flightdatabase.country.Country

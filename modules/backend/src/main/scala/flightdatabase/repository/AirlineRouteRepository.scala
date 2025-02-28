@@ -28,6 +28,9 @@ class AirlineRouteRepository[F[_]: Concurrent] private (
   implicit transactor: Transactor[F]
 ) extends AirlineRouteAlgebra[F] {
 
+  // Doobie implicits
+  implicit val readAirlineRoute: Read[AirlineRoute] = Read.derived
+
   override def doesAirlineRouteExist(id: Long): F[Boolean] =
     airlineRouteExists(id).unique.execute
 

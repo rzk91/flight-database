@@ -25,6 +25,9 @@ class CountryRepository[F[_]: Concurrent] private (
   implicit transactor: Transactor[F]
 ) extends CountryAlgebra[F] {
 
+  // Doobie implicits
+  implicit val readAirlineRoute: Read[Country] = Read.derived
+
   override def doesCountryExist(id: Long): F[Boolean] =
     countryExists(id).unique.execute
 
