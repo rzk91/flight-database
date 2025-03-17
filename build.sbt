@@ -29,9 +29,9 @@ val circeVersion = "0.14.4"
 val doobieVersion = "1.0.0-RC8"
 val http4sVersion = "0.23.30"
 val pureconfigVersion = "0.17.8"
-val flywayVersion = "11.3.4"
+val flywayVersion = "11.4.0"
 val scalaTestVersion = "3.2.19"
-val testcontainersVersion = "0.41.8"
+val testcontainersVersion = "0.43.0"
 
 val circeDependencies = Seq(
   "io.circe" %% "circe-core"           % circeVersion,
@@ -66,7 +66,7 @@ val otherDependencies = Seq(
   "commons-io"                 % "commons-io"                 % "2.18.0",
   "org.flywaydb"               % "flyway-core"                % flywayVersion,
   "org.flywaydb"               % "flyway-database-postgresql" % flywayVersion,
-  "com.ibm.icu"                % "icu4j"                      % "76.1"
+  "com.ibm.icu"                % "icu4j"                      % "77.1"
 )
 
 val allCoreDependencies =
