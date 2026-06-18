@@ -21,11 +21,17 @@ final class DomainSpecificQueryIT extends DbChecker {
   // Airplane checks
   "All airplane queries" should "work correctly" in {
     check(AirplaneQueries.airplaneExists(1))
-    check(AirplaneQueries.selectAllAirplanes)
-    check(AirplaneQueries.selectAirplanesBy("id", Nel.one(1L), Operator.Equals))
+    check(AirplaneQueries.selectAllAirplanes(emptySortAndLimit))
+    check(AirplaneQueries.selectAllAirplanes(someSortAndLimit))
+    check(AirplaneQueries.selectAirplanesBy("id", Nel.one(1L), Operator.Equals, emptySortAndLimit))
     check(
       AirplaneQueries
-        .selectAirplanesByExternal[Manufacturer, String]("name", Nel.one("Airbus"), Operator.Equals)
+        .selectAirplanesByExternal[Manufacturer, String](
+          "name",
+          Nel.one("Airbus"),
+          Operator.Equals,
+          emptySortAndLimit
+        )
     )
     check(AirplaneQueries.insertAirplane(AirplaneCreate(None, "Boeing 747", 2, 416, 13400)))
     check(AirplaneQueries.deleteAirplane(1))

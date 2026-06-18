@@ -8,6 +8,7 @@ import doobie.Update0
 import doobie.implicits._
 import flightdatabase.Operator
 import flightdatabase.TableBase
+import flightdatabase.ValidatedSortAndLimit
 import flightdatabase.airplane.Airplane
 import flightdatabase.airplane.AirplaneCreate
 
@@ -15,25 +16,29 @@ private[repository] object AirplaneQueries {
 
   def airplaneExists(id: Long): Query0[Boolean] = idExistsQuery[Airplane](id)
 
-  def selectAllAirplanes: Query0[Airplane] = selectAll.query[Airplane]
+  def selectAllAirplanes(sortAndLimit: ValidatedSortAndLimit): Query0[Airplane] =
+    (selectAll ++ sortAndLimit.fragment).query[Airplane]
 
   def selectAirplanesBy[V: Put](
     field: String,
     values: Nel[V],
-    operator: Operator
+    operator: Operator,
+    sortAndLimit: ValidatedSortAndLimit
   ): Query0[Airplane] =
-    (selectAll ++ whereFragment(s"airplane.$field", values, operator)).query[Airplane]
+    (selectAll ++ whereFragment(s"airplane.$field", values, operator) ++ sortAndLimit.fragment)
+      .query[Airplane]
 
   def selectAirplanesByExternal[ET: TableBase, EV: Put](
     externalField: String,
     externalValues: Nel[EV],
-    operator: Operator
+    operator: Operator,
+    sortAndLimit: ValidatedSortAndLimit
   ): Query0[Airplane] = {
     selectAll ++ innerJoinWhereFragment[Airplane, ET, EV](
       externalField,
       externalValues,
       operator
-    )
+    ) ++ sortAndLimit.fragment
   }.query[Airplane]
 
   def insertAirplane(model: AirplaneCreate): Update0 =
