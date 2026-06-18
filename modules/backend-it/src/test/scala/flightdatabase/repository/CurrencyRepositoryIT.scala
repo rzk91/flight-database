@@ -12,6 +12,7 @@ import flightdatabase.InvalidField
 import flightdatabase.InvalidValueType
 import flightdatabase.Operator
 import flightdatabase.SqlError
+import flightdatabase.ValidatedSortAndLimit
 import flightdatabase.currency.Currency
 import flightdatabase.currency.CurrencyCreate
 import flightdatabase.currency.CurrencyPatch
@@ -51,17 +52,53 @@ final class CurrencyRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting all currencies" should "return the correct detailed list" in {
-    repo.getCurrencies.value should contain only (originalCurrencies.toList: _*)
+    repo.getCurrencies(emptySortAndLimit).value should contain only (originalCurrencies.toList: _*)
   }
 
-  it should "only return names if so required" in {
-    repo.getCurrenciesOnly[String]("name").value should contain only (
+  it should "return a properly sorted list" in {
+    val sortedCurrencies = repo.getCurrencies(ValidatedSortAndLimit.sortAscending("name")).value
+    sortedCurrencies shouldBe originalCurrencies.sortBy(_.name)
+
+    val sortedCurrenciesDesc =
+      repo.getCurrencies(ValidatedSortAndLimit.sortDescending("name")).value
+    sortedCurrenciesDesc shouldBe originalCurrencies.sortBy(_.name).reverse
+  }
+
+  it should "return only as many currencies as requested" in {
+    val limitedCurrencies = repo.getCurrencies(ValidatedSortAndLimit.limit(1)).value
+
+    limitedCurrencies should have size 1
+    limitedCurrencies should contain only originalCurrencies.head
+
+    val limitedCurrenciesWithOffset =
+      repo.getCurrencies(ValidatedSortAndLimit.limitAndOffset(1, 1)).value
+
+    limitedCurrenciesWithOffset should have size 1
+    limitedCurrenciesWithOffset should contain only originalCurrencies.tail.head
+  }
+
+  it should "only return the requested fields if so required" in {
+    repo.getCurrencies[String](emptySortAndLimit, "name").value should contain only (
       originalCurrencies.map(_.name).toList: _*
     )
 
-    repo.getCurrenciesOnly[String]("iso").value should contain only (
+    repo.getCurrencies[String](emptySortAndLimit, "iso").value should contain only (
       originalCurrencies.map(_.iso).toList: _*
     )
+  }
+
+  it should "sort and return the requested fields if so required" in {
+    val currencyNames =
+      repo.getCurrencies[String](ValidatedSortAndLimit.sortAscending("name"), "name").value
+    currencyNames shouldBe originalCurrencies.map(_.name).sorted
+
+    val currencyIsosDesc =
+      repo.getCurrencies[String](ValidatedSortAndLimit.sortDescending("iso"), "iso").value
+    currencyIsosDesc shouldBe originalCurrencies.map(_.iso).sorted.reverse
+  }
+
+  it should "return an empty list if offset is too large" in {
+    repo.getCurrencies(ValidatedSortAndLimit.offset(100)).error shouldBe EntryListEmpty
   }
 
   "Selecting a currency by ID" should "return the correct currency" in {
@@ -72,9 +109,9 @@ final class CurrencyRepositoryIT extends RepositoryCheck {
 
   "Selecting a currency by other fields" should "return the corresponding entries" in {
     def currencyByName(name: String): IO[ApiResult[Nel[Currency]]] =
-      repo.getCurrenciesBy("name", Nel.one(name), Operator.Equals)
+      repo.getCurrenciesBy("name", Nel.one(name), Operator.Equals, emptySortAndLimit)
     def currencyByIso(iso: String): IO[ApiResult[Nel[Currency]]] =
-      repo.getCurrenciesBy("iso", Nel.one(iso), Operator.Equals)
+      repo.getCurrenciesBy("iso", Nel.one(iso), Operator.Equals, emptySortAndLimit)
 
     forAll(originalCurrencies) { currency =>
       currencyByName(currency.name).value should contain only currency
@@ -85,18 +122,40 @@ final class CurrencyRepositoryIT extends RepositoryCheck {
     currencyByIso(valueNotPresent).error shouldBe EntryListEmpty
   }
 
+  it should "sort and limit the filtered entries if so required" in {
+    val sortedByName = repo
+      .getCurrenciesBy(
+        "symbol",
+        Nel.of("₹", "€", "kr", "$"),
+        Operator.In,
+        ValidatedSortAndLimit.sortAscending("name")
+      )
+      .value
+    sortedByName.toList shouldBe originalCurrencies.filter(_.symbol.isDefined).sortBy(_.name)
+
+    val limited = repo
+      .getCurrenciesBy(
+        "symbol",
+        Nel.of("₹", "€", "kr", "$"),
+        Operator.In,
+        ValidatedSortAndLimit.sortAscending("name").copy(limit = Some(1))
+      )
+      .value
+    limited should contain only originalCurrencies.filter(_.symbol.isDefined).minBy(_.name)
+  }
+
   "Selecting a non-existent field" should "return an error" in {
     repo
-      .getCurrenciesBy(invalidFieldSyntax, Nel.one("value"), Operator.Equals)
+      .getCurrenciesBy(invalidFieldSyntax, Nel.one("value"), Operator.Equals, emptySortAndLimit)
       .error shouldBe sqlErrorInvalidSyntax
     repo
-      .getCurrenciesBy(invalidFieldColumn, Nel.one("value"), Operator.Equals)
+      .getCurrenciesBy(invalidFieldColumn, Nel.one("value"), Operator.Equals, emptySortAndLimit)
       .error shouldBe InvalidField(invalidFieldColumn)
   }
 
   "Selecting an existing field with an invalid value type" should "return an error" in {
     repo
-      .getCurrenciesBy("iso", Nel.one(invalidStringValue), Operator.Equals)
+      .getCurrenciesBy("iso", Nel.one(invalidStringValue), Operator.Equals, emptySortAndLimit)
       .error shouldBe InvalidValueType(
       invalidStringValue.toString
     )
@@ -176,7 +235,10 @@ final class CurrencyRepositoryIT extends RepositoryCheck {
 
   it should "work if all criteria are met" in {
     val existingCurrency =
-      repo.getCurrenciesBy("name", Nel.one(newCurrency.name), Operator.Equals).value.head
+      repo
+        .getCurrenciesBy("name", Nel.one(newCurrency.name), Operator.Equals, emptySortAndLimit)
+        .value
+        .head
     val updated = existingCurrency.copy(name = updatedName)
 
     repo.updateCurrency(updated).value shouldBe existingCurrency.id
@@ -223,7 +285,10 @@ final class CurrencyRepositoryIT extends RepositoryCheck {
 
   it should "work if all criteria are met" in {
     val existingCurrency =
-      repo.getCurrenciesBy("name", Nel.one(updatedName), Operator.Equals).value.head
+      repo
+        .getCurrenciesBy("name", Nel.one(updatedName), Operator.Equals, emptySortAndLimit)
+        .value
+        .head
     val patched = CurrencyPatch(name = Some(patchedName))
 
     repo
@@ -236,7 +301,10 @@ final class CurrencyRepositoryIT extends RepositoryCheck {
 
   "Removing a currency" should "work correctly" in {
     val existingCurrency =
-      repo.getCurrenciesBy("name", Nel.one(patchedName), Operator.Equals).value.head
+      repo
+        .getCurrenciesBy("name", Nel.one(patchedName), Operator.Equals, emptySortAndLimit)
+        .value
+        .head
     repo.removeCurrency(existingCurrency.id).value shouldBe ()
 
     repo.getCurrency(existingCurrency.id).error shouldBe EntryNotFound(existingCurrency.id)

@@ -21,27 +21,19 @@ class LanguageEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Lang
         case false => NotFound()
       }
 
-    // GET /languages?return-only={language_field}
-    case GET -> Root :? ReturnOnlyMatcher(returnOnly) =>
-      processReturnOnly[Language](returnOnly)(
-        stringF = algebra.getLanguagesOnly,
-        intF = algebra.getLanguagesOnly,
-        longF = algebra.getLanguagesOnly,
-        boolF = algebra.getLanguagesOnly,
-        bigDecimalF = algebra.getLanguagesOnly,
-        allF = algebra.getLanguages
-      )
+    // GET /languages?return-only={field}&sort-by={field}&order={asc, desc}&limit={number}&offset={number}
+    case GET -> Root :? SortAndLimit(sortAndLimit) +& ReturnOnlyMatcher(returnOnly) =>
+      withSortAndLimitValidation[Language](sortAndLimit) {
+        processReturnOnly2[Language](_, returnOnly)(algebra.getLanguages)
+      }
 
-    // GET /languages/filter?field={language_field}&operator={operator; default: eq}&value={value}
+    // GET /languages/filter?field={language_field}&operator={operator; default: eq}&value={value}&sort-by={language_field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root / "filter" :?
-          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +& ValueMatcher(values) =>
-      processFilter[Language, Language](field, operator, values)(
-        stringF = algebra.getLanguagesBy,
-        intF = algebra.getLanguagesBy,
-        longF = algebra.getLanguagesBy,
-        boolF = algebra.getLanguagesBy,
-        bigDecimalF = algebra.getLanguagesBy
-      )
+          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
+            ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
+      withSortAndLimitValidation[Language](sortAndLimit) {
+        processFilter2[Language, Language](field, operator, values, _)(algebra.getLanguagesBy)
+      }
 
     // GET /languages/{id}
     case GET -> Root / id =>

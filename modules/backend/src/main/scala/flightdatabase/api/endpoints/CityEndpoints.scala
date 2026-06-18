@@ -23,42 +23,31 @@ class CityEndpoints[F[_]: Concurrent] private (prefix: String, algebra: CityAlge
         case false => NotFound()
       }
 
-    // GET /cities?return-only={city_field}
-    case GET -> Root :? ReturnOnlyMatcher(returnOnly) =>
-      processReturnOnly[City](returnOnly)(
-        stringF = algebra.getCitiesOnly,
-        intF = algebra.getCitiesOnly,
-        longF = algebra.getCitiesOnly,
-        boolF = algebra.getCitiesOnly,
-        bigDecimalF = algebra.getCitiesOnly,
-        allF = algebra.getCities
-      )
+    // GET /cities?return-only={field}&sort-by={field}&order={asc, desc}&limit={number}&offset={number}
+    case GET -> Root :? SortAndLimit(sortAndLimit) +& ReturnOnlyMatcher(returnOnly) =>
+      withSortAndLimitValidation[City](sortAndLimit) {
+        processReturnOnly2[City](_, returnOnly)(algebra.getCities)
+      }
 
-    // GET /cities/filter?field={city_field}&operator={operator; default: eq}&value={value}
+    // GET /cities/filter?field={city_field}&operator={operator; default: eq}&value={value}&sort-by={city_field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root / "filter" :?
-          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +& ValueMatcher(values) =>
-      processFilter[City, City](field, operator, values)(
-        stringF = algebra.getCitiesBy,
-        intF = algebra.getCitiesBy,
-        longF = algebra.getCitiesBy,
-        boolF = algebra.getCitiesBy,
-        bigDecimalF = algebra.getCitiesBy
-      )
+          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
+            ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
+      withSortAndLimitValidation[City](sortAndLimit) {
+        processFilter2[City, City](field, operator, values, _)(algebra.getCitiesBy)
+      }
 
     // GET /cities/{id}
     case GET -> Root / id =>
       id.asLong.toResponse(algebra.getCity)
 
-    // GET /cities/country/filter?field={country_field}&operator={operator; default: eq}&value={value}
+    // GET /cities/country/filter?field={country_field}&operator={operator; default: eq}&value={value}&sort-by={country_field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root / "country" / "filter" :?
-          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +& ValueMatcher(values) =>
-      processFilter[Country, City](field, operator, values)(
-        stringF = algebra.getCitiesByCountry,
-        intF = algebra.getCitiesByCountry,
-        longF = algebra.getCitiesByCountry,
-        boolF = algebra.getCitiesByCountry,
-        bigDecimalF = algebra.getCitiesByCountry
-      )
+          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
+            ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
+      withSortAndLimitValidation[Country](sortAndLimit) {
+        processFilter2[Country, City](field, operator, values, _)(algebra.getCitiesByCountry)
+      }
 
     // POST /cities
     case req @ POST -> Root =>

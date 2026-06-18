@@ -1,41 +1,19 @@
 package flightdatabase.airline_route
 
-import cats.data.{NonEmptyList => Nel}
-import doobie.Put
-import doobie.Read
 import flightdatabase.ApiResult
-import flightdatabase.Operator
+import flightdatabase.partial.PartiallyAppliedGetAll
+import flightdatabase.partial.PartiallyAppliedGetBy
 
 trait AirlineRouteAlgebra[F[_]] {
   def doesAirlineRouteExist(id: Long): F[Boolean]
-  def getAirlineRoutes: F[ApiResult[Nel[AirlineRoute]]]
-  def getAirlineRoutesOnly[V: Read](field: String): F[ApiResult[Nel[V]]]
+  def getAirlineRoutes: PartiallyAppliedGetAll[F, AirlineRoute]
   def getAirlineRoute(id: Long): F[ApiResult[AirlineRoute]]
+  def getAirlineRoutesBy: PartiallyAppliedGetBy[F, AirlineRoute]
+  def getAirlineRoutesByAirline: PartiallyAppliedGetBy[F, AirlineRoute]
+  def getAirlineRoutesByAirplane: PartiallyAppliedGetBy[F, AirlineRoute]
 
-  def getAirlineRoutesBy[V: Put](
-    field: String,
-    values: Nel[V],
-    operator: Operator
-  ): F[ApiResult[Nel[AirlineRoute]]]
-
-  def getAirlineRoutesByAirline[V: Put](
-    field: String,
-    values: Nel[V],
-    operator: Operator
-  ): F[ApiResult[Nel[AirlineRoute]]]
-
-  def getAirlineRoutesByAirplane[V: Put](
-    field: String,
-    values: Nel[V],
-    operator: Operator
-  ): F[ApiResult[Nel[AirlineRoute]]]
-
-  def getAirlineRoutesByAirport[V: Put](
-    field: String,
-    values: Nel[V],
-    operator: Operator,
-    inbound: Option[Boolean]
-  ): F[ApiResult[Nel[AirlineRoute]]]
+  // None for both inbound and outbound
+  def getAirlineRoutesByAirport(inbound: Option[Boolean]): PartiallyAppliedGetBy[F, AirlineRoute]
 
   def createAirlineRoute(airlineRoute: AirlineRouteCreate): F[ApiResult[Long]]
   def updateAirlineRoute(airlineRoute: AirlineRoute): F[ApiResult[Long]]

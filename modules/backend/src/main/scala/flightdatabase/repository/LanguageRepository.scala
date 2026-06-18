@@ -10,11 +10,16 @@ import doobie.Read
 import doobie.Transactor
 import flightdatabase.ApiResult
 import flightdatabase.Operator
+import flightdatabase.ValidatedSortAndLimit
 import flightdatabase.extensions.all._
 import flightdatabase.language.Language
 import flightdatabase.language.LanguageAlgebra
 import flightdatabase.language.LanguageCreate
 import flightdatabase.language.LanguagePatch
+import flightdatabase.partial.PartiallyAppliedGetAll
+import flightdatabase.partial.PartiallyAppliedGetBy
+import flightdatabase.repository.LanguageRepository.PartiallyAppliedGetAllLanguages
+import flightdatabase.repository.LanguageRepository.PartiallyAppliedGetByLanguage
 import flightdatabase.repository.queries.LanguageQueries.deleteLanguage
 import flightdatabase.repository.queries.LanguageQueries.insertLanguage
 import flightdatabase.repository.queries.LanguageQueries.languageExists
@@ -28,21 +33,16 @@ class LanguageRepository[F[_]: Concurrent] private (
 
   override def doesLanguageExist(id: Long): F[Boolean] = languageExists(id).unique.execute
 
-  override def getLanguages: F[ApiResult[Nel[Language]]] =
-    selectAllLanguages.asNel().execute
-
-  override def getLanguagesOnly[V: Read](field: String): F[ApiResult[Nel[V]]] =
-    getFieldList[Language, V](field).execute
+  override def getLanguages: PartiallyAppliedGetAll[F, Language] =
+    new PartiallyAppliedGetAllLanguages[F]
 
   override def getLanguage(id: Long): F[ApiResult[Language]] =
-    selectLanguageBy("id", Nel.one(id), Operator.Equals).asSingle(id).execute
+    selectLanguageBy("id", Nel.one(id), Operator.Equals, ValidatedSortAndLimit.empty)
+      .asSingle(id)
+      .execute
 
-  override def getLanguagesBy[V: Put](
-    field: String,
-    values: Nel[V],
-    operator: Operator
-  ): F[ApiResult[Nel[Language]]] =
-    selectLanguageBy(field, values, operator).asNel(Some(field), Some(values)).execute
+  override def getLanguagesBy: PartiallyAppliedGetBy[F, Language] =
+    new PartiallyAppliedGetByLanguage[F]
 
   override def createLanguage(language: LanguageCreate): F[ApiResult[Long]] =
     insertLanguage(language).attemptInsert.execute
@@ -72,4 +72,34 @@ object LanguageRepository {
     implicit transactor: Transactor[F]
   ): Resource[F, LanguageRepository[F]] =
     Resource.pure(new LanguageRepository[F])
+
+  // Partially applied algebra
+  private class PartiallyAppliedGetAllLanguages[F[_]: Concurrent](
+    implicit transactor: Transactor[F]
+  ) extends PartiallyAppliedGetAll[F, Language] {
+
+    override def apply(sortAndLimit: ValidatedSortAndLimit): F[ApiResult[Nel[Language]]] =
+      selectAllLanguages(sortAndLimit).asNel().execute
+
+    override def apply[V: Read](
+      sortAndLimit: ValidatedSortAndLimit,
+      returnField: String
+    ): F[ApiResult[Nel[V]]] =
+      getFieldList2[Language, V](sortAndLimit, returnField).execute
+  }
+
+  private class PartiallyAppliedGetByLanguage[F[_]: Concurrent](
+    implicit transactor: Transactor[F]
+  ) extends PartiallyAppliedGetBy[F, Language] {
+
+    override def apply[V: Put](
+      field: String,
+      values: Nel[V],
+      operator: Operator,
+      sortAndLimit: ValidatedSortAndLimit
+    ): F[ApiResult[Nel[Language]]] =
+      selectLanguageBy(field, values, operator, sortAndLimit)
+        .asNel(Some(field), Some(values))
+        .execute
+  }
 }

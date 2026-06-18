@@ -7,6 +7,7 @@ import doobie.Query0
 import doobie.implicits._
 import doobie.util.update.Update0
 import flightdatabase.Operator
+import flightdatabase.ValidatedSortAndLimit
 import flightdatabase.language.Language
 import flightdatabase.language.LanguageCreate
 
@@ -14,14 +15,17 @@ private[repository] object LanguageQueries {
 
   def languageExists(id: Long): Query0[Boolean] = idExistsQuery[Language](id)
 
-  def selectAllLanguages: Query0[Language] = selectAll.query[Language]
+  def selectAllLanguages(sortAndLimit: ValidatedSortAndLimit): Query0[Language] =
+    (selectAll ++ sortAndLimit.fragment).query[Language]
 
   def selectLanguageBy[V: Put](
     field: String,
     values: Nel[V],
-    operator: Operator
+    operator: Operator,
+    sortAndLimit: ValidatedSortAndLimit
   ): Query0[Language] =
-    (selectAll ++ whereFragment(s"language.$field", values, operator)).query[Language]
+    (selectAll ++ whereFragment(s"language.$field", values, operator) ++ sortAndLimit.fragment)
+      .query[Language]
 
   def insertLanguage(model: LanguageCreate): Update0 =
     sql"""

@@ -10,12 +10,18 @@ import doobie.Read
 import doobie.Transactor
 import flightdatabase.ApiResult
 import flightdatabase.Operator
+import flightdatabase.ValidatedSortAndLimit
 import flightdatabase.airplane.Airplane
 import flightdatabase.airplane.AirplaneAlgebra
 import flightdatabase.airplane.AirplaneCreate
 import flightdatabase.airplane.AirplanePatch
 import flightdatabase.extensions.all._
 import flightdatabase.manufacturer.Manufacturer
+import flightdatabase.partial.PartiallyAppliedGetAll
+import flightdatabase.partial.PartiallyAppliedGetBy
+import flightdatabase.repository.AirplaneRepository.PartiallyAppliedGetAllAirplanes
+import flightdatabase.repository.AirplaneRepository.PartiallyAppliedGetByAirplane
+import flightdatabase.repository.AirplaneRepository.PartiallyAppliedGetByManufacturer
 import flightdatabase.repository.queries.AirplaneQueries._
 
 class AirplaneRepository[F[_]: Concurrent] private (
@@ -24,30 +30,19 @@ class AirplaneRepository[F[_]: Concurrent] private (
 
   override def doesAirplaneExist(id: Long): F[Boolean] = airplaneExists(id).unique.execute
 
-  override def getAirplanes: F[ApiResult[Nel[Airplane]]] =
-    selectAllAirplanes.asNel().execute
-
-  override def getAirplanesOnly[V: Read](field: String): F[ApiResult[Nel[V]]] =
-    getFieldList[Airplane, V](field).execute
+  override def getAirplanes: PartiallyAppliedGetAll[F, Airplane] =
+    new PartiallyAppliedGetAllAirplanes[F]
 
   override def getAirplane(id: Long): F[ApiResult[Airplane]] =
-    selectAirplanesBy("id", Nel.one(id), Operator.Equals).asSingle(id).execute
-
-  override def getAirplanesBy[V: Put](
-    field: String,
-    values: Nel[V],
-    operator: Operator
-  ): F[ApiResult[Nel[Airplane]]] =
-    selectAirplanesBy(field, values, operator).asNel(Some(field), Some(values)).execute
-
-  def getAirplanesByManufacturer[V: Put](
-    field: String,
-    values: Nel[V],
-    operator: Operator
-  ): F[ApiResult[Nel[Airplane]]] =
-    selectAirplanesByExternal[Manufacturer, V](field, values, operator)
-      .asNel(Some(field), Some(values))
+    selectAirplanesBy("id", Nel.one(id), Operator.Equals, ValidatedSortAndLimit.empty)
+      .asSingle(id)
       .execute
+
+  override def getAirplanesBy: PartiallyAppliedGetBy[F, Airplane] =
+    new PartiallyAppliedGetByAirplane[F]
+
+  override def getAirplanesByManufacturer: PartiallyAppliedGetBy[F, Airplane] =
+    new PartiallyAppliedGetByManufacturer[F]
 
   override def createAirplane(airplane: AirplaneCreate): F[ApiResult[Long]] =
     insertAirplane(airplane).attemptInsert.execute
@@ -80,4 +75,49 @@ object AirplaneRepository {
     implicit transactor: Transactor[F]
   ): Resource[F, AirplaneRepository[F]] =
     Resource.pure(new AirplaneRepository[F])
+
+  // Partially applied algebra
+  private class PartiallyAppliedGetAllAirplanes[F[_]: Concurrent](
+    implicit transactor: Transactor[F]
+  ) extends PartiallyAppliedGetAll[F, Airplane] {
+
+    override def apply(sortAndLimit: ValidatedSortAndLimit): F[ApiResult[Nel[Airplane]]] =
+      selectAllAirplanes(sortAndLimit).asNel().execute
+
+    override def apply[V: Read](
+      sortAndLimit: ValidatedSortAndLimit,
+      returnField: String
+    ): F[ApiResult[Nel[V]]] =
+      getFieldList2[Airplane, V](sortAndLimit, returnField).execute
+  }
+
+  private class PartiallyAppliedGetByAirplane[F[_]: Concurrent](
+    implicit transactor: Transactor[F]
+  ) extends PartiallyAppliedGetBy[F, Airplane] {
+
+    override def apply[V: Put](
+      field: String,
+      values: Nel[V],
+      operator: Operator,
+      sortAndLimit: ValidatedSortAndLimit
+    ): F[ApiResult[Nel[Airplane]]] =
+      selectAirplanesBy(field, values, operator, sortAndLimit)
+        .asNel(Some(field), Some(values))
+        .execute
+  }
+
+  private class PartiallyAppliedGetByManufacturer[F[_]: Concurrent](
+    implicit transactor: Transactor[F]
+  ) extends PartiallyAppliedGetBy[F, Airplane] {
+
+    override def apply[V: Put](
+      field: String,
+      values: Nel[V],
+      operator: Operator,
+      sortAndLimit: ValidatedSortAndLimit
+    ): F[ApiResult[Nel[Airplane]]] =
+      selectAirplanesByExternal[Manufacturer, V](field, values, operator, sortAndLimit)
+        .asNel(Some(field), Some(values))
+        .execute
+  }
 }

@@ -8,6 +8,7 @@ import doobie.Update0
 import doobie.implicits._
 import flightdatabase.Operator
 import flightdatabase.TableBase
+import flightdatabase.ValidatedSortAndLimit
 import flightdatabase.manufacturer.Manufacturer
 import flightdatabase.manufacturer.ManufacturerCreate
 
@@ -15,26 +16,30 @@ private[repository] object ManufacturerQueries {
 
   def manufacturerExists(id: Long): Query0[Boolean] = idExistsQuery[Manufacturer](id)
 
-  def selectAllManufacturers: Query0[Manufacturer] = selectAll.query[Manufacturer]
+  def selectAllManufacturers(sortAndLimit: ValidatedSortAndLimit): Query0[Manufacturer] =
+    (selectAll ++ sortAndLimit.fragment).query[Manufacturer]
 
   def selectManufacturersBy[V: Put](
     field: String,
     values: Nel[V],
-    operator: Operator
+    operator: Operator,
+    sortAndLimit: ValidatedSortAndLimit
   ): Query0[Manufacturer] =
-    (selectAll ++ whereFragment(s"manufacturer.$field", values, operator)).query[Manufacturer]
+    (selectAll ++ whereFragment(s"manufacturer.$field", values, operator) ++ sortAndLimit.fragment)
+      .query[Manufacturer]
 
   def selectManufacturersByCity[ET: TableBase, EV: Put](
     externalField: String,
     externalValues: Nel[EV],
-    operator: Operator
+    operator: Operator,
+    sortAndLimit: ValidatedSortAndLimit
   ): Query0[Manufacturer] = {
     selectAll ++ innerJoinWhereFragment[Manufacturer, ET, EV](
       externalField,
       externalValues,
       operator,
       Some("base_city_id")
-    )
+    ) ++ sortAndLimit.fragment
   }.query[Manufacturer]
 
   def insertManufacturer(model: ManufacturerCreate): Update0 =

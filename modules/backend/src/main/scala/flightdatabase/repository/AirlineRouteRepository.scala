@@ -12,6 +12,7 @@ import doobie.Transactor
 import doobie.syntax.string._
 import flightdatabase.ApiResult
 import flightdatabase.Operator
+import flightdatabase.ValidatedSortAndLimit
 import flightdatabase.airline.Airline
 import flightdatabase.airline_airplane.AirlineAirplane
 import flightdatabase.airline_route.AirlineRoute
@@ -21,6 +22,13 @@ import flightdatabase.airline_route.AirlineRoutePatch
 import flightdatabase.airplane.Airplane
 import flightdatabase.airport.Airport
 import flightdatabase.extensions.all._
+import flightdatabase.partial.PartiallyAppliedGetAll
+import flightdatabase.partial.PartiallyAppliedGetBy
+import flightdatabase.repository.AirlineRouteRepository.PartiallyAppliedGetAllAirlineRoutes
+import flightdatabase.repository.AirlineRouteRepository.PartiallyAppliedGetByAirline
+import flightdatabase.repository.AirlineRouteRepository.PartiallyAppliedGetByAirplane
+import flightdatabase.repository.AirlineRouteRepository.PartiallyAppliedGetByAirport
+import flightdatabase.repository.AirlineRouteRepository.PartiallyAppliedGetByAirlineRoute
 import flightdatabase.repository.queries.AirlineRouteQueries._
 import flightdatabase.repository.queries.selectWhereQuery
 
@@ -28,75 +36,30 @@ class AirlineRouteRepository[F[_]: Concurrent] private (
   implicit transactor: Transactor[F]
 ) extends AirlineRouteAlgebra[F] {
 
-  // Doobie implicits
-  implicit val readAirlineRoute: Read[AirlineRoute] = Read.derived
-
   override def doesAirlineRouteExist(id: Long): F[Boolean] =
     airlineRouteExists(id).unique.execute
 
-  override def getAirlineRoutes: F[ApiResult[Nel[AirlineRoute]]] =
-    selectAllAirlineRoutes.asNel().execute
-
-  override def getAirlineRoutesOnly[V: Read](field: String): F[ApiResult[Nel[V]]] =
-    getFieldList[AirlineRoute, V](field).execute
+  override def getAirlineRoutes: PartiallyAppliedGetAll[F, AirlineRoute] =
+    new PartiallyAppliedGetAllAirlineRoutes[F]
 
   override def getAirlineRoute(id: Long): F[ApiResult[AirlineRoute]] =
-    selectAirlineRouteBy("id", Nel.one(id), Operator.Equals).asSingle(id).execute
-
-  override def getAirlineRoutesBy[V: Put](
-    field: String,
-    values: Nel[V],
-    operator: Operator
-  ): F[ApiResult[Nel[AirlineRoute]]] =
-    selectAirlineRouteBy(field, values, operator).asNel(Some(field), Some(values)).execute
-
-  override def getAirlineRoutesByAirline[V: Put](
-    field: String,
-    values: Nel[V],
-    operator: Operator
-  ): F[ApiResult[Nel[AirlineRoute]]] =
-    // Get airline IDs for given airline field values
-    EitherT(
-      selectWhereQuery[Airline, Long, V]("id", field, values, operator)
-        .asNel(Some(field), Some(values))
-    ).flatMapF { airlineIds =>
-        val ids = airlineIds.value
-        selectAirlineRoutesByExternal[AirlineAirplane, Long]("airline_id", ids, Operator.In)
-          .asNel(invalidValues = Some(ids))
-      }
-      .value
+    selectAirlineRouteBy("id", Nel.one(id), Operator.Equals, ValidatedSortAndLimit.empty)
+      .asSingle(id)
       .execute
 
-  override def getAirlineRoutesByAirplane[V: Put](
-    field: String,
-    values: Nel[V],
-    operator: Operator
-  ): F[ApiResult[Nel[AirlineRoute]]] =
-    EitherT(
-      selectWhereQuery[Airplane, Long, V]("id", field, values, operator)
-        .asNel(Some(field), Some(values))
-    ).flatMapF { airplaneIds =>
-        val ids = airplaneIds.value
-        selectAirlineRoutesByExternal[AirlineAirplane, Long]("airplane_id", ids, Operator.In)
-          .asNel(invalidValues = Some(ids))
-      }
-      .value
-      .execute
+  override def getAirlineRoutesBy: PartiallyAppliedGetBy[F, AirlineRoute] =
+    new PartiallyAppliedGetByAirlineRoute[F]
 
-  override def getAirlineRoutesByAirport[V: Put](
-    field: String,
-    values: Nel[V],
-    operator: Operator,
-    inbound: Option[Boolean] // None for both inbound and outbound
-  ): F[ApiResult[Nel[AirlineRoute]]] = {
-    def q(f: String): Query0[AirlineRoute] =
-      selectAirlineRoutesByExternal[Airport, V](field, values, operator, Some(f))
-    inbound.fold {
-      val startQuery = q("start_airport_id")
-      val destinationQuery = q("destination_airport_id")
-      (startQuery.toFragment ++ fr"UNION" ++ destinationQuery.toFragment).query[AirlineRoute]
-    }(in => q(if (in) "destination_airport_id" else "start_airport_id"))
-  }.asNel(Some(field), Some(values)).execute
+  override def getAirlineRoutesByAirline: PartiallyAppliedGetBy[F, AirlineRoute] =
+    new PartiallyAppliedGetByAirline[F]
+
+  override def getAirlineRoutesByAirplane: PartiallyAppliedGetBy[F, AirlineRoute] =
+    new PartiallyAppliedGetByAirplane[F]
+
+  override def getAirlineRoutesByAirport(
+    inbound: Option[Boolean]
+  ): PartiallyAppliedGetBy[F, AirlineRoute] =
+    new PartiallyAppliedGetByAirport[F](inbound)
 
   override def createAirlineRoute(airlineRoute: AirlineRouteCreate): F[ApiResult[Long]] =
     insertAirlineRoute(airlineRoute).attemptInsert.execute
@@ -129,4 +92,113 @@ object AirlineRouteRepository {
     implicit transactor: Transactor[F]
   ): Resource[F, AirlineRouteRepository[F]] =
     Resource.pure(new AirlineRouteRepository[F])
+
+  // Needed by the airport UNION query, which calls `.query[AirlineRoute]` directly
+  private implicit val readAirlineRoute: Read[AirlineRoute] = Read.derived
+
+  // Partially applied algebra
+  private class PartiallyAppliedGetAllAirlineRoutes[F[_]: Concurrent](
+    implicit transactor: Transactor[F]
+  ) extends PartiallyAppliedGetAll[F, AirlineRoute] {
+
+    override def apply(sortAndLimit: ValidatedSortAndLimit): F[ApiResult[Nel[AirlineRoute]]] =
+      selectAllAirlineRoutes(sortAndLimit).asNel().execute
+
+    override def apply[V: Read](
+      sortAndLimit: ValidatedSortAndLimit,
+      returnField: String
+    ): F[ApiResult[Nel[V]]] =
+      getFieldList2[AirlineRoute, V](sortAndLimit, returnField).execute
+  }
+
+  private class PartiallyAppliedGetByAirlineRoute[F[_]: Concurrent](
+    implicit transactor: Transactor[F]
+  ) extends PartiallyAppliedGetBy[F, AirlineRoute] {
+
+    override def apply[V: Put](
+      field: String,
+      values: Nel[V],
+      operator: Operator,
+      sortAndLimit: ValidatedSortAndLimit
+    ): F[ApiResult[Nel[AirlineRoute]]] =
+      selectAirlineRouteBy(field, values, operator, sortAndLimit)
+        .asNel(Some(field), Some(values))
+        .execute
+  }
+
+  private class PartiallyAppliedGetByAirline[F[_]: Concurrent](
+    implicit transactor: Transactor[F]
+  ) extends PartiallyAppliedGetBy[F, AirlineRoute] {
+
+    override def apply[V: Put](
+      field: String,
+      values: Nel[V],
+      operator: Operator,
+      sortAndLimit: ValidatedSortAndLimit
+    ): F[ApiResult[Nel[AirlineRoute]]] =
+      // Get airline IDs for given airline field values, then route through airline_airplane
+      EitherT(
+        selectWhereQuery[Airline, Long, V]("id", field, values, operator)
+          .asNel(Some(field), Some(values))
+      ).flatMapF { airlineIds =>
+          val ids = airlineIds.value
+          selectAirlineRoutesByExternal[AirlineAirplane, Long](
+            "airline_id",
+            ids,
+            Operator.In,
+            sortAndLimit
+          ).asNel(invalidValues = Some(ids))
+        }
+        .value
+        .execute
+  }
+
+  private class PartiallyAppliedGetByAirplane[F[_]: Concurrent](
+    implicit transactor: Transactor[F]
+  ) extends PartiallyAppliedGetBy[F, AirlineRoute] {
+
+    override def apply[V: Put](
+      field: String,
+      values: Nel[V],
+      operator: Operator,
+      sortAndLimit: ValidatedSortAndLimit
+    ): F[ApiResult[Nel[AirlineRoute]]] =
+      EitherT(
+        selectWhereQuery[Airplane, Long, V]("id", field, values, operator)
+          .asNel(Some(field), Some(values))
+      ).flatMapF { airplaneIds =>
+          val ids = airplaneIds.value
+          selectAirlineRoutesByExternal[AirlineAirplane, Long](
+            "airplane_id",
+            ids,
+            Operator.In,
+            sortAndLimit
+          ).asNel(invalidValues = Some(ids))
+        }
+        .value
+        .execute
+  }
+
+  private class PartiallyAppliedGetByAirport[F[_]: Concurrent](
+    inbound: Option[Boolean] // None for both inbound and outbound
+  )(implicit transactor: Transactor[F])
+      extends PartiallyAppliedGetBy[F, AirlineRoute] {
+
+    override def apply[V: Put](
+      field: String,
+      values: Nel[V],
+      operator: Operator,
+      sortAndLimit: ValidatedSortAndLimit
+    ): F[ApiResult[Nel[AirlineRoute]]] = {
+      def q(f: String, sl: ValidatedSortAndLimit): Query0[AirlineRoute] =
+        selectAirlineRoutesByExternal[Airport, V](field, values, operator, sl, Some(f))
+      inbound.fold {
+        // For the UNION, keep the legs unsorted and apply sort/limit to the whole result
+        val startQuery = q("start_airport_id", ValidatedSortAndLimit.empty)
+        val destinationQuery = q("destination_airport_id", ValidatedSortAndLimit.empty)
+        (startQuery.toFragment ++ fr"UNION" ++ destinationQuery.toFragment ++ sortAndLimit.fragment)
+          .query[AirlineRoute]
+      }(in => q(if (in) "destination_airport_id" else "start_airport_id", sortAndLimit))
+    }.asNel(Some(field), Some(values)).execute
+  }
 }

@@ -8,6 +8,7 @@ import doobie.Update0
 import doobie.implicits._
 import flightdatabase.Operator
 import flightdatabase.TableBase
+import flightdatabase.ValidatedSortAndLimit
 import flightdatabase.airline_route.AirlineRoute
 import flightdatabase.airline_route.AirlineRouteCreate
 
@@ -15,19 +16,23 @@ private[repository] object AirlineRouteQueries {
 
   def airlineRouteExists(id: Long): Query0[Boolean] = idExistsQuery[AirlineRoute](id)
 
-  def selectAllAirlineRoutes: Query0[AirlineRoute] = selectAll.query[AirlineRoute]
+  def selectAllAirlineRoutes(sortAndLimit: ValidatedSortAndLimit): Query0[AirlineRoute] =
+    (selectAll ++ sortAndLimit.fragment).query[AirlineRoute]
 
   def selectAirlineRouteBy[V: Put](
     field: String,
     values: Nel[V],
-    operator: Operator
+    operator: Operator,
+    sortAndLimit: ValidatedSortAndLimit
   ): Query0[AirlineRoute] =
-    (selectAll ++ whereFragment(s"airline_route.$field", values, operator)).query[AirlineRoute]
+    (selectAll ++ whereFragment(s"airline_route.$field", values, operator) ++ sortAndLimit.fragment)
+      .query[AirlineRoute]
 
   def selectAirlineRoutesByExternal[ET: TableBase, EV: Put](
     externalField: String,
     externalValues: Nel[EV],
     operator: Operator,
+    sortAndLimit: ValidatedSortAndLimit,
     overrideExternalIdField: Option[String] = None
   ): Query0[AirlineRoute] = {
     selectAll ++ innerJoinWhereFragment[AirlineRoute, ET, EV](
@@ -35,7 +40,7 @@ private[repository] object AirlineRouteQueries {
       externalValues,
       operator,
       overrideExternalIdField
-    )
+    ) ++ sortAndLimit.fragment
   }.query[AirlineRoute]
 
   def insertAirlineRoute(model: AirlineRouteCreate): Update0 =

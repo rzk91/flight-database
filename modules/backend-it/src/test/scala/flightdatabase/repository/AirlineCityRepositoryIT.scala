@@ -11,6 +11,7 @@ import flightdatabase.EntryNotFound
 import flightdatabase.InvalidField
 import flightdatabase.InvalidValueType
 import flightdatabase.Operator
+import flightdatabase.ValidatedSortAndLimit
 import flightdatabase.airline_city.AirlineCity
 import flightdatabase.airline_city.AirlineCityCreate
 import flightdatabase.airline_city.AirlineCityPatch
@@ -57,8 +58,44 @@ final class AirlineCityRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting all airline-city combinations" should "return the correct detailed list" in {
-    val airlineCities = repo.getAirlineCities.value
+    val airlineCities = repo.getAirlineCities(emptySortAndLimit).value
     airlineCities should contain only (originalAirlineCities.toList: _*)
+  }
+
+  it should "return a properly sorted list" in {
+    val sorted = repo.getAirlineCities(ValidatedSortAndLimit.sortAscending("city_id")).value
+    sorted shouldBe originalAirlineCities.sortBy(_.cityId)
+
+    val sortedDesc = repo.getAirlineCities(ValidatedSortAndLimit.sortDescending("city_id")).value
+    sortedDesc shouldBe originalAirlineCities.sortBy(_.cityId).reverse
+  }
+
+  it should "return only as many entries as requested" in {
+    val limited = repo.getAirlineCities(ValidatedSortAndLimit.limit(1)).value
+
+    limited should have size 1
+    limited should contain only originalAirlineCities.head
+
+    val limitedWithOffset = repo.getAirlineCities(ValidatedSortAndLimit.limitAndOffset(1, 1)).value
+
+    limitedWithOffset should have size 1
+    limitedWithOffset should contain only originalAirlineCities.tail.head
+  }
+
+  it should "only return the requested fields if so required" in {
+    repo
+      .getAirlineCities[Long](emptySortAndLimit, "airline_id")
+      .value should contain only (originalAirlineCities.map(_.airlineId).toList: _*)
+  }
+
+  it should "sort and return the requested fields if so required" in {
+    val cityIds =
+      repo.getAirlineCities[Long](ValidatedSortAndLimit.sortAscending("city_id"), "city_id").value
+    cityIds shouldBe originalAirlineCities.map(_.cityId).sorted
+  }
+
+  it should "return an empty list if offset is too large" in {
+    repo.getAirlineCities(ValidatedSortAndLimit.offset(100)).error shouldBe EntryListEmpty
   }
 
   "Selecting an airline-city by ID" should "return the correct detailed entry" in {
@@ -82,9 +119,9 @@ final class AirlineCityRepositoryIT extends RepositoryCheck {
 
   "Selecting airline-city combinations by other fields" should "return the corresponding entries" in {
     def entriesByAirlineId(id: Long): IO[ApiResult[Nel[AirlineCity]]] =
-      repo.getAirlineCitiesBy("airline_id", Nel.one(id), Operator.Equals)
+      repo.getAirlineCitiesBy("airline_id", Nel.one(id), Operator.Equals, emptySortAndLimit)
     def entriesByCityId(id: Long): IO[ApiResult[Nel[AirlineCity]]] =
-      repo.getAirlineCitiesBy("city_id", Nel.one(id), Operator.Equals)
+      repo.getAirlineCitiesBy("city_id", Nel.one(id), Operator.Equals, emptySortAndLimit)
 
     val distinctAirlineIds = originalAirlineCities.map(_.airlineId).distinct
     val distinctCityIds = originalAirlineCities.map(_.cityId).distinct
@@ -107,21 +144,51 @@ final class AirlineCityRepositoryIT extends RepositoryCheck {
     entriesByCityId(veryLongIdNotPresent).error shouldBe EntryListEmpty
   }
 
+  it should "sort and limit the filtered entries if so required" in {
+    // city_id IN (every entry's city) matches all entries
+    val allCityIds = originalAirlineCities.map(_.cityId)
+
+    val sorted = repo
+      .getAirlineCitiesBy(
+        "city_id",
+        allCityIds,
+        Operator.In,
+        ValidatedSortAndLimit.sortDescending("city_id")
+      )
+      .value
+    sorted shouldBe originalAirlineCities.sortBy(_.cityId).reverse
+
+    val limited = repo
+      .getAirlineCitiesBy(
+        "city_id",
+        allCityIds,
+        Operator.In,
+        ValidatedSortAndLimit.sortAscending("city_id").copy(limit = Some(1))
+      )
+      .value
+    limited should contain only originalAirlineCities.sortBy(_.cityId).head
+  }
+
   "Selecting airline-city combinations by external fields" should "return the corresponding entries" in {
     def entryByAirlineName(name: String): IO[ApiResult[Nel[AirlineCity]]] =
-      repo.getAirlineCitiesByAirline("name", Nel.one(name), Operator.Equals)
+      repo.getAirlineCitiesByAirline("name", Nel.one(name), Operator.Equals, emptySortAndLimit)
 
     def entryByAirlineIata(iata: String): IO[ApiResult[Nel[AirlineCity]]] =
-      repo.getAirlineCitiesByAirline("iata", Nel.one(iata), Operator.Equals)
+      repo.getAirlineCitiesByAirline("iata", Nel.one(iata), Operator.Equals, emptySortAndLimit)
 
     def entryByAirlineIcao(icao: String): IO[ApiResult[Nel[AirlineCity]]] =
-      repo.getAirlineCitiesByAirline("icao", Nel.one(icao), Operator.Equals)
+      repo.getAirlineCitiesByAirline("icao", Nel.one(icao), Operator.Equals, emptySortAndLimit)
 
     def entryByCityName(name: String): IO[ApiResult[Nel[AirlineCity]]] =
-      repo.getAirlineCitiesByCity("name", Nel.one(name), Operator.Equals)
+      repo.getAirlineCitiesByCity("name", Nel.one(name), Operator.Equals, emptySortAndLimit)
 
     def entryByCityPop(pop: Long): IO[ApiResult[Nel[AirlineCity]]] =
-      repo.getAirlineCitiesByCity("population", Nel.one(pop), Operator.LessThanOrEqualTo)
+      repo.getAirlineCitiesByCity(
+        "population",
+        Nel.one(pop),
+        Operator.LessThanOrEqualTo,
+        emptySortAndLimit
+      )
 
     forAll(airlineIdMap) {
       case (id, (name, iata, icao)) =>
@@ -162,41 +229,46 @@ final class AirlineCityRepositoryIT extends RepositoryCheck {
 
   "Selecting a non-existent field" should "return an error" in {
     repo
-      .getAirlineCitiesBy(invalidFieldSyntax, Nel.one(valueNotPresent), Operator.Equals)
+      .getAirlineCitiesBy(invalidFieldSyntax, Nel.one(valueNotPresent), Operator.Equals, emptySortAndLimit)
       .error shouldBe sqlErrorInvalidSyntax
 
     repo
-      .getAirlineCitiesByCity(invalidFieldSyntax, Nel.one(valueNotPresent), Operator.Equals)
+      .getAirlineCitiesByCity(invalidFieldSyntax, Nel.one(valueNotPresent), Operator.Equals, emptySortAndLimit)
       .error shouldBe sqlErrorInvalidSyntax
 
     repo
-      .getAirlineCitiesByAirline(invalidFieldSyntax, Nel.one(valueNotPresent), Operator.Equals)
+      .getAirlineCitiesByAirline(invalidFieldSyntax, Nel.one(valueNotPresent), Operator.Equals, emptySortAndLimit)
       .error shouldBe sqlErrorInvalidSyntax
 
     repo
-      .getAirlineCitiesBy(invalidFieldColumn, Nel.one(valueNotPresent), Operator.Equals)
+      .getAirlineCitiesBy(invalidFieldColumn, Nel.one(valueNotPresent), Operator.Equals, emptySortAndLimit)
       .error shouldBe InvalidField(invalidFieldColumn)
 
     repo
-      .getAirlineCitiesByCity(invalidFieldColumn, Nel.one(valueNotPresent), Operator.Equals)
+      .getAirlineCitiesByCity(invalidFieldColumn, Nel.one(valueNotPresent), Operator.Equals, emptySortAndLimit)
       .error shouldBe InvalidField(invalidFieldColumn)
 
     repo
-      .getAirlineCitiesByAirline(invalidFieldColumn, Nel.one(valueNotPresent), Operator.Equals)
+      .getAirlineCitiesByAirline(invalidFieldColumn, Nel.one(valueNotPresent), Operator.Equals, emptySortAndLimit)
       .error shouldBe InvalidField(invalidFieldColumn)
   }
 
   "Selecting an existing field with an invalid value type" should "return an error" in {
     repo
-      .getAirlineCitiesBy("airline_id", Nel.one(invalidLongValue), Operator.Equals)
+      .getAirlineCitiesBy("airline_id", Nel.one(invalidLongValue), Operator.Equals, emptySortAndLimit)
       .error shouldBe InvalidValueType(invalidLongValue)
 
     repo
-      .getAirlineCitiesByCity("population", Nel.one(invalidLongValue), Operator.LessThanOrEqualTo)
+      .getAirlineCitiesByCity(
+        "population",
+        Nel.one(invalidLongValue),
+        Operator.LessThanOrEqualTo,
+        emptySortAndLimit
+      )
       .error shouldBe InvalidValueType(invalidLongValue)
 
     repo
-      .getAirlineCitiesByAirline("country_id", Nel.one(invalidLongValue), Operator.Equals)
+      .getAirlineCitiesByAirline("country_id", Nel.one(invalidLongValue), Operator.Equals, emptySortAndLimit)
       .error shouldBe InvalidValueType(invalidLongValue)
   }
 

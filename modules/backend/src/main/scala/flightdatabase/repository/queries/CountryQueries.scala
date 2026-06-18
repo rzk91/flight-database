@@ -8,6 +8,7 @@ import doobie.Update0
 import doobie.implicits._
 import flightdatabase.Operator
 import flightdatabase.TableBase
+import flightdatabase.ValidatedSortAndLimit
 import flightdatabase.country.Country
 import flightdatabase.country.CountryCreate
 
@@ -15,19 +16,23 @@ private[repository] object CountryQueries {
 
   def countryExists(id: Long): Query0[Boolean] = idExistsQuery[Country](id)
 
-  def selectAllCountries: Query0[Country] = selectAll.query[Country]
+  def selectAllCountries(sortAndLimit: ValidatedSortAndLimit): Query0[Country] =
+    (selectAll ++ sortAndLimit.fragment).query[Country]
 
   def selectCountriesBy[V: Put](
     field: String,
     values: Nel[V],
-    operator: Operator
+    operator: Operator,
+    sortAndLimit: ValidatedSortAndLimit
   ): Query0[Country] =
-    (selectAll ++ whereFragment(s"country.$field", values, operator)).query[Country]
+    (selectAll ++ whereFragment(s"country.$field", values, operator) ++ sortAndLimit.fragment)
+      .query[Country]
 
   def selectCountriesByExternal[ET: TableBase, EV: Put](
     externalField: String,
     externalValues: Nel[EV],
     operator: Operator,
+    sortAndLimit: ValidatedSortAndLimit,
     overrideExternalIdField: Option[String] = None
   ): Query0[Country] = {
     selectAll ++ innerJoinWhereFragment[Country, ET, EV](
@@ -35,7 +40,7 @@ private[repository] object CountryQueries {
       externalValues,
       operator,
       overrideExternalIdField
-    )
+    ) ++ sortAndLimit.fragment
   }.query[Country]
 
   def insertCountry(model: CountryCreate): Update0 =

@@ -7,6 +7,7 @@ import doobie.Query0
 import doobie.Update0
 import doobie.implicits._
 import flightdatabase.Operator
+import flightdatabase.ValidatedSortAndLimit
 import flightdatabase.currency.Currency
 import flightdatabase.currency.CurrencyCreate
 
@@ -14,14 +15,17 @@ private[repository] object CurrencyQueries {
 
   def currencyExists(id: Long): Query0[Boolean] = idExistsQuery[Currency](id)
 
-  def selectAllCurrencies: Query0[Currency] = selectAll.query[Currency]
+  def selectAllCurrencies(sortAndLimit: ValidatedSortAndLimit): Query0[Currency] =
+    (selectAll ++ sortAndLimit.fragment).query[Currency]
 
   def selectCurrencyBy[V: Put](
     field: String,
     values: Nel[V],
-    operator: Operator
+    operator: Operator,
+    sortAndLimit: ValidatedSortAndLimit
   ): Query0[Currency] =
-    (selectAll ++ whereFragment(s"currency.$field", values, operator)).query[Currency]
+    (selectAll ++ whereFragment(s"currency.$field", values, operator) ++ sortAndLimit.fragment)
+      .query[Currency]
 
   def insertCurrency(model: CurrencyCreate): Update0 =
     sql"""INSERT INTO currency

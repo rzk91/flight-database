@@ -6,6 +6,7 @@ import cats.effect.Concurrent
 import cats.effect.Resource
 import cats.implicits._
 import doobie.Put
+import doobie.Read
 import doobie.Transactor
 import flightdatabase.Operator
 import flightdatabase._
@@ -13,6 +14,12 @@ import flightdatabase.airline.Airline
 import flightdatabase.airline_city._
 import flightdatabase.city.City
 import flightdatabase.extensions.all._
+import flightdatabase.partial.PartiallyAppliedGetAll
+import flightdatabase.partial.PartiallyAppliedGetBy
+import flightdatabase.repository.AirlineCityRepository.PartiallyAppliedGetAllAirlineCities
+import flightdatabase.repository.AirlineCityRepository.PartiallyAppliedGetByAirline
+import flightdatabase.repository.AirlineCityRepository.PartiallyAppliedGetByAirlineCity
+import flightdatabase.repository.AirlineCityRepository.PartiallyAppliedGetByCity
 import flightdatabase.repository.queries.AirlineCityQueries._
 
 class AirlineCityRepository[F[_]: Concurrent] private (implicit transactor: Transactor[F])
@@ -21,16 +28,18 @@ class AirlineCityRepository[F[_]: Concurrent] private (implicit transactor: Tran
   override def doesAirlineCityExist(id: Long): F[Boolean] =
     airlineCityExists(id).unique.execute
 
-  override def getAirlineCities: F[ApiResult[Nel[AirlineCity]]] =
-    selectAllAirlineCities.asNel().execute
+  override def getAirlineCities: PartiallyAppliedGetAll[F, AirlineCity] =
+    new PartiallyAppliedGetAllAirlineCities[F]
 
   override def getAirlineCity(id: Long): F[ApiResult[AirlineCity]] =
-    selectAirlineCitiesBy("id", Nel.one(id), Operator.Equals).asSingle(id).execute
+    selectAirlineCitiesBy("id", Nel.one(id), Operator.Equals, ValidatedSortAndLimit.empty)
+      .asSingle(id)
+      .execute
 
   override def getAirlineCity(airlineId: Long, cityId: Long): F[ApiResult[AirlineCity]] = {
     val idAsNel = Nel.one(airlineId)
     EitherT(
-      selectAirlineCitiesBy("airline_id", idAsNel, Operator.Equals)
+      selectAirlineCitiesBy("airline_id", idAsNel, Operator.Equals, ValidatedSortAndLimit.empty)
         .asNel(invalidValues = Some(idAsNel))
     ).subflatMap[ApiError, ApiOutput[AirlineCity]] { output =>
         val airlineCities = output.value
@@ -43,33 +52,14 @@ class AirlineCityRepository[F[_]: Concurrent] private (implicit transactor: Tran
       .execute
   }
 
-  override def getAirlineCitiesBy[V: Put](
-    field: String,
-    values: Nel[V],
-    operator: Operator
-  ): F[ApiResult[Nel[AirlineCity]]] =
-    selectAirlineCitiesBy(field, values, operator).asNel(Some(field), Some(values)).execute
+  override def getAirlineCitiesBy: PartiallyAppliedGetBy[F, AirlineCity] =
+    new PartiallyAppliedGetByAirlineCity[F]
 
-  override def getAirlineCitiesByExternal[ET: TableBase, EV: Put](
-    field: String,
-    values: Nel[EV],
-    operator: Operator
-  ): F[ApiResult[Nel[AirlineCity]]] =
-    selectAirlineCityByExternal(field, values, operator).asNel(Some(field), Some(values)).execute
+  override def getAirlineCitiesByCity: PartiallyAppliedGetBy[F, AirlineCity] =
+    new PartiallyAppliedGetByCity[F]
 
-  override def getAirlineCitiesByCity[V: Put](
-    field: String,
-    values: Nel[V],
-    operator: Operator
-  ): F[ApiResult[Nel[AirlineCity]]] =
-    getAirlineCitiesByExternal[City, V](field, values, operator)
-
-  override def getAirlineCitiesByAirline[V: Put](
-    field: String,
-    values: Nel[V],
-    operator: Operator
-  ): F[ApiResult[Nel[AirlineCity]]] =
-    getAirlineCitiesByExternal[Airline, V](field, values, operator)
+  override def getAirlineCitiesByAirline: PartiallyAppliedGetBy[F, AirlineCity] =
+    new PartiallyAppliedGetByAirline[F]
 
   override def createAirlineCity(airlineCity: AirlineCityCreate): F[ApiResult[Long]] =
     insertAirlineCity(airlineCity).attemptInsert.execute
@@ -102,4 +92,64 @@ object AirlineCityRepository {
     implicit transactor: Transactor[F]
   ): Resource[F, AirlineCityRepository[F]] =
     Resource.pure(new AirlineCityRepository[F])
+
+  // Partially applied algebra
+  private class PartiallyAppliedGetAllAirlineCities[F[_]: Concurrent](
+    implicit transactor: Transactor[F]
+  ) extends PartiallyAppliedGetAll[F, AirlineCity] {
+
+    override def apply(sortAndLimit: ValidatedSortAndLimit): F[ApiResult[Nel[AirlineCity]]] =
+      selectAllAirlineCities(sortAndLimit).asNel().execute
+
+    override def apply[V: Read](
+      sortAndLimit: ValidatedSortAndLimit,
+      returnField: String
+    ): F[ApiResult[Nel[V]]] =
+      getFieldList2[AirlineCity, V](sortAndLimit, returnField).execute
+  }
+
+  private class PartiallyAppliedGetByAirlineCity[F[_]: Concurrent](
+    implicit transactor: Transactor[F]
+  ) extends PartiallyAppliedGetBy[F, AirlineCity] {
+
+    override def apply[V: Put](
+      field: String,
+      values: Nel[V],
+      operator: Operator,
+      sortAndLimit: ValidatedSortAndLimit
+    ): F[ApiResult[Nel[AirlineCity]]] =
+      selectAirlineCitiesBy(field, values, operator, sortAndLimit)
+        .asNel(Some(field), Some(values))
+        .execute
+  }
+
+  private class PartiallyAppliedGetByCity[F[_]: Concurrent](
+    implicit transactor: Transactor[F]
+  ) extends PartiallyAppliedGetBy[F, AirlineCity] {
+
+    override def apply[V: Put](
+      field: String,
+      values: Nel[V],
+      operator: Operator,
+      sortAndLimit: ValidatedSortAndLimit
+    ): F[ApiResult[Nel[AirlineCity]]] =
+      selectAirlineCityByExternal[City, V](field, values, operator, sortAndLimit)
+        .asNel(Some(field), Some(values))
+        .execute
+  }
+
+  private class PartiallyAppliedGetByAirline[F[_]: Concurrent](
+    implicit transactor: Transactor[F]
+  ) extends PartiallyAppliedGetBy[F, AirlineCity] {
+
+    override def apply[V: Put](
+      field: String,
+      values: Nel[V],
+      operator: Operator,
+      sortAndLimit: ValidatedSortAndLimit
+    ): F[ApiResult[Nel[AirlineCity]]] =
+      selectAirlineCityByExternal[Airline, V](field, values, operator, sortAndLimit)
+        .asNel(Some(field), Some(values))
+        .execute
+  }
 }

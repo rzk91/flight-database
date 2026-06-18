@@ -1,23 +1,14 @@
 package flightdatabase.language
 
-import cats.data.{NonEmptyList => Nel}
-import doobie.Put
-import doobie.Read
 import flightdatabase.ApiResult
-import flightdatabase.Operator
+import flightdatabase.partial.PartiallyAppliedGetAll
+import flightdatabase.partial.PartiallyAppliedGetBy
 
 trait LanguageAlgebra[F[_]] {
   def doesLanguageExist(id: Long): F[Boolean]
-  def getLanguages: F[ApiResult[Nel[Language]]]
-  def getLanguagesOnly[V: Read](field: String): F[ApiResult[Nel[V]]]
+  def getLanguages: PartiallyAppliedGetAll[F, Language]
   def getLanguage(id: Long): F[ApiResult[Language]]
-
-  def getLanguagesBy[V: Put](
-    field: String,
-    values: Nel[V],
-    operator: Operator
-  ): F[ApiResult[Nel[Language]]]
-
+  def getLanguagesBy: PartiallyAppliedGetBy[F, Language]
   def createLanguage(language: LanguageCreate): F[ApiResult[Long]]
   def updateLanguage(language: Language): F[ApiResult[Long]]
   def partiallyUpdateLanguage(id: Long, patch: LanguagePatch): F[ApiResult[Language]]

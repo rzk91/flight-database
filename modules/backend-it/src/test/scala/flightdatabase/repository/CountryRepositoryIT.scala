@@ -12,6 +12,7 @@ import flightdatabase.EntryNotFound
 import flightdatabase.InvalidField
 import flightdatabase.InvalidValueType
 import flightdatabase.Operator
+import flightdatabase.ValidatedSortAndLimit
 import flightdatabase.country.Country
 import flightdatabase.country.CountryCreate
 import flightdatabase.country.CountryPatch
@@ -96,16 +97,46 @@ final class CountryRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting all countries" should "return the correct detailed list" in {
-    repo.getCountries.value should contain only (originalCountries.toList: _*)
+    repo.getCountries(emptySortAndLimit).value should contain only (originalCountries.toList: _*)
   }
 
-  it should "return only names if so required" in {
+  it should "return a properly sorted list" in {
+    val sorted = repo.getCountries(ValidatedSortAndLimit.sortAscending("name")).value
+    sorted shouldBe originalCountries.sortBy(_.name)
+
+    val sortedDesc = repo.getCountries(ValidatedSortAndLimit.sortDescending("name")).value
+    sortedDesc shouldBe originalCountries.sortBy(_.name).reverse
+  }
+
+  it should "return only as many countries as requested" in {
+    val limited = repo.getCountries(ValidatedSortAndLimit.limit(1)).value
+
+    limited should have size 1
+    limited should contain only originalCountries.head
+
+    val limitedWithOffset = repo.getCountries(ValidatedSortAndLimit.limitAndOffset(1, 1)).value
+
+    limitedWithOffset should have size 1
+    limitedWithOffset should contain only originalCountries.tail.head
+  }
+
+  it should "only return the requested fields if so required" in {
     repo
-      .getCountriesOnly[String]("name")
+      .getCountries[String](emptySortAndLimit, "name")
       .value should contain only (originalCountries.map(_.name).toList: _*)
     repo
-      .getCountriesOnly[Int]("country_code")
+      .getCountries[Int](emptySortAndLimit, "country_code")
       .value should contain only (originalCountries.map(_.countryCode).toList: _*)
+  }
+
+  it should "sort and return the requested fields if so required" in {
+    val names =
+      repo.getCountries[String](ValidatedSortAndLimit.sortAscending("name"), "name").value
+    names shouldBe originalCountries.map(_.name).sorted
+  }
+
+  it should "return an empty list if offset is too large" in {
+    repo.getCountries(ValidatedSortAndLimit.offset(100)).error shouldBe EntryListEmpty
   }
 
   "Selecting a country by ID" should "return the correct country" in {
@@ -116,19 +147,19 @@ final class CountryRepositoryIT extends RepositoryCheck {
 
   "Selecting a country by other fields" should "return the corresponding entries" in {
     def countryByName(name: String): IO[ApiResult[Nel[Country]]] =
-      repo.getCountriesBy("name", Nel.one(name), Operator.Equals)
+      repo.getCountriesBy("name", Nel.one(name), Operator.Equals, emptySortAndLimit)
 
     def countryByIso2(iso2: String): IO[ApiResult[Nel[Country]]] =
-      repo.getCountriesBy("iso2", Nel.one(iso2), Operator.Equals)
+      repo.getCountriesBy("iso2", Nel.one(iso2), Operator.Equals, emptySortAndLimit)
 
     def countryByNationality(nationality: String): IO[ApiResult[Nel[Country]]] =
-      repo.getCountriesBy("nationality", Nel.one(nationality), Operator.Equals)
+      repo.getCountriesBy("nationality", Nel.one(nationality), Operator.Equals, emptySortAndLimit)
 
     def countryByLanguage(id: Long): IO[ApiResult[Nel[Country]]] =
-      repo.getCountriesByLanguage("id", Nel.one(id), Operator.Equals)
+      repo.getCountriesByLanguage("id", Nel.one(id), Operator.Equals, emptySortAndLimit)
 
     def countryByCurrency(id: Long): IO[ApiResult[Nel[Country]]] =
-      repo.getCountriesByCurrency("id", Nel.one(id), Operator.Equals)
+      repo.getCountriesByCurrency("id", Nel.one(id), Operator.Equals, emptySortAndLimit)
 
     val distinctLanguageIds = originalCountries.flatMap(allLanguageIds).distinct
 
@@ -159,16 +190,16 @@ final class CountryRepositoryIT extends RepositoryCheck {
 
   "Selecting a country by external fields" should "return the corresponding entries" in {
     def countriesByLanguageIso2(iso2: String): IO[ApiResult[Nel[Country]]] =
-      repo.getCountriesByLanguage("iso2", Nel.one(iso2), Operator.Equals)
+      repo.getCountriesByLanguage("iso2", Nel.one(iso2), Operator.Equals, emptySortAndLimit)
 
     def countriesByLanguageName(name: String): IO[ApiResult[Nel[Country]]] =
-      repo.getCountriesByLanguage("name", Nel.one(name), Operator.Equals)
+      repo.getCountriesByLanguage("name", Nel.one(name), Operator.Equals, emptySortAndLimit)
 
     def countriesByCurrencyIso(iso: String): IO[ApiResult[Nel[Country]]] =
-      repo.getCountriesByCurrency("iso", Nel.one(iso), Operator.Equals)
+      repo.getCountriesByCurrency("iso", Nel.one(iso), Operator.Equals, emptySortAndLimit)
 
     def countriesByCurrencyName(name: String): IO[ApiResult[Nel[Country]]] =
-      repo.getCountriesByCurrency("name", Nel.one(name), Operator.Equals)
+      repo.getCountriesByCurrency("name", Nel.one(name), Operator.Equals, emptySortAndLimit)
 
     forAll(languageIdMap) {
       case (id, (iso2, name)) =>
@@ -188,37 +219,94 @@ final class CountryRepositoryIT extends RepositoryCheck {
     }
   }
 
+  "Sorting and limiting filtered countries" should "work for the direct filter" in {
+    val eurId = 2L
+    val expected = originalCountries.filter(_.currencyId == eurId)
+
+    val sorted = repo
+      .getCountriesBy(
+        "currency_id",
+        Nel.one(eurId),
+        Operator.Equals,
+        ValidatedSortAndLimit.sortAscending("name")
+      )
+      .value
+    sorted.toList shouldBe expected.sortBy(_.name)
+  }
+
+  it should "work for the language filter, which unions the three language slots" in {
+    // Language id 1 (English) is referenced by India (secondary), UAE (secondary),
+    // and USA (main); the union must return all three, sorted across the whole result.
+    val englishId = 1L
+    val expected = originalCountries.filter(allLanguageIds(_).exists(_ == englishId))
+
+    val sortedDesc = repo
+      .getCountriesByLanguage(
+        "id",
+        Nel.one(englishId),
+        Operator.Equals,
+        ValidatedSortAndLimit.sortDescending("name")
+      )
+      .value
+    sortedDesc.toList shouldBe expected.sortBy(_.name).reverse
+
+    val limited = repo
+      .getCountriesByLanguage(
+        "id",
+        Nel.one(englishId),
+        Operator.Equals,
+        ValidatedSortAndLimit.sortAscending("name").copy(limit = Some(1))
+      )
+      .value
+    limited should contain only expected.minBy(_.name)
+  }
+
+  it should "work for the currency filter" in {
+    val eurId = 2L
+    val expected = originalCountries.filter(_.currencyId == eurId)
+
+    val limited = repo
+      .getCountriesByCurrency(
+        "iso",
+        Nel.one("EUR"),
+        Operator.Equals,
+        ValidatedSortAndLimit.sortAscending("name").copy(limit = Some(1))
+      )
+      .value
+    limited should contain only expected.minBy(_.name)
+  }
+
   "Selecting a non-existent field" should "return an error" in {
     repo
-      .getCountriesBy(invalidFieldSyntax, Nel.one("value"), Operator.Equals)
+      .getCountriesBy(invalidFieldSyntax, Nel.one("value"), Operator.Equals, emptySortAndLimit)
       .error shouldBe sqlErrorInvalidSyntax
     repo
-      .getCountriesByLanguage(invalidFieldSyntax, Nel.one("value"), Operator.Equals)
+      .getCountriesByLanguage(invalidFieldSyntax, Nel.one("value"), Operator.Equals, emptySortAndLimit)
       .error shouldBe sqlErrorInvalidSyntax
     repo
-      .getCountriesByCurrency(invalidFieldSyntax, Nel.one("value"), Operator.Equals)
+      .getCountriesByCurrency(invalidFieldSyntax, Nel.one("value"), Operator.Equals, emptySortAndLimit)
       .error shouldBe sqlErrorInvalidSyntax
 
     repo
-      .getCountriesBy(invalidFieldColumn, Nel.one("value"), Operator.Equals)
+      .getCountriesBy(invalidFieldColumn, Nel.one("value"), Operator.Equals, emptySortAndLimit)
       .error shouldBe InvalidField(invalidFieldColumn)
     repo
-      .getCountriesByLanguage(invalidFieldColumn, Nel.one("value"), Operator.Equals)
+      .getCountriesByLanguage(invalidFieldColumn, Nel.one("value"), Operator.Equals, emptySortAndLimit)
       .error shouldBe InvalidField(invalidFieldColumn)
     repo
-      .getCountriesByCurrency(invalidFieldColumn, Nel.one("value"), Operator.Equals)
+      .getCountriesByCurrency(invalidFieldColumn, Nel.one("value"), Operator.Equals, emptySortAndLimit)
       .error shouldBe InvalidField(invalidFieldColumn)
   }
 
   "Selecting an existing field with an invalid value type" should "return an error" in {
     repo
-      .getCountriesBy("country_code", Nel.one(invalidLongValue), Operator.Equals)
+      .getCountriesBy("country_code", Nel.one(invalidLongValue), Operator.Equals, emptySortAndLimit)
       .error shouldBe InvalidValueType(invalidLongValue)
     repo
-      .getCountriesByLanguage("iso2", Nel.one(invalidStringValue), Operator.Equals)
+      .getCountriesByLanguage("iso2", Nel.one(invalidStringValue), Operator.Equals, emptySortAndLimit)
       .error shouldBe InvalidValueType(invalidStringValue.toString)
     repo
-      .getCountriesByCurrency("iso", Nel.one(invalidStringValue), Operator.Equals)
+      .getCountriesByCurrency("iso", Nel.one(invalidStringValue), Operator.Equals, emptySortAndLimit)
       .error shouldBe InvalidValueType(invalidStringValue.toString)
   }
 
@@ -273,7 +361,7 @@ final class CountryRepositoryIT extends RepositoryCheck {
 
   "Updating a country" should "not take place if fields do not satisfy their criteria" in {
     val existingCountry =
-      repo.getCountriesBy("name", Nel.one(newCountry.name), Operator.Equals).value.head
+      repo.getCountriesBy("name", Nel.one(newCountry.name), Operator.Equals, emptySortAndLimit).value.head
 
     val invalidCountries = List(
       existingCountry.copy(name = ""),
@@ -308,7 +396,7 @@ final class CountryRepositoryIT extends RepositoryCheck {
 
   it should "throw an error if a language/currency does not exist" in {
     val existingCountry =
-      repo.getCountriesBy("name", Nel.one(newCountry.name), Operator.Equals).value.head
+      repo.getCountriesBy("name", Nel.one(newCountry.name), Operator.Equals, emptySortAndLimit).value.head
 
     val invalidCountries = List(
       existingCountry.copy(mainLanguageId = idNotPresent),
@@ -322,7 +410,7 @@ final class CountryRepositoryIT extends RepositoryCheck {
 
   it should "update a country if all criteria are satisfied" in {
     val existingCountry =
-      repo.getCountriesBy("name", Nel.one(newCountry.name), Operator.Equals).value.head
+      repo.getCountriesBy("name", Nel.one(newCountry.name), Operator.Equals, emptySortAndLimit).value.head
 
     val updated = existingCountry.copy(name = updatedName)
     repo.updateCountry(updated).value shouldBe existingCountry.id
@@ -333,7 +421,7 @@ final class CountryRepositoryIT extends RepositoryCheck {
 
   "Patching a country" should "not take place if fields do not satisfy their criteria" in {
     val existingCountry =
-      repo.getCountriesBy("name", Nel.one(updatedName), Operator.Equals).value.head
+      repo.getCountriesBy("name", Nel.one(updatedName), Operator.Equals, emptySortAndLimit).value.head
 
     val invalidPatches = List(
       CountryPatch(name = Some("")),
@@ -395,7 +483,7 @@ final class CountryRepositoryIT extends RepositoryCheck {
 
   it should "patch a country if all criteria are satisfied" in {
     val existingCountry =
-      repo.getCountriesBy("name", Nel.one(updatedName), Operator.Equals).value.head
+      repo.getCountriesBy("name", Nel.one(updatedName), Operator.Equals, emptySortAndLimit).value.head
 
     val patched = CountryPatch(name = Some(patchedName))
     repo
@@ -408,7 +496,7 @@ final class CountryRepositoryIT extends RepositoryCheck {
 
   "Removing a country" should "work correctly" in {
     val existingCountry =
-      repo.getCountriesBy("name", Nel.one(patchedName), Operator.Equals).value.head
+      repo.getCountriesBy("name", Nel.one(patchedName), Operator.Equals, emptySortAndLimit).value.head
 
     repo.removeCountry(existingCountry.id).value shouldBe ()
     repo

@@ -24,53 +24,39 @@ class CountryEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Count
         case false => NotFound()
       }
 
-    // GET /countries?return-only={country_field}
-    case GET -> Root :? ReturnOnlyMatcher(returnOnly) =>
-      processReturnOnly[Country](returnOnly)(
-        stringF = algebra.getCountriesOnly,
-        intF = algebra.getCountriesOnly,
-        longF = algebra.getCountriesOnly,
-        boolF = algebra.getCountriesOnly,
-        bigDecimalF = algebra.getCountriesOnly,
-        allF = algebra.getCountries
-      )
+    // GET /countries?return-only={field}&sort-by={field}&order={asc, desc}&limit={number}&offset={number}
+    case GET -> Root :? SortAndLimit(sortAndLimit) +& ReturnOnlyMatcher(returnOnly) =>
+      withSortAndLimitValidation[Country](sortAndLimit) {
+        processReturnOnly2[Country](_, returnOnly)(algebra.getCountries)
+      }
 
-    // GET /countries/filter?field={country_field}&operator={operator; default: eq}&value={value}
+    // GET /countries/filter?field={country_field}&operator={operator; default: eq}&value={value}&sort-by={country_field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root / "filter" :?
-          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +& ValueMatcher(values) =>
-      processFilter[Country, Country](field, operator, values)(
-        stringF = algebra.getCountriesBy,
-        intF = algebra.getCountriesBy,
-        longF = algebra.getCountriesBy,
-        boolF = algebra.getCountriesBy,
-        bigDecimalF = algebra.getCountriesBy
-      )
+          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
+            ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
+      withSortAndLimitValidation[Country](sortAndLimit) {
+        processFilter2[Country, Country](field, operator, values, _)(algebra.getCountriesBy)
+      }
 
     // GET /countries/{id}
     case GET -> Root / id =>
       id.asLong.toResponse(algebra.getCountry)
 
-    // GET /countries/language/filter?field={language_field}&operator={operator; default: eq}&value={value}
+    // GET /countries/language/filter?field={language_field}&operator={operator; default: eq}&value={value}&sort-by={language_field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root / "language" / "filter" :?
-          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +& ValueMatcher(values) =>
-      processFilter[Language, Country](field, operator, values)(
-        stringF = algebra.getCountriesByLanguage,
-        intF = algebra.getCountriesByLanguage,
-        longF = algebra.getCountriesByLanguage,
-        boolF = algebra.getCountriesByLanguage,
-        bigDecimalF = algebra.getCountriesByLanguage
-      )
+          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
+            ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
+      withSortAndLimitValidation[Language](sortAndLimit) {
+        processFilter2[Language, Country](field, operator, values, _)(algebra.getCountriesByLanguage)
+      }
 
-    // GET /countries/currency/filter?field={currency_field}&operator={operator; default: eq}&value={value}
+    // GET /countries/currency/filter?field={currency_field}&operator={operator; default: eq}&value={value}&sort-by={currency_field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root / "currency" / "filter" :?
-          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +& ValueMatcher(values) =>
-      processFilter[Currency, Country](field, operator, values)(
-        stringF = algebra.getCountriesByCurrency,
-        intF = algebra.getCountriesByCurrency,
-        longF = algebra.getCountriesByCurrency,
-        boolF = algebra.getCountriesByCurrency,
-        bigDecimalF = algebra.getCountriesByCurrency
-      )
+          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
+            ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
+      withSortAndLimitValidation[Currency](sortAndLimit) {
+        processFilter2[Currency, Country](field, operator, values, _)(algebra.getCountriesByCurrency)
+      }
 
     // POST /countries
     case req @ POST -> Root =>

@@ -1,36 +1,17 @@
 package flightdatabase.country
 
-import cats.data.{NonEmptyList => Nel}
-import doobie.Put
-import doobie.Read
 import flightdatabase.ApiResult
-import flightdatabase.Operator
+import flightdatabase.partial.PartiallyAppliedGetAll
+import flightdatabase.partial.PartiallyAppliedGetBy
 
 trait CountryAlgebra[F[_]] {
 
   def doesCountryExist(id: Long): F[Boolean]
-  def getCountries: F[ApiResult[Nel[Country]]]
-  def getCountriesOnly[V: Read](field: String): F[ApiResult[Nel[V]]]
+  def getCountries: PartiallyAppliedGetAll[F, Country]
   def getCountry(id: Long): F[ApiResult[Country]]
-
-  def getCountriesBy[V: Put](
-    field: String,
-    values: Nel[V],
-    operator: Operator
-  ): F[ApiResult[Nel[Country]]]
-
-  def getCountriesByLanguage[V: Put](
-    field: String,
-    values: Nel[V],
-    operator: Operator
-  ): F[ApiResult[Nel[Country]]]
-
-  def getCountriesByCurrency[V: Put](
-    field: String,
-    values: Nel[V],
-    operator: Operator
-  ): F[ApiResult[Nel[Country]]]
-
+  def getCountriesBy: PartiallyAppliedGetBy[F, Country]
+  def getCountriesByLanguage: PartiallyAppliedGetBy[F, Country]
+  def getCountriesByCurrency: PartiallyAppliedGetBy[F, Country]
   def createCountry(country: CountryCreate): F[ApiResult[Long]]
   def updateCountry(country: Country): F[ApiResult[Long]]
   def partiallyUpdateCountry(id: Long, patch: CountryPatch): F[ApiResult[Country]]
