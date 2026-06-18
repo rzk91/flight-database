@@ -86,7 +86,8 @@ final class DomainSpecificQueryIT extends DbChecker {
 
   // Language checks
   "All language queries" should "work correctly" in {
-    check(LanguageQueries.selectAllLanguages)
+    check(LanguageQueries.selectAllLanguages(emptySortAndLimit))
+    check(LanguageQueries.selectAllLanguages(someSortAndLimit))
     check(LanguageQueries.deleteLanguage(1))
   }
 
