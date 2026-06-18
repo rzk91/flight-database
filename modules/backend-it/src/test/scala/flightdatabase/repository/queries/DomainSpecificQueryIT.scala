@@ -5,6 +5,7 @@ import flightdatabase.Operator
 import flightdatabase.ResultOrder
 import flightdatabase.ValidatedSortAndLimit
 import flightdatabase.airplane.AirplaneCreate
+import flightdatabase.airport.Airport
 import flightdatabase.city.City
 import flightdatabase.country.Country
 import flightdatabase.itutils.DbChecker
@@ -121,7 +122,22 @@ final class DomainSpecificQueryIT extends DbChecker {
 
   // AirlineRoute checks
   "All airline route queries" should "work correctly" in {
-    check(AirlineRouteQueries.selectAllAirlineRoutes)
+    check(AirlineRouteQueries.selectAllAirlineRoutes(emptySortAndLimit))
+    check(AirlineRouteQueries.selectAllAirlineRoutes(someSortAndLimit.copy(sortBy = Some("route_number"))))
+    check(
+      AirlineRouteQueries
+        .selectAirlineRouteBy("id", Nel.one(1L), Operator.Equals, emptySortAndLimit)
+    )
+    check(
+      AirlineRouteQueries
+        .selectAirlineRoutesByExternal[Airport, String](
+          "iata",
+          Nel.one("FRA"),
+          Operator.Equals,
+          emptySortAndLimit,
+          Some("start_airport_id")
+        )
+    )
     check(AirlineRouteQueries.deleteAirlineRoute(1))
   }
 

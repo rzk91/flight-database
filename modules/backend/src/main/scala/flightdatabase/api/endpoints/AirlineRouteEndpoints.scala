@@ -29,71 +29,62 @@ class AirlineRouteEndpoints[F[_]: Concurrent] private (
         case false => NotFound()
       }
 
-    // GET /airline-routes?return-only={airline-route-field}
-    case GET -> Root :? ReturnOnlyMatcher(returnOnly) =>
-      processReturnOnly[AirlineRoute](returnOnly)(
-        stringF = algebra.getAirlineRoutesOnly,
-        intF = algebra.getAirlineRoutesOnly,
-        longF = algebra.getAirlineRoutesOnly,
-        boolF = algebra.getAirlineRoutesOnly,
-        bigDecimalF = algebra.getAirlineRoutesOnly,
-        allF = algebra.getAirlineRoutes
-      )
+    // GET /airline-routes?return-only={field}&sort-by={field}&order={asc, desc}&limit={number}&offset={number}
+    case GET -> Root :? SortAndLimit(sortAndLimit) +& ReturnOnlyMatcher(returnOnly) =>
+      withSortAndLimitValidation[AirlineRoute](sortAndLimit) {
+        processReturnOnly2[AirlineRoute](_, returnOnly)(algebra.getAirlineRoutes)
+      }
 
-    // GET /airline-routes/filter?field={airline-route-field}&operator={operator; default: eq}&value={value}
+    // GET /airline-routes/filter?field={airline-route-field}&operator={operator; default: eq}&value={value}&sort-by={airline-route-field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root / "filter" :?
-          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +& ValueMatcher(values) =>
-      processFilter[AirlineRoute, AirlineRoute](field, operator, values)(
-        stringF = algebra.getAirlineRoutesBy,
-        intF = algebra.getAirlineRoutesBy,
-        longF = algebra.getAirlineRoutesBy,
-        boolF = algebra.getAirlineRoutesBy,
-        bigDecimalF = algebra.getAirlineRoutesBy
-      )
+          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
+            ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
+      withSortAndLimitValidation[AirlineRoute](sortAndLimit) {
+        processFilter2[AirlineRoute, AirlineRoute](field, operator, values, _)(
+          algebra.getAirlineRoutesBy
+        )
+      }
 
     // GET /airline-routes/{id}
     case GET -> Root / id =>
       id.asLong.toResponse(algebra.getAirlineRoute)
 
-    // GET /airline-routes/airline/filter?field={airline_field}&operator={operator; default: eq}&value={value}
+    // GET /airline-routes/airline/filter?field={airline_field}&operator={operator; default: eq}&value={value}&sort-by={airline_field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root / "airline" / "filter" :?
-          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +& ValueMatcher(values) =>
-      processFilter[Airline, AirlineRoute](field, operator, values)(
-        stringF = algebra.getAirlineRoutesByAirline,
-        intF = algebra.getAirlineRoutesByAirline,
-        longF = algebra.getAirlineRoutesByAirline,
-        boolF = algebra.getAirlineRoutesByAirline,
-        bigDecimalF = algebra.getAirlineRoutesByAirline
-      )
+          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
+            ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
+      withSortAndLimitValidation[Airline](sortAndLimit) {
+        processFilter2[Airline, AirlineRoute](field, operator, values, _)(
+          algebra.getAirlineRoutesByAirline
+        )
+      }
 
-    // GET /airline-routes/airplane/filter?field={airplane_field}&operator={operator; default: eq}&value={value}
+    // GET /airline-routes/airplane/filter?field={airplane_field}&operator={operator; default: eq}&value={value}&sort-by={airplane_field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root / "airplane" / "filter" :?
-          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +& ValueMatcher(values) =>
-      processFilter[Airplane, AirlineRoute](field, operator, values)(
-        stringF = algebra.getAirlineRoutesByAirplane,
-        intF = algebra.getAirlineRoutesByAirplane,
-        longF = algebra.getAirlineRoutesByAirplane,
-        boolF = algebra.getAirlineRoutesByAirplane,
-        bigDecimalF = algebra.getAirlineRoutesByAirplane
-      )
+          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
+            ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
+      withSortAndLimitValidation[Airplane](sortAndLimit) {
+        processFilter2[Airplane, AirlineRoute](field, operator, values, _)(
+          algebra.getAirlineRoutesByAirplane
+        )
+      }
 
-    // GET /airline-routes/airport/filter?field={airport_field}&operator={operator; default: eq}&value={value}&inbound&outbound
+    // GET /airline-routes/airport/filter?field={airport_field}&operator={operator; default: eq}&value={value}&inbound&outbound&sort-by={airport_field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root / "airport" / "filter" :?
           FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +& ValueMatcher(values) +&
-            InboundFlagMatcher(inbound) +& OutboundFlagMatcher(outbound) =>
+            InboundFlagMatcher(inbound) +& OutboundFlagMatcher(outbound) +&
+            SortAndLimit(sortAndLimit) =>
       val direction = (inbound, outbound) match {
         case (true, false) => Some(true)
         case (false, true) => Some(false)
         case _             => None
       }
 
-      processFilter[Airport, AirlineRoute](field, operator, values)(
-        stringF = algebra.getAirlineRoutesByAirport(_, _, _, direction),
-        intF = algebra.getAirlineRoutesByAirport(_, _, _, direction),
-        longF = algebra.getAirlineRoutesByAirport(_, _, _, direction),
-        boolF = algebra.getAirlineRoutesByAirport(_, _, _, direction),
-        bigDecimalF = algebra.getAirlineRoutesByAirport(_, _, _, direction)
-      )
+      withSortAndLimitValidation[Airport](sortAndLimit) {
+        processFilter2[Airport, AirlineRoute](field, operator, values, _)(
+          algebra.getAirlineRoutesByAirport(direction)
+        )
+      }
 
     // POST /airline-routes
     case req @ POST -> Root =>

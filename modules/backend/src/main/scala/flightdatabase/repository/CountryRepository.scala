@@ -84,8 +84,8 @@ object CountryRepository {
   ): Resource[F, CountryRepository[F]] =
     Resource.pure(new CountryRepository[F])
 
-  // Country's field count exceeds doobie's automatic Read derivation; derive it
-  // explicitly via the semi-auto Read.derived.
+  // The language UNION is assembled as raw fragments and run via `.query[Country]`
+  // here, where doobie's auto-derivation isn't imported; derive Read explicitly.
   private implicit val readCountry: Read[Country] = Read.derived
 
   // Partially applied algebra
