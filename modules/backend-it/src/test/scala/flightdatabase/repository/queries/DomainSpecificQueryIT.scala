@@ -99,7 +99,13 @@ final class DomainSpecificQueryIT extends DbChecker {
 
   // Manufacturer checks
   "All manufacturer queries" should "work correctly" in {
-    check(ManufacturerQueries.selectAllManufacturers)
+    check(ManufacturerQueries.selectAllManufacturers(emptySortAndLimit))
+    check(ManufacturerQueries.selectAllManufacturers(someSortAndLimit))
+    check(ManufacturerQueries.selectManufacturersBy("id", Nel.one(1L), Operator.Equals, emptySortAndLimit))
+    check(
+      ManufacturerQueries
+        .selectManufacturersByCity[City, String]("name", Nel.one("Leiden"), Operator.Equals, emptySortAndLimit)
+    )
     check(ManufacturerQueries.deleteManufacturer(1))
   }
 }

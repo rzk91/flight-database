@@ -25,53 +25,45 @@ class ManufacturerEndpoints[F[_]: Concurrent] private (
         case false => NotFound()
       }
 
-    // GET /manufacturers?return-only={manufacturer_field}
-    case GET -> Root :? ReturnOnlyMatcher(returnOnly) =>
-      processReturnOnly[Manufacturer](returnOnly)(
-        stringF = algebra.getManufacturersOnly,
-        intF = algebra.getManufacturersOnly,
-        longF = algebra.getManufacturersOnly,
-        boolF = algebra.getManufacturersOnly,
-        bigDecimalF = algebra.getManufacturersOnly,
-        allF = algebra.getManufacturers
-      )
+    // GET /manufacturers?return-only={field}&sort-by={field}&order={asc, desc}&limit={number}&offset={number}
+    case GET -> Root :? SortAndLimit(sortAndLimit) +& ReturnOnlyMatcher(returnOnly) =>
+      withSortAndLimitValidation[Manufacturer](sortAndLimit) {
+        processReturnOnly2[Manufacturer](_, returnOnly)(algebra.getManufacturers)
+      }
 
-    // GET /manufacturers/filter?field={manufacturer_field}&operator={operator; default: eq}&value={value}
+    // GET /manufacturers/filter?field={manufacturer_field}&operator={operator; default: eq}&value={value}&sort-by={manufacturer_field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root / "filter" :?
-          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +& ValueMatcher(values) =>
-      processFilter[Manufacturer, Manufacturer](field, operator, values)(
-        stringF = algebra.getManufacturersBy,
-        intF = algebra.getManufacturersBy,
-        longF = algebra.getManufacturersBy,
-        boolF = algebra.getManufacturersBy,
-        bigDecimalF = algebra.getManufacturersBy
-      )
+          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
+            ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
+      withSortAndLimitValidation[Manufacturer](sortAndLimit) {
+        processFilter2[Manufacturer, Manufacturer](field, operator, values, _)(
+          algebra.getManufacturersBy
+        )
+      }
 
     // GET /manufacturers/{id}
     case GET -> Root / id =>
       id.asLong.toResponse(algebra.getManufacturer)
 
-    // GET /manufacturers/city/filter?field={city_field}&operator={operator; default: eq}&value={value}
+    // GET /manufacturers/city/filter?field={city_field}&operator={operator; default: eq}&value={value}&sort-by={city_field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root / "city" / "filter" :?
-          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +& ValueMatcher(values) =>
-      processFilter[City, Manufacturer](field, operator, values)(
-        stringF = algebra.getManufacturersByCity,
-        intF = algebra.getManufacturersByCity,
-        longF = algebra.getManufacturersByCity,
-        boolF = algebra.getManufacturersByCity,
-        bigDecimalF = algebra.getManufacturersByCity
-      )
+          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
+            ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
+      withSortAndLimitValidation[City](sortAndLimit) {
+        processFilter2[City, Manufacturer](field, operator, values, _)(
+          algebra.getManufacturersByCity
+        )
+      }
 
-    // GET /manufacturers/country/filter?field={country_field}&operator={operator; default: eq}&value={value}
+    // GET /manufacturers/country/filter?field={country_field}&operator={operator; default: eq}&value={value}&sort-by={country_field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root / "country" / "filter" :?
-          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +& ValueMatcher(values) =>
-      processFilter[Country, Manufacturer](field, operator, values)(
-        stringF = algebra.getManufacturersByCountry,
-        intF = algebra.getManufacturersByCountry,
-        longF = algebra.getManufacturersByCountry,
-        boolF = algebra.getManufacturersByCountry,
-        bigDecimalF = algebra.getManufacturersByCountry
-      )
+          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
+            ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
+      withSortAndLimitValidation[Country](sortAndLimit) {
+        processFilter2[Country, Manufacturer](field, operator, values, _)(
+          algebra.getManufacturersByCountry
+        )
+      }
 
     // POST /manufacturers
     case req @ POST -> Root =>
