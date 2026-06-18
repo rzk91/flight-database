@@ -100,6 +100,25 @@ final class DomainSpecificQueryIT extends DbChecker {
     check(AirlineAirplaneQueries.deleteAirlineAirplane(1))
   }
 
+  // AirlineCity checks
+  "All airline city queries" should "work correctly" in {
+    check(AirlineCityQueries.selectAllAirlineCities(emptySortAndLimit))
+    check(AirlineCityQueries.selectAllAirlineCities(someSortAndLimit.copy(sortBy = Some("city_id"))))
+    check(
+      AirlineCityQueries.selectAirlineCitiesBy("id", Nel.one(1L), Operator.Equals, emptySortAndLimit)
+    )
+    check(
+      AirlineCityQueries
+        .selectAirlineCityByExternal[City, String](
+          "name",
+          Nel.one("Frankfurt am Main"),
+          Operator.Equals,
+          emptySortAndLimit
+        )
+    )
+    check(AirlineCityQueries.deleteAirlineCity(1))
+  }
+
   // AirlineRoute checks
   "All airline route queries" should "work correctly" in {
     check(AirlineRouteQueries.selectAllAirlineRoutes)

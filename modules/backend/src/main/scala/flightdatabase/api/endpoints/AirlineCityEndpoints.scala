@@ -25,20 +25,21 @@ class AirlineCityEndpoints[F[_]: Concurrent] private (
         case false => NotFound()
       }
 
-    // GET /airline-cities
-    case GET -> Root =>
-      algebra.getAirlineCities.flatMap(_.toResponse)
+    // GET /airline-cities?return-only={field}&sort-by={field}&order={asc, desc}&limit={number}&offset={number}
+    case GET -> Root :? SortAndLimit(sortAndLimit) +& ReturnOnlyMatcher(returnOnly) =>
+      withSortAndLimitValidation[AirlineCity](sortAndLimit) {
+        processReturnOnly2[AirlineCity](_, returnOnly)(algebra.getAirlineCities)
+      }
 
-    // GET /airline-cities/filter?field={airline_city_field}&operator={operator; default: eq}&value={value}
+    // GET /airline-cities/filter?field={airline_city_field}&operator={operator; default: eq}&value={value}&sort-by={airline_city_field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root / "filter" :?
-          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +& ValueMatcher(values) =>
-      processFilter[AirlineCity, AirlineCity](field, operator, values)(
-        stringF = algebra.getAirlineCitiesBy,
-        intF = algebra.getAirlineCitiesBy,
-        longF = algebra.getAirlineCitiesBy,
-        boolF = algebra.getAirlineCitiesBy,
-        bigDecimalF = algebra.getAirlineCitiesBy
-      )
+          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
+            ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
+      withSortAndLimitValidation[AirlineCity](sortAndLimit) {
+        processFilter2[AirlineCity, AirlineCity](field, operator, values, _)(
+          algebra.getAirlineCitiesBy
+        )
+      }
 
     // GET /airline-cities/{id}
     case GET -> Root / id =>
@@ -48,27 +49,25 @@ class AirlineCityEndpoints[F[_]: Concurrent] private (
     case GET -> Root / "airline" / airlineId / "city" / cityId =>
       (airlineId.asLong, cityId.asLong).tupled.toResponse(algebra.getAirlineCity)
 
-    // GET /airline-cities/airline/filter?field={airline_field}&operator={operator; default: eq}&value={value}
+    // GET /airline-cities/airline/filter?field={airline_field}&operator={operator; default: eq}&value={value}&sort-by={airline_field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root / "airline" / "filter" :?
-          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +& ValueMatcher(values) =>
-      processFilter[Airline, AirlineCity](field, operator, values)(
-        stringF = algebra.getAirlineCitiesByAirline,
-        intF = algebra.getAirlineCitiesByAirline,
-        longF = algebra.getAirlineCitiesByAirline,
-        boolF = algebra.getAirlineCitiesByAirline,
-        bigDecimalF = algebra.getAirlineCitiesByAirline
-      )
+          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
+            ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
+      withSortAndLimitValidation[Airline](sortAndLimit) {
+        processFilter2[Airline, AirlineCity](field, operator, values, _)(
+          algebra.getAirlineCitiesByAirline
+        )
+      }
 
-    // GET /airline-cities/city/filter?field={city_field}&operator={operator; default: eq}&value={value}
+    // GET /airline-cities/city/filter?field={city_field}&operator={operator; default: eq}&value={value}&sort-by={city_field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root / "city" / "filter" :?
-          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +& ValueMatcher(values) =>
-      processFilter[City, AirlineCity](field, operator, values)(
-        stringF = algebra.getAirlineCitiesByCity,
-        intF = algebra.getAirlineCitiesByCity,
-        longF = algebra.getAirlineCitiesByCity,
-        boolF = algebra.getAirlineCitiesByCity,
-        bigDecimalF = algebra.getAirlineCitiesByCity
-      )
+          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
+            ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
+      withSortAndLimitValidation[City](sortAndLimit) {
+        processFilter2[City, AirlineCity](field, operator, values, _)(
+          algebra.getAirlineCitiesByCity
+        )
+      }
 
     // POST /airline-cities
     case req @ POST -> Root =>
