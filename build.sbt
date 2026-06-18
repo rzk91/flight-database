@@ -31,7 +31,7 @@ val http4sVersion = "0.23.30"
 val pureconfigVersion = "0.17.8"
 val flywayVersion = "11.4.0"
 val scalaTestVersion = "3.2.19"
-val testcontainersVersion = "0.43.0"
+val testcontainersVersion = "0.44.1"
 
 val circeDependencies = Seq(
   "io.circe" %% "circe-core"           % circeVersion,
