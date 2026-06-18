@@ -22,27 +22,19 @@ class CurrencyEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Curr
         case false => NotFound()
       }
 
-    // GET /currencies?return-only={currency_field}
-    case GET -> Root :? ReturnOnlyMatcher(returnOnly) =>
-      processReturnOnly[Currency](returnOnly)(
-        stringF = algebra.getCurrenciesOnly,
-        intF = algebra.getCurrenciesOnly,
-        longF = algebra.getCurrenciesOnly,
-        boolF = algebra.getCurrenciesOnly,
-        bigDecimalF = algebra.getCurrenciesOnly,
-        allF = algebra.getCurrencies
-      )
+    // GET /currencies?return-only={field}&sort-by={field}&order={asc, desc}&limit={number}&offset={number}
+    case GET -> Root :? SortAndLimit(sortAndLimit) +& ReturnOnlyMatcher(returnOnly) =>
+      withSortAndLimitValidation[Currency](sortAndLimit) {
+        processReturnOnly2[Currency](_, returnOnly)(algebra.getCurrencies)
+      }
 
-    // GET /currencies/filter?field={currency_field}&operator={operator; default: eq}&value={value}
+    // GET /currencies/filter?field={currency_field}&operator={operator; default: eq}&value={value}&sort-by={currency_field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root / "filter" :?
-          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +& ValueMatcher(values) =>
-      processFilter[Currency, Currency](field, operator, values)(
-        stringF = algebra.getCurrenciesBy,
-        intF = algebra.getCurrenciesBy,
-        longF = algebra.getCurrenciesBy,
-        boolF = algebra.getCurrenciesBy,
-        bigDecimalF = algebra.getCurrenciesBy
-      )
+          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
+            ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
+      withSortAndLimitValidation[Currency](sortAndLimit) {
+        processFilter2[Currency, Currency](field, operator, values, _)(algebra.getCurrenciesBy)
+      }
 
     // GET /currencies/{id}
     case GET -> Root / id =>

@@ -10,11 +10,16 @@ import doobie.Read
 import doobie.Transactor
 import flightdatabase.ApiResult
 import flightdatabase.Operator
+import flightdatabase.ValidatedSortAndLimit
 import flightdatabase.currency.Currency
 import flightdatabase.currency.CurrencyAlgebra
 import flightdatabase.currency.CurrencyCreate
 import flightdatabase.currency.CurrencyPatch
 import flightdatabase.extensions.all._
+import flightdatabase.partial.PartiallyAppliedGetAll
+import flightdatabase.partial.PartiallyAppliedGetBy
+import flightdatabase.repository.CurrencyRepository.PartiallyAppliedGetAllCurrencies
+import flightdatabase.repository.CurrencyRepository.PartiallyAppliedGetByCurrency
 import flightdatabase.repository.queries.CurrencyQueries._
 
 class CurrencyRepository[F[_]: Concurrent] private (
@@ -23,21 +28,16 @@ class CurrencyRepository[F[_]: Concurrent] private (
 
   override def doesCurrencyExist(id: Long): F[Boolean] = currencyExists(id).unique.execute
 
-  override def getCurrencies: F[ApiResult[Nel[Currency]]] =
-    selectAllCurrencies.asNel().execute
-
-  def getCurrenciesOnly[V: Read](field: String): F[ApiResult[Nel[V]]] =
-    getFieldList[Currency, V](field).execute
+  override def getCurrencies: PartiallyAppliedGetAll[F, Currency] =
+    new PartiallyAppliedGetAllCurrencies[F]
 
   override def getCurrency(id: Long): F[ApiResult[Currency]] =
-    selectCurrencyBy("id", Nel.one(id), Operator.Equals).asSingle(id).execute
+    selectCurrencyBy("id", Nel.one(id), Operator.Equals, ValidatedSortAndLimit.empty)
+      .asSingle(id)
+      .execute
 
-  override def getCurrenciesBy[V: Put](
-    field: String,
-    values: Nel[V],
-    operator: Operator
-  ): F[ApiResult[Nel[Currency]]] =
-    selectCurrencyBy(field, values, operator).asNel(Some(field), Some(values)).execute
+  override def getCurrenciesBy: PartiallyAppliedGetBy[F, Currency] =
+    new PartiallyAppliedGetByCurrency[F]
 
   override def createCurrency(currency: CurrencyCreate): F[ApiResult[Long]] =
     insertCurrency(currency).attemptInsert.execute
@@ -67,4 +67,34 @@ object CurrencyRepository {
     implicit transactor: Transactor[F]
   ): Resource[F, CurrencyRepository[F]] =
     Resource.pure(new CurrencyRepository[F])
+
+  // Partially applied algebra
+  private class PartiallyAppliedGetAllCurrencies[F[_]: Concurrent](
+    implicit transactor: Transactor[F]
+  ) extends PartiallyAppliedGetAll[F, Currency] {
+
+    override def apply(sortAndLimit: ValidatedSortAndLimit): F[ApiResult[Nel[Currency]]] =
+      selectAllCurrencies(sortAndLimit).asNel().execute
+
+    override def apply[V: Read](
+      sortAndLimit: ValidatedSortAndLimit,
+      returnField: String
+    ): F[ApiResult[Nel[V]]] =
+      getFieldList2[Currency, V](sortAndLimit, returnField).execute
+  }
+
+  private class PartiallyAppliedGetByCurrency[F[_]: Concurrent](
+    implicit transactor: Transactor[F]
+  ) extends PartiallyAppliedGetBy[F, Currency] {
+
+    override def apply[V: Put](
+      field: String,
+      values: Nel[V],
+      operator: Operator,
+      sortAndLimit: ValidatedSortAndLimit
+    ): F[ApiResult[Nel[Currency]]] =
+      selectCurrencyBy(field, values, operator, sortAndLimit)
+        .asNel(Some(field), Some(values))
+        .execute
+  }
 }

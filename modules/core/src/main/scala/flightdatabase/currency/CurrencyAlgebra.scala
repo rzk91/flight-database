@@ -1,23 +1,14 @@
 package flightdatabase.currency
 
-import cats.data.{NonEmptyList => Nel}
-import doobie.Put
-import doobie.Read
 import flightdatabase.ApiResult
-import flightdatabase.Operator
+import flightdatabase.partial.PartiallyAppliedGetAll
+import flightdatabase.partial.PartiallyAppliedGetBy
 
 trait CurrencyAlgebra[F[_]] {
   def doesCurrencyExist(id: Long): F[Boolean]
-  def getCurrencies: F[ApiResult[Nel[Currency]]]
-  def getCurrenciesOnly[V: Read](field: String): F[ApiResult[Nel[V]]]
+  def getCurrencies: PartiallyAppliedGetAll[F, Currency]
   def getCurrency(id: Long): F[ApiResult[Currency]]
-
-  def getCurrenciesBy[V: Put](
-    field: String,
-    values: Nel[V],
-    operator: Operator
-  ): F[ApiResult[Nel[Currency]]]
-
+  def getCurrenciesBy: PartiallyAppliedGetBy[F, Currency]
   def createCurrency(currency: CurrencyCreate): F[ApiResult[Long]]
   def updateCurrency(currency: Currency): F[ApiResult[Long]]
   def partiallyUpdateCurrency(id: Long, patch: CurrencyPatch): F[ApiResult[Currency]]

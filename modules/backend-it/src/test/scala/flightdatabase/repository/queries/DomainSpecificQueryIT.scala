@@ -59,7 +59,8 @@ final class DomainSpecificQueryIT extends DbChecker {
 
   // Currency checks
   "All currency queries" should "work correctly" in {
-    check(CurrencyQueries.selectAllCurrencies)
+    check(CurrencyQueries.selectAllCurrencies(emptySortAndLimit))
+    check(CurrencyQueries.selectAllCurrencies(someSortAndLimit))
     check(CurrencyQueries.deleteCurrency(1))
   }
 
@@ -73,6 +74,7 @@ final class DomainSpecificQueryIT extends DbChecker {
   // AirlineAirplane checks
   "All airline airplane queries" should "work correctly" in {
     check(AirlineAirplaneQueries.selectAllAirlineAirplanes(emptySortAndLimit))
+    check(AirlineAirplaneQueries.selectAllAirlineAirplanes(someSortAndLimit.copy(sortBy = Some("airplane_id"))))
     check(AirlineAirplaneQueries.deleteAirlineAirplane(1))
   }
 
