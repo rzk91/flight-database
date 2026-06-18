@@ -39,10 +39,17 @@ final class DomainSpecificQueryIT extends DbChecker {
 
   // Airport checks
   "All airport queries" should "work correctly" in {
-    check(AirportQueries.selectAllAirports)
+    check(AirportQueries.selectAllAirports(emptySortAndLimit))
+    check(AirportQueries.selectAllAirports(someSortAndLimit))
+    check(AirportQueries.selectAirportsBy("id", Nel.one(1L), Operator.Equals, emptySortAndLimit))
     check(
       AirportQueries
-        .selectAllAirportsByExternal[City, String]("name", Nel.one("Bangalore"), Operator.Equals)
+        .selectAllAirportsByExternal[City, String](
+          "name",
+          Nel.one("Bangalore"),
+          Operator.Equals,
+          emptySortAndLimit
+        )
     )
     check(AirportQueries.deleteAirport(1))
   }

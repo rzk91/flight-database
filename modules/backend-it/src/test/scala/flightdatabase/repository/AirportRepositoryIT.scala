@@ -12,6 +12,7 @@ import flightdatabase.EntryNotFound
 import flightdatabase.InvalidField
 import flightdatabase.InvalidValueType
 import flightdatabase.Operator
+import flightdatabase.ValidatedSortAndLimit
 import flightdatabase.airport.Airport
 import flightdatabase.airport.AirportCreate
 import flightdatabase.airport.AirportPatch
@@ -97,17 +98,47 @@ final class AirportRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting all airports" should "return the correct detailed list" in {
-    repo.getAirports.value should contain only (originalAirports.toList: _*)
+    repo.getAirports(emptySortAndLimit).value should contain only (originalAirports.toList: _*)
   }
 
-  it should "return only names if so required" in {
+  it should "return a properly sorted list" in {
+    val sorted = repo.getAirports(ValidatedSortAndLimit.sortAscending("name")).value
+    sorted shouldBe originalAirports.sortBy(_.name)
+
+    val sortedDesc = repo.getAirports(ValidatedSortAndLimit.sortDescending("name")).value
+    sortedDesc shouldBe originalAirports.sortBy(_.name).reverse
+  }
+
+  it should "return only as many airports as requested" in {
+    val limited = repo.getAirports(ValidatedSortAndLimit.limit(1)).value
+
+    limited should have size 1
+    limited should contain only originalAirports.head
+
+    val limitedWithOffset = repo.getAirports(ValidatedSortAndLimit.limitAndOffset(1, 1)).value
+
+    limitedWithOffset should have size 1
+    limitedWithOffset should contain only originalAirports.tail.head
+  }
+
+  it should "only return the requested fields if so required" in {
     repo
-      .getAirportsOnly[String]("name")
+      .getAirports[String](emptySortAndLimit, "name")
       .value should contain only (originalAirports.map(_.name).toList: _*)
 
     repo
-      .getAirportsOnly[Boolean]("international")
+      .getAirports[Boolean](emptySortAndLimit, "international")
       .value should contain allElementsOf originalAirports.map(_.international).toList
+  }
+
+  it should "sort and return the requested fields if so required" in {
+    val names =
+      repo.getAirports[String](ValidatedSortAndLimit.sortAscending("name"), "name").value
+    names shouldBe originalAirports.map(_.name).sorted
+  }
+
+  it should "return an empty list if offset is too large" in {
+    repo.getAirports(ValidatedSortAndLimit.offset(100)).error shouldBe EntryListEmpty
   }
 
   "Selecting an airport by id" should "return the correct entry" in {
@@ -118,13 +149,13 @@ final class AirportRepositoryIT extends RepositoryCheck {
 
   "Selecting airports by other fields" should "return the corresponding entries" in {
     def airportByName(name: String): IO[ApiResult[Nel[Airport]]] =
-      repo.getAirportsBy("name", Nel.one(name), Operator.Equals)
+      repo.getAirportsBy("name", Nel.one(name), Operator.Equals, emptySortAndLimit)
     def airportByIcao(icao: String): IO[ApiResult[Nel[Airport]]] =
-      repo.getAirportsBy("icao", Nel.one(icao), Operator.Equals)
+      repo.getAirportsBy("icao", Nel.one(icao), Operator.Equals, emptySortAndLimit)
     def airportByIata(iata: String): IO[ApiResult[Nel[Airport]]] =
-      repo.getAirportsBy("iata", Nel.one(iata), Operator.Equals)
+      repo.getAirportsBy("iata", Nel.one(iata), Operator.Equals, emptySortAndLimit)
     def airportByCityId(id: Long): IO[ApiResult[Nel[Airport]]] =
-      repo.getAirportsBy("city_id", Nel.one(id), Operator.Equals)
+      repo.getAirportsBy("city_id", Nel.one(id), Operator.Equals, emptySortAndLimit)
 
     val distinctCityIds = originalAirports.map(_.cityId).distinct
 
@@ -146,9 +177,34 @@ final class AirportRepositoryIT extends RepositoryCheck {
     airportByCityId(veryLongIdNotPresent).error shouldBe EntryListEmpty
   }
 
+  it should "sort and limit the filtered entries if so required" in {
+    // city_id IN (every airport's city) matches all airports
+    val allCityIds = originalAirports.map(_.cityId)
+
+    val sortedByName = repo
+      .getAirportsBy(
+        "city_id",
+        allCityIds,
+        Operator.In,
+        ValidatedSortAndLimit.sortAscending("name")
+      )
+      .value
+    sortedByName shouldBe originalAirports.sortBy(_.name)
+
+    val limited = repo
+      .getAirportsBy(
+        "city_id",
+        allCityIds,
+        Operator.In,
+        ValidatedSortAndLimit.sortAscending("name").copy(limit = Some(1))
+      )
+      .value
+    limited should contain only originalAirports.sortBy(_.name).head
+  }
+
   "Selecting airports by city name" should "return the corresponding entries" in {
     def airportByCity(city: String): IO[ApiResult[Nel[Airport]]] =
-      repo.getAirportsByCity("name", Nel.one(city), Operator.Equals)
+      repo.getAirportsByCity("name", Nel.one(city), Operator.Equals, emptySortAndLimit)
 
     forAll(cityToIdMap) {
       case (city, id) =>
@@ -162,7 +218,7 @@ final class AirportRepositoryIT extends RepositoryCheck {
 
   "Selecting airport by country" should "also return the corresponding entries" in {
     def airportByCountry(country: String): IO[ApiResult[Nel[Airport]]] =
-      repo.getAirportsByCountry("name", Nel.one(country), Operator.Equals)
+      repo.getAirportsByCountry("name", Nel.one(country), Operator.Equals, emptySortAndLimit)
 
     forAll(countryToCityIdMap) {
       case (country, cityId) =>
@@ -174,37 +230,60 @@ final class AirportRepositoryIT extends RepositoryCheck {
     airportByCountry(valueNotPresent).error shouldBe EntryListEmpty
   }
 
+  "Sorting and limiting airports filtered by city/country" should "work if so required" in {
+    val allCities = Nel.fromListUnsafe(cityToIdMap.keys.toList)
+    val allCountries = Nel.fromListUnsafe(countryToCityIdMap.keys.toList)
+
+    repo
+      .getAirportsByCity(
+        "name",
+        allCities,
+        Operator.In,
+        ValidatedSortAndLimit.sortDescending("name")
+      )
+      .value shouldBe originalAirports.sortBy(_.name).reverse
+
+    repo
+      .getAirportsByCountry(
+        "name",
+        allCountries,
+        Operator.In,
+        ValidatedSortAndLimit.sortAscending("name").copy(limit = Some(1))
+      )
+      .value should contain only originalAirports.sortBy(_.name).head
+  }
+
   "Selecting a non-existent field" should "return an error" in {
     repo
-      .getAirportsBy(invalidFieldSyntax, Nel.one("value"), Operator.Equals)
+      .getAirportsBy(invalidFieldSyntax, Nel.one("value"), Operator.Equals, emptySortAndLimit)
       .error shouldBe sqlErrorInvalidSyntax
     repo
-      .getAirportsByCity(invalidFieldSyntax, Nel.one("value"), Operator.Equals)
+      .getAirportsByCity(invalidFieldSyntax, Nel.one("value"), Operator.Equals, emptySortAndLimit)
       .error shouldBe sqlErrorInvalidSyntax
     repo
-      .getAirportsByCountry(invalidFieldSyntax, Nel.one("value"), Operator.Equals)
+      .getAirportsByCountry(invalidFieldSyntax, Nel.one("value"), Operator.Equals, emptySortAndLimit)
       .error shouldBe sqlErrorInvalidSyntax
 
     repo
-      .getAirportsBy(invalidFieldColumn, Nel.one("value"), Operator.Equals)
+      .getAirportsBy(invalidFieldColumn, Nel.one("value"), Operator.Equals, emptySortAndLimit)
       .error shouldBe InvalidField(invalidFieldColumn)
     repo
-      .getAirportsByCity(invalidFieldColumn, Nel.one("value"), Operator.Equals)
+      .getAirportsByCity(invalidFieldColumn, Nel.one("value"), Operator.Equals, emptySortAndLimit)
       .error shouldBe InvalidField(invalidFieldColumn)
     repo
-      .getAirportsByCountry(invalidFieldColumn, Nel.one("value"), Operator.Equals)
+      .getAirportsByCountry(invalidFieldColumn, Nel.one("value"), Operator.Equals, emptySortAndLimit)
       .error shouldBe InvalidField(invalidFieldColumn)
   }
 
   "Selecting an existing field with an invalid value type" should "return an error" in {
     repo
-      .getAirportsBy("iata", Nel.one(invalidStringValue), Operator.Equals)
+      .getAirportsBy("iata", Nel.one(invalidStringValue), Operator.Equals, emptySortAndLimit)
       .error shouldBe InvalidValueType(invalidStringValue.toString)
     repo
-      .getAirportsByCity("population", Nel.one(invalidLongValue), Operator.Equals)
+      .getAirportsByCity("population", Nel.one(invalidLongValue), Operator.Equals, emptySortAndLimit)
       .error shouldBe InvalidValueType(invalidLongValue)
     repo
-      .getAirportsByCountry("iso2", Nel.one(invalidStringValue), Operator.Equals)
+      .getAirportsByCountry("iso2", Nel.one(invalidStringValue), Operator.Equals, emptySortAndLimit)
       .error shouldBe InvalidValueType(invalidStringValue.toString)
   }
 
@@ -250,7 +329,7 @@ final class AirportRepositoryIT extends RepositoryCheck {
 
   it should "otherwise return the correct id" in {
     val newId = repo.createAirport(newAirport).value
-    val airports = repo.getAirports.value
+    val airports = repo.getAirports(emptySortAndLimit).value
 
     airports should contain(Airport.fromCreate(newId, newAirport))
   }
@@ -260,13 +339,13 @@ final class AirportRepositoryIT extends RepositoryCheck {
   }
 
   "Updating an airport" should "work and return the updated airport ID" in {
-    val original = repo.getAirportsBy("name", Nel.one(newAirport.name), Operator.Equals).value.head
+    val original = repo.getAirportsBy("name", Nel.one(newAirport.name), Operator.Equals, emptySortAndLimit).value.head
     val updated = original.copy(capacity = original.capacity + 100)
     repo.updateAirport(updated).value shouldBe updated.id
   }
 
   it should "also allow changing the name field to a new non-empty value" in {
-    val original = repo.getAirportsBy("name", Nel.one(newAirport.name), Operator.Equals).value.head
+    val original = repo.getAirportsBy("name", Nel.one(newAirport.name), Operator.Equals, emptySortAndLimit).value.head
     val updated = original.copy(name = updatedName)
     repo.updateAirport(updated).value shouldBe updated.id
 
@@ -288,7 +367,7 @@ final class AirportRepositoryIT extends RepositoryCheck {
   }
 
   "Patching an airport" should "work and return the updated airport" in {
-    val original = repo.getAirportsBy("name", Nel.one(updatedName), Operator.Equals).value.head
+    val original = repo.getAirportsBy("name", Nel.one(updatedName), Operator.Equals, emptySortAndLimit).value.head
     val patch = AirportPatch(name = Some(patchedName))
     val patched = Airport.fromPatch(original.id, patch, original)
     repo.partiallyUpdateAirport(original.id, patch).value shouldBe patched
@@ -302,7 +381,7 @@ final class AirportRepositoryIT extends RepositoryCheck {
   }
 
   it should "throw a foreign key error if the city does not exist" in {
-    val original = repo.getAirportsBy("name", Nel.one(patchedName), Operator.Equals).value.head
+    val original = repo.getAirportsBy("name", Nel.one(patchedName), Operator.Equals, emptySortAndLimit).value.head
     val patch = AirportPatch(cityId = Some(idNotPresent))
     repo
       .partiallyUpdateAirport(original.id, patch)
@@ -310,7 +389,7 @@ final class AirportRepositoryIT extends RepositoryCheck {
   }
 
   "Removing an airplane" should "work correctly" in {
-    val original = repo.getAirportsBy("name", Nel.one(patchedName), Operator.Equals).value.head
+    val original = repo.getAirportsBy("name", Nel.one(patchedName), Operator.Equals, emptySortAndLimit).value.head
     repo.removeAirport(original.id).value shouldBe ()
     repo.doesAirportExist(original.id).unsafeRunSync() shouldBe false
   }
