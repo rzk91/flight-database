@@ -17,6 +17,11 @@ import flightdatabase.city.CityCreate
 import flightdatabase.city.CityPatch
 import flightdatabase.country.Country
 import flightdatabase.extensions.all._
+import flightdatabase.partial.PartiallyAppliedGetAll
+import flightdatabase.partial.PartiallyAppliedGetBy
+import flightdatabase.repository.CityRepository.PartiallyAppliedGetAllCities
+import flightdatabase.repository.CityRepository.PartiallyAppliedGetByCity
+import flightdatabase.repository.CityRepository.PartiallyAppliedGetByCountry
 import flightdatabase.repository.queries.CityQueries._
 import flightdatabase.repository.queries.CountryQueries
 
@@ -26,29 +31,19 @@ class CityRepository[F[_]: Concurrent] private (
 
   override def doesCityExist(id: Long): F[Boolean] = cityExists(id).unique.execute
 
-  override def getCities: F[ApiResult[Nel[City]]] = selectAllCities.asNel().execute
-
-  def getCitiesOnly[V: Read](field: String): F[ApiResult[Nel[V]]] =
-    getFieldList[City, V](field).execute
+  override def getCities: PartiallyAppliedGetAll[F, City] =
+    new PartiallyAppliedGetAllCities[F]
 
   override def getCity(id: Long): F[ApiResult[City]] =
-    selectCitiesBy("id", Nel.one(id), Operator.Equals).asSingle(id).execute
-
-  override def getCitiesBy[V: Put](
-    field: String,
-    values: Nel[V],
-    operator: Operator
-  ): F[ApiResult[Nel[City]]] =
-    selectCitiesBy(field, values, operator).asNel(Some(field), Some(values)).execute
-
-  def getCitiesByCountry[V: Put](
-    field: String,
-    values: Nel[V],
-    operator: Operator
-  ): F[ApiResult[Nel[City]]] =
-    selectCitiesByExternal[Country, V](field, values, operator)
-      .asNel(Some(field), Some(values))
+    selectCitiesBy("id", Nel.one(id), Operator.Equals, ValidatedSortAndLimit.empty)
+      .asSingle(id)
       .execute
+
+  override def getCitiesBy: PartiallyAppliedGetBy[F, City] =
+    new PartiallyAppliedGetByCity[F]
+
+  override def getCitiesByCountry: PartiallyAppliedGetBy[F, City] =
+    new PartiallyAppliedGetByCountry[F]
 
   // Do we need checks for latitude/longitude <-> country matching?
   override def createCity(city: CityCreate): F[ApiResult[Long]] =
@@ -108,4 +103,49 @@ object CityRepository {
   def resource[F[_]: Concurrent](
     implicit transactor: Transactor[F]
   ): Resource[F, CityRepository[F]] = Resource.pure(new CityRepository[F])
+
+  // Partially applied algebra
+  private class PartiallyAppliedGetAllCities[F[_]: Concurrent](
+    implicit transactor: Transactor[F]
+  ) extends PartiallyAppliedGetAll[F, City] {
+
+    override def apply(sortAndLimit: ValidatedSortAndLimit): F[ApiResult[Nel[City]]] =
+      selectAllCities(sortAndLimit).asNel().execute
+
+    override def apply[V: Read](
+      sortAndLimit: ValidatedSortAndLimit,
+      returnField: String
+    ): F[ApiResult[Nel[V]]] =
+      getFieldList2[City, V](sortAndLimit, returnField).execute
+  }
+
+  private class PartiallyAppliedGetByCity[F[_]: Concurrent](
+    implicit transactor: Transactor[F]
+  ) extends PartiallyAppliedGetBy[F, City] {
+
+    override def apply[V: Put](
+      field: String,
+      values: Nel[V],
+      operator: Operator,
+      sortAndLimit: ValidatedSortAndLimit
+    ): F[ApiResult[Nel[City]]] =
+      selectCitiesBy(field, values, operator, sortAndLimit)
+        .asNel(Some(field), Some(values))
+        .execute
+  }
+
+  private class PartiallyAppliedGetByCountry[F[_]: Concurrent](
+    implicit transactor: Transactor[F]
+  ) extends PartiallyAppliedGetBy[F, City] {
+
+    override def apply[V: Put](
+      field: String,
+      values: Nel[V],
+      operator: Operator,
+      sortAndLimit: ValidatedSortAndLimit
+    ): F[ApiResult[Nel[City]]] =
+      selectCitiesByExternal[Country, V](field, values, operator, sortAndLimit)
+        .asNel(Some(field), Some(values))
+        .execute
+  }
 }

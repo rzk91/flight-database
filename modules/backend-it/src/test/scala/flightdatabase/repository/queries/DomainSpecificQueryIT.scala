@@ -49,10 +49,17 @@ final class DomainSpecificQueryIT extends DbChecker {
 
   // City checks
   "All city queries" should "work correctly" in {
-    check(CityQueries.selectAllCities)
+    check(CityQueries.selectAllCities(emptySortAndLimit))
+    check(CityQueries.selectAllCities(someSortAndLimit))
+    check(CityQueries.selectCitiesBy("id", Nel.one(1L), Operator.Equals, emptySortAndLimit))
     check(
       CityQueries
-        .selectCitiesByExternal[Country, String]("name", Nel.one("Germany"), Operator.Equals)
+        .selectCitiesByExternal[Country, String](
+          "name",
+          Nel.one("Germany"),
+          Operator.Equals,
+          emptySortAndLimit
+        )
     )
     check(CityQueries.deleteCity(1))
   }

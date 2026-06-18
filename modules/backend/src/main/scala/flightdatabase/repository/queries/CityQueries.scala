@@ -8,6 +8,7 @@ import doobie.Update0
 import doobie.implicits._
 import flightdatabase.Operator
 import flightdatabase.TableBase
+import flightdatabase.ValidatedSortAndLimit
 import flightdatabase.city.City
 import flightdatabase.city.CityCreate
 
@@ -15,21 +16,29 @@ private[repository] object CityQueries {
 
   def cityExists(id: Long): Query0[Boolean] = idExistsQuery[City](id)
 
-  def selectAllCities: Query0[City] = selectAll.query[City]
+  def selectAllCities(sortAndLimit: ValidatedSortAndLimit): Query0[City] =
+    (selectAll ++ sortAndLimit.fragment).query[City]
 
-  def selectCitiesBy[V: Put](field: String, values: Nel[V], operator: Operator): Query0[City] =
-    (selectAll ++ whereFragment(s"city.$field", values, operator)).query[City]
+  def selectCitiesBy[V: Put](
+    field: String,
+    values: Nel[V],
+    operator: Operator,
+    sortAndLimit: ValidatedSortAndLimit
+  ): Query0[City] =
+    (selectAll ++ whereFragment(s"city.$field", values, operator) ++ sortAndLimit.fragment)
+      .query[City]
 
   def selectCitiesByExternal[ET: TableBase, EV: Put](
     externalField: String,
     externalValues: Nel[EV],
-    operator: Operator
+    operator: Operator,
+    sortAndLimit: ValidatedSortAndLimit
   ): Query0[City] = {
     selectAll ++ innerJoinWhereFragment[City, ET, EV](
       externalField,
       externalValues,
       operator
-    )
+    ) ++ sortAndLimit.fragment
   }.query[City]
 
   def insertCity(model: CityCreate): Update0 =
