@@ -66,7 +66,9 @@ final class DomainSpecificQueryIT extends DbChecker {
 
   // Country checks
   "All country queries" should "work correctly" in {
-    check(CountryQueries.selectAllCountries)
+    check(CountryQueries.selectAllCountries(emptySortAndLimit))
+    check(CountryQueries.selectAllCountries(someSortAndLimit))
+    check(CountryQueries.selectCountriesBy("id", Nel.one(1L), Operator.Equals, emptySortAndLimit))
     check(CountryQueries.deleteCountry(1))
   }
 

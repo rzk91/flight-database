@@ -12,6 +12,7 @@ import doobie.Transactor
 import doobie.syntax.string._
 import flightdatabase.ApiResult
 import flightdatabase.Operator
+import flightdatabase.ValidatedSortAndLimit
 import flightdatabase.country.Country
 import flightdatabase.country.CountryAlgebra
 import flightdatabase.country.CountryCreate
@@ -19,57 +20,37 @@ import flightdatabase.country.CountryPatch
 import flightdatabase.currency.Currency
 import flightdatabase.extensions.all._
 import flightdatabase.language.Language
+import flightdatabase.partial.PartiallyAppliedGetAll
+import flightdatabase.partial.PartiallyAppliedGetBy
+import flightdatabase.repository.CountryRepository.PartiallyAppliedGetAllCountries
+import flightdatabase.repository.CountryRepository.PartiallyAppliedGetByCountry
+import flightdatabase.repository.CountryRepository.PartiallyAppliedGetByCurrency
+import flightdatabase.repository.CountryRepository.PartiallyAppliedGetByLanguage
 import flightdatabase.repository.queries.CountryQueries._
 
 class CountryRepository[F[_]: Concurrent] private (
   implicit transactor: Transactor[F]
 ) extends CountryAlgebra[F] {
 
-  // Doobie implicits
-  implicit val readAirlineRoute: Read[Country] = Read.derived
-
   override def doesCountryExist(id: Long): F[Boolean] =
     countryExists(id).unique.execute
 
-  override def getCountries: F[ApiResult[Nel[Country]]] =
-    selectAllCountries.asNel().execute
-
-  def getCountriesOnly[V: Read](field: String): F[ApiResult[Nel[V]]] =
-    getFieldList[Country, V](field).execute
+  override def getCountries: PartiallyAppliedGetAll[F, Country] =
+    new PartiallyAppliedGetAllCountries[F]
 
   override def getCountry(id: Long): F[ApiResult[Country]] =
-    selectCountriesBy("id", Nel.one(id), Operator.Equals).asSingle(id).execute
-
-  override def getCountriesBy[V: Put](
-    field: String,
-    values: Nel[V],
-    operator: Operator
-  ): F[ApiResult[Nel[Country]]] =
-    selectCountriesBy(field, values, operator).asNel(Some(field), Some(values)).execute
-
-  override def getCountriesByLanguage[V: Put](
-    field: String,
-    values: Nel[V],
-    operator: Operator
-  ): F[ApiResult[Nel[Country]]] = {
-    def q(idField: String): Fragment =
-      selectCountriesByExternal[Language, V](field, values, operator, Some(idField)).toFragment
-
-    {
-      q("main_language_id") ++ fr"UNION" ++
-      q("secondary_language_id") ++ fr"UNION" ++
-      q("tertiary_language_id")
-    }.query[Country].asNel(Some(field), Some(values)).execute
-  }
-
-  override def getCountriesByCurrency[V: Put](
-    field: String,
-    values: Nel[V],
-    operator: Operator
-  ): F[ApiResult[Nel[Country]]] =
-    selectCountriesByExternal[Currency, V](field, values, operator)
-      .asNel(Some(field), Some(values))
+    selectCountriesBy("id", Nel.one(id), Operator.Equals, ValidatedSortAndLimit.empty)
+      .asSingle(id)
       .execute
+
+  override def getCountriesBy: PartiallyAppliedGetBy[F, Country] =
+    new PartiallyAppliedGetByCountry[F]
+
+  override def getCountriesByLanguage: PartiallyAppliedGetBy[F, Country] =
+    new PartiallyAppliedGetByLanguage[F]
+
+  override def getCountriesByCurrency: PartiallyAppliedGetBy[F, Country] =
+    new PartiallyAppliedGetByCurrency[F]
 
   override def createCountry(country: CountryCreate): F[ApiResult[Long]] =
     insertCountry(country).attemptInsert.execute
@@ -102,4 +83,83 @@ object CountryRepository {
     implicit transactor: Transactor[F]
   ): Resource[F, CountryRepository[F]] =
     Resource.pure(new CountryRepository[F])
+
+  // Country's field count exceeds doobie's automatic Read derivation; derive it
+  // explicitly via the semi-auto Read.derived.
+  private implicit val readCountry: Read[Country] = Read.derived
+
+  // Partially applied algebra
+  private class PartiallyAppliedGetAllCountries[F[_]: Concurrent](
+    implicit transactor: Transactor[F]
+  ) extends PartiallyAppliedGetAll[F, Country] {
+
+    override def apply(sortAndLimit: ValidatedSortAndLimit): F[ApiResult[Nel[Country]]] =
+      selectAllCountries(sortAndLimit).asNel().execute
+
+    override def apply[V: Read](
+      sortAndLimit: ValidatedSortAndLimit,
+      returnField: String
+    ): F[ApiResult[Nel[V]]] =
+      getFieldList2[Country, V](sortAndLimit, returnField).execute
+  }
+
+  private class PartiallyAppliedGetByCountry[F[_]: Concurrent](
+    implicit transactor: Transactor[F]
+  ) extends PartiallyAppliedGetBy[F, Country] {
+
+    override def apply[V: Put](
+      field: String,
+      values: Nel[V],
+      operator: Operator,
+      sortAndLimit: ValidatedSortAndLimit
+    ): F[ApiResult[Nel[Country]]] =
+      selectCountriesBy(field, values, operator, sortAndLimit)
+        .asNel(Some(field), Some(values))
+        .execute
+  }
+
+  private class PartiallyAppliedGetByLanguage[F[_]: Concurrent](
+    implicit transactor: Transactor[F]
+  ) extends PartiallyAppliedGetBy[F, Country] {
+
+    override def apply[V: Put](
+      field: String,
+      values: Nel[V],
+      operator: Operator,
+      sortAndLimit: ValidatedSortAndLimit
+    ): F[ApiResult[Nel[Country]]] = {
+      // A country may reference a language as its main, secondary, or tertiary
+      // language; union the three matches. Sort/limit applies to the whole union,
+      // so each arm is built with an empty sort/limit.
+      def q(idField: String): Fragment =
+        selectCountriesByExternal[Language, V](
+          field,
+          values,
+          operator,
+          ValidatedSortAndLimit.empty,
+          Some(idField)
+        ).toFragment
+
+      {
+        q("main_language_id") ++ fr"UNION" ++
+        q("secondary_language_id") ++ fr"UNION" ++
+        q("tertiary_language_id") ++ sortAndLimit.fragment
+      }.query[Country].asNel(Some(field), Some(values)).execute
+    }
+  }
+
+  private class PartiallyAppliedGetByCurrency[F[_]: Concurrent](
+    implicit transactor: Transactor[F]
+  ) extends PartiallyAppliedGetBy[F, Country] {
+
+    override def apply[V: Put](
+      field: String,
+      values: Nel[V],
+      operator: Operator,
+      sortAndLimit: ValidatedSortAndLimit
+    ): F[ApiResult[Nel[Country]]] =
+      selectCountriesByExternal[Currency, V](field, values, operator, sortAndLimit)
+        .asNel(Some(field), Some(values))
+        .execute
+  }
 }

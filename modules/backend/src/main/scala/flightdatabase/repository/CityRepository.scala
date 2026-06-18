@@ -74,7 +74,7 @@ class CityRepository[F[_]: Concurrent] private (
   override protected def validateTimezone(timezone: String, countryId: Long): F[ApiResult[Unit]] =
     EitherT(
       CountryQueries
-        .selectCountriesBy("id", Nel.one(countryId), Operator.Equals)
+        .selectCountriesBy("id", Nel.one(countryId), Operator.Equals, ValidatedSortAndLimit.empty)
         .map(_.iso2)
         .asSingle(countryId)
     ).leftMap {
