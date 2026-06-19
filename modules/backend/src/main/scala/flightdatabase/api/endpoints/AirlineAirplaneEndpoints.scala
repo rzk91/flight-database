@@ -28,7 +28,7 @@ class AirlineAirplaneEndpoints[F[_]: Concurrent] private (
     // GET /airline-airplanes?return-only={field}&sort-by={field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root :? SortAndLimit(sortAndLimit) +& ReturnOnlyMatcher(returnOnly) =>
       withSortAndLimitValidation[AirlineAirplane](sortAndLimit) {
-        processReturnOnly2[AirlineAirplane](_, returnOnly)(algebra.getAirlineAirplanes)
+        processReturnOnly[AirlineAirplane](_, returnOnly)(algebra.getAirlineAirplanes)
       }
 
     // GET /airline-airplanes/{id}
@@ -44,7 +44,7 @@ class AirlineAirplaneEndpoints[F[_]: Concurrent] private (
           FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
             ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
       withSortAndLimitValidation[AirlineAirplane](sortAndLimit) {
-        processFilter2[AirlineAirplane, AirlineAirplane](field, operator, values, _)(
+        processFilter[AirlineAirplane, AirlineAirplane](field, operator, values, _)(
           algebra.getAirlineAirplanesBy
         )
       }
@@ -54,7 +54,7 @@ class AirlineAirplaneEndpoints[F[_]: Concurrent] private (
           FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
             ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
       withSortAndLimitValidation[Airline](sortAndLimit) {
-        processFilter2[Airline, AirlineAirplane](field, operator, values, _)(
+        processFilter[Airline, AirlineAirplane](field, operator, values, _)(
           algebra.getAirlineAirplanesByAirline
         )
       }
@@ -64,7 +64,7 @@ class AirlineAirplaneEndpoints[F[_]: Concurrent] private (
           FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
             ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
       withSortAndLimitValidation[Airplane](sortAndLimit) {
-        processFilter2[Airplane, AirlineAirplane](field, operator, values, _)(
+        processFilter[Airplane, AirlineAirplane](field, operator, values, _)(
           algebra.getAirlineAirplanesByAirplane
         )
       }

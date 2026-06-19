@@ -24,7 +24,7 @@ class LanguageEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Lang
     // GET /languages?return-only={field}&sort-by={field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root :? SortAndLimit(sortAndLimit) +& ReturnOnlyMatcher(returnOnly) =>
       withSortAndLimitValidation[Language](sortAndLimit) {
-        processReturnOnly2[Language](_, returnOnly)(algebra.getLanguages)
+        processReturnOnly[Language](_, returnOnly)(algebra.getLanguages)
       }
 
     // GET /languages/filter?field={language_field}&operator={operator; default: eq}&value={value}&sort-by={language_field}&order={asc, desc}&limit={number}&offset={number}
@@ -32,7 +32,7 @@ class LanguageEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Lang
           FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
             ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
       withSortAndLimitValidation[Language](sortAndLimit) {
-        processFilter2[Language, Language](field, operator, values, _)(algebra.getLanguagesBy)
+        processFilter[Language, Language](field, operator, values, _)(algebra.getLanguagesBy)
       }
 
     // GET /languages/{id}

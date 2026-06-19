@@ -27,7 +27,7 @@ class CountryEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Count
     // GET /countries?return-only={field}&sort-by={field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root :? SortAndLimit(sortAndLimit) +& ReturnOnlyMatcher(returnOnly) =>
       withSortAndLimitValidation[Country](sortAndLimit) {
-        processReturnOnly2[Country](_, returnOnly)(algebra.getCountries)
+        processReturnOnly[Country](_, returnOnly)(algebra.getCountries)
       }
 
     // GET /countries/filter?field={country_field}&operator={operator; default: eq}&value={value}&sort-by={country_field}&order={asc, desc}&limit={number}&offset={number}
@@ -35,7 +35,7 @@ class CountryEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Count
           FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
             ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
       withSortAndLimitValidation[Country](sortAndLimit) {
-        processFilter2[Country, Country](field, operator, values, _)(algebra.getCountriesBy)
+        processFilter[Country, Country](field, operator, values, _)(algebra.getCountriesBy)
       }
 
     // GET /countries/{id}
@@ -47,7 +47,7 @@ class CountryEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Count
           FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
             ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
       withSortAndLimitValidation[Language](sortAndLimit) {
-        processFilter2[Language, Country](field, operator, values, _)(algebra.getCountriesByLanguage)
+        processFilter[Language, Country](field, operator, values, _)(algebra.getCountriesByLanguage)
       }
 
     // GET /countries/currency/filter?field={currency_field}&operator={operator; default: eq}&value={value}&sort-by={currency_field}&order={asc, desc}&limit={number}&offset={number}
@@ -55,7 +55,7 @@ class CountryEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Count
           FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
             ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
       withSortAndLimitValidation[Currency](sortAndLimit) {
-        processFilter2[Currency, Country](field, operator, values, _)(algebra.getCountriesByCurrency)
+        processFilter[Currency, Country](field, operator, values, _)(algebra.getCountriesByCurrency)
       }
 
     // POST /countries

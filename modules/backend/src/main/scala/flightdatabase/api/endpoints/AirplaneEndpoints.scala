@@ -25,7 +25,7 @@ class AirplaneEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airp
     // GET /airplanes?return-only={field}&sort-by={field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root :? SortAndLimit(sortAndLimit) +& ReturnOnlyMatcher(returnOnly) =>
       withSortAndLimitValidation[Airplane](sortAndLimit) {
-        processReturnOnly2[Airplane](_, returnOnly)(algebra.getAirplanes)
+        processReturnOnly[Airplane](_, returnOnly)(algebra.getAirplanes)
       }
 
     // GET /airplanes/filter?field={airplane_field}&operator={operator; default: eq}&value={value}&sort-by={airplane_field}&order={asc, desc}&limit={number}&offset={number}
@@ -33,7 +33,7 @@ class AirplaneEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airp
           FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
             ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
       withSortAndLimitValidation[Airplane](sortAndLimit) {
-        processFilter2[Airplane, Airplane](field, operator, values, _)(algebra.getAirplanesBy)
+        processFilter[Airplane, Airplane](field, operator, values, _)(algebra.getAirplanesBy)
       }
 
     // GET /airplanes/{id}
@@ -45,7 +45,7 @@ class AirplaneEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airp
           FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
             ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
       withSortAndLimitValidation[Manufacturer](sortAndLimit) {
-        processFilter2[Manufacturer, Airplane](field, operator, values, _)(
+        processFilter[Manufacturer, Airplane](field, operator, values, _)(
           algebra.getAirplanesByManufacturer
         )
       }

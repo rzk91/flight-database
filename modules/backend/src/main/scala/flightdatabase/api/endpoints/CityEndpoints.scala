@@ -26,7 +26,7 @@ class CityEndpoints[F[_]: Concurrent] private (prefix: String, algebra: CityAlge
     // GET /cities?return-only={field}&sort-by={field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root :? SortAndLimit(sortAndLimit) +& ReturnOnlyMatcher(returnOnly) =>
       withSortAndLimitValidation[City](sortAndLimit) {
-        processReturnOnly2[City](_, returnOnly)(algebra.getCities)
+        processReturnOnly[City](_, returnOnly)(algebra.getCities)
       }
 
     // GET /cities/filter?field={city_field}&operator={operator; default: eq}&value={value}&sort-by={city_field}&order={asc, desc}&limit={number}&offset={number}
@@ -34,7 +34,7 @@ class CityEndpoints[F[_]: Concurrent] private (prefix: String, algebra: CityAlge
           FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
             ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
       withSortAndLimitValidation[City](sortAndLimit) {
-        processFilter2[City, City](field, operator, values, _)(algebra.getCitiesBy)
+        processFilter[City, City](field, operator, values, _)(algebra.getCitiesBy)
       }
 
     // GET /cities/{id}
@@ -46,7 +46,7 @@ class CityEndpoints[F[_]: Concurrent] private (prefix: String, algebra: CityAlge
           FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
             ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
       withSortAndLimitValidation[Country](sortAndLimit) {
-        processFilter2[Country, City](field, operator, values, _)(algebra.getCitiesByCountry)
+        processFilter[Country, City](field, operator, values, _)(algebra.getCitiesByCountry)
       }
 
     // POST /cities

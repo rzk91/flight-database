@@ -28,7 +28,7 @@ class AirlineCityEndpoints[F[_]: Concurrent] private (
     // GET /airline-cities?return-only={field}&sort-by={field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root :? SortAndLimit(sortAndLimit) +& ReturnOnlyMatcher(returnOnly) =>
       withSortAndLimitValidation[AirlineCity](sortAndLimit) {
-        processReturnOnly2[AirlineCity](_, returnOnly)(algebra.getAirlineCities)
+        processReturnOnly[AirlineCity](_, returnOnly)(algebra.getAirlineCities)
       }
 
     // GET /airline-cities/filter?field={airline_city_field}&operator={operator; default: eq}&value={value}&sort-by={airline_city_field}&order={asc, desc}&limit={number}&offset={number}
@@ -36,7 +36,7 @@ class AirlineCityEndpoints[F[_]: Concurrent] private (
           FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
             ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
       withSortAndLimitValidation[AirlineCity](sortAndLimit) {
-        processFilter2[AirlineCity, AirlineCity](field, operator, values, _)(
+        processFilter[AirlineCity, AirlineCity](field, operator, values, _)(
           algebra.getAirlineCitiesBy
         )
       }
@@ -54,7 +54,7 @@ class AirlineCityEndpoints[F[_]: Concurrent] private (
           FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
             ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
       withSortAndLimitValidation[Airline](sortAndLimit) {
-        processFilter2[Airline, AirlineCity](field, operator, values, _)(
+        processFilter[Airline, AirlineCity](field, operator, values, _)(
           algebra.getAirlineCitiesByAirline
         )
       }
@@ -64,7 +64,7 @@ class AirlineCityEndpoints[F[_]: Concurrent] private (
           FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
             ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
       withSortAndLimitValidation[City](sortAndLimit) {
-        processFilter2[City, AirlineCity](field, operator, values, _)(
+        processFilter[City, AirlineCity](field, operator, values, _)(
           algebra.getAirlineCitiesByCity
         )
       }

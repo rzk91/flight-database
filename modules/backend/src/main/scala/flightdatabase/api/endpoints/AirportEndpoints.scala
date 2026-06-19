@@ -26,7 +26,7 @@ class AirportEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airpo
     // GET /airports?return-only={field}&sort-by={field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root :? SortAndLimit(sortAndLimit) +& ReturnOnlyMatcher(returnOnly) =>
       withSortAndLimitValidation[Airport](sortAndLimit) {
-        processReturnOnly2[Airport](_, returnOnly)(algebra.getAirports)
+        processReturnOnly[Airport](_, returnOnly)(algebra.getAirports)
       }
 
     // GET /airports/filter?field={airport_field}&operator={operator; default: eq}&value={value}&sort-by={airport_field}&order={asc, desc}&limit={number}&offset={number}
@@ -34,7 +34,7 @@ class AirportEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airpo
           FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
             ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
       withSortAndLimitValidation[Airport](sortAndLimit) {
-        processFilter2[Airport, Airport](field, operator, values, _)(algebra.getAirportsBy)
+        processFilter[Airport, Airport](field, operator, values, _)(algebra.getAirportsBy)
       }
 
     // GET /airports/{id}
@@ -46,7 +46,7 @@ class AirportEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airpo
           FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
             ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
       withSortAndLimitValidation[City](sortAndLimit) {
-        processFilter2[City, Airport](field, operator, values, _)(algebra.getAirportsByCity)
+        processFilter[City, Airport](field, operator, values, _)(algebra.getAirportsByCity)
       }
 
     // GET /airports/country/filter?field={country_field}&operator={operator; default: eq}&value={value}&sort-by={country_field}&order={asc, desc}&limit={number}&offset={number}
@@ -54,7 +54,7 @@ class AirportEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airpo
           FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
             ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
       withSortAndLimitValidation[Country](sortAndLimit) {
-        processFilter2[Country, Airport](field, operator, values, _)(algebra.getAirportsByCountry)
+        processFilter[Country, Airport](field, operator, values, _)(algebra.getAirportsByCountry)
       }
 
     // POST /airports

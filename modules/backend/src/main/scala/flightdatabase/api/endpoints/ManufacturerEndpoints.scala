@@ -28,7 +28,7 @@ class ManufacturerEndpoints[F[_]: Concurrent] private (
     // GET /manufacturers?return-only={field}&sort-by={field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root :? SortAndLimit(sortAndLimit) +& ReturnOnlyMatcher(returnOnly) =>
       withSortAndLimitValidation[Manufacturer](sortAndLimit) {
-        processReturnOnly2[Manufacturer](_, returnOnly)(algebra.getManufacturers)
+        processReturnOnly[Manufacturer](_, returnOnly)(algebra.getManufacturers)
       }
 
     // GET /manufacturers/filter?field={manufacturer_field}&operator={operator; default: eq}&value={value}&sort-by={manufacturer_field}&order={asc, desc}&limit={number}&offset={number}
@@ -36,7 +36,7 @@ class ManufacturerEndpoints[F[_]: Concurrent] private (
           FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
             ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
       withSortAndLimitValidation[Manufacturer](sortAndLimit) {
-        processFilter2[Manufacturer, Manufacturer](field, operator, values, _)(
+        processFilter[Manufacturer, Manufacturer](field, operator, values, _)(
           algebra.getManufacturersBy
         )
       }
@@ -50,7 +50,7 @@ class ManufacturerEndpoints[F[_]: Concurrent] private (
           FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
             ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
       withSortAndLimitValidation[City](sortAndLimit) {
-        processFilter2[City, Manufacturer](field, operator, values, _)(
+        processFilter[City, Manufacturer](field, operator, values, _)(
           algebra.getManufacturersByCity
         )
       }
@@ -60,7 +60,7 @@ class ManufacturerEndpoints[F[_]: Concurrent] private (
           FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
             ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
       withSortAndLimitValidation[Country](sortAndLimit) {
-        processFilter2[Country, Manufacturer](field, operator, values, _)(
+        processFilter[Country, Manufacturer](field, operator, values, _)(
           algebra.getManufacturersByCountry
         )
       }

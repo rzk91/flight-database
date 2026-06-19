@@ -25,7 +25,7 @@ class CurrencyEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Curr
     // GET /currencies?return-only={field}&sort-by={field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root :? SortAndLimit(sortAndLimit) +& ReturnOnlyMatcher(returnOnly) =>
       withSortAndLimitValidation[Currency](sortAndLimit) {
-        processReturnOnly2[Currency](_, returnOnly)(algebra.getCurrencies)
+        processReturnOnly[Currency](_, returnOnly)(algebra.getCurrencies)
       }
 
     // GET /currencies/filter?field={currency_field}&operator={operator; default: eq}&value={value}&sort-by={currency_field}&order={asc, desc}&limit={number}&offset={number}
@@ -33,7 +33,7 @@ class CurrencyEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Curr
           FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
             ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
       withSortAndLimitValidation[Currency](sortAndLimit) {
-        processFilter2[Currency, Currency](field, operator, values, _)(algebra.getCurrenciesBy)
+        processFilter[Currency, Currency](field, operator, values, _)(algebra.getCurrenciesBy)
       }
 
     // GET /currencies/{id}

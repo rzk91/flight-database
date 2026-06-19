@@ -32,7 +32,7 @@ class AirlineRouteEndpoints[F[_]: Concurrent] private (
     // GET /airline-routes?return-only={field}&sort-by={field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root :? SortAndLimit(sortAndLimit) +& ReturnOnlyMatcher(returnOnly) =>
       withSortAndLimitValidation[AirlineRoute](sortAndLimit) {
-        processReturnOnly2[AirlineRoute](_, returnOnly)(algebra.getAirlineRoutes)
+        processReturnOnly[AirlineRoute](_, returnOnly)(algebra.getAirlineRoutes)
       }
 
     // GET /airline-routes/filter?field={airline-route-field}&operator={operator; default: eq}&value={value}&sort-by={airline-route-field}&order={asc, desc}&limit={number}&offset={number}
@@ -40,7 +40,7 @@ class AirlineRouteEndpoints[F[_]: Concurrent] private (
           FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
             ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
       withSortAndLimitValidation[AirlineRoute](sortAndLimit) {
-        processFilter2[AirlineRoute, AirlineRoute](field, operator, values, _)(
+        processFilter[AirlineRoute, AirlineRoute](field, operator, values, _)(
           algebra.getAirlineRoutesBy
         )
       }
@@ -54,7 +54,7 @@ class AirlineRouteEndpoints[F[_]: Concurrent] private (
           FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
             ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
       withSortAndLimitValidation[Airline](sortAndLimit) {
-        processFilter2[Airline, AirlineRoute](field, operator, values, _)(
+        processFilter[Airline, AirlineRoute](field, operator, values, _)(
           algebra.getAirlineRoutesByAirline
         )
       }
@@ -64,7 +64,7 @@ class AirlineRouteEndpoints[F[_]: Concurrent] private (
           FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
             ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
       withSortAndLimitValidation[Airplane](sortAndLimit) {
-        processFilter2[Airplane, AirlineRoute](field, operator, values, _)(
+        processFilter[Airplane, AirlineRoute](field, operator, values, _)(
           algebra.getAirlineRoutesByAirplane
         )
       }
@@ -81,7 +81,7 @@ class AirlineRouteEndpoints[F[_]: Concurrent] private (
       }
 
       withSortAndLimitValidation[Airport](sortAndLimit) {
-        processFilter2[Airport, AirlineRoute](field, operator, values, _)(
+        processFilter[Airport, AirlineRoute](field, operator, values, _)(
           algebra.getAirlineRoutesByAirport(direction)
         )
       }
