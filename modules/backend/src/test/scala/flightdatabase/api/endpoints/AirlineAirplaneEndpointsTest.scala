@@ -8,6 +8,7 @@ import doobie.Read
 import flightdatabase._
 import flightdatabase.airline_airplane.AirlineAirplane
 import flightdatabase.airline_airplane.AirlineAirplaneAlgebra
+import flightdatabase.airline_airplane.AirlineAirplaneCreate
 import flightdatabase.airline_airplane.AirlineAirplanePatch
 import flightdatabase.extensions.test._
 import flightdatabase.partial.PartiallyAppliedGetAll
@@ -851,7 +852,7 @@ final class AirlineAirplaneEndpointsTest
     Scenario("A valid airline-airplane is created") {
       Given("a valid airline-airplane")
       val airlineAirplane = originalAirlineAirplanes.head
-      val create = airlineAirplane.toCreate
+      val create = AirlineAirplaneCreate(airlineAirplane.airlineId, airlineAirplane.airplaneId)
       (mockAlgebra.createAirlineAirplane _).when(create).returns(Created(testId).elevate[IO])
 
       When("the airline-airplane is created")
@@ -886,7 +887,8 @@ final class AirlineAirplaneEndpointsTest
 
     Scenario("An existing airline-airplane is created") {
       Given("an existing airline-airplane")
-      val airlineAirplane = originalAirlineAirplanes.head.toCreate
+      val head = originalAirlineAirplanes.head
+      val airlineAirplane = AirlineAirplaneCreate(head.airlineId, head.airplaneId)
       (mockAlgebra.createAirlineAirplane _)
         .when(airlineAirplane)
         .returns(EntryAlreadyExists.elevate[IO, Long])
@@ -907,7 +909,7 @@ final class AirlineAirplaneEndpointsTest
 
   Feature("Updating an airline-airplane") {
     val airlineAirplane = originalAirlineAirplanes.head
-    val update = airlineAirplane.toCreate
+    val update = AirlineAirplaneCreate(airlineAirplane.airlineId, airlineAirplane.airplaneId)
 
     Scenario("A valid airline-airplane is updated properly") {
       Given("an existing airline-airplane ID and a valid airline-airplane")

@@ -94,7 +94,7 @@ object AirlineRouteRepository {
     Resource.pure(new AirlineRouteRepository[F])
 
   // Needed by the airport UNION query, which calls `.query[AirlineRoute]` directly
-  private implicit val readAirlineRoute: Read[AirlineRoute] = Read.derived
+  implicit private val readAirlineRoute: Read[AirlineRoute] = Read.derived
 
   // Partially applied algebra
   private class PartiallyAppliedGetAllAirlineRoutes[F[_]: Concurrent](
