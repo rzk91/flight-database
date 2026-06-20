@@ -11,8 +11,12 @@ A static, recurring scheduled connection operated by an airline from a start air
 _Avoid_: Scheduled flight, service, connection, city-pair (a city-pair is bidirectional; a Route is not)
 
 **Flight** *(future)*:
-A concrete in-progress or historical instance of a Route on a particular date — e.g. "LH 400 on 2026-06-15". Lives in the planned Kafka feed, not in the schedule.
+A concrete in-progress or historical instance of a Route on a particular date — e.g. "LH 400 on 2026-06-15". Lives in the planned Kafka feed, not in the schedule. Carries runtime state — position along the great-circle arc, percent complete, on-time vs. delayed — computed against the system clock and **never persisted**. A Flight is born when the system clock reaches its Route's scheduled departure.
 _Avoid_: Leg, trip (those are passenger-itinerary concepts and do not belong here)
+
+**Schedule**:
+The persisted departure time of a Route — its static recurring intent to depart at a given time of day — and, once a cruise-speed attribute exists, the implied flight duration. Two Routes between the same airports for the same airline are distinguished by route number *and* departure time (e.g. Emirates EK45 and EK47, both DXB→FRA, departing at different times). An attribute of Route, not a separate entity. Distinct from a Flight's runtime state, which is computed against the system clock and never persisted.
+_Avoid_: Timetable (implies a whole published document), flight time (ambiguous — could mean duration or wall-clock departure)
 
 **HubCity**:
 A city an airline considers a home base, hub, or operational footprint. An airline can have many hub cities (e.g. Lufthansa → Frankfurt *and* Munich), and a city can be a hub for many airlines — hence the many-to-many. Independent of which routes happen to touch the city today. (The persisted join table is named `AirlineCity` for join-table convention, but the domain concept is HubCity.)
