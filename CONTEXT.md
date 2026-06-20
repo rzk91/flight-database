@@ -14,9 +14,18 @@ _Avoid_: Scheduled flight, service, connection, city-pair (a city-pair is bidire
 A concrete in-progress or historical instance of a Route on a particular date — e.g. "LH 400 on 2026-06-15". Lives in the planned Kafka feed, not in the schedule. Carries runtime state — position along the great-circle arc, percent complete, on-time vs. delayed — computed against the system clock and **never persisted**. A Flight is born when the system clock reaches its Route's scheduled departure.
 _Avoid_: Leg, trip (those are passenger-itinerary concepts and do not belong here)
 
+**Flight lifecycle (OOOI)**:
+The runtime states a Flight passes through, named with the industry-standard OOOI milestones. All ephemeral, never persisted.
+- **Out** — off the gate (off-block); taxi-out begins. A Flight enters the live system here.
+- **Off** — wheels up; now airborne and travelling the great-circle arc.
+- **On** — wheels down at the destination.
+- **In** — at the arrival gate (on-block); the Flight leaves the live system here.
+*Taxi-out* is Out→Off; *taxi-in* is On→In. Both have real duration; only taxi-out can end in cancellation. A Flight is **Cancelled** if ground delay exceeds its cap *before Out*, or during *taxi-out* (after Out, before Off). Once airborne (Off), a Flight always reaches On/In in this model — diversions are out of scope. Out is the actual counterpart of the Route's scheduled Out; the difference between them is delay.
+_Avoid_: Departed (ambiguous — say Out for off-block or Off for wheels-up), Arrived (say On for wheels-down or In for on-block)
+
 **Schedule**:
-The persisted departure time of a Route — its static recurring intent to depart at a given time of day — and, once a cruise-speed attribute exists, the implied flight duration. Two Routes between the same airports for the same airline are distinguished by route number *and* departure time (e.g. Emirates EK45 and EK47, both DXB→FRA, departing at different times). An attribute of Route, not a separate entity. Distinct from a Flight's runtime state, which is computed against the system clock and never persisted.
-_Avoid_: Timetable (implies a whole published document), flight time (ambiguous — could mean duration or wall-clock departure)
+The persisted intended timing of a Route. At minimum the scheduled **Out** time — gate push-back, the published departure (STD) — which is what makes Emirates EK45 and EK47 (both DXB→FRA) distinct Routes rather than duplicates. Optionally a scheduled **In** time (gate arrival, STA); the gap between them is block time. An attribute of Route, not a separate entity. The Schedule is *intent*; the actual Out/Off/On/In a Flight achieves are runtime state, computed against the system clock and never persisted.
+_Avoid_: Timetable (implies a whole published document), departure time (ambiguous — name the OOOI point: scheduled Out)
 
 **HubCity**:
 A city an airline considers a home base, hub, or operational footprint. An airline can have many hub cities (e.g. Lufthansa → Frankfurt *and* Munich), and a city can be a hub for many airlines — hence the many-to-many. Independent of which routes happen to touch the city today. (The persisted join table is named `AirlineCity` for join-table convention, but the domain concept is HubCity.)
