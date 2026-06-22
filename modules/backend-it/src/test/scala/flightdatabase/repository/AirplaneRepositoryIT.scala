@@ -216,10 +216,20 @@ final class AirplaneRepositoryIT extends RepositoryCheck {
 
   "Selecting an existing field with an invalid value type" should "return an error" in {
     repo
-      .getAirplanesBy("manufacturer_id", Nel.one(invalidLongValue), Operator.Equals, emptySortAndLimit)
+      .getAirplanesBy(
+        "manufacturer_id",
+        Nel.one(invalidLongValue),
+        Operator.Equals,
+        emptySortAndLimit
+      )
       .error shouldBe InvalidValueType(invalidLongValue)
     repo
-      .getAirplanesByManufacturer("name", Nel.one(invalidStringValue), Operator.Equals, emptySortAndLimit)
+      .getAirplanesByManufacturer(
+        "name",
+        Nel.one(invalidStringValue),
+        Operator.Equals,
+        emptySortAndLimit
+      )
       .error shouldBe InvalidValueType(invalidStringValue.toString)
   }
 

@@ -97,16 +97,22 @@ final class DomainSpecificQueryIT extends DbChecker {
   // AirlineAirplane checks
   "All airline airplane queries" should "work correctly" in {
     check(AirlineAirplaneQueries.selectAllAirlineAirplanes(emptySortAndLimit))
-    check(AirlineAirplaneQueries.selectAllAirlineAirplanes(someSortAndLimit.copy(sortBy = Some("airplane_id"))))
+    check(
+      AirlineAirplaneQueries
+        .selectAllAirlineAirplanes(someSortAndLimit.copy(sortBy = Some("airplane_id")))
+    )
     check(AirlineAirplaneQueries.deleteAirlineAirplane(1))
   }
 
   // AirlineCity checks
   "All airline city queries" should "work correctly" in {
     check(AirlineCityQueries.selectAllAirlineCities(emptySortAndLimit))
-    check(AirlineCityQueries.selectAllAirlineCities(someSortAndLimit.copy(sortBy = Some("city_id"))))
     check(
-      AirlineCityQueries.selectAirlineCitiesBy("id", Nel.one(1L), Operator.Equals, emptySortAndLimit)
+      AirlineCityQueries.selectAllAirlineCities(someSortAndLimit.copy(sortBy = Some("city_id")))
+    )
+    check(
+      AirlineCityQueries
+        .selectAirlineCitiesBy("id", Nel.one(1L), Operator.Equals, emptySortAndLimit)
     )
     check(
       AirlineCityQueries
@@ -123,7 +129,10 @@ final class DomainSpecificQueryIT extends DbChecker {
   // AirlineRoute checks
   "All airline route queries" should "work correctly" in {
     check(AirlineRouteQueries.selectAllAirlineRoutes(emptySortAndLimit))
-    check(AirlineRouteQueries.selectAllAirlineRoutes(someSortAndLimit.copy(sortBy = Some("route_number"))))
+    check(
+      AirlineRouteQueries
+        .selectAllAirlineRoutes(someSortAndLimit.copy(sortBy = Some("route_number")))
+    )
     check(
       AirlineRouteQueries
         .selectAirlineRouteBy("id", Nel.one(1L), Operator.Equals, emptySortAndLimit)
@@ -152,10 +161,18 @@ final class DomainSpecificQueryIT extends DbChecker {
   "All manufacturer queries" should "work correctly" in {
     check(ManufacturerQueries.selectAllManufacturers(emptySortAndLimit))
     check(ManufacturerQueries.selectAllManufacturers(someSortAndLimit))
-    check(ManufacturerQueries.selectManufacturersBy("id", Nel.one(1L), Operator.Equals, emptySortAndLimit))
     check(
       ManufacturerQueries
-        .selectManufacturersByCity[City, String]("name", Nel.one("Leiden"), Operator.Equals, emptySortAndLimit)
+        .selectManufacturersBy("id", Nel.one(1L), Operator.Equals, emptySortAndLimit)
+    )
+    check(
+      ManufacturerQueries
+        .selectManufacturersByCity[City, String](
+          "name",
+          Nel.one("Leiden"),
+          Operator.Equals,
+          emptySortAndLimit
+        )
     )
     check(ManufacturerQueries.deleteManufacturer(1))
   }

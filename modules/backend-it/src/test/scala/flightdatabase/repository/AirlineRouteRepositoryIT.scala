@@ -132,7 +132,12 @@ final class AirlineRouteRepositoryIT extends RepositoryCheck {
       repo.getAirlineRoutesBy("route_number", Nel.one(routeNr), Operator.Equals, emptySortAndLimit)
 
     def routeByAirlineAirplaneId(id: Long): IO[ApiResult[Nel[AirlineRoute]]] =
-      repo.getAirlineRoutesBy("airline_airplane_id", Nel.one(id), Operator.Equals, emptySortAndLimit)
+      repo.getAirlineRoutesBy(
+        "airline_airplane_id",
+        Nel.one(id),
+        Operator.Equals,
+        emptySortAndLimit
+      )
 
     def routeByStartAirportId(id: Long): IO[ApiResult[Nel[AirlineRoute]]] =
       repo.getAirlineRoutesBy("start_airport_id", Nel.one(id), Operator.Equals, emptySortAndLimit)
@@ -348,13 +353,28 @@ final class AirlineRouteRepositoryIT extends RepositoryCheck {
 
   "Selecting an existing field with an invalid value type" should "return an error" in {
     repo
-      .getAirlineRoutesBy("route_number", Nel.one(invalidStringValue), Operator.Equals, emptySortAndLimit)
+      .getAirlineRoutesBy(
+        "route_number",
+        Nel.one(invalidStringValue),
+        Operator.Equals,
+        emptySortAndLimit
+      )
       .error shouldBe InvalidValueType(invalidStringValue.toString)
     repo
-      .getAirlineRoutesByAirline("name", Nel.one(invalidStringValue), Operator.Equals, emptySortAndLimit)
+      .getAirlineRoutesByAirline(
+        "name",
+        Nel.one(invalidStringValue),
+        Operator.Equals,
+        emptySortAndLimit
+      )
       .error shouldBe InvalidValueType(invalidStringValue.toString)
     repo
-      .getAirlineRoutesByAirplane("capacity", Nel.one(invalidLongValue), Operator.Equals, emptySortAndLimit)
+      .getAirlineRoutesByAirplane(
+        "capacity",
+        Nel.one(invalidLongValue),
+        Operator.Equals,
+        emptySortAndLimit
+      )
       .error shouldBe InvalidValueType(invalidLongValue)
     repo
       .getAirlineRoutesByAirport(None)(
@@ -430,7 +450,12 @@ final class AirlineRouteRepositoryIT extends RepositoryCheck {
 
   it should "work if all criteria are satisfied" in {
     val existingRoute = repo
-      .getAirlineRoutesBy("route_number", Nel.one(newAirlineRoute.route), Operator.Equals, emptySortAndLimit)
+      .getAirlineRoutesBy(
+        "route_number",
+        Nel.one(newAirlineRoute.route),
+        Operator.Equals,
+        emptySortAndLimit
+      )
       .value
       .head
     val updatedRoute = existingRoute.copy(route = updatedRouteNumber)
@@ -468,7 +493,12 @@ final class AirlineRouteRepositoryIT extends RepositoryCheck {
 
   it should "work if all criteria are satisfied" in {
     val existingRoute = repo
-      .getAirlineRoutesBy("route_number", Nel.one(updatedRouteNumber), Operator.Equals, emptySortAndLimit)
+      .getAirlineRoutesBy(
+        "route_number",
+        Nel.one(updatedRouteNumber),
+        Operator.Equals,
+        emptySortAndLimit
+      )
       .value
       .head
     val patch = AirlineRoutePatch(route = Some(patchedRouteNumber))
@@ -481,7 +511,12 @@ final class AirlineRouteRepositoryIT extends RepositoryCheck {
 
   "Removing an airline-route" should "work correctly" in {
     val existingRoute = repo
-      .getAirlineRoutesBy("route_number", Nel.one(patchedRouteNumber), Operator.Equals, emptySortAndLimit)
+      .getAirlineRoutesBy(
+        "route_number",
+        Nel.one(patchedRouteNumber),
+        Operator.Equals,
+        emptySortAndLimit
+      )
       .value
       .head
     repo.removeAirlineRoute(existingRoute.id).value shouldBe ()

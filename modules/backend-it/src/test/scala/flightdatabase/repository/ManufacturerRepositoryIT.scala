@@ -315,7 +315,12 @@ final class ManufacturerRepositoryIT extends RepositoryCheck {
   it should "work if all criteria are met" in {
     val existingManufacturer =
       repo
-        .getManufacturersBy("name", Nel.one(newManufacturer.name), Operator.Equals, emptySortAndLimit)
+        .getManufacturersBy(
+          "name",
+          Nel.one(newManufacturer.name),
+          Operator.Equals,
+          emptySortAndLimit
+        )
         .value
         .head
 

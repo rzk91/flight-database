@@ -281,20 +281,40 @@ final class CountryRepositoryIT extends RepositoryCheck {
       .getCountriesBy(invalidFieldSyntax, Nel.one("value"), Operator.Equals, emptySortAndLimit)
       .error shouldBe sqlErrorInvalidSyntax
     repo
-      .getCountriesByLanguage(invalidFieldSyntax, Nel.one("value"), Operator.Equals, emptySortAndLimit)
+      .getCountriesByLanguage(
+        invalidFieldSyntax,
+        Nel.one("value"),
+        Operator.Equals,
+        emptySortAndLimit
+      )
       .error shouldBe sqlErrorInvalidSyntax
     repo
-      .getCountriesByCurrency(invalidFieldSyntax, Nel.one("value"), Operator.Equals, emptySortAndLimit)
+      .getCountriesByCurrency(
+        invalidFieldSyntax,
+        Nel.one("value"),
+        Operator.Equals,
+        emptySortAndLimit
+      )
       .error shouldBe sqlErrorInvalidSyntax
 
     repo
       .getCountriesBy(invalidFieldColumn, Nel.one("value"), Operator.Equals, emptySortAndLimit)
       .error shouldBe InvalidField(invalidFieldColumn)
     repo
-      .getCountriesByLanguage(invalidFieldColumn, Nel.one("value"), Operator.Equals, emptySortAndLimit)
+      .getCountriesByLanguage(
+        invalidFieldColumn,
+        Nel.one("value"),
+        Operator.Equals,
+        emptySortAndLimit
+      )
       .error shouldBe InvalidField(invalidFieldColumn)
     repo
-      .getCountriesByCurrency(invalidFieldColumn, Nel.one("value"), Operator.Equals, emptySortAndLimit)
+      .getCountriesByCurrency(
+        invalidFieldColumn,
+        Nel.one("value"),
+        Operator.Equals,
+        emptySortAndLimit
+      )
       .error shouldBe InvalidField(invalidFieldColumn)
   }
 
@@ -303,10 +323,20 @@ final class CountryRepositoryIT extends RepositoryCheck {
       .getCountriesBy("country_code", Nel.one(invalidLongValue), Operator.Equals, emptySortAndLimit)
       .error shouldBe InvalidValueType(invalidLongValue)
     repo
-      .getCountriesByLanguage("iso2", Nel.one(invalidStringValue), Operator.Equals, emptySortAndLimit)
+      .getCountriesByLanguage(
+        "iso2",
+        Nel.one(invalidStringValue),
+        Operator.Equals,
+        emptySortAndLimit
+      )
       .error shouldBe InvalidValueType(invalidStringValue.toString)
     repo
-      .getCountriesByCurrency("iso", Nel.one(invalidStringValue), Operator.Equals, emptySortAndLimit)
+      .getCountriesByCurrency(
+        "iso",
+        Nel.one(invalidStringValue),
+        Operator.Equals,
+        emptySortAndLimit
+      )
       .error shouldBe InvalidValueType(invalidStringValue.toString)
   }
 
@@ -361,7 +391,10 @@ final class CountryRepositoryIT extends RepositoryCheck {
 
   "Updating a country" should "not take place if fields do not satisfy their criteria" in {
     val existingCountry =
-      repo.getCountriesBy("name", Nel.one(newCountry.name), Operator.Equals, emptySortAndLimit).value.head
+      repo
+        .getCountriesBy("name", Nel.one(newCountry.name), Operator.Equals, emptySortAndLimit)
+        .value
+        .head
 
     val invalidCountries = List(
       existingCountry.copy(name = ""),
@@ -396,7 +429,10 @@ final class CountryRepositoryIT extends RepositoryCheck {
 
   it should "throw an error if a language/currency does not exist" in {
     val existingCountry =
-      repo.getCountriesBy("name", Nel.one(newCountry.name), Operator.Equals, emptySortAndLimit).value.head
+      repo
+        .getCountriesBy("name", Nel.one(newCountry.name), Operator.Equals, emptySortAndLimit)
+        .value
+        .head
 
     val invalidCountries = List(
       existingCountry.copy(mainLanguageId = idNotPresent),
@@ -410,7 +446,10 @@ final class CountryRepositoryIT extends RepositoryCheck {
 
   it should "update a country if all criteria are satisfied" in {
     val existingCountry =
-      repo.getCountriesBy("name", Nel.one(newCountry.name), Operator.Equals, emptySortAndLimit).value.head
+      repo
+        .getCountriesBy("name", Nel.one(newCountry.name), Operator.Equals, emptySortAndLimit)
+        .value
+        .head
 
     val updated = existingCountry.copy(name = updatedName)
     repo.updateCountry(updated).value shouldBe existingCountry.id
@@ -421,7 +460,10 @@ final class CountryRepositoryIT extends RepositoryCheck {
 
   "Patching a country" should "not take place if fields do not satisfy their criteria" in {
     val existingCountry =
-      repo.getCountriesBy("name", Nel.one(updatedName), Operator.Equals, emptySortAndLimit).value.head
+      repo
+        .getCountriesBy("name", Nel.one(updatedName), Operator.Equals, emptySortAndLimit)
+        .value
+        .head
 
     val invalidPatches = List(
       CountryPatch(name = Some("")),
@@ -483,7 +525,10 @@ final class CountryRepositoryIT extends RepositoryCheck {
 
   it should "patch a country if all criteria are satisfied" in {
     val existingCountry =
-      repo.getCountriesBy("name", Nel.one(updatedName), Operator.Equals, emptySortAndLimit).value.head
+      repo
+        .getCountriesBy("name", Nel.one(updatedName), Operator.Equals, emptySortAndLimit)
+        .value
+        .head
 
     val patched = CountryPatch(name = Some(patchedName))
     repo
@@ -496,7 +541,10 @@ final class CountryRepositoryIT extends RepositoryCheck {
 
   "Removing a country" should "work correctly" in {
     val existingCountry =
-      repo.getCountriesBy("name", Nel.one(patchedName), Operator.Equals, emptySortAndLimit).value.head
+      repo
+        .getCountriesBy("name", Nel.one(patchedName), Operator.Equals, emptySortAndLimit)
+        .value
+        .head
 
     repo.removeCountry(existingCountry.id).value shouldBe ()
     repo

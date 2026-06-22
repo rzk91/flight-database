@@ -229,33 +229,68 @@ final class AirlineCityRepositoryIT extends RepositoryCheck {
 
   "Selecting a non-existent field" should "return an error" in {
     repo
-      .getAirlineCitiesBy(invalidFieldSyntax, Nel.one(valueNotPresent), Operator.Equals, emptySortAndLimit)
+      .getAirlineCitiesBy(
+        invalidFieldSyntax,
+        Nel.one(valueNotPresent),
+        Operator.Equals,
+        emptySortAndLimit
+      )
       .error shouldBe sqlErrorInvalidSyntax
 
     repo
-      .getAirlineCitiesByCity(invalidFieldSyntax, Nel.one(valueNotPresent), Operator.Equals, emptySortAndLimit)
+      .getAirlineCitiesByCity(
+        invalidFieldSyntax,
+        Nel.one(valueNotPresent),
+        Operator.Equals,
+        emptySortAndLimit
+      )
       .error shouldBe sqlErrorInvalidSyntax
 
     repo
-      .getAirlineCitiesByAirline(invalidFieldSyntax, Nel.one(valueNotPresent), Operator.Equals, emptySortAndLimit)
+      .getAirlineCitiesByAirline(
+        invalidFieldSyntax,
+        Nel.one(valueNotPresent),
+        Operator.Equals,
+        emptySortAndLimit
+      )
       .error shouldBe sqlErrorInvalidSyntax
 
     repo
-      .getAirlineCitiesBy(invalidFieldColumn, Nel.one(valueNotPresent), Operator.Equals, emptySortAndLimit)
+      .getAirlineCitiesBy(
+        invalidFieldColumn,
+        Nel.one(valueNotPresent),
+        Operator.Equals,
+        emptySortAndLimit
+      )
       .error shouldBe InvalidField(invalidFieldColumn)
 
     repo
-      .getAirlineCitiesByCity(invalidFieldColumn, Nel.one(valueNotPresent), Operator.Equals, emptySortAndLimit)
+      .getAirlineCitiesByCity(
+        invalidFieldColumn,
+        Nel.one(valueNotPresent),
+        Operator.Equals,
+        emptySortAndLimit
+      )
       .error shouldBe InvalidField(invalidFieldColumn)
 
     repo
-      .getAirlineCitiesByAirline(invalidFieldColumn, Nel.one(valueNotPresent), Operator.Equals, emptySortAndLimit)
+      .getAirlineCitiesByAirline(
+        invalidFieldColumn,
+        Nel.one(valueNotPresent),
+        Operator.Equals,
+        emptySortAndLimit
+      )
       .error shouldBe InvalidField(invalidFieldColumn)
   }
 
   "Selecting an existing field with an invalid value type" should "return an error" in {
     repo
-      .getAirlineCitiesBy("airline_id", Nel.one(invalidLongValue), Operator.Equals, emptySortAndLimit)
+      .getAirlineCitiesBy(
+        "airline_id",
+        Nel.one(invalidLongValue),
+        Operator.Equals,
+        emptySortAndLimit
+      )
       .error shouldBe InvalidValueType(invalidLongValue)
 
     repo
@@ -268,7 +303,12 @@ final class AirlineCityRepositoryIT extends RepositoryCheck {
       .error shouldBe InvalidValueType(invalidLongValue)
 
     repo
-      .getAirlineCitiesByAirline("country_id", Nel.one(invalidLongValue), Operator.Equals, emptySortAndLimit)
+      .getAirlineCitiesByAirline(
+        "country_id",
+        Nel.one(invalidLongValue),
+        Operator.Equals,
+        emptySortAndLimit
+      )
       .error shouldBe InvalidValueType(invalidLongValue)
   }
 

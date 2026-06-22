@@ -356,13 +356,15 @@ final class CityRepositoryIT extends RepositoryCheck {
   }
 
   "Updating a city" should "work and return the updated city ID" in {
-    val original = repo.getCitiesBy("name", Nel.one(newCity.name), Operator.Equals, emptySortAndLimit).value.head
+    val original =
+      repo.getCitiesBy("name", Nel.one(newCity.name), Operator.Equals, emptySortAndLimit).value.head
     val updatedCity = original.copy(population = original.population + 100000)
     repo.updateCity(updatedCity).value shouldBe updatedCity.id
   }
 
   it should "also allow changing the city's name to a non-empty value" in {
-    val original = repo.getCitiesBy("name", Nel.one(newCity.name), Operator.Equals, emptySortAndLimit).value.head
+    val original =
+      repo.getCitiesBy("name", Nel.one(newCity.name), Operator.Equals, emptySortAndLimit).value.head
     val updatedCity = original.copy(name = updatedName)
     repo.updateCity(updatedCity).value shouldBe updatedCity.id
 
@@ -375,7 +377,8 @@ final class CityRepositoryIT extends RepositoryCheck {
   }
 
   it should "throw an error if we update the timezone to an invalid value" in {
-    val original = repo.getCitiesBy("name", Nel.one(updatedName), Operator.Equals, emptySortAndLimit).value.head
+    val original =
+      repo.getCitiesBy("name", Nel.one(updatedName), Operator.Equals, emptySortAndLimit).value.head
     val updatedCity = original.copy(timezone = "")
     repo.updateCity(updatedCity).error shouldBe InvalidTimezone("")
 
@@ -385,13 +388,15 @@ final class CityRepositoryIT extends RepositoryCheck {
   }
 
   it should "throw a foreign key error if the country does not exist" in {
-    val original = repo.getCitiesBy("name", Nel.one(updatedName), Operator.Equals, emptySortAndLimit).value.head
+    val original =
+      repo.getCitiesBy("name", Nel.one(updatedName), Operator.Equals, emptySortAndLimit).value.head
     val updatedCity = original.copy(countryId = idNotPresent)
     repo.updateCity(updatedCity).error shouldBe EntryHasInvalidForeignKey
   }
 
   "Patching a city" should "work and return the updated city ID" in {
-    val original = repo.getCitiesBy("name", Nel.one(updatedName), Operator.Equals, emptySortAndLimit).value.head
+    val original =
+      repo.getCitiesBy("name", Nel.one(updatedName), Operator.Equals, emptySortAndLimit).value.head
     val patch = CityPatch(name = Some(patchedName))
     val patched = City.fromPatch(original.id, patch, original)
     repo.partiallyUpdateCity(original.id, patch).value shouldBe patched
@@ -403,7 +408,8 @@ final class CityRepositoryIT extends RepositoryCheck {
   }
 
   it should "throw an error if we patch a city with an invalid timezone" in {
-    val original = repo.getCitiesBy("name", Nel.one(patchedName), Operator.Equals, emptySortAndLimit).value.head
+    val original =
+      repo.getCitiesBy("name", Nel.one(patchedName), Operator.Equals, emptySortAndLimit).value.head
     val patch = CityPatch(timezone = Some(""))
     repo.partiallyUpdateCity(original.id, patch).error shouldBe InvalidTimezone("")
 
@@ -413,13 +419,15 @@ final class CityRepositoryIT extends RepositoryCheck {
   }
 
   it should "throw a foreign key error if the country does not exist" in {
-    val original = repo.getCitiesBy("name", Nel.one(patchedName), Operator.Equals, emptySortAndLimit).value.head
+    val original =
+      repo.getCitiesBy("name", Nel.one(patchedName), Operator.Equals, emptySortAndLimit).value.head
     val patch = CityPatch(countryId = Some(idNotPresent))
     repo.partiallyUpdateCity(original.id, patch).error shouldBe EntryHasInvalidForeignKey
   }
 
   "Removing a city" should "work correctly" in {
-    val cityToRemove = repo.getCitiesBy("name", Nel.one(patchedName), Operator.Equals, emptySortAndLimit).value.head
+    val cityToRemove =
+      repo.getCitiesBy("name", Nel.one(patchedName), Operator.Equals, emptySortAndLimit).value.head
     repo.removeCity(cityToRemove.id).value shouldBe ()
     repo.doesCityExist(cityToRemove.id).unsafeRunSync() shouldBe false
   }
