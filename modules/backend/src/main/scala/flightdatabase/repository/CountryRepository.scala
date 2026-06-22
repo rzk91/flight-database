@@ -86,7 +86,7 @@ object CountryRepository {
 
   // The language UNION is assembled as raw fragments and run via `.query[Country]`
   // here, where doobie's auto-derivation isn't imported; derive Read explicitly.
-  private implicit val readCountry: Read[Country] = Read.derived
+  implicit private val readCountry: Read[Country] = Read.derived
 
   // Partially applied algebra
   private class PartiallyAppliedGetAllCountries[F[_]: Concurrent](

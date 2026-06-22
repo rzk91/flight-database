@@ -8,9 +8,7 @@ import io.circe.generic.extras.ConfiguredJsonCodec
   id: Long,
   airlineId: Long,
   airplaneId: Long
-) {
-  def toCreate: AirlineAirplaneCreate = AirlineAirplaneCreate(airlineId, airplaneId)
-}
+)
 
 object AirlineAirplane {
 
