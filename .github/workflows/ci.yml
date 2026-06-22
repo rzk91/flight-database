@@ -20,6 +20,8 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
           cache: 'sbt'
+      - &setup-sbt
+        uses: sbt/setup-sbt@v1
       - name: Check formatting (scalafmt)
         run: sbt scalafmtCheckAll
       - name: Check linting (scalafix)
@@ -32,6 +34,7 @@ jobs:
     steps:
       - *checkout
       - *setup-java
+      - *setup-sbt
       - name: Run core tests
         run: sbt core/test
       - name: Run utils tests
@@ -46,5 +49,6 @@ jobs:
     steps:
       - *checkout
       - *setup-java
+      - *setup-sbt
       - name: Run integration tests
         run: sbt backendIt/test
