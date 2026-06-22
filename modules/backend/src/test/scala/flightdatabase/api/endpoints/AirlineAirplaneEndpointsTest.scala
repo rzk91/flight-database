@@ -2,6 +2,7 @@ package flightdatabase.api.endpoints
 
 import cats.data.{NonEmptyList => Nel}
 import cats.effect.IO
+import flightdatabase.ApiResult
 import flightdatabase._
 import flightdatabase.airline_airplane.AirlineAirplane
 import flightdatabase.airline_airplane.AirlineAirplaneAlgebra
@@ -14,6 +15,8 @@ import flightdatabase.testutils.endpoints.EntityEndpointsSpec
 import flightdatabase.testutils.endpoints.FieldFixture
 import io.circe.Decoder
 import io.circe.Encoder
+import org.scalamock.function.StubFunction1
+import org.scalamock.function.StubFunction2
 
 final class AirlineAirplaneEndpointsTest
     extends EntityEndpointsSpec[AirlineAirplane, AirlineAirplaneCreate, AirlineAirplanePatch]
@@ -24,8 +27,8 @@ final class AirlineAirplaneEndpointsTest
   override val api: Endpoints[IO] =
     AirlineAirplaneEndpoints[IO]("/airline-airplanes", mockAlgebra)
 
-  override val mockGetAll = stub[PartiallyAppliedGetAll[IO, AirlineAirplane]]
-  override val mockGetBy = stub[PartiallyAppliedGetBy[IO, AirlineAirplane]]
+  override val mockGetAll: PartiallyAppliedGetAll[IO,AirlineAirplane] = stub[PartiallyAppliedGetAll[IO, AirlineAirplane]]
+  override val mockGetBy: PartiallyAppliedGetBy[IO,AirlineAirplane] = stub[PartiallyAppliedGetBy[IO, AirlineAirplane]]
 
   val table: TableBase[AirlineAirplane] = AirlineAirplane.airlineAirplaneTableBase
   val modelDecoder: Decoder[AirlineAirplane] = Decoder[AirlineAirplane]
@@ -57,16 +60,16 @@ final class AirlineAirplaneEndpointsTest
     FieldFixture("capacity", 400, Operator.GreaterThan, IntType)
   )
 
-  def existsStub = mockAlgebra.doesAirlineAirplaneExist _
-  def getByIdStub = mockAlgebra.getAirlineAirplane(_: Long)
-  def compositeStub = mockAlgebra.getAirlineAirplane(_: Long, _: Long)
+  def existsStub: StubFunction1[Long,IO[Boolean]] = mockAlgebra.doesAirlineAirplaneExist _
+  def getByIdStub: StubFunction1[Long,IO[ApiResult[AirlineAirplane]]] = mockAlgebra.getAirlineAirplane(_: Long)
+  def compositeStub: StubFunction2[Long,Long,IO[ApiResult[AirlineAirplane]]] = mockAlgebra.getAirlineAirplane(_: Long, _: Long)
 
   def compositePath(leftId: String, rightId: String): String =
     s"airline/$leftId/airplane/$rightId"
-  def createStub = mockAlgebra.createAirlineAirplane _
-  def updateStub = mockAlgebra.updateAirlineAirplane _
-  def patchStub = mockAlgebra.partiallyUpdateAirlineAirplane _
-  def removeStub = mockAlgebra.removeAirlineAirplane _
+  def createStub: StubFunction1[AirlineAirplaneCreate,IO[ApiResult[Long]]] = mockAlgebra.createAirlineAirplane _
+  def updateStub: StubFunction1[AirlineAirplane,IO[ApiResult[Long]]] = mockAlgebra.updateAirlineAirplane _
+  def patchStub: StubFunction2[Long,AirlineAirplanePatch,IO[ApiResult[AirlineAirplane]]] = mockAlgebra.partiallyUpdateAirlineAirplane _
+  def removeStub: StubFunction1[Long,IO[ApiResult[Unit]]] = mockAlgebra.removeAirlineAirplane _
 
   def armGetAll(): Unit = (() => mockAlgebra.getAirlineAirplanes).when().returns(mockGetAll)
   def armGetBy(): Unit = (() => mockAlgebra.getAirlineAirplanesBy).when().returns(mockGetBy)

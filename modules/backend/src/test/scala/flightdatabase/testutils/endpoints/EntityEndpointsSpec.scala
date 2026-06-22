@@ -11,8 +11,8 @@ import flightdatabase.partial.PartiallyAppliedGetBy
 import flightdatabase.testutils._
 import io.circe.Decoder
 import io.circe.Encoder
-import org.http4s.circe.CirceEntityCodec._
 import org.http4s.Status.{Created => CreatedStatus, _}
+import org.http4s.circe.CirceEntityCodec._
 import org.scalamock.function.StubFunction1
 import org.scalamock.function.StubFunction2
 import org.scalamock.function.StubFunction3

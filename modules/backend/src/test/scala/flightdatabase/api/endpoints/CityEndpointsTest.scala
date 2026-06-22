@@ -2,23 +2,28 @@ package flightdatabase.api.endpoints
 
 import cats.data.{NonEmptyList => Nel}
 import cats.effect.IO
+import flightdatabase.ApiResult
 import flightdatabase._
 import flightdatabase.city.City
 import flightdatabase.city.CityAlgebra
 import flightdatabase.city.CityCreate
 import flightdatabase.city.CityPatch
+import flightdatabase.partial.PartiallyAppliedGetAll
+import flightdatabase.partial.PartiallyAppliedGetBy
 import flightdatabase.testutils.endpoints.EntityEndpointsSpec
 import flightdatabase.testutils.endpoints.FieldFixture
 import io.circe.Decoder
 import io.circe.Encoder
+import org.scalamock.function.StubFunction1
+import org.scalamock.function.StubFunction2
 
 final class CityEndpointsTest extends EntityEndpointsSpec[City, CityCreate, CityPatch] {
 
   val mockAlgebra: CityAlgebra[IO] = stub[CityAlgebra[IO]]
   override val api: Endpoints[IO] = CityEndpoints[IO]("/cities", mockAlgebra)
 
-  override val mockGetAll = stub[flightdatabase.partial.PartiallyAppliedGetAll[IO, City]]
-  override val mockGetBy = stub[flightdatabase.partial.PartiallyAppliedGetBy[IO, City]]
+  override val mockGetAll: PartiallyAppliedGetAll[IO,City] = stub[flightdatabase.partial.PartiallyAppliedGetAll[IO, City]]
+  override val mockGetBy: PartiallyAppliedGetBy[IO,City] = stub[flightdatabase.partial.PartiallyAppliedGetBy[IO, City]]
 
   val table: TableBase[City] = City.cityTableBase
   val modelDecoder: Decoder[City] = Decoder[City]
@@ -104,12 +109,12 @@ final class CityEndpointsTest extends EntityEndpointsSpec[City, CityCreate, City
     FieldFixture("country_code", 49, Operator.GreaterThan, IntType)
   )
 
-  def existsStub = mockAlgebra.doesCityExist _
-  def getByIdStub = mockAlgebra.getCity _
-  def createStub = mockAlgebra.createCity _
-  def updateStub = mockAlgebra.updateCity _
-  def patchStub = mockAlgebra.partiallyUpdateCity _
-  def removeStub = mockAlgebra.removeCity _
+  def existsStub: StubFunction1[Long,IO[Boolean]] = mockAlgebra.doesCityExist _
+  def getByIdStub: StubFunction1[Long,IO[ApiResult[City]]] = mockAlgebra.getCity _
+  def createStub: StubFunction1[CityCreate,IO[ApiResult[Long]]] = mockAlgebra.createCity _
+  def updateStub: StubFunction1[City,IO[ApiResult[Long]]] = mockAlgebra.updateCity _
+  def patchStub: StubFunction2[Long,CityPatch,IO[ApiResult[City]]] = mockAlgebra.partiallyUpdateCity _
+  def removeStub: StubFunction1[Long,IO[ApiResult[Unit]]] = mockAlgebra.removeCity _
 
   def armGetAll(): Unit = (() => mockAlgebra.getCities).when().returns(mockGetAll)
   def armGetBy(): Unit = (() => mockAlgebra.getCitiesBy).when().returns(mockGetBy)

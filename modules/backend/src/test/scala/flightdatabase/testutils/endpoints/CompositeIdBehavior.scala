@@ -4,8 +4,8 @@ import cats.effect.IO
 import flightdatabase._
 import flightdatabase.extensions.test._
 import flightdatabase.testutils._
-import org.http4s.circe.CirceEntityCodec._
 import org.http4s.Status._
+import org.http4s.circe.CirceEntityCodec._
 import org.scalamock.function.StubFunction2
 
 /**

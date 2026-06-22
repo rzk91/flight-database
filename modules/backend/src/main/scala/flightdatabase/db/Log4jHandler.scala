@@ -3,7 +3,11 @@ package flightdatabase.db
 import cats.effect.Sync
 import com.typesafe.scalalogging.Logger
 import doobie.LogHandler
-import doobie.util.log.{ExecFailure, LogEvent, Parameters, ProcessingFailure, Success}
+import doobie.util.log.ExecFailure
+import doobie.util.log.LogEvent
+import doobie.util.log.Parameters
+import doobie.util.log.ProcessingFailure
+import doobie.util.log.Success
 import org.slf4j.LoggerFactory
 
 class Log4jHandler[F[_]: Sync] private (className: String) extends LogHandler[F] {

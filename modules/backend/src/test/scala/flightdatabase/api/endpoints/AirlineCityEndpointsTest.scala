@@ -2,6 +2,7 @@ package flightdatabase.api.endpoints
 
 import cats.data.{NonEmptyList => Nel}
 import cats.effect.IO
+import flightdatabase.ApiResult
 import flightdatabase._
 import flightdatabase.airline_city.AirlineCity
 import flightdatabase.airline_city.AirlineCityAlgebra
@@ -14,6 +15,8 @@ import flightdatabase.testutils.endpoints.EntityEndpointsSpec
 import flightdatabase.testutils.endpoints.FieldFixture
 import io.circe.Decoder
 import io.circe.Encoder
+import org.scalamock.function.StubFunction1
+import org.scalamock.function.StubFunction2
 
 final class AirlineCityEndpointsTest
     extends EntityEndpointsSpec[AirlineCity, AirlineCityCreate, AirlineCityPatch]
@@ -22,8 +25,8 @@ final class AirlineCityEndpointsTest
   val mockAlgebra: AirlineCityAlgebra[IO] = stub[AirlineCityAlgebra[IO]]
   override val api: Endpoints[IO] = AirlineCityEndpoints[IO]("/airline-cities", mockAlgebra)
 
-  override val mockGetAll = stub[PartiallyAppliedGetAll[IO, AirlineCity]]
-  override val mockGetBy = stub[PartiallyAppliedGetBy[IO, AirlineCity]]
+  override val mockGetAll: PartiallyAppliedGetAll[IO,AirlineCity] = stub[PartiallyAppliedGetAll[IO, AirlineCity]]
+  override val mockGetBy: PartiallyAppliedGetBy[IO,AirlineCity] = stub[PartiallyAppliedGetBy[IO, AirlineCity]]
 
   val table: TableBase[AirlineCity] = AirlineCity.airlineCityTableBase
   val modelDecoder: Decoder[AirlineCity] = Decoder[AirlineCity]
@@ -52,14 +55,14 @@ final class AirlineCityEndpointsTest
     FieldFixture("population", 1000000L, Operator.GreaterThan, LongType)
   )
 
-  def existsStub = mockAlgebra.doesAirlineCityExist _
-  def getByIdStub = mockAlgebra.getAirlineCity(_: Long)
-  def compositeStub = mockAlgebra.getAirlineCity(_: Long, _: Long)
+  def existsStub: StubFunction1[Long,IO[Boolean]] = mockAlgebra.doesAirlineCityExist _
+  def getByIdStub: StubFunction1[Long,IO[ApiResult[AirlineCity]]] = mockAlgebra.getAirlineCity(_: Long)
+  def compositeStub: StubFunction2[Long,Long,IO[ApiResult[AirlineCity]]] = mockAlgebra.getAirlineCity(_: Long, _: Long)
   def compositePath(leftId: String, rightId: String): String = s"airline/$leftId/city/$rightId"
-  def createStub = mockAlgebra.createAirlineCity _
-  def updateStub = mockAlgebra.updateAirlineCity _
-  def patchStub = mockAlgebra.partiallyUpdateAirlineCity _
-  def removeStub = mockAlgebra.removeAirlineCity _
+  def createStub: StubFunction1[AirlineCityCreate,IO[ApiResult[Long]]] = mockAlgebra.createAirlineCity _
+  def updateStub: StubFunction1[AirlineCity,IO[ApiResult[Long]]] = mockAlgebra.updateAirlineCity _
+  def patchStub: StubFunction2[Long,AirlineCityPatch,IO[ApiResult[AirlineCity]]] = mockAlgebra.partiallyUpdateAirlineCity _
+  def removeStub: StubFunction1[Long,IO[ApiResult[Unit]]] = mockAlgebra.removeAirlineCity _
 
   def armGetAll(): Unit = (() => mockAlgebra.getAirlineCities).when().returns(mockGetAll)
   def armGetBy(): Unit = (() => mockAlgebra.getAirlineCitiesBy).when().returns(mockGetBy)

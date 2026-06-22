@@ -2,6 +2,7 @@ package flightdatabase.api.endpoints
 
 import cats.data.{NonEmptyList => Nel}
 import cats.effect.IO
+import flightdatabase.ApiResult
 import flightdatabase._
 import flightdatabase.language.Language
 import flightdatabase.language.LanguageAlgebra
@@ -13,6 +14,8 @@ import flightdatabase.testutils.endpoints.EntityEndpointsSpec
 import flightdatabase.testutils.endpoints.FieldFixture
 import io.circe.Decoder
 import io.circe.Encoder
+import org.scalamock.function.StubFunction1
+import org.scalamock.function.StubFunction2
 
 final class LanguageEndpointsTest
     extends EntityEndpointsSpec[Language, LanguageCreate, LanguagePatch] {
@@ -20,8 +23,8 @@ final class LanguageEndpointsTest
   val mockAlgebra: LanguageAlgebra[IO] = stub[LanguageAlgebra[IO]]
   override val api: Endpoints[IO] = LanguageEndpoints[IO]("/languages", mockAlgebra)
 
-  override val mockGetAll = stub[PartiallyAppliedGetAll[IO, Language]]
-  override val mockGetBy = stub[PartiallyAppliedGetBy[IO, Language]]
+  override val mockGetAll: PartiallyAppliedGetAll[IO,Language] = stub[PartiallyAppliedGetAll[IO, Language]]
+  override val mockGetBy: PartiallyAppliedGetBy[IO,Language] = stub[PartiallyAppliedGetBy[IO, Language]]
 
   val table: TableBase[Language] = Language.languageTableBase
   val modelDecoder: Decoder[Language] = Decoder[Language]
@@ -46,12 +49,12 @@ final class LanguageEndpointsTest
     FieldFixture("id", 1L, Operator.In, LongType)
   )
 
-  def existsStub = mockAlgebra.doesLanguageExist _
-  def getByIdStub = mockAlgebra.getLanguage _
-  def createStub = mockAlgebra.createLanguage _
-  def updateStub = mockAlgebra.updateLanguage _
-  def patchStub = mockAlgebra.partiallyUpdateLanguage _
-  def removeStub = mockAlgebra.removeLanguage _
+  def existsStub: StubFunction1[Long,IO[Boolean]] = mockAlgebra.doesLanguageExist _
+  def getByIdStub: StubFunction1[Long,IO[ApiResult[Language]]] = mockAlgebra.getLanguage _
+  def createStub: StubFunction1[LanguageCreate,IO[ApiResult[Long]]] = mockAlgebra.createLanguage _
+  def updateStub: StubFunction1[Language,IO[ApiResult[Long]]] = mockAlgebra.updateLanguage _
+  def patchStub: StubFunction2[Long,LanguagePatch,IO[ApiResult[Language]]] = mockAlgebra.partiallyUpdateLanguage _
+  def removeStub: StubFunction1[Long,IO[ApiResult[Unit]]] = mockAlgebra.removeLanguage _
 
   def armGetAll(): Unit = (() => mockAlgebra.getLanguages).when().returns(mockGetAll)
   def armGetBy(): Unit = (() => mockAlgebra.getLanguagesBy).when().returns(mockGetBy)
