@@ -60,7 +60,7 @@ class AirlineAirplaneEndpoints[F[_]: Concurrent] private (
       }
 
     // GET /airline-airplanes/airplane/filter?field={airplane_field}&operator={operator; default: eq}&value={value}&sort-by={airplane_field}&order={asc, desc}&limit={number}&offset={number}
-    case GET -> Root / "airplane" / value :?
+    case GET -> Root / "airplane" / "filter" :?
           FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
             ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
       withSortAndLimitValidation[Airplane](sortAndLimit) {
