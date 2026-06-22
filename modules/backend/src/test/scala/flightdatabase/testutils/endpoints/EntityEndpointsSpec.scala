@@ -91,7 +91,9 @@ abstract class EntityEndpointsSpec[Model, Create, Patch]
 
   private def tableName: String = table.asString
   private def qualified(field: String): String = s"$tableName.$field"
-  private val emptySortAndLimit: ValidatedSortAndLimit = ValidatedSortAndLimit.empty
+
+  // protected (not private) so the opt-in mixins (e.g. direction-flag filters) can reuse them.
+  protected val emptySortAndLimit: ValidatedSortAndLimit = ValidatedSortAndLimit.empty
 
   private def mockAll: StubFunction1[ValidatedSortAndLimit, IO[ApiResult[Nel[Model]]]] =
     mockGetAll.apply(_: ValidatedSortAndLimit)
@@ -100,7 +102,7 @@ abstract class EntityEndpointsSpec[Model, Create, Patch]
     : StubFunction3[ValidatedSortAndLimit, String, Read[V], IO[ApiResult[Nel[V]]]] =
     mockGetAll.apply(_: ValidatedSortAndLimit, _: String)(_: Read[V])
 
-  private def mockBy[V]: StubFunction5[
+  protected def mockBy[V]: StubFunction5[
     String,
     Nel[V],
     Operator,
