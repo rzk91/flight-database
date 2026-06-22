@@ -22,8 +22,11 @@ final class AirlineEndpointsTest extends EntityEndpointsSpec[Airline, AirlineCre
   val mockAlgebra: AirlineAlgebra[IO] = stub[AirlineAlgebra[IO]]
   override val api: Endpoints[IO] = AirlineEndpoints[IO]("/airlines", mockAlgebra)
 
-  override val mockGetAll: PartiallyAppliedGetAll[IO,Airline] = stub[PartiallyAppliedGetAll[IO, Airline]]
-  override val mockGetBy: PartiallyAppliedGetBy[IO,Airline] = stub[PartiallyAppliedGetBy[IO, Airline]]
+  override val mockGetAll: PartiallyAppliedGetAll[IO, Airline] =
+    stub[PartiallyAppliedGetAll[IO, Airline]]
+
+  override val mockGetBy: PartiallyAppliedGetBy[IO, Airline] =
+    stub[PartiallyAppliedGetBy[IO, Airline]]
 
   val table: TableBase[Airline] = Airline.airlineTableBase
   val modelDecoder: Decoder[Airline] = Decoder[Airline]
@@ -49,12 +52,14 @@ final class AirlineEndpointsTest extends EntityEndpointsSpec[Airline, AirlineCre
     FieldFixture("country_code", 49, Operator.GreaterThan, IntType)
   )
 
-  def existsStub: StubFunction1[Long,IO[Boolean]] = mockAlgebra.doesAirlineExist _
-  def getByIdStub: StubFunction1[Long,IO[ApiResult[Airline]]] = mockAlgebra.getAirline _
-  def createStub: StubFunction1[AirlineCreate,IO[ApiResult[Long]]] = mockAlgebra.createAirline _
-  def updateStub: StubFunction1[Airline,IO[ApiResult[Long]]] = mockAlgebra.updateAirline _
-  def patchStub: StubFunction2[Long,AirlinePatch,IO[ApiResult[Airline]]] = mockAlgebra.partiallyUpdateAirline _
-  def removeStub: StubFunction1[Long,IO[ApiResult[Unit]]] = mockAlgebra.removeAirline _
+  def existsStub: StubFunction1[Long, IO[Boolean]] = mockAlgebra.doesAirlineExist _
+  def getByIdStub: StubFunction1[Long, IO[ApiResult[Airline]]] = mockAlgebra.getAirline _
+  def createStub: StubFunction1[AirlineCreate, IO[ApiResult[Long]]] = mockAlgebra.createAirline _
+  def updateStub: StubFunction1[Airline, IO[ApiResult[Long]]] = mockAlgebra.updateAirline _
+
+  def patchStub: StubFunction2[Long, AirlinePatch, IO[ApiResult[Airline]]] =
+    mockAlgebra.partiallyUpdateAirline _
+  def removeStub: StubFunction1[Long, IO[ApiResult[Unit]]] = mockAlgebra.removeAirline _
 
   def armGetAll(): Unit = (() => mockAlgebra.getAirlines).when().returns(mockGetAll)
   def armGetBy(): Unit = (() => mockAlgebra.getAirlinesBy).when().returns(mockGetBy)

@@ -22,8 +22,11 @@ final class CountryEndpointsTest extends EntityEndpointsSpec[Country, CountryCre
   val mockAlgebra: CountryAlgebra[IO] = stub[CountryAlgebra[IO]]
   override val api: Endpoints[IO] = CountryEndpoints[IO]("/countries", mockAlgebra)
 
-  override val mockGetAll: PartiallyAppliedGetAll[IO,Country] = stub[PartiallyAppliedGetAll[IO, Country]]
-  override val mockGetBy: PartiallyAppliedGetBy[IO,Country] = stub[PartiallyAppliedGetBy[IO, Country]]
+  override val mockGetAll: PartiallyAppliedGetAll[IO, Country] =
+    stub[PartiallyAppliedGetAll[IO, Country]]
+
+  override val mockGetBy: PartiallyAppliedGetBy[IO, Country] =
+    stub[PartiallyAppliedGetBy[IO, Country]]
 
   val table: TableBase[Country] = Country.countryTableBase
   val modelDecoder: Decoder[Country] = Decoder[Country]
@@ -84,12 +87,14 @@ final class CountryEndpointsTest extends EntityEndpointsSpec[Country, CountryCre
     FieldFixture("id", 1L, Operator.In, LongType)
   )
 
-  def existsStub: StubFunction1[Long,IO[Boolean]] = mockAlgebra.doesCountryExist _
-  def getByIdStub: StubFunction1[Long,IO[ApiResult[Country]]] = mockAlgebra.getCountry _
-  def createStub: StubFunction1[CountryCreate,IO[ApiResult[Long]]] = mockAlgebra.createCountry _
-  def updateStub: StubFunction1[Country,IO[ApiResult[Long]]] = mockAlgebra.updateCountry _
-  def patchStub: StubFunction2[Long,CountryPatch,IO[ApiResult[Country]]] = mockAlgebra.partiallyUpdateCountry _
-  def removeStub: StubFunction1[Long,IO[ApiResult[Unit]]] = mockAlgebra.removeCountry _
+  def existsStub: StubFunction1[Long, IO[Boolean]] = mockAlgebra.doesCountryExist _
+  def getByIdStub: StubFunction1[Long, IO[ApiResult[Country]]] = mockAlgebra.getCountry _
+  def createStub: StubFunction1[CountryCreate, IO[ApiResult[Long]]] = mockAlgebra.createCountry _
+  def updateStub: StubFunction1[Country, IO[ApiResult[Long]]] = mockAlgebra.updateCountry _
+
+  def patchStub: StubFunction2[Long, CountryPatch, IO[ApiResult[Country]]] =
+    mockAlgebra.partiallyUpdateCountry _
+  def removeStub: StubFunction1[Long, IO[ApiResult[Unit]]] = mockAlgebra.removeCountry _
 
   def armGetAll(): Unit = (() => mockAlgebra.getCountries).when().returns(mockGetAll)
   def armGetBy(): Unit = (() => mockAlgebra.getCountriesBy).when().returns(mockGetBy)

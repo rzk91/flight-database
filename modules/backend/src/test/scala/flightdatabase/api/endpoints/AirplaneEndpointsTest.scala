@@ -23,8 +23,11 @@ final class AirplaneEndpointsTest
   val mockAlgebra: AirplaneAlgebra[IO] = stub[AirplaneAlgebra[IO]]
   override val api: Endpoints[IO] = AirplaneEndpoints[IO]("/airplanes", mockAlgebra)
 
-  override val mockGetAll: PartiallyAppliedGetAll[IO,Airplane] = stub[PartiallyAppliedGetAll[IO, Airplane]]
-  override val mockGetBy: PartiallyAppliedGetBy[IO,Airplane] = stub[PartiallyAppliedGetBy[IO, Airplane]]
+  override val mockGetAll: PartiallyAppliedGetAll[IO, Airplane] =
+    stub[PartiallyAppliedGetAll[IO, Airplane]]
+
+  override val mockGetBy: PartiallyAppliedGetBy[IO, Airplane] =
+    stub[PartiallyAppliedGetBy[IO, Airplane]]
 
   val table: TableBase[Airplane] = Airplane.airplaneTableBase
   val modelDecoder: Decoder[Airplane] = Decoder[Airplane]
@@ -52,12 +55,14 @@ final class AirplaneEndpointsTest
     FieldFixture("base_city_id", 5L, Operator.In, LongType)
   )
 
-  def existsStub: StubFunction1[Long,IO[Boolean]] = mockAlgebra.doesAirplaneExist _
-  def getByIdStub: StubFunction1[Long,IO[ApiResult[Airplane]]] = mockAlgebra.getAirplane _
-  def createStub: StubFunction1[AirplaneCreate,IO[ApiResult[Long]]] = mockAlgebra.createAirplane _
-  def updateStub: StubFunction1[Airplane,IO[ApiResult[Long]]] = mockAlgebra.updateAirplane _
-  def patchStub: StubFunction2[Long,AirplanePatch,IO[ApiResult[Airplane]]] = mockAlgebra.partiallyUpdateAirplane _
-  def removeStub: StubFunction1[Long,IO[ApiResult[Unit]]] = mockAlgebra.removeAirplane _
+  def existsStub: StubFunction1[Long, IO[Boolean]] = mockAlgebra.doesAirplaneExist _
+  def getByIdStub: StubFunction1[Long, IO[ApiResult[Airplane]]] = mockAlgebra.getAirplane _
+  def createStub: StubFunction1[AirplaneCreate, IO[ApiResult[Long]]] = mockAlgebra.createAirplane _
+  def updateStub: StubFunction1[Airplane, IO[ApiResult[Long]]] = mockAlgebra.updateAirplane _
+
+  def patchStub: StubFunction2[Long, AirplanePatch, IO[ApiResult[Airplane]]] =
+    mockAlgebra.partiallyUpdateAirplane _
+  def removeStub: StubFunction1[Long, IO[ApiResult[Unit]]] = mockAlgebra.removeAirplane _
 
   def armGetAll(): Unit = (() => mockAlgebra.getAirplanes).when().returns(mockGetAll)
   def armGetBy(): Unit = (() => mockAlgebra.getAirplanesBy).when().returns(mockGetBy)

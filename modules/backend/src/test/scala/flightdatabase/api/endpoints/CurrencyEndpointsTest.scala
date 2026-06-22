@@ -23,8 +23,11 @@ final class CurrencyEndpointsTest
   val mockAlgebra: CurrencyAlgebra[IO] = stub[CurrencyAlgebra[IO]]
   override val api: Endpoints[IO] = CurrencyEndpoints[IO]("/currencies", mockAlgebra)
 
-  override val mockGetAll: PartiallyAppliedGetAll[IO,Currency] = stub[flightdatabase.partial.PartiallyAppliedGetAll[IO, Currency]]
-  override val mockGetBy: PartiallyAppliedGetBy[IO,Currency] = stub[flightdatabase.partial.PartiallyAppliedGetBy[IO, Currency]]
+  override val mockGetAll: PartiallyAppliedGetAll[IO, Currency] =
+    stub[flightdatabase.partial.PartiallyAppliedGetAll[IO, Currency]]
+
+  override val mockGetBy: PartiallyAppliedGetBy[IO, Currency] =
+    stub[flightdatabase.partial.PartiallyAppliedGetBy[IO, Currency]]
 
   val table: TableBase[Currency] = Currency.currencyTableBase
   val modelDecoder: Decoder[Currency] = Decoder[Currency]
@@ -46,12 +49,14 @@ final class CurrencyEndpointsTest
     FieldFixture("id", 1L, Operator.In, LongType)
   )
 
-  def existsStub: StubFunction1[Long,IO[Boolean]] = mockAlgebra.doesCurrencyExist _
-  def getByIdStub: StubFunction1[Long,IO[ApiResult[Currency]]] = mockAlgebra.getCurrency _
-  def createStub: StubFunction1[CurrencyCreate,IO[ApiResult[Long]]] = mockAlgebra.createCurrency _
-  def updateStub: StubFunction1[Currency,IO[ApiResult[Long]]] = mockAlgebra.updateCurrency _
-  def patchStub: StubFunction2[Long,CurrencyPatch,IO[ApiResult[Currency]]] = mockAlgebra.partiallyUpdateCurrency _
-  def removeStub: StubFunction1[Long,IO[ApiResult[Unit]]] = mockAlgebra.removeCurrency _
+  def existsStub: StubFunction1[Long, IO[Boolean]] = mockAlgebra.doesCurrencyExist _
+  def getByIdStub: StubFunction1[Long, IO[ApiResult[Currency]]] = mockAlgebra.getCurrency _
+  def createStub: StubFunction1[CurrencyCreate, IO[ApiResult[Long]]] = mockAlgebra.createCurrency _
+  def updateStub: StubFunction1[Currency, IO[ApiResult[Long]]] = mockAlgebra.updateCurrency _
+
+  def patchStub: StubFunction2[Long, CurrencyPatch, IO[ApiResult[Currency]]] =
+    mockAlgebra.partiallyUpdateCurrency _
+  def removeStub: StubFunction1[Long, IO[ApiResult[Unit]]] = mockAlgebra.removeCurrency _
 
   def armGetAll(): Unit = (() => mockAlgebra.getCurrencies).when().returns(mockGetAll)
   def armGetBy(): Unit = (() => mockAlgebra.getCurrenciesBy).when().returns(mockGetBy)

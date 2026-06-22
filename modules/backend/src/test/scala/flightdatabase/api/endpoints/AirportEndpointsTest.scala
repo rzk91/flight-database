@@ -22,8 +22,11 @@ final class AirportEndpointsTest extends EntityEndpointsSpec[Airport, AirportCre
   val mockAlgebra: AirportAlgebra[IO] = stub[AirportAlgebra[IO]]
   override val api: Endpoints[IO] = AirportEndpoints[IO]("/airports", mockAlgebra)
 
-  override val mockGetAll: PartiallyAppliedGetAll[IO,Airport] = stub[PartiallyAppliedGetAll[IO, Airport]]
-  override val mockGetBy: PartiallyAppliedGetBy[IO,Airport] = stub[PartiallyAppliedGetBy[IO, Airport]]
+  override val mockGetAll: PartiallyAppliedGetAll[IO, Airport] =
+    stub[PartiallyAppliedGetAll[IO, Airport]]
+
+  override val mockGetBy: PartiallyAppliedGetBy[IO, Airport] =
+    stub[PartiallyAppliedGetBy[IO, Airport]]
 
   val table: TableBase[Airport] = Airport.airportTableBase
   val modelDecoder: Decoder[Airport] = Decoder[Airport]
@@ -96,12 +99,14 @@ final class AirportEndpointsTest extends EntityEndpointsSpec[Airport, AirportCre
     FieldFixture("country_code", 49, Operator.GreaterThan, IntType)
   )
 
-  def existsStub: StubFunction1[Long,IO[Boolean]] = mockAlgebra.doesAirportExist _
-  def getByIdStub: StubFunction1[Long,IO[ApiResult[Airport]]] = mockAlgebra.getAirport _
-  def createStub: StubFunction1[AirportCreate,IO[ApiResult[Long]]] = mockAlgebra.createAirport _
-  def updateStub: StubFunction1[Airport,IO[ApiResult[Long]]] = mockAlgebra.updateAirport _
-  def patchStub: StubFunction2[Long,AirportPatch,IO[ApiResult[Airport]]] = mockAlgebra.partiallyUpdateAirport _
-  def removeStub: StubFunction1[Long,IO[ApiResult[Unit]]] = mockAlgebra.removeAirport _
+  def existsStub: StubFunction1[Long, IO[Boolean]] = mockAlgebra.doesAirportExist _
+  def getByIdStub: StubFunction1[Long, IO[ApiResult[Airport]]] = mockAlgebra.getAirport _
+  def createStub: StubFunction1[AirportCreate, IO[ApiResult[Long]]] = mockAlgebra.createAirport _
+  def updateStub: StubFunction1[Airport, IO[ApiResult[Long]]] = mockAlgebra.updateAirport _
+
+  def patchStub: StubFunction2[Long, AirportPatch, IO[ApiResult[Airport]]] =
+    mockAlgebra.partiallyUpdateAirport _
+  def removeStub: StubFunction1[Long, IO[ApiResult[Unit]]] = mockAlgebra.removeAirport _
 
   def armGetAll(): Unit = (() => mockAlgebra.getAirports).when().returns(mockGetAll)
   def armGetBy(): Unit = (() => mockAlgebra.getAirportsBy).when().returns(mockGetBy)

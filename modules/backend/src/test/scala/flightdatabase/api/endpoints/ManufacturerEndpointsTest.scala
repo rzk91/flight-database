@@ -23,8 +23,11 @@ final class ManufacturerEndpointsTest
   val mockAlgebra: ManufacturerAlgebra[IO] = stub[ManufacturerAlgebra[IO]]
   override val api: Endpoints[IO] = ManufacturerEndpoints[IO]("/manufacturers", mockAlgebra)
 
-  override val mockGetAll: PartiallyAppliedGetAll[IO,Manufacturer] = stub[PartiallyAppliedGetAll[IO, Manufacturer]]
-  override val mockGetBy: PartiallyAppliedGetBy[IO,Manufacturer] = stub[PartiallyAppliedGetBy[IO, Manufacturer]]
+  override val mockGetAll: PartiallyAppliedGetAll[IO, Manufacturer] =
+    stub[PartiallyAppliedGetAll[IO, Manufacturer]]
+
+  override val mockGetBy: PartiallyAppliedGetBy[IO, Manufacturer] =
+    stub[PartiallyAppliedGetBy[IO, Manufacturer]]
 
   val table: TableBase[Manufacturer] = Manufacturer.manufacturerTableBase
   val modelDecoder: Decoder[Manufacturer] = Decoder[Manufacturer]
@@ -57,12 +60,18 @@ final class ManufacturerEndpointsTest
     FieldFixture("country_code", 49, Operator.GreaterThan, IntType)
   )
 
-  def existsStub: StubFunction1[Long,IO[Boolean]] = mockAlgebra.doesManufacturerExist _
-  def getByIdStub: StubFunction1[Long,IO[ApiResult[Manufacturer]]] = mockAlgebra.getManufacturer _
-  def createStub: StubFunction1[ManufacturerCreate,IO[ApiResult[Long]]] = mockAlgebra.createManufacturer _
-  def updateStub: StubFunction1[Manufacturer,IO[ApiResult[Long]]] = mockAlgebra.updateManufacturer _
-  def patchStub: StubFunction2[Long,ManufacturerPatch,IO[ApiResult[Manufacturer]]] = mockAlgebra.partiallyUpdateManufacturer _
-  def removeStub: StubFunction1[Long,IO[ApiResult[Unit]]] = mockAlgebra.removeManufacturer _
+  def existsStub: StubFunction1[Long, IO[Boolean]] = mockAlgebra.doesManufacturerExist _
+  def getByIdStub: StubFunction1[Long, IO[ApiResult[Manufacturer]]] = mockAlgebra.getManufacturer _
+
+  def createStub: StubFunction1[ManufacturerCreate, IO[ApiResult[Long]]] =
+    mockAlgebra.createManufacturer _
+
+  def updateStub: StubFunction1[Manufacturer, IO[ApiResult[Long]]] =
+    mockAlgebra.updateManufacturer _
+
+  def patchStub: StubFunction2[Long, ManufacturerPatch, IO[ApiResult[Manufacturer]]] =
+    mockAlgebra.partiallyUpdateManufacturer _
+  def removeStub: StubFunction1[Long, IO[ApiResult[Unit]]] = mockAlgebra.removeManufacturer _
 
   def armGetAll(): Unit = (() => mockAlgebra.getManufacturers).when().returns(mockGetAll)
   def armGetBy(): Unit = (() => mockAlgebra.getManufacturersBy).when().returns(mockGetBy)

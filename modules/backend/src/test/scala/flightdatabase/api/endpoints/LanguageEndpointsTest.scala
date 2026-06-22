@@ -23,8 +23,11 @@ final class LanguageEndpointsTest
   val mockAlgebra: LanguageAlgebra[IO] = stub[LanguageAlgebra[IO]]
   override val api: Endpoints[IO] = LanguageEndpoints[IO]("/languages", mockAlgebra)
 
-  override val mockGetAll: PartiallyAppliedGetAll[IO,Language] = stub[PartiallyAppliedGetAll[IO, Language]]
-  override val mockGetBy: PartiallyAppliedGetBy[IO,Language] = stub[PartiallyAppliedGetBy[IO, Language]]
+  override val mockGetAll: PartiallyAppliedGetAll[IO, Language] =
+    stub[PartiallyAppliedGetAll[IO, Language]]
+
+  override val mockGetBy: PartiallyAppliedGetBy[IO, Language] =
+    stub[PartiallyAppliedGetBy[IO, Language]]
 
   val table: TableBase[Language] = Language.languageTableBase
   val modelDecoder: Decoder[Language] = Decoder[Language]
@@ -49,12 +52,14 @@ final class LanguageEndpointsTest
     FieldFixture("id", 1L, Operator.In, LongType)
   )
 
-  def existsStub: StubFunction1[Long,IO[Boolean]] = mockAlgebra.doesLanguageExist _
-  def getByIdStub: StubFunction1[Long,IO[ApiResult[Language]]] = mockAlgebra.getLanguage _
-  def createStub: StubFunction1[LanguageCreate,IO[ApiResult[Long]]] = mockAlgebra.createLanguage _
-  def updateStub: StubFunction1[Language,IO[ApiResult[Long]]] = mockAlgebra.updateLanguage _
-  def patchStub: StubFunction2[Long,LanguagePatch,IO[ApiResult[Language]]] = mockAlgebra.partiallyUpdateLanguage _
-  def removeStub: StubFunction1[Long,IO[ApiResult[Unit]]] = mockAlgebra.removeLanguage _
+  def existsStub: StubFunction1[Long, IO[Boolean]] = mockAlgebra.doesLanguageExist _
+  def getByIdStub: StubFunction1[Long, IO[ApiResult[Language]]] = mockAlgebra.getLanguage _
+  def createStub: StubFunction1[LanguageCreate, IO[ApiResult[Long]]] = mockAlgebra.createLanguage _
+  def updateStub: StubFunction1[Language, IO[ApiResult[Long]]] = mockAlgebra.updateLanguage _
+
+  def patchStub: StubFunction2[Long, LanguagePatch, IO[ApiResult[Language]]] =
+    mockAlgebra.partiallyUpdateLanguage _
+  def removeStub: StubFunction1[Long, IO[ApiResult[Unit]]] = mockAlgebra.removeLanguage _
 
   def armGetAll(): Unit = (() => mockAlgebra.getLanguages).when().returns(mockGetAll)
   def armGetBy(): Unit = (() => mockAlgebra.getLanguagesBy).when().returns(mockGetBy)
