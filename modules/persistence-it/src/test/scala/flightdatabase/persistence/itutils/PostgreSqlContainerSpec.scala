@@ -1,4 +1,4 @@
-package flightdatabase.itutils
+package flightdatabase.persistence.itutils
 
 import cats.effect.Async
 import com.dimafeng.testcontainers.ForAllTestContainer
@@ -23,7 +23,7 @@ trait PostgreSqlContainerSpec[F[_]] extends AnyFlatSpec with ForAllTestContainer
 
   final lazy val testConfig: DatabaseConfig = defaultTestConfig.copy(
     driver = container.driverClassName,
-    baseUrl = container.jdbcUrl.stripSuffix(s"/${defaultTestConfig.dbName}")
+    baseUrl = s"jdbc:postgresql://${container.host}:${container.firstMappedPort}"
   )
 
   final lazy val transactor: Transactor[F] =

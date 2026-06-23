@@ -13,10 +13,10 @@ import flightdatabase.InvalidValueType
 import flightdatabase.Operator
 import flightdatabase.SqlError
 import flightdatabase.ValidatedSortAndLimit
-import flightdatabase.itutils.RepositoryCheck
 import flightdatabase.language.Language
 import flightdatabase.language.LanguageCreate
 import flightdatabase.language.LanguagePatch
+import flightdatabase.persistence.itutils.RepositoryCheck
 import flightdatabase.test.syntax.all._
 import org.scalatest.Inspectors.forAll
 

@@ -16,7 +16,7 @@ import flightdatabase.ValidatedSortAndLimit
 import flightdatabase.currency.Currency
 import flightdatabase.currency.CurrencyCreate
 import flightdatabase.currency.CurrencyPatch
-import flightdatabase.itutils.RepositoryCheck
+import flightdatabase.persistence.itutils.RepositoryCheck
 import flightdatabase.test.syntax.all._
 import org.scalatest.Inspectors.forAll
 

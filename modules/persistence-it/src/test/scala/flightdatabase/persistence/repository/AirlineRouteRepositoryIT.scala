@@ -16,7 +16,7 @@ import flightdatabase.ValidatedSortAndLimit
 import flightdatabase.airline_route.AirlineRoute
 import flightdatabase.airline_route.AirlineRouteCreate
 import flightdatabase.airline_route.AirlineRoutePatch
-import flightdatabase.itutils.RepositoryCheck
+import flightdatabase.persistence.itutils.RepositoryCheck
 import flightdatabase.test.syntax.all._
 import org.scalatest.Inspectors.forAll
 

@@ -14,10 +14,10 @@ import flightdatabase.InvalidField
 import flightdatabase.InvalidValueType
 import flightdatabase.Operator
 import flightdatabase.ValidatedSortAndLimit
-import flightdatabase.itutils.RepositoryCheck
 import flightdatabase.manufacturer.Manufacturer
 import flightdatabase.manufacturer.ManufacturerCreate
 import flightdatabase.manufacturer.ManufacturerPatch
+import flightdatabase.persistence.itutils.RepositoryCheck
 import flightdatabase.test.syntax.all._
 import org.scalatest.Inspectors.forAll
 

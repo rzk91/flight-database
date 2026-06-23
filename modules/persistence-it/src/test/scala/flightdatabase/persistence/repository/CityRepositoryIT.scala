@@ -17,7 +17,7 @@ import flightdatabase.ValidatedSortAndLimit
 import flightdatabase.city.City
 import flightdatabase.city.CityCreate
 import flightdatabase.city.CityPatch
-import flightdatabase.itutils.RepositoryCheck
+import flightdatabase.persistence.itutils.RepositoryCheck
 import flightdatabase.test.syntax.all._
 import org.scalatest.Inspectors.forAll
 

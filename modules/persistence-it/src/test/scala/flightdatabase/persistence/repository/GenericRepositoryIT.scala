@@ -8,7 +8,7 @@ import flightdatabase.FieldValues
 import flightdatabase.Operator
 import flightdatabase.city.City
 import flightdatabase.country.Country
-import flightdatabase.itutils.RepositoryCheck
+import flightdatabase.persistence.itutils.RepositoryCheck
 import flightdatabase.persistence.syntax.all._
 import flightdatabase.test.syntax.all._
 

@@ -16,7 +16,7 @@ import flightdatabase.ValidatedSortAndLimit
 import flightdatabase.airplane.Airplane
 import flightdatabase.airplane.AirplaneCreate
 import flightdatabase.airplane.AirplanePatch
-import flightdatabase.itutils.RepositoryCheck
+import flightdatabase.persistence.itutils.RepositoryCheck
 import flightdatabase.test.syntax.all._
 import org.scalatest.Inspectors.forAll
 
