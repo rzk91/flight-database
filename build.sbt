@@ -88,17 +88,17 @@ val itDependencies = Seq(
   "com.dimafeng"  %% "testcontainers-scala-postgresql" % testcontainersVersion % "test"
 )
 
-lazy val core = project
-  .in(file("modules/core"))
+lazy val domain = project
+  .in(file("modules/domain"))
   .settings(
-    name := "flight-database-core",
+    name := "flight-database-domain",
     commonSettings,
     libraryDependencies ++= circeDependencies ++ doobieDependencies ++ enumerationDependencies ++ testingDependencies
   )
 
 lazy val utils = project
   .in(file("modules/utils"))
-  .dependsOn(core)
+  .dependsOn(domain)
   .settings(
     name := "flight-database-utils",
     commonSettings,
@@ -107,7 +107,7 @@ lazy val utils = project
 
 lazy val backend = project
   .in(file("modules/backend"))
-  .dependsOn(core, utils)
+  .dependsOn(domain, utils)
   .settings(
     name := "flight-database-backend",
     commonSettings,
@@ -128,7 +128,7 @@ lazy val backendIt = project
 // TODO: Add frontend module
 
 lazy val root = (project in file("."))
-  .aggregate(core, utils, backend, backendIt)
+  .aggregate(domain, utils, backend, backendIt)
   .settings(
     name := "flight-database",
     commonSettings
