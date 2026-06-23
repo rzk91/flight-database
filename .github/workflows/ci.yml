@@ -35,12 +35,12 @@ jobs:
       - *checkout
       - *setup-java
       - *setup-sbt
-      - name: Run core tests
-        run: sbt core/test
-      - name: Run utils tests
-        run: sbt utils/test
-      - name: Run backend tests
-        run: sbt backend/test
+      - name: Run domain tests
+        run: sbt domain/test
+      - name: Run syntax tests
+        run: sbt syntax/test
+      - name: Run api tests
+        run: sbt api/test
 
   integration-test:
     name: Integration Tests
@@ -50,5 +50,5 @@ jobs:
       - *checkout
       - *setup-java
       - *setup-sbt
-      - name: Run integration tests
-        run: sbt backendIt/test
+      - name: Run persistence integration tests
+        run: sbt persistenceIt/test

@@ -1,0 +1,179 @@
+package flightdatabase.persistence.repository.queries
+
+import cats.data.{NonEmptyList => Nel}
+import flightdatabase.Operator
+import flightdatabase.ResultOrder
+import flightdatabase.ValidatedSortAndLimit
+import flightdatabase.airplane.AirplaneCreate
+import flightdatabase.airport.Airport
+import flightdatabase.city.City
+import flightdatabase.country.Country
+import flightdatabase.itutils.DbChecker
+import flightdatabase.manufacturer.Manufacturer
+
+// TODO: Checks are incomplete (e.g. insert, update, failure checks, etc. are missing)
+final class DomainSpecificQueryIT extends DbChecker {
+
+  val emptySortAndLimit: ValidatedSortAndLimit = ValidatedSortAndLimit.empty
+
+  val someSortAndLimit: ValidatedSortAndLimit =
+    ValidatedSortAndLimit(Some("name"), Some(ResultOrder.Ascending), Some(1), Some(0))
+
+  // Airplane checks
+  "All airplane queries" should "work correctly" in {
+    check(AirplaneQueries.airplaneExists(1))
+    check(AirplaneQueries.selectAllAirplanes(emptySortAndLimit))
+    check(AirplaneQueries.selectAllAirplanes(someSortAndLimit))
+    check(AirplaneQueries.selectAirplanesBy("id", Nel.one(1L), Operator.Equals, emptySortAndLimit))
+    check(
+      AirplaneQueries
+        .selectAirplanesByExternal[Manufacturer, String](
+          "name",
+          Nel.one("Airbus"),
+          Operator.Equals,
+          emptySortAndLimit
+        )
+    )
+    check(AirplaneQueries.insertAirplane(AirplaneCreate(None, "Boeing 747", 2, 416, 13400)))
+    check(AirplaneQueries.deleteAirplane(1))
+  }
+
+  // Airport checks
+  "All airport queries" should "work correctly" in {
+    check(AirportQueries.selectAllAirports(emptySortAndLimit))
+    check(AirportQueries.selectAllAirports(someSortAndLimit))
+    check(AirportQueries.selectAirportsBy("id", Nel.one(1L), Operator.Equals, emptySortAndLimit))
+    check(
+      AirportQueries
+        .selectAllAirportsByExternal[City, String](
+          "name",
+          Nel.one("Bangalore"),
+          Operator.Equals,
+          emptySortAndLimit
+        )
+    )
+    check(AirportQueries.deleteAirport(1))
+  }
+
+  // City checks
+  "All city queries" should "work correctly" in {
+    check(CityQueries.selectAllCities(emptySortAndLimit))
+    check(CityQueries.selectAllCities(someSortAndLimit))
+    check(CityQueries.selectCitiesBy("id", Nel.one(1L), Operator.Equals, emptySortAndLimit))
+    check(
+      CityQueries
+        .selectCitiesByExternal[Country, String](
+          "name",
+          Nel.one("Germany"),
+          Operator.Equals,
+          emptySortAndLimit
+        )
+    )
+    check(CityQueries.deleteCity(1))
+  }
+
+  // Country checks
+  "All country queries" should "work correctly" in {
+    check(CountryQueries.selectAllCountries(emptySortAndLimit))
+    check(CountryQueries.selectAllCountries(someSortAndLimit))
+    check(CountryQueries.selectCountriesBy("id", Nel.one(1L), Operator.Equals, emptySortAndLimit))
+    check(CountryQueries.deleteCountry(1))
+  }
+
+  // Currency checks
+  "All currency queries" should "work correctly" in {
+    check(CurrencyQueries.selectAllCurrencies(emptySortAndLimit))
+    check(CurrencyQueries.selectAllCurrencies(someSortAndLimit))
+    check(CurrencyQueries.deleteCurrency(1))
+  }
+
+  // Airline checks
+  "All airline queries" should "work correctly" in {
+    check(AirlineQueries.selectAllAirlines(emptySortAndLimit))
+    check(AirlineQueries.selectAllAirlines(someSortAndLimit))
+    check(AirlineQueries.deleteAirline(1))
+  }
+
+  // AirlineAirplane checks
+  "All airline airplane queries" should "work correctly" in {
+    check(AirlineAirplaneQueries.selectAllAirlineAirplanes(emptySortAndLimit))
+    check(
+      AirlineAirplaneQueries
+        .selectAllAirlineAirplanes(someSortAndLimit.copy(sortBy = Some("airplane_id")))
+    )
+    check(AirlineAirplaneQueries.deleteAirlineAirplane(1))
+  }
+
+  // AirlineCity checks
+  "All airline city queries" should "work correctly" in {
+    check(AirlineCityQueries.selectAllAirlineCities(emptySortAndLimit))
+    check(
+      AirlineCityQueries.selectAllAirlineCities(someSortAndLimit.copy(sortBy = Some("city_id")))
+    )
+    check(
+      AirlineCityQueries
+        .selectAirlineCitiesBy("id", Nel.one(1L), Operator.Equals, emptySortAndLimit)
+    )
+    check(
+      AirlineCityQueries
+        .selectAirlineCityByExternal[City, String](
+          "name",
+          Nel.one("Frankfurt am Main"),
+          Operator.Equals,
+          emptySortAndLimit
+        )
+    )
+    check(AirlineCityQueries.deleteAirlineCity(1))
+  }
+
+  // AirlineRoute checks
+  "All airline route queries" should "work correctly" in {
+    check(AirlineRouteQueries.selectAllAirlineRoutes(emptySortAndLimit))
+    check(
+      AirlineRouteQueries
+        .selectAllAirlineRoutes(someSortAndLimit.copy(sortBy = Some("route_number")))
+    )
+    check(
+      AirlineRouteQueries
+        .selectAirlineRouteBy("id", Nel.one(1L), Operator.Equals, emptySortAndLimit)
+    )
+    check(
+      AirlineRouteQueries
+        .selectAirlineRoutesByExternal[Airport, String](
+          "iata",
+          Nel.one("FRA"),
+          Operator.Equals,
+          emptySortAndLimit,
+          Some("start_airport_id")
+        )
+    )
+    check(AirlineRouteQueries.deleteAirlineRoute(1))
+  }
+
+  // Language checks
+  "All language queries" should "work correctly" in {
+    check(LanguageQueries.selectAllLanguages(emptySortAndLimit))
+    check(LanguageQueries.selectAllLanguages(someSortAndLimit))
+    check(LanguageQueries.deleteLanguage(1))
+  }
+
+  // Manufacturer checks
+  "All manufacturer queries" should "work correctly" in {
+    check(ManufacturerQueries.selectAllManufacturers(emptySortAndLimit))
+    check(ManufacturerQueries.selectAllManufacturers(someSortAndLimit))
+    check(
+      ManufacturerQueries
+        .selectManufacturersBy("id", Nel.one(1L), Operator.Equals, emptySortAndLimit)
+    )
+    check(
+      ManufacturerQueries
+        .selectManufacturersByCity[City, String](
+          "name",
+          Nel.one("Leiden"),
+          Operator.Equals,
+          emptySortAndLimit
+        )
+    )
+    check(ManufacturerQueries.deleteManufacturer(1))
+  }
+}
