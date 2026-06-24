@@ -69,7 +69,7 @@ Module path + sbt name only; package stayed `flightdatabase.*`.
 - `path` stays in `syntax` for now (JVM-only; leaves with the future ETL/feed module).
 - `all.scala` → per-module orthogonal `all` aggregators.
 
-### Step 5 — Purge doobie from `domain` (`FieldType[V]`)  ⬜ not started (next)
+### Step 5 — Purge doobie from `domain` (`FieldType[V]`)  ✅ done
 - `FieldType` → `FieldType[V]` GADT; partial traits take `FieldType[V]` explicitly instead of `Put`/`Read`.
 - `FieldFixture`: drop `Put`/`Read`, keep `Decoder`, promote `fieldType` to `FieldType[V]`.
 - `Endpoints`: `f[String](…)` → `f(…, StringType)`.
@@ -85,8 +85,10 @@ Module path + sbt name only; package stayed `flightdatabase.*`.
 
 ## Status
 
-Steps 1–4 complete. `sbt clean Test/compile` is green across all 7 modules
-(domain, syntax, testkit, persistence, api, app, persistence-it) — main + tests.
+**Steps 1–5 complete — the restructure is finished.** `sbt clean Test/compile` is green across all
+7 modules (domain, syntax, testkit, persistence, api, app, persistence-it; main + tests), both CI lint
+gates (`scalafmtCheckAll`, `scalafixAll --check`) pass, 583 unit tests pass, and the integration tests
+pass. `domain` is fully doobie-free.
 
 Notable details from the migration:
 - `domain` already holds `Repositories[F]` (algebra bundle); `RepositoryContainer extends Repositories[F]`;
@@ -101,11 +103,12 @@ Notable details from the migration:
   JSON seed moved to `persistence/src/main/resources/db`. `log4j.properties`→app. IT `application.conf`→persistence-it.
 - `PostgreSqlContainerSpec` now uses `DatabaseConfig.loadUnsafe` (drops http4s from the IT path).
 
-### Caveat to verify when running (not compile-checked)
-- The IT `application.conf` (`modules/persistence-it/src/test/resources`) sets `db-config.url` directly,
-  whereas `DatabaseConfig` expects `base-url` + `db-name` (with a derived `url`). This predates the
-  restructure; confirm `DatabaseConfig.loadUnsafe` resolves it (pureconfig unknown-key handling) when
-  running the ITs under Docker.
+### Resolved
+- The IT `application.conf` now sets only `db-name` + credentials (no raw `url`); `PostgreSqlContainerSpec`
+  builds the JDBC URL from the container's mapped host/port. ITs pass under Docker.
 
-### Step 5 (remaining)
-`FieldType[V]` GADT + drop doobie from `domain` + `putFor`/`readFor` bridge in `persistence`. Not started.
+### Step 5 (done)
+`FieldType` is now a GADT (`FieldType[A]`); the `partial` traits take an explicit `FieldType[V]` instead of
+`Put`/`Read` context bounds; the `FieldTypeOps` bridge in `persistence.syntax` maps `FieldType[V]` →
+`Put`/`Read` via a GADT match; repositories, `Endpoints`, `FieldFixture`, and the repository ITs thread the
+`FieldType` through. `domain` no longer depends on doobie.
