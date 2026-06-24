@@ -8,14 +8,12 @@ import doobie.implicits._
 import flightdatabase._
 import flightdatabase.persistence.repository.queries._
 import flightdatabase.persistence.syntax.query._
+import flightdatabase.persistence.syntax.sortandlimit._
 
 package object repository {
 
   // Helper methods to access DB
-  def getFieldList[S: TableBase, V: Read](field: String): ConnectionIO[ApiResult[Nel[V]]] =
-    selectFragment[S](field).query[V].asNel(Some(field))
-
-  def getFieldList2[S: TableBase, V: Read](
+  def getFieldList[S: TableBase, V: Read](
     sortAndLimit: ValidatedSortAndLimit,
     field: String
   ): ConnectionIO[ApiResult[Nel[V]]] =

@@ -9,8 +9,16 @@ import com.ibm.icu.util.TimeZone
 import doobie.Put
 import doobie.Read
 import doobie.Transactor
+import flightdatabase.ApiError
+import flightdatabase.ApiOutput
+import flightdatabase.ApiResult
+import flightdatabase.EntryHasInvalidForeignKey
+import flightdatabase.EntryNotFound
+import flightdatabase.FieldType
+import flightdatabase.Got
+import flightdatabase.InvalidTimezone
 import flightdatabase.Operator
-import flightdatabase._
+import flightdatabase.ValidatedSortAndLimit
 import flightdatabase.city.City
 import flightdatabase.city.CityAlgebra
 import flightdatabase.city.CityCreate
@@ -112,40 +120,49 @@ object CityRepository {
     override def apply(sortAndLimit: ValidatedSortAndLimit): F[ApiResult[Nel[City]]] =
       selectAllCities(sortAndLimit).asNel().execute
 
-    override def apply[V: Read](
+    override def apply[V](
       sortAndLimit: ValidatedSortAndLimit,
-      returnField: String
-    ): F[ApiResult[Nel[V]]] =
-      getFieldList2[City, V](sortAndLimit, returnField).execute
+      returnField: String,
+      fieldType: FieldType[V]
+    ): F[ApiResult[Nel[V]]] = {
+      implicit val read: Read[V] = fieldType.asRead
+      getFieldList[City, V](sortAndLimit, returnField).execute
+    }
   }
 
   private class PartiallyAppliedGetByCity[F[_]: Concurrent](
     implicit transactor: Transactor[F]
   ) extends PartiallyAppliedGetBy[F, City] {
 
-    override def apply[V: Put](
+    override def apply[V](
       field: String,
       values: Nel[V],
       operator: Operator,
-      sortAndLimit: ValidatedSortAndLimit
-    ): F[ApiResult[Nel[City]]] =
+      sortAndLimit: ValidatedSortAndLimit,
+      fieldType: FieldType[V]
+    ): F[ApiResult[Nel[City]]] = {
+      implicit val put: Put[V] = fieldType.asPut
       selectCitiesBy(field, values, operator, sortAndLimit)
         .asNel(Some(field), Some(values))
         .execute
+    }
   }
 
   private class PartiallyAppliedGetByCountry[F[_]: Concurrent](
     implicit transactor: Transactor[F]
   ) extends PartiallyAppliedGetBy[F, City] {
 
-    override def apply[V: Put](
+    override def apply[V](
       field: String,
       values: Nel[V],
       operator: Operator,
-      sortAndLimit: ValidatedSortAndLimit
-    ): F[ApiResult[Nel[City]]] =
+      sortAndLimit: ValidatedSortAndLimit,
+      fieldType: FieldType[V]
+    ): F[ApiResult[Nel[City]]] = {
+      implicit val put: Put[V] = fieldType.asPut
       selectCitiesByExternal[Country, V](field, values, operator, sortAndLimit)
         .asNel(Some(field), Some(values))
         .execute
+    }
   }
 }

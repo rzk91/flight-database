@@ -9,6 +9,7 @@ import doobie.Put
 import doobie.Read
 import doobie.Transactor
 import flightdatabase.ApiResult
+import flightdatabase.FieldType
 import flightdatabase.Operator
 import flightdatabase.ValidatedSortAndLimit
 import flightdatabase.airline.Airline
@@ -80,40 +81,49 @@ object AirlineRepository {
     override def apply(sortAndLimit: ValidatedSortAndLimit): F[ApiResult[Nel[Airline]]] =
       selectAllAirlines(sortAndLimit).asNel().execute
 
-    override def apply[V: Read](
+    override def apply[V](
       sortAndLimit: ValidatedSortAndLimit,
-      returnField: String
-    ): F[ApiResult[Nel[V]]] =
-      getFieldList2[Airline, V](sortAndLimit, returnField).execute
+      returnField: String,
+      fieldType: FieldType[V]
+    ): F[ApiResult[Nel[V]]] = {
+      implicit val read: Read[V] = fieldType.asRead
+      getFieldList[Airline, V](sortAndLimit, returnField).execute
+    }
   }
 
   private class PartiallyAppliedGetByAirline[F[_]: Concurrent](
     implicit transactor: Transactor[F]
   ) extends PartiallyAppliedGetBy[F, Airline] {
 
-    override def apply[V: Put](
+    override def apply[V](
       field: String,
       values: Nel[V],
       operator: Operator,
-      sortAndLimit: ValidatedSortAndLimit
-    ): F[ApiResult[Nel[Airline]]] =
+      sortAndLimit: ValidatedSortAndLimit,
+      fieldType: FieldType[V]
+    ): F[ApiResult[Nel[Airline]]] = {
+      implicit val put: Put[V] = fieldType.asPut
       selectAirlineBy(field, values, operator, sortAndLimit)
         .asNel(Some(field), Some(values))
         .execute
+    }
   }
 
   private class PartiallyAppliedGetByCountry[F[_]: Concurrent](
     implicit transactor: Transactor[F]
   ) extends PartiallyAppliedGetBy[F, Airline] {
 
-    override def apply[V: Put](
+    override def apply[V](
       field: String,
       values: Nel[V],
       operator: Operator,
-      sortAndLimit: ValidatedSortAndLimit
-    ): F[ApiResult[Nel[Airline]]] =
+      sortAndLimit: ValidatedSortAndLimit,
+      fieldType: FieldType[V]
+    ): F[ApiResult[Nel[Airline]]] = {
+      implicit val put: Put[V] = fieldType.asPut
       selectAirlineByCountry(field, values, operator, sortAndLimit)
         .asNel(Some(field), Some(values))
         .execute
+    }
   }
 }

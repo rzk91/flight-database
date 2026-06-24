@@ -9,6 +9,7 @@ import doobie.Put
 import doobie.Read
 import doobie.Transactor
 import flightdatabase.ApiResult
+import flightdatabase.FieldType
 import flightdatabase.Operator
 import flightdatabase.ValidatedSortAndLimit
 import flightdatabase.currency.Currency
@@ -76,25 +77,31 @@ object CurrencyRepository {
     override def apply(sortAndLimit: ValidatedSortAndLimit): F[ApiResult[Nel[Currency]]] =
       selectAllCurrencies(sortAndLimit).asNel().execute
 
-    override def apply[V: Read](
+    override def apply[V](
       sortAndLimit: ValidatedSortAndLimit,
-      returnField: String
-    ): F[ApiResult[Nel[V]]] =
-      getFieldList2[Currency, V](sortAndLimit, returnField).execute
+      returnField: String,
+      fieldType: FieldType[V]
+    ): F[ApiResult[Nel[V]]] = {
+      implicit val read: Read[V] = fieldType.asRead
+      getFieldList[Currency, V](sortAndLimit, returnField).execute
+    }
   }
 
   private class PartiallyAppliedGetByCurrency[F[_]: Concurrent](
     implicit transactor: Transactor[F]
   ) extends PartiallyAppliedGetBy[F, Currency] {
 
-    override def apply[V: Put](
+    override def apply[V](
       field: String,
       values: Nel[V],
       operator: Operator,
-      sortAndLimit: ValidatedSortAndLimit
-    ): F[ApiResult[Nel[Currency]]] =
+      sortAndLimit: ValidatedSortAndLimit,
+      fieldType: FieldType[V]
+    ): F[ApiResult[Nel[Currency]]] = {
+      implicit val put: Put[V] = fieldType.asPut
       selectCurrencyBy(field, values, operator, sortAndLimit)
         .asNel(Some(field), Some(values))
         .execute
+    }
   }
 }

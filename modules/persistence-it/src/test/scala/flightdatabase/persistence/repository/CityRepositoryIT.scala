@@ -9,10 +9,13 @@ import flightdatabase.EntryCheckFailed
 import flightdatabase.EntryHasInvalidForeignKey
 import flightdatabase.EntryListEmpty
 import flightdatabase.EntryNotFound
+import flightdatabase.IntType
 import flightdatabase.InvalidField
 import flightdatabase.InvalidTimezone
 import flightdatabase.InvalidValueType
+import flightdatabase.LongType
 import flightdatabase.Operator
+import flightdatabase.StringType
 import flightdatabase.ValidatedSortAndLimit
 import flightdatabase.city.City
 import flightdatabase.city.CityCreate
@@ -160,20 +163,22 @@ final class CityRepositoryIT extends RepositoryCheck {
 
   it should "only return the requested fields if so required" in {
     repo
-      .getCities[String](emptySortAndLimit, "name")
+      .getCities[String](emptySortAndLimit, "name", StringType)
       .value should contain only (originalCities.map(_.name).toList: _*)
     repo
-      .getCities[Long](emptySortAndLimit, "population")
+      .getCities[Long](emptySortAndLimit, "population", LongType)
       .value should contain only (originalCities.map(_.population).toList: _*)
   }
 
   it should "sort and return the requested fields if so required" in {
     val names =
-      repo.getCities[String](ValidatedSortAndLimit.sortAscending("name"), "name").value
+      repo.getCities[String](ValidatedSortAndLimit.sortAscending("name"), "name", StringType).value
     names shouldBe originalCities.map(_.name).sorted
 
     val populationsDesc =
-      repo.getCities[Long](ValidatedSortAndLimit.sortDescending("population"), "population").value
+      repo
+        .getCities[Long](ValidatedSortAndLimit.sortDescending("population"), "population", LongType)
+        .value
     populationsDesc shouldBe originalCities.map(_.population).sorted.reverse
   }
 
@@ -189,9 +194,9 @@ final class CityRepositoryIT extends RepositoryCheck {
 
   "Selecting a city by other fields" should "return the corresponding entries" in {
     def cityByName(name: String): IO[ApiResult[Nel[City]]] =
-      repo.getCitiesBy("name", Nel.one(name), Operator.Equals, emptySortAndLimit)
+      repo.getCitiesBy("name", Nel.one(name), Operator.Equals, emptySortAndLimit, StringType)
     def cityByCountryId(id: Long): IO[ApiResult[Nel[City]]] =
-      repo.getCitiesBy("country_id", Nel.one(id), Operator.Equals, emptySortAndLimit)
+      repo.getCitiesBy("country_id", Nel.one(id), Operator.Equals, emptySortAndLimit, LongType)
 
     val distinctCountryIds = originalCities.map(_.countryId).distinct
 
@@ -216,7 +221,8 @@ final class CityRepositoryIT extends RepositoryCheck {
         "country_id",
         Nel.one(germanyId),
         Operator.Equals,
-        ValidatedSortAndLimit.sortAscending("name")
+        ValidatedSortAndLimit.sortAscending("name"),
+        LongType
       )
       .value
     sortedByName.toList shouldBe expected.sortBy(_.name)
@@ -226,7 +232,8 @@ final class CityRepositoryIT extends RepositoryCheck {
         "country_id",
         Nel.one(germanyId),
         Operator.Equals,
-        ValidatedSortAndLimit.sortAscending("name").copy(limit = Some(1))
+        ValidatedSortAndLimit.sortAscending("name").copy(limit = Some(1)),
+        LongType
       )
       .value
     limited should contain only expected.minBy(_.name)
@@ -234,7 +241,7 @@ final class CityRepositoryIT extends RepositoryCheck {
 
   "Selecting a city by country name" should "return the corresponding entries" in {
     def cityByCountry(name: String): IO[ApiResult[Nel[City]]] =
-      repo.getCitiesByCountry("name", Nel.one(name), Operator.Equals, emptySortAndLimit)
+      repo.getCitiesByCountry("name", Nel.one(name), Operator.Equals, emptySortAndLimit, StringType)
 
     forAll(countryToIdMap) {
       case (country, id) =>
@@ -254,7 +261,8 @@ final class CityRepositoryIT extends RepositoryCheck {
         "name",
         Nel.one("Germany"),
         Operator.Equals,
-        ValidatedSortAndLimit.sortDescending("name")
+        ValidatedSortAndLimit.sortDescending("name"),
+        StringType
       )
       .value
     sortedByName.toList shouldBe germanyCities.sortBy(_.name).reverse
@@ -264,7 +272,8 @@ final class CityRepositoryIT extends RepositoryCheck {
         "name",
         Nel.one("Germany"),
         Operator.Equals,
-        ValidatedSortAndLimit.sortAscending("name").copy(limit = Some(1))
+        ValidatedSortAndLimit.sortAscending("name").copy(limit = Some(1)),
+        StringType
       )
       .value
     limited should contain only germanyCities.minBy(_.name)
@@ -272,25 +281,61 @@ final class CityRepositoryIT extends RepositoryCheck {
 
   "Selecting a non-existent field" should "return an error" in {
     repo
-      .getCitiesBy(invalidFieldSyntax, Nel.one("value"), Operator.Equals, emptySortAndLimit)
+      .getCitiesBy(
+        invalidFieldSyntax,
+        Nel.one("value"),
+        Operator.Equals,
+        emptySortAndLimit,
+        StringType
+      )
       .error shouldBe sqlErrorInvalidSyntax
     repo
-      .getCitiesByCountry(invalidFieldSyntax, Nel.one("value"), Operator.Equals, emptySortAndLimit)
+      .getCitiesByCountry(
+        invalidFieldSyntax,
+        Nel.one("value"),
+        Operator.Equals,
+        emptySortAndLimit,
+        StringType
+      )
       .error shouldBe sqlErrorInvalidSyntax
     repo
-      .getCitiesBy(invalidFieldColumn, Nel.one("value"), Operator.Equals, emptySortAndLimit)
+      .getCitiesBy(
+        invalidFieldColumn,
+        Nel.one("value"),
+        Operator.Equals,
+        emptySortAndLimit,
+        StringType
+      )
       .error shouldBe InvalidField(invalidFieldColumn)
     repo
-      .getCitiesByCountry(invalidFieldColumn, Nel.one("value"), Operator.Equals, emptySortAndLimit)
+      .getCitiesByCountry(
+        invalidFieldColumn,
+        Nel.one("value"),
+        Operator.Equals,
+        emptySortAndLimit,
+        StringType
+      )
       .error shouldBe InvalidField(invalidFieldColumn)
   }
 
   "Selecting an existing field with an invalid value type" should "return an error" in {
     repo
-      .getCitiesBy("population", Nel.one(invalidLongValue), Operator.Equals, emptySortAndLimit)
+      .getCitiesBy(
+        "population",
+        Nel.one(invalidLongValue),
+        Operator.Equals,
+        emptySortAndLimit,
+        StringType
+      )
       .error shouldBe InvalidValueType(invalidLongValue)
     repo
-      .getCitiesByCountry("name", Nel.one(invalidStringValue), Operator.Equals, emptySortAndLimit)
+      .getCitiesByCountry(
+        "name",
+        Nel.one(invalidStringValue),
+        Operator.Equals,
+        emptySortAndLimit,
+        IntType
+      )
       .error shouldBe InvalidValueType(invalidStringValue.toString)
   }
 
@@ -357,14 +402,20 @@ final class CityRepositoryIT extends RepositoryCheck {
 
   "Updating a city" should "work and return the updated city ID" in {
     val original =
-      repo.getCitiesBy("name", Nel.one(newCity.name), Operator.Equals, emptySortAndLimit).value.head
+      repo
+        .getCitiesBy("name", Nel.one(newCity.name), Operator.Equals, emptySortAndLimit, StringType)
+        .value
+        .head
     val updatedCity = original.copy(population = original.population + 100000)
     repo.updateCity(updatedCity).value shouldBe updatedCity.id
   }
 
   it should "also allow changing the city's name to a non-empty value" in {
     val original =
-      repo.getCitiesBy("name", Nel.one(newCity.name), Operator.Equals, emptySortAndLimit).value.head
+      repo
+        .getCitiesBy("name", Nel.one(newCity.name), Operator.Equals, emptySortAndLimit, StringType)
+        .value
+        .head
     val updatedCity = original.copy(name = updatedName)
     repo.updateCity(updatedCity).value shouldBe updatedCity.id
 
@@ -378,7 +429,10 @@ final class CityRepositoryIT extends RepositoryCheck {
 
   it should "throw an error if we update the timezone to an invalid value" in {
     val original =
-      repo.getCitiesBy("name", Nel.one(updatedName), Operator.Equals, emptySortAndLimit).value.head
+      repo
+        .getCitiesBy("name", Nel.one(updatedName), Operator.Equals, emptySortAndLimit, StringType)
+        .value
+        .head
     val updatedCity = original.copy(timezone = "")
     repo.updateCity(updatedCity).error shouldBe InvalidTimezone("")
 
@@ -389,14 +443,20 @@ final class CityRepositoryIT extends RepositoryCheck {
 
   it should "throw a foreign key error if the country does not exist" in {
     val original =
-      repo.getCitiesBy("name", Nel.one(updatedName), Operator.Equals, emptySortAndLimit).value.head
+      repo
+        .getCitiesBy("name", Nel.one(updatedName), Operator.Equals, emptySortAndLimit, StringType)
+        .value
+        .head
     val updatedCity = original.copy(countryId = idNotPresent)
     repo.updateCity(updatedCity).error shouldBe EntryHasInvalidForeignKey
   }
 
   "Patching a city" should "work and return the updated city ID" in {
     val original =
-      repo.getCitiesBy("name", Nel.one(updatedName), Operator.Equals, emptySortAndLimit).value.head
+      repo
+        .getCitiesBy("name", Nel.one(updatedName), Operator.Equals, emptySortAndLimit, StringType)
+        .value
+        .head
     val patch = CityPatch(name = Some(patchedName))
     val patched = City.fromPatch(original.id, patch, original)
     repo.partiallyUpdateCity(original.id, patch).value shouldBe patched
@@ -409,7 +469,10 @@ final class CityRepositoryIT extends RepositoryCheck {
 
   it should "throw an error if we patch a city with an invalid timezone" in {
     val original =
-      repo.getCitiesBy("name", Nel.one(patchedName), Operator.Equals, emptySortAndLimit).value.head
+      repo
+        .getCitiesBy("name", Nel.one(patchedName), Operator.Equals, emptySortAndLimit, StringType)
+        .value
+        .head
     val patch = CityPatch(timezone = Some(""))
     repo.partiallyUpdateCity(original.id, patch).error shouldBe InvalidTimezone("")
 
@@ -420,14 +483,20 @@ final class CityRepositoryIT extends RepositoryCheck {
 
   it should "throw a foreign key error if the country does not exist" in {
     val original =
-      repo.getCitiesBy("name", Nel.one(patchedName), Operator.Equals, emptySortAndLimit).value.head
+      repo
+        .getCitiesBy("name", Nel.one(patchedName), Operator.Equals, emptySortAndLimit, StringType)
+        .value
+        .head
     val patch = CityPatch(countryId = Some(idNotPresent))
     repo.partiallyUpdateCity(original.id, patch).error shouldBe EntryHasInvalidForeignKey
   }
 
   "Removing a city" should "work correctly" in {
     val cityToRemove =
-      repo.getCitiesBy("name", Nel.one(patchedName), Operator.Equals, emptySortAndLimit).value.head
+      repo
+        .getCitiesBy("name", Nel.one(patchedName), Operator.Equals, emptySortAndLimit, StringType)
+        .value
+        .head
     repo.removeCity(cityToRemove.id).value shouldBe ()
     repo.doesCityExist(cityToRemove.id).unsafeRunSync() shouldBe false
   }

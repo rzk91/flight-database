@@ -10,6 +10,7 @@ import flightdatabase.Operator
 import flightdatabase.ValidatedSortAndLimit
 import flightdatabase.currency.Currency
 import flightdatabase.currency.CurrencyCreate
+import flightdatabase.persistence.syntax.sortandlimit._
 
 private[repository] object CurrencyQueries {
 

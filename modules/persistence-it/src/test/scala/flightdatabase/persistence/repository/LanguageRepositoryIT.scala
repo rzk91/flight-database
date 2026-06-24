@@ -8,10 +8,12 @@ import flightdatabase.EntryAlreadyExists
 import flightdatabase.EntryCheckFailed
 import flightdatabase.EntryListEmpty
 import flightdatabase.EntryNotFound
+import flightdatabase.IntType
 import flightdatabase.InvalidField
 import flightdatabase.InvalidValueType
 import flightdatabase.Operator
 import flightdatabase.SqlError
+import flightdatabase.StringType
 import flightdatabase.ValidatedSortAndLimit
 import flightdatabase.language.Language
 import flightdatabase.language.LanguageCreate
@@ -82,20 +84,24 @@ final class LanguageRepositoryIT extends RepositoryCheck {
 
   it should "only return the requested fields if so required" in {
     repo
-      .getLanguages[String](emptySortAndLimit, "name")
+      .getLanguages[String](emptySortAndLimit, "name", StringType)
       .value should contain only (originalLanguages.map(_.name).toList: _*)
     repo
-      .getLanguages[String](emptySortAndLimit, "iso2")
+      .getLanguages[String](emptySortAndLimit, "iso2", StringType)
       .value should contain only (originalLanguages.map(_.iso2).toList: _*)
   }
 
   it should "sort and return the requested fields if so required" in {
     val languageNames =
-      repo.getLanguages[String](ValidatedSortAndLimit.sortAscending("name"), "name").value
+      repo
+        .getLanguages[String](ValidatedSortAndLimit.sortAscending("name"), "name", StringType)
+        .value
     languageNames shouldBe originalLanguages.map(_.name).sorted
 
     val languageIso2Desc =
-      repo.getLanguages[String](ValidatedSortAndLimit.sortDescending("iso2"), "iso2").value
+      repo
+        .getLanguages[String](ValidatedSortAndLimit.sortDescending("iso2"), "iso2", StringType)
+        .value
     languageIso2Desc shouldBe originalLanguages.map(_.iso2).sorted.reverse
   }
 
@@ -111,16 +117,22 @@ final class LanguageRepositoryIT extends RepositoryCheck {
 
   "Selecting a language by other fields" should "return the corresponding entries" in {
     def languageByName(name: String): IO[ApiResult[Nel[Language]]] =
-      repo.getLanguagesBy("name", Nel.one(name), Operator.Equals, emptySortAndLimit)
+      repo.getLanguagesBy("name", Nel.one(name), Operator.Equals, emptySortAndLimit, StringType)
 
     def languageByIso2(iso2: String): IO[ApiResult[Nel[Language]]] =
-      repo.getLanguagesBy("iso2", Nel.one(iso2), Operator.Equals, emptySortAndLimit)
+      repo.getLanguagesBy("iso2", Nel.one(iso2), Operator.Equals, emptySortAndLimit, StringType)
 
     def languageByIso3(iso3: String): IO[ApiResult[Nel[Language]]] =
-      repo.getLanguagesBy("iso3", Nel.one(iso3), Operator.Equals, emptySortAndLimit)
+      repo.getLanguagesBy("iso3", Nel.one(iso3), Operator.Equals, emptySortAndLimit, StringType)
 
     def languageByOriginalName(name: String): IO[ApiResult[Nel[Language]]] =
-      repo.getLanguagesBy("original_name", Nel.one(name), Operator.Equals, emptySortAndLimit)
+      repo.getLanguagesBy(
+        "original_name",
+        Nel.one(name),
+        Operator.Equals,
+        emptySortAndLimit,
+        StringType
+      )
 
     forAll(originalLanguages) { language =>
       languageByName(language.name).value should contain only language
@@ -140,7 +152,13 @@ final class LanguageRepositoryIT extends RepositoryCheck {
     val expected = originalLanguages.filter(l => isoSet.toList.contains(l.iso2))
 
     val sortedByName = repo
-      .getLanguagesBy("iso2", isoSet, Operator.In, ValidatedSortAndLimit.sortAscending("name"))
+      .getLanguagesBy(
+        "iso2",
+        isoSet,
+        Operator.In,
+        ValidatedSortAndLimit.sortAscending("name"),
+        StringType
+      )
       .value
     sortedByName.toList shouldBe expected.sortBy(_.name)
 
@@ -149,7 +167,8 @@ final class LanguageRepositoryIT extends RepositoryCheck {
         "iso2",
         isoSet,
         Operator.In,
-        ValidatedSortAndLimit.sortAscending("name").copy(limit = Some(1))
+        ValidatedSortAndLimit.sortAscending("name").copy(limit = Some(1)),
+        StringType
       )
       .value
     limited should contain only expected.minBy(_.name)
@@ -157,16 +176,34 @@ final class LanguageRepositoryIT extends RepositoryCheck {
 
   "Selecting a non-existent field" should "return an error" in {
     repo
-      .getLanguagesBy(invalidFieldSyntax, Nel.one("value"), Operator.Equals, emptySortAndLimit)
+      .getLanguagesBy(
+        invalidFieldSyntax,
+        Nel.one("value"),
+        Operator.Equals,
+        emptySortAndLimit,
+        StringType
+      )
       .error shouldBe sqlErrorInvalidSyntax
     repo
-      .getLanguagesBy(invalidFieldColumn, Nel.one("value"), Operator.Equals, emptySortAndLimit)
+      .getLanguagesBy(
+        invalidFieldColumn,
+        Nel.one("value"),
+        Operator.Equals,
+        emptySortAndLimit,
+        StringType
+      )
       .error shouldBe InvalidField(invalidFieldColumn)
   }
 
   "Selecting an existing field with an invalid value type" should "return an error" in {
     repo
-      .getLanguagesBy("name", Nel.one(invalidStringValue), Operator.Equals, emptySortAndLimit)
+      .getLanguagesBy(
+        "name",
+        Nel.one(invalidStringValue),
+        Operator.Equals,
+        emptySortAndLimit,
+        IntType
+      )
       .error shouldBe InvalidValueType(
       invalidStringValue.toString
     )
@@ -263,7 +300,13 @@ final class LanguageRepositoryIT extends RepositoryCheck {
   it should "work if all criteria are met" in {
     val existingLanguage =
       repo
-        .getLanguagesBy("name", Nel.one(newLanguage.name), Operator.Equals, emptySortAndLimit)
+        .getLanguagesBy(
+          "name",
+          Nel.one(newLanguage.name),
+          Operator.Equals,
+          emptySortAndLimit,
+          StringType
+        )
         .value
         .head
     val updated = existingLanguage.copy(name = updatedName)
@@ -320,7 +363,13 @@ final class LanguageRepositoryIT extends RepositoryCheck {
   it should "work if all criteria are met" in {
     val existingLanguage =
       repo
-        .getLanguagesBy("name", Nel.one(updatedName), Operator.Equals, emptySortAndLimit)
+        .getLanguagesBy(
+          "name",
+          Nel.one(updatedName),
+          Operator.Equals,
+          emptySortAndLimit,
+          StringType
+        )
         .value
         .head
     val patched = LanguagePatch(name = Some(patchedName))
@@ -336,7 +385,13 @@ final class LanguageRepositoryIT extends RepositoryCheck {
   "Removing a language" should "work correctly" in {
     val existingLanguage =
       repo
-        .getLanguagesBy("name", Nel.one(patchedName), Operator.Equals, emptySortAndLimit)
+        .getLanguagesBy(
+          "name",
+          Nel.one(patchedName),
+          Operator.Equals,
+          emptySortAndLimit,
+          StringType
+        )
         .value
         .head
     repo.removeLanguage(existingLanguage.id).value shouldBe ()

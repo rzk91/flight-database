@@ -10,7 +10,9 @@ import flightdatabase.EntryListEmpty
 import flightdatabase.EntryNotFound
 import flightdatabase.InvalidField
 import flightdatabase.InvalidValueType
+import flightdatabase.LongType
 import flightdatabase.Operator
+import flightdatabase.StringType
 import flightdatabase.ValidatedSortAndLimit
 import flightdatabase.airline_city.AirlineCity
 import flightdatabase.airline_city.AirlineCityCreate
@@ -84,13 +86,15 @@ final class AirlineCityRepositoryIT extends RepositoryCheck {
 
   it should "only return the requested fields if so required" in {
     repo
-      .getAirlineCities[Long](emptySortAndLimit, "airline_id")
+      .getAirlineCities[Long](emptySortAndLimit, "airline_id", LongType)
       .value should contain only (originalAirlineCities.map(_.airlineId).toList: _*)
   }
 
   it should "sort and return the requested fields if so required" in {
     val cityIds =
-      repo.getAirlineCities[Long](ValidatedSortAndLimit.sortAscending("city_id"), "city_id").value
+      repo
+        .getAirlineCities[Long](ValidatedSortAndLimit.sortAscending("city_id"), "city_id", LongType)
+        .value
     cityIds shouldBe originalAirlineCities.map(_.cityId).sorted
   }
 
@@ -119,9 +123,15 @@ final class AirlineCityRepositoryIT extends RepositoryCheck {
 
   "Selecting airline-city combinations by other fields" should "return the corresponding entries" in {
     def entriesByAirlineId(id: Long): IO[ApiResult[Nel[AirlineCity]]] =
-      repo.getAirlineCitiesBy("airline_id", Nel.one(id), Operator.Equals, emptySortAndLimit)
+      repo.getAirlineCitiesBy(
+        "airline_id",
+        Nel.one(id),
+        Operator.Equals,
+        emptySortAndLimit,
+        LongType
+      )
     def entriesByCityId(id: Long): IO[ApiResult[Nel[AirlineCity]]] =
-      repo.getAirlineCitiesBy("city_id", Nel.one(id), Operator.Equals, emptySortAndLimit)
+      repo.getAirlineCitiesBy("city_id", Nel.one(id), Operator.Equals, emptySortAndLimit, LongType)
 
     val distinctAirlineIds = originalAirlineCities.map(_.airlineId).distinct
     val distinctCityIds = originalAirlineCities.map(_.cityId).distinct
@@ -153,7 +163,8 @@ final class AirlineCityRepositoryIT extends RepositoryCheck {
         "city_id",
         allCityIds,
         Operator.In,
-        ValidatedSortAndLimit.sortDescending("city_id")
+        ValidatedSortAndLimit.sortDescending("city_id"),
+        LongType
       )
       .value
     sorted shouldBe originalAirlineCities.sortBy(_.cityId).reverse
@@ -163,7 +174,8 @@ final class AirlineCityRepositoryIT extends RepositoryCheck {
         "city_id",
         allCityIds,
         Operator.In,
-        ValidatedSortAndLimit.sortAscending("city_id").copy(limit = Some(1))
+        ValidatedSortAndLimit.sortAscending("city_id").copy(limit = Some(1)),
+        LongType
       )
       .value
     limited should contain only originalAirlineCities.sortBy(_.cityId).head
@@ -171,23 +183,48 @@ final class AirlineCityRepositoryIT extends RepositoryCheck {
 
   "Selecting airline-city combinations by external fields" should "return the corresponding entries" in {
     def entryByAirlineName(name: String): IO[ApiResult[Nel[AirlineCity]]] =
-      repo.getAirlineCitiesByAirline("name", Nel.one(name), Operator.Equals, emptySortAndLimit)
+      repo.getAirlineCitiesByAirline(
+        "name",
+        Nel.one(name),
+        Operator.Equals,
+        emptySortAndLimit,
+        StringType
+      )
 
     def entryByAirlineIata(iata: String): IO[ApiResult[Nel[AirlineCity]]] =
-      repo.getAirlineCitiesByAirline("iata", Nel.one(iata), Operator.Equals, emptySortAndLimit)
+      repo.getAirlineCitiesByAirline(
+        "iata",
+        Nel.one(iata),
+        Operator.Equals,
+        emptySortAndLimit,
+        StringType
+      )
 
     def entryByAirlineIcao(icao: String): IO[ApiResult[Nel[AirlineCity]]] =
-      repo.getAirlineCitiesByAirline("icao", Nel.one(icao), Operator.Equals, emptySortAndLimit)
+      repo.getAirlineCitiesByAirline(
+        "icao",
+        Nel.one(icao),
+        Operator.Equals,
+        emptySortAndLimit,
+        StringType
+      )
 
     def entryByCityName(name: String): IO[ApiResult[Nel[AirlineCity]]] =
-      repo.getAirlineCitiesByCity("name", Nel.one(name), Operator.Equals, emptySortAndLimit)
+      repo.getAirlineCitiesByCity(
+        "name",
+        Nel.one(name),
+        Operator.Equals,
+        emptySortAndLimit,
+        StringType
+      )
 
     def entryByCityPop(pop: Long): IO[ApiResult[Nel[AirlineCity]]] =
       repo.getAirlineCitiesByCity(
         "population",
         Nel.one(pop),
         Operator.LessThanOrEqualTo,
-        emptySortAndLimit
+        emptySortAndLimit,
+        LongType
       )
 
     forAll(airlineIdMap) {
@@ -233,7 +270,8 @@ final class AirlineCityRepositoryIT extends RepositoryCheck {
         invalidFieldSyntax,
         Nel.one(valueNotPresent),
         Operator.Equals,
-        emptySortAndLimit
+        emptySortAndLimit,
+        StringType
       )
       .error shouldBe sqlErrorInvalidSyntax
 
@@ -242,7 +280,8 @@ final class AirlineCityRepositoryIT extends RepositoryCheck {
         invalidFieldSyntax,
         Nel.one(valueNotPresent),
         Operator.Equals,
-        emptySortAndLimit
+        emptySortAndLimit,
+        StringType
       )
       .error shouldBe sqlErrorInvalidSyntax
 
@@ -251,7 +290,8 @@ final class AirlineCityRepositoryIT extends RepositoryCheck {
         invalidFieldSyntax,
         Nel.one(valueNotPresent),
         Operator.Equals,
-        emptySortAndLimit
+        emptySortAndLimit,
+        StringType
       )
       .error shouldBe sqlErrorInvalidSyntax
 
@@ -260,7 +300,8 @@ final class AirlineCityRepositoryIT extends RepositoryCheck {
         invalidFieldColumn,
         Nel.one(valueNotPresent),
         Operator.Equals,
-        emptySortAndLimit
+        emptySortAndLimit,
+        StringType
       )
       .error shouldBe InvalidField(invalidFieldColumn)
 
@@ -269,7 +310,8 @@ final class AirlineCityRepositoryIT extends RepositoryCheck {
         invalidFieldColumn,
         Nel.one(valueNotPresent),
         Operator.Equals,
-        emptySortAndLimit
+        emptySortAndLimit,
+        StringType
       )
       .error shouldBe InvalidField(invalidFieldColumn)
 
@@ -278,7 +320,8 @@ final class AirlineCityRepositoryIT extends RepositoryCheck {
         invalidFieldColumn,
         Nel.one(valueNotPresent),
         Operator.Equals,
-        emptySortAndLimit
+        emptySortAndLimit,
+        StringType
       )
       .error shouldBe InvalidField(invalidFieldColumn)
   }
@@ -289,7 +332,8 @@ final class AirlineCityRepositoryIT extends RepositoryCheck {
         "airline_id",
         Nel.one(invalidLongValue),
         Operator.Equals,
-        emptySortAndLimit
+        emptySortAndLimit,
+        StringType
       )
       .error shouldBe InvalidValueType(invalidLongValue)
 
@@ -298,7 +342,8 @@ final class AirlineCityRepositoryIT extends RepositoryCheck {
         "population",
         Nel.one(invalidLongValue),
         Operator.LessThanOrEqualTo,
-        emptySortAndLimit
+        emptySortAndLimit,
+        StringType
       )
       .error shouldBe InvalidValueType(invalidLongValue)
 
@@ -307,7 +352,8 @@ final class AirlineCityRepositoryIT extends RepositoryCheck {
         "country_id",
         Nel.one(invalidLongValue),
         Operator.Equals,
-        emptySortAndLimit
+        emptySortAndLimit,
+        StringType
       )
       .error shouldBe InvalidValueType(invalidLongValue)
   }

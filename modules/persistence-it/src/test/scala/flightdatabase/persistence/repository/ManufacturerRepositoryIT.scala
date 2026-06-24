@@ -10,9 +10,12 @@ import flightdatabase.EntryCheckFailed
 import flightdatabase.EntryHasInvalidForeignKey
 import flightdatabase.EntryListEmpty
 import flightdatabase.EntryNotFound
+import flightdatabase.IntType
 import flightdatabase.InvalidField
 import flightdatabase.InvalidValueType
+import flightdatabase.LongType
 import flightdatabase.Operator
+import flightdatabase.StringType
 import flightdatabase.ValidatedSortAndLimit
 import flightdatabase.manufacturer.Manufacturer
 import flightdatabase.manufacturer.ManufacturerCreate
@@ -82,18 +85,22 @@ final class ManufacturerRepositoryIT extends RepositoryCheck {
   }
 
   it should "only return the requested fields if so required" in {
-    repo.getManufacturers[String](emptySortAndLimit, "name").value should contain only (
+    repo.getManufacturers[String](emptySortAndLimit, "name", StringType).value should contain only (
       originalManufacturers.map(_.name).toList: _*
     )
 
-    repo.getManufacturers[Long](emptySortAndLimit, "base_city_id").value should contain only (
+    repo
+      .getManufacturers[Long](emptySortAndLimit, "base_city_id", LongType)
+      .value should contain only (
       originalManufacturers.map(_.baseCityId).toList: _*
     )
   }
 
   it should "sort and return the requested fields if so required" in {
     val names =
-      repo.getManufacturers[String](ValidatedSortAndLimit.sortAscending("name"), "name").value
+      repo
+        .getManufacturers[String](ValidatedSortAndLimit.sortAscending("name"), "name", StringType)
+        .value
     names shouldBe originalManufacturers.map(_.name).sorted
   }
 
@@ -109,10 +116,16 @@ final class ManufacturerRepositoryIT extends RepositoryCheck {
 
   "Selecting a manufacturer by other fields" should "return the correct manufacturer(s)" in {
     def manufacturerByName(name: String): IO[ApiResult[Nel[Manufacturer]]] =
-      repo.getManufacturersBy("name", Nel.one(name), Operator.Equals, emptySortAndLimit)
+      repo.getManufacturersBy("name", Nel.one(name), Operator.Equals, emptySortAndLimit, StringType)
 
     def manufacturerByCity(cityId: Long): IO[ApiResult[Nel[Manufacturer]]] =
-      repo.getManufacturersBy("base_city_id", Nel.one(cityId), Operator.Equals, emptySortAndLimit)
+      repo.getManufacturersBy(
+        "base_city_id",
+        Nel.one(cityId),
+        Operator.Equals,
+        emptySortAndLimit,
+        LongType
+      )
 
     val distinctCityIds = originalManufacturers.map(_.baseCityId).distinct
 
@@ -133,7 +146,8 @@ final class ManufacturerRepositoryIT extends RepositoryCheck {
         "base_city_id",
         allCityIds,
         Operator.In,
-        ValidatedSortAndLimit.sortAscending("name")
+        ValidatedSortAndLimit.sortAscending("name"),
+        LongType
       )
       .value
     sortedByName shouldBe originalManufacturers.sortBy(_.name)
@@ -143,7 +157,8 @@ final class ManufacturerRepositoryIT extends RepositoryCheck {
         "base_city_id",
         allCityIds,
         Operator.In,
-        ValidatedSortAndLimit.sortAscending("name").copy(limit = Some(1))
+        ValidatedSortAndLimit.sortAscending("name").copy(limit = Some(1)),
+        LongType
       )
       .value
     limited should contain only originalManufacturers.sortBy(_.name).head
@@ -151,10 +166,22 @@ final class ManufacturerRepositoryIT extends RepositoryCheck {
 
   "Selecting a manufacturer by city/country name" should "return the correct list of manufacturers" in {
     def manufacturerByCity(city: String): IO[ApiResult[Nel[Manufacturer]]] =
-      repo.getManufacturersByCity("name", Nel.one(city), Operator.Equals, emptySortAndLimit)
+      repo.getManufacturersByCity(
+        "name",
+        Nel.one(city),
+        Operator.Equals,
+        emptySortAndLimit,
+        StringType
+      )
 
     def manufacturerByCountry(country: String): IO[ApiResult[Nel[Manufacturer]]] =
-      repo.getManufacturersByCountry("name", Nel.one(country), Operator.Equals, emptySortAndLimit)
+      repo.getManufacturersByCountry(
+        "name",
+        Nel.one(country),
+        Operator.Equals,
+        emptySortAndLimit,
+        StringType
+      )
 
     forAll(cityIdMap) {
       case (cityId, cityName) =>
@@ -183,7 +210,8 @@ final class ManufacturerRepositoryIT extends RepositoryCheck {
         "name",
         allCityNames,
         Operator.In,
-        ValidatedSortAndLimit.sortDescending("name")
+        ValidatedSortAndLimit.sortDescending("name"),
+        StringType
       )
       .value shouldBe originalManufacturers.sortBy(_.name).reverse
 
@@ -192,21 +220,29 @@ final class ManufacturerRepositoryIT extends RepositoryCheck {
         "name",
         allCountryNames,
         Operator.In,
-        ValidatedSortAndLimit.sortAscending("name").copy(limit = Some(1))
+        ValidatedSortAndLimit.sortAscending("name").copy(limit = Some(1)),
+        StringType
       )
       .value should contain only originalManufacturers.sortBy(_.name).head
   }
 
   "Selecting a non-existent field" should "return an error" in {
     repo
-      .getManufacturersBy(invalidFieldSyntax, Nel.one("value"), Operator.Equals, emptySortAndLimit)
+      .getManufacturersBy(
+        invalidFieldSyntax,
+        Nel.one("value"),
+        Operator.Equals,
+        emptySortAndLimit,
+        StringType
+      )
       .error shouldBe sqlErrorInvalidSyntax
     repo
       .getManufacturersByCity(
         invalidFieldSyntax,
         Nel.one("value"),
         Operator.Equals,
-        emptySortAndLimit
+        emptySortAndLimit,
+        StringType
       )
       .error shouldBe sqlErrorInvalidSyntax
     repo
@@ -214,19 +250,27 @@ final class ManufacturerRepositoryIT extends RepositoryCheck {
         invalidFieldSyntax,
         Nel.one("value"),
         Operator.Equals,
-        emptySortAndLimit
+        emptySortAndLimit,
+        StringType
       )
       .error shouldBe sqlErrorInvalidSyntax
 
     repo
-      .getManufacturersBy(invalidFieldColumn, Nel.one("value"), Operator.Equals, emptySortAndLimit)
+      .getManufacturersBy(
+        invalidFieldColumn,
+        Nel.one("value"),
+        Operator.Equals,
+        emptySortAndLimit,
+        StringType
+      )
       .error shouldBe InvalidField(invalidFieldColumn)
     repo
       .getManufacturersByCity(
         invalidFieldColumn,
         Nel.one("value"),
         Operator.Equals,
-        emptySortAndLimit
+        emptySortAndLimit,
+        StringType
       )
       .error shouldBe InvalidField(invalidFieldColumn)
     repo
@@ -234,21 +278,29 @@ final class ManufacturerRepositoryIT extends RepositoryCheck {
         invalidFieldColumn,
         Nel.one("value"),
         Operator.Equals,
-        emptySortAndLimit
+        emptySortAndLimit,
+        StringType
       )
       .error shouldBe InvalidField(invalidFieldColumn)
   }
 
   "Selecting an existing field with an invalid value type" should "return an error" in {
     repo
-      .getManufacturersBy("name", Nel.one(invalidStringValue), Operator.Equals, emptySortAndLimit)
+      .getManufacturersBy(
+        "name",
+        Nel.one(invalidStringValue),
+        Operator.Equals,
+        emptySortAndLimit,
+        IntType
+      )
       .error shouldBe InvalidValueType(invalidStringValue.toString)
     repo
       .getManufacturersBy(
         "base_city_id",
         Nel.one(invalidLongValue),
         Operator.Equals,
-        emptySortAndLimit
+        emptySortAndLimit,
+        StringType
       )
       .error shouldBe InvalidValueType(invalidLongValue)
     repo
@@ -256,7 +308,8 @@ final class ManufacturerRepositoryIT extends RepositoryCheck {
         "population",
         Nel.one(invalidLongValue),
         Operator.Equals,
-        emptySortAndLimit
+        emptySortAndLimit,
+        StringType
       )
       .error shouldBe InvalidValueType(invalidLongValue)
     repo
@@ -264,7 +317,8 @@ final class ManufacturerRepositoryIT extends RepositoryCheck {
         "name",
         Nel.one(invalidStringValue),
         Operator.Equals,
-        emptySortAndLimit
+        emptySortAndLimit,
+        IntType
       )
       .error shouldBe InvalidValueType(invalidStringValue.toString)
   }
@@ -319,7 +373,8 @@ final class ManufacturerRepositoryIT extends RepositoryCheck {
           "name",
           Nel.one(newManufacturer.name),
           Operator.Equals,
-          emptySortAndLimit
+          emptySortAndLimit,
+          StringType
         )
         .value
         .head
@@ -356,7 +411,13 @@ final class ManufacturerRepositoryIT extends RepositoryCheck {
   it should "work if all criteria are met" in {
     val existingManufacturer =
       repo
-        .getManufacturersBy("name", Nel.one(updatedName), Operator.Equals, emptySortAndLimit)
+        .getManufacturersBy(
+          "name",
+          Nel.one(updatedName),
+          Operator.Equals,
+          emptySortAndLimit,
+          StringType
+        )
         .value
         .head
 
@@ -370,7 +431,13 @@ final class ManufacturerRepositoryIT extends RepositoryCheck {
   "Removing a manufacturer" should "work correctly" in {
     val existingManufacturer =
       repo
-        .getManufacturersBy("name", Nel.one(patchedName), Operator.Equals, emptySortAndLimit)
+        .getManufacturersBy(
+          "name",
+          Nel.one(patchedName),
+          Operator.Equals,
+          emptySortAndLimit,
+          StringType
+        )
         .value
         .head
     repo.removeManufacturer(existingManufacturer.id).value shouldBe ()

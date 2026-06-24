@@ -47,15 +47,19 @@ abstract class Endpoints[F[_]: Monad](prefix: String) extends Http4sDsl[F] {
   )(f: => PartiallyAppliedGetBy[F, OUT])(implicit enc: EntityEncoder[F, Nel[OUT]]): F[Response[F]] =
     (operatorStr.toOperator, implicitly[TableBase[IN]].fieldTypeMap.get(field)) match {
       case (Right(operator), Some(StringType)) if StringType.operators(operator) =>
-        values.asStringToResponse(field, operator)(f(field, _, operator, sortAndLimit))
+        values.asStringToResponse(field, operator)(f(field, _, operator, sortAndLimit, StringType))
       case (Right(operator), Some(IntType)) if IntType.operators(operator) =>
-        values.asIntToResponse(field, operator)(f(field, _, operator, sortAndLimit))
+        values.asIntToResponse(field, operator)(f(field, _, operator, sortAndLimit, IntType))
       case (Right(operator), Some(LongType)) if LongType.operators(operator) =>
-        values.asLongToResponse(field, operator)(f(field, _, operator, sortAndLimit))
+        values.asLongToResponse(field, operator)(f(field, _, operator, sortAndLimit, LongType))
       case (Right(operator), Some(BooleanType)) if BooleanType.operators(operator) =>
-        values.asBooleanToResponse(field, operator)(f(field, _, operator, sortAndLimit))
+        values.asBooleanToResponse(field, operator)(
+          f(field, _, operator, sortAndLimit, BooleanType)
+        )
       case (Right(operator), Some(BigDecimalType)) if BigDecimalType.operators(operator) =>
-        values.asBigDecimalToResponse(field, operator)(f(field, _, operator, sortAndLimit))
+        values.asBigDecimalToResponse(field, operator)(
+          f(field, _, operator, sortAndLimit, BigDecimalType)
+        )
       case (Left(parseError), _) => InvalidOperator(parseError).asResult[Nel[OUT]].toResponse[F]
       case (Right(operator), Some(fieldType)) =>
         WrongOperator(operator, field, fieldType).asResult[Nel[OUT]].toResponse[F]
@@ -73,12 +77,13 @@ abstract class Endpoints[F[_]: Monad](prefix: String) extends Http4sDsl[F] {
         val table = implicitly[TableBase[IN]]
         val tableField = s"${table.asString}.$field"
         table.fieldTypeMap.get(field) match {
-          case Some(StringType)  => f[String](sortAndLimit, tableField).flatMap(_.toResponse[F])
-          case Some(IntType)     => f[Int](sortAndLimit, tableField).flatMap(_.toResponse[F])
-          case Some(LongType)    => f[Long](sortAndLimit, tableField).flatMap(_.toResponse[F])
-          case Some(BooleanType) => f[Boolean](sortAndLimit, tableField).flatMap(_.toResponse[F])
+          case Some(StringType) => f(sortAndLimit, tableField, StringType).flatMap(_.toResponse[F])
+          case Some(IntType)    => f(sortAndLimit, tableField, IntType).flatMap(_.toResponse[F])
+          case Some(LongType)   => f(sortAndLimit, tableField, LongType).flatMap(_.toResponse[F])
+          case Some(BooleanType) =>
+            f(sortAndLimit, tableField, BooleanType).flatMap(_.toResponse[F])
           case Some(BigDecimalType) =>
-            f[BigDecimal](sortAndLimit, tableField).flatMap(_.toResponse[F])
+            f(sortAndLimit, tableField, BigDecimalType).flatMap(_.toResponse[F])
           case None => InvalidField(field).asResult[Nel[IN]].toResponse[F]
         }
       case None => f(sortAndLimit).flatMap(_.toResponse[F])

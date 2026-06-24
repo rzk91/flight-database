@@ -11,6 +11,7 @@ import doobie.Read
 import doobie.Transactor
 import doobie.syntax.string._
 import flightdatabase.ApiResult
+import flightdatabase.FieldType
 import flightdatabase.Operator
 import flightdatabase.ValidatedSortAndLimit
 import flightdatabase.airline.Airline
@@ -104,38 +105,46 @@ object AirlineRouteRepository {
     override def apply(sortAndLimit: ValidatedSortAndLimit): F[ApiResult[Nel[AirlineRoute]]] =
       selectAllAirlineRoutes(sortAndLimit).asNel().execute
 
-    override def apply[V: Read](
+    override def apply[V](
       sortAndLimit: ValidatedSortAndLimit,
-      returnField: String
-    ): F[ApiResult[Nel[V]]] =
-      getFieldList2[AirlineRoute, V](sortAndLimit, returnField).execute
+      returnField: String,
+      fieldType: FieldType[V]
+    ): F[ApiResult[Nel[V]]] = {
+      implicit val read: Read[V] = fieldType.asRead
+      getFieldList[AirlineRoute, V](sortAndLimit, returnField).execute
+    }
   }
 
   private class PartiallyAppliedGetByAirlineRoute[F[_]: Concurrent](
     implicit transactor: Transactor[F]
   ) extends PartiallyAppliedGetBy[F, AirlineRoute] {
 
-    override def apply[V: Put](
+    override def apply[V](
       field: String,
       values: Nel[V],
       operator: Operator,
-      sortAndLimit: ValidatedSortAndLimit
-    ): F[ApiResult[Nel[AirlineRoute]]] =
+      sortAndLimit: ValidatedSortAndLimit,
+      fieldType: FieldType[V]
+    ): F[ApiResult[Nel[AirlineRoute]]] = {
+      implicit val put: Put[V] = fieldType.asPut
       selectAirlineRouteBy(field, values, operator, sortAndLimit)
         .asNel(Some(field), Some(values))
         .execute
+    }
   }
 
   private class PartiallyAppliedGetByAirline[F[_]: Concurrent](
     implicit transactor: Transactor[F]
   ) extends PartiallyAppliedGetBy[F, AirlineRoute] {
 
-    override def apply[V: Put](
+    override def apply[V](
       field: String,
       values: Nel[V],
       operator: Operator,
-      sortAndLimit: ValidatedSortAndLimit
-    ): F[ApiResult[Nel[AirlineRoute]]] =
+      sortAndLimit: ValidatedSortAndLimit,
+      fieldType: FieldType[V]
+    ): F[ApiResult[Nel[AirlineRoute]]] = {
+      implicit val put: Put[V] = fieldType.asPut
       // Get airline IDs for given airline field values, then route through airline_airplane
       EitherT(
         selectWhereQuery[Airline, Long, V]("id", field, values, operator)
@@ -151,18 +160,21 @@ object AirlineRouteRepository {
         }
         .value
         .execute
+    }
   }
 
   private class PartiallyAppliedGetByAirplane[F[_]: Concurrent](
     implicit transactor: Transactor[F]
   ) extends PartiallyAppliedGetBy[F, AirlineRoute] {
 
-    override def apply[V: Put](
+    override def apply[V](
       field: String,
       values: Nel[V],
       operator: Operator,
-      sortAndLimit: ValidatedSortAndLimit
-    ): F[ApiResult[Nel[AirlineRoute]]] =
+      sortAndLimit: ValidatedSortAndLimit,
+      fieldType: FieldType[V]
+    ): F[ApiResult[Nel[AirlineRoute]]] = {
+      implicit val put: Put[V] = fieldType.asPut
       EitherT(
         selectWhereQuery[Airplane, Long, V]("id", field, values, operator)
           .asNel(Some(field), Some(values))
@@ -177,6 +189,7 @@ object AirlineRouteRepository {
         }
         .value
         .execute
+    }
   }
 
   private class PartiallyAppliedGetByAirport[F[_]: Concurrent](
@@ -184,12 +197,14 @@ object AirlineRouteRepository {
   )(implicit transactor: Transactor[F])
       extends PartiallyAppliedGetBy[F, AirlineRoute] {
 
-    override def apply[V: Put](
+    override def apply[V](
       field: String,
       values: Nel[V],
       operator: Operator,
-      sortAndLimit: ValidatedSortAndLimit
+      sortAndLimit: ValidatedSortAndLimit,
+      fieldType: FieldType[V]
     ): F[ApiResult[Nel[AirlineRoute]]] = {
+      implicit val put: Put[V] = fieldType.asPut
       def q(f: String, sl: ValidatedSortAndLimit): Query0[AirlineRoute] =
         selectAirlineRoutesByExternal[Airport, V](field, values, operator, sl, Some(f))
       inbound.fold {

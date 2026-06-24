@@ -10,6 +10,7 @@ import flightdatabase.Operator
 import flightdatabase.ValidatedSortAndLimit
 import flightdatabase.language.Language
 import flightdatabase.language.LanguageCreate
+import flightdatabase.persistence.syntax.sortandlimit._
 
 private[repository] object LanguageQueries {
 

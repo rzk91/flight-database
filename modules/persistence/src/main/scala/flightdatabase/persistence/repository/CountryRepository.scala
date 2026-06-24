@@ -11,6 +11,7 @@ import doobie.Read
 import doobie.Transactor
 import doobie.syntax.string._
 import flightdatabase.ApiResult
+import flightdatabase.FieldType
 import flightdatabase.Operator
 import flightdatabase.ValidatedSortAndLimit
 import flightdatabase.country.Country
@@ -96,38 +97,46 @@ object CountryRepository {
     override def apply(sortAndLimit: ValidatedSortAndLimit): F[ApiResult[Nel[Country]]] =
       selectAllCountries(sortAndLimit).asNel().execute
 
-    override def apply[V: Read](
+    override def apply[V](
       sortAndLimit: ValidatedSortAndLimit,
-      returnField: String
-    ): F[ApiResult[Nel[V]]] =
-      getFieldList2[Country, V](sortAndLimit, returnField).execute
+      returnField: String,
+      fieldType: FieldType[V]
+    ): F[ApiResult[Nel[V]]] = {
+      implicit val read: Read[V] = fieldType.asRead
+      getFieldList[Country, V](sortAndLimit, returnField).execute
+    }
   }
 
   private class PartiallyAppliedGetByCountry[F[_]: Concurrent](
     implicit transactor: Transactor[F]
   ) extends PartiallyAppliedGetBy[F, Country] {
 
-    override def apply[V: Put](
+    override def apply[V](
       field: String,
       values: Nel[V],
       operator: Operator,
-      sortAndLimit: ValidatedSortAndLimit
-    ): F[ApiResult[Nel[Country]]] =
+      sortAndLimit: ValidatedSortAndLimit,
+      fieldType: FieldType[V]
+    ): F[ApiResult[Nel[Country]]] = {
+      implicit val put: Put[V] = fieldType.asPut
       selectCountriesBy(field, values, operator, sortAndLimit)
         .asNel(Some(field), Some(values))
         .execute
+    }
   }
 
   private class PartiallyAppliedGetByLanguage[F[_]: Concurrent](
     implicit transactor: Transactor[F]
   ) extends PartiallyAppliedGetBy[F, Country] {
 
-    override def apply[V: Put](
+    override def apply[V](
       field: String,
       values: Nel[V],
       operator: Operator,
-      sortAndLimit: ValidatedSortAndLimit
+      sortAndLimit: ValidatedSortAndLimit,
+      fieldType: FieldType[V]
     ): F[ApiResult[Nel[Country]]] = {
+      implicit val put: Put[V] = fieldType.asPut
       // A country may reference a language as its main, secondary, or tertiary
       // language; union the three matches. Sort/limit applies to the whole union,
       // so each arm is built with an empty sort/limit.
@@ -152,14 +161,17 @@ object CountryRepository {
     implicit transactor: Transactor[F]
   ) extends PartiallyAppliedGetBy[F, Country] {
 
-    override def apply[V: Put](
+    override def apply[V](
       field: String,
       values: Nel[V],
       operator: Operator,
-      sortAndLimit: ValidatedSortAndLimit
-    ): F[ApiResult[Nel[Country]]] =
+      sortAndLimit: ValidatedSortAndLimit,
+      fieldType: FieldType[V]
+    ): F[ApiResult[Nel[Country]]] = {
+      implicit val put: Put[V] = fieldType.asPut
       selectCountriesByExternal[Currency, V](field, values, operator, sortAndLimit)
         .asNel(Some(field), Some(values))
         .execute
+    }
   }
 }

@@ -2,18 +2,18 @@ package flightdatabase
 
 import flightdatabase.Operator._
 
-sealed abstract class FieldType(val asString: String) {
+sealed abstract class FieldType[A](val asString: String) {
   lazy val operators: Set[Operator] = FieldType.fieldTypeToOperators(this)
 }
-case object StringType extends FieldType("String")
-case object IntType extends FieldType("Int")
-case object LongType extends FieldType("Long")
-case object BooleanType extends FieldType("Boolean")
-case object BigDecimalType extends FieldType("BigDecimal")
+case object StringType extends FieldType[String]("String")
+case object IntType extends FieldType[Int]("Int")
+case object LongType extends FieldType[Long]("Long")
+case object BooleanType extends FieldType[Boolean]("Boolean")
+case object BigDecimalType extends FieldType[BigDecimal]("BigDecimal")
 
 object FieldType {
 
-  val fieldTypeToOperators: Map[FieldType, Set[Operator]] = Map(
+  val fieldTypeToOperators: Map[FieldType[_], Set[Operator]] = Map(
     StringType -> Set(
       Equals,
       NotEquals,

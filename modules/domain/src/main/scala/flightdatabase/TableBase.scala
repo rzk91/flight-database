@@ -2,7 +2,7 @@ package flightdatabase
 
 trait TableBase[A] {
   def table: FlightDbTable
-  def fieldTypeMap: Map[String, FieldType]
+  def fieldTypeMap: Map[String, FieldType[_]]
 
   def asString: String = table.entryName
   def fields: Set[String] = fieldTypeMap.keySet
@@ -11,9 +11,9 @@ trait TableBase[A] {
 object TableBase {
   @inline final def apply[A](implicit ev: TableBase[A]): TableBase[A] = ev
 
-  @inline def instance[A](t: FlightDbTable, map: Map[String, FieldType]): TableBase[A] =
+  @inline def instance[A](t: FlightDbTable, map: Map[String, FieldType[_]]): TableBase[A] =
     new TableBase[A] {
       override val table: FlightDbTable = t
-      override val fieldTypeMap: Map[String, FieldType] = map
+      override val fieldTypeMap: Map[String, FieldType[_]] = map
     }
 }

@@ -9,9 +9,12 @@ import flightdatabase.EntryCheckFailed
 import flightdatabase.EntryHasInvalidForeignKey
 import flightdatabase.EntryListEmpty
 import flightdatabase.EntryNotFound
+import flightdatabase.IntType
 import flightdatabase.InvalidField
 import flightdatabase.InvalidValueType
+import flightdatabase.LongType
 import flightdatabase.Operator
+import flightdatabase.StringType
 import flightdatabase.ValidatedSortAndLimit
 import flightdatabase.airline.Airline
 import flightdatabase.airline.AirlineCreate
@@ -82,25 +85,29 @@ final class AirlineRepositoryIT extends RepositoryCheck {
   }
 
   it should "only return the requested fields if so required" in {
-    val airlineNames = repo.getAirlines[String](emptySortAndLimit, "name").value
+    val airlineNames = repo.getAirlines[String](emptySortAndLimit, "name", StringType).value
     airlineNames should contain only (originalAirlines.map(_.name).toList: _*)
 
-    val airlineCountryIds = repo.getAirlines[Int](emptySortAndLimit, "country_id").value
+    val airlineCountryIds = repo.getAirlines[Int](emptySortAndLimit, "country_id", IntType).value
     airlineCountryIds should contain only (originalAirlines.map(_.countryId).toList: _*)
   }
 
   it should "sort and return the requested fields if so required" in {
     val airlineNames =
-      repo.getAirlines[String](ValidatedSortAndLimit.sortAscending("name"), "name").value
+      repo
+        .getAirlines[String](ValidatedSortAndLimit.sortAscending("name"), "name", StringType)
+        .value
     airlineNames shouldBe originalAirlines.map(_.name).sorted
 
     val airlineCountryIds = repo
-      .getAirlines[Int](ValidatedSortAndLimit.sortDescending("country_id"), "country_id")
+      .getAirlines[Int](ValidatedSortAndLimit.sortDescending("country_id"), "country_id", IntType)
       .value
     airlineCountryIds shouldBe originalAirlines.map(_.countryId).sorted.reverse
 
     val airlineNamesCountrySort =
-      repo.getAirlines[String](ValidatedSortAndLimit.sortAscending("country_id"), "name").value
+      repo
+        .getAirlines[String](ValidatedSortAndLimit.sortAscending("country_id"), "name", StringType)
+        .value
 
     airlineNamesCountrySort shouldBe originalAirlines.sortBy(_.countryId).map(_.name)
   }
@@ -118,15 +125,21 @@ final class AirlineRepositoryIT extends RepositoryCheck {
 
   "Selecting an airline by other fields" should "return the corresponding airlines" in {
     def airlinesByName(name: String): IO[ApiResult[Nel[Airline]]] =
-      repo.getAirlinesBy("name", Nel.one(name), Operator.Equals, emptySortAndLimit)
+      repo.getAirlinesBy("name", Nel.one(name), Operator.Equals, emptySortAndLimit, StringType)
     def airlinesByIata(iata: String): IO[ApiResult[Nel[Airline]]] =
-      repo.getAirlinesBy("iata", Nel.one(iata), Operator.Equals, emptySortAndLimit)
+      repo.getAirlinesBy("iata", Nel.one(iata), Operator.Equals, emptySortAndLimit, StringType)
     def airlinesByIcao(icao: String): IO[ApiResult[Nel[Airline]]] =
-      repo.getAirlinesBy("icao", Nel.one(icao), Operator.Equals, emptySortAndLimit)
+      repo.getAirlinesBy("icao", Nel.one(icao), Operator.Equals, emptySortAndLimit, StringType)
     def airlinesByCallSign(callSign: String): IO[ApiResult[Nel[Airline]]] =
-      repo.getAirlinesBy("call_sign", Nel.one(callSign), Operator.Equals, emptySortAndLimit)
+      repo.getAirlinesBy(
+        "call_sign",
+        Nel.one(callSign),
+        Operator.Equals,
+        emptySortAndLimit,
+        StringType
+      )
     def airlinesByCountryId(id: Long): IO[ApiResult[Nel[Airline]]] =
-      repo.getAirlinesBy("country_id", Nel.one(id), Operator.Equals, emptySortAndLimit)
+      repo.getAirlinesBy("country_id", Nel.one(id), Operator.Equals, emptySortAndLimit, LongType)
 
     val distinctNames = originalAirlines.map(_.name).distinct
     val distinctCountryIds = originalAirlines.map(_.countryId).distinct
@@ -161,7 +174,8 @@ final class AirlineRepositoryIT extends RepositoryCheck {
         "country_id",
         originalAirlines.map(_.countryId).distinct,
         Operator.In,
-        ValidatedSortAndLimit.sortAscending("name")
+        ValidatedSortAndLimit.sortAscending("name"),
+        LongType
       )
       .value shouldBe originalAirlines.sortBy(_.name)
 
@@ -170,7 +184,8 @@ final class AirlineRepositoryIT extends RepositoryCheck {
         "country_id",
         originalAirlines.map(_.countryId).distinct,
         Operator.In,
-        ValidatedSortAndLimit.limitAndOffset(1, 1)
+        ValidatedSortAndLimit.limitAndOffset(1, 1),
+        LongType
       )
       .value
 
@@ -180,16 +195,40 @@ final class AirlineRepositoryIT extends RepositoryCheck {
 
   "Selecting an airline by country field" should "return the corresponding entries" in {
     def airlineByCountryName(name: String): IO[ApiResult[Nel[Airline]]] =
-      repo.getAirlinesByCountry("name", Nel.one(name), Operator.Equals, emptySortAndLimit)
+      repo.getAirlinesByCountry(
+        "name",
+        Nel.one(name),
+        Operator.Equals,
+        emptySortAndLimit,
+        StringType
+      )
 
     def airlineByCountryIso2(iso2: String): IO[ApiResult[Nel[Airline]]] =
-      repo.getAirlinesByCountry("iso2", Nel.one(iso2), Operator.Equals, emptySortAndLimit)
+      repo.getAirlinesByCountry(
+        "iso2",
+        Nel.one(iso2),
+        Operator.Equals,
+        emptySortAndLimit,
+        StringType
+      )
 
     def airlineByCountryIso3(iso3: String): IO[ApiResult[Nel[Airline]]] =
-      repo.getAirlinesByCountry("iso3", Nel.one(iso3), Operator.Equals, emptySortAndLimit)
+      repo.getAirlinesByCountry(
+        "iso3",
+        Nel.one(iso3),
+        Operator.Equals,
+        emptySortAndLimit,
+        StringType
+      )
 
     def airlineByCountryCode(code: Int): IO[ApiResult[Nel[Airline]]] =
-      repo.getAirlinesByCountry("country_code", Nel.one(code), Operator.Equals, emptySortAndLimit)
+      repo.getAirlinesByCountry(
+        "country_code",
+        Nel.one(code),
+        Operator.Equals,
+        emptySortAndLimit,
+        IntType
+      )
 
     forAll(countryIdMap) {
       case (id, (name, iso2, iso3, code)) =>
@@ -219,7 +258,8 @@ final class AirlineRepositoryIT extends RepositoryCheck {
         "iso2",
         Nel.fromListUnsafe(countryIdMap.values.map(_._2).toList),
         Operator.In,
-        ValidatedSortAndLimit.sortDescending("name")
+        ValidatedSortAndLimit.sortDescending("name"),
+        StringType
       )
       .value shouldBe originalAirlines.sortBy(_.name).reverse
 
@@ -228,7 +268,8 @@ final class AirlineRepositoryIT extends RepositoryCheck {
         "name",
         Nel.fromListUnsafe(countryIdMap.values.map(_._1).toList),
         Operator.In,
-        ValidatedSortAndLimit.sortAscending("iata").copy(limit = Some(1))
+        ValidatedSortAndLimit.sortAscending("iata").copy(limit = Some(1)),
+        StringType
       )
       .value
 
@@ -238,39 +279,60 @@ final class AirlineRepositoryIT extends RepositoryCheck {
 
   "Selecting a non-existent field" should "return an error" in {
     repo
-      .getAirlinesBy(invalidFieldSyntax, Nel.one("value"), Operator.Equals, emptySortAndLimit)
+      .getAirlinesBy(
+        invalidFieldSyntax,
+        Nel.one("value"),
+        Operator.Equals,
+        emptySortAndLimit,
+        StringType
+      )
       .error shouldBe sqlErrorInvalidSyntax
     repo
       .getAirlinesByCountry(
         invalidFieldSyntax,
         Nel.one("value"),
         Operator.Equals,
-        emptySortAndLimit
+        emptySortAndLimit,
+        StringType
       )
       .error shouldBe sqlErrorInvalidSyntax
     repo
-      .getAirlinesBy(invalidFieldColumn, Nel.one("value"), Operator.Equals, emptySortAndLimit)
+      .getAirlinesBy(
+        invalidFieldColumn,
+        Nel.one("value"),
+        Operator.Equals,
+        emptySortAndLimit,
+        StringType
+      )
       .error shouldBe InvalidField(invalidFieldColumn)
     repo
       .getAirlinesByCountry(
         invalidFieldColumn,
         Nel.one("value"),
         Operator.Equals,
-        emptySortAndLimit
+        emptySortAndLimit,
+        StringType
       )
       .error shouldBe InvalidField(invalidFieldColumn)
   }
 
   "Selecting an existing field with an invalid value type" should "return an error" in {
     repo
-      .getAirlinesBy("country_id", Nel.one(invalidLongValue), Operator.Equals, emptySortAndLimit)
+      .getAirlinesBy(
+        "country_id",
+        Nel.one(invalidLongValue),
+        Operator.Equals,
+        emptySortAndLimit,
+        StringType
+      )
       .error shouldBe InvalidValueType(invalidLongValue)
     repo
       .getAirlinesByCountry(
         "domain_name",
         Nel.one(invalidStringValue),
         Operator.Equals,
-        emptySortAndLimit
+        emptySortAndLimit,
+        IntType
       )
       .error shouldBe InvalidValueType(invalidStringValue.toString)
   }
@@ -357,7 +419,13 @@ final class AirlineRepositoryIT extends RepositoryCheck {
   it should "work if all criteria are met" in {
     val existingAirline =
       repo
-        .getAirlinesBy("name", Nel.one(newAirline.name), Operator.Equals, emptySortAndLimit)
+        .getAirlinesBy(
+          "name",
+          Nel.one(newAirline.name),
+          Operator.Equals,
+          emptySortAndLimit,
+          StringType
+        )
         .value
         .head
     val updated = existingAirline.copy(name = updatedName)
@@ -411,7 +479,7 @@ final class AirlineRepositoryIT extends RepositoryCheck {
   it should "work if all criteria are met" in {
     val existingAirline =
       repo
-        .getAirlinesBy("name", Nel.one(updatedName), Operator.Equals, emptySortAndLimit)
+        .getAirlinesBy("name", Nel.one(updatedName), Operator.Equals, emptySortAndLimit, StringType)
         .value
         .head
     val patch = AirlinePatch(name = Some(patchedName))
@@ -425,7 +493,7 @@ final class AirlineRepositoryIT extends RepositoryCheck {
   "Removing an airline" should "work correctly" in {
     val existingAirline =
       repo
-        .getAirlinesBy("name", Nel.one(patchedName), Operator.Equals, emptySortAndLimit)
+        .getAirlinesBy("name", Nel.one(patchedName), Operator.Equals, emptySortAndLimit, StringType)
         .value
         .head
     repo.removeAirline(existingAirline.id).value shouldBe ()

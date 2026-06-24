@@ -9,9 +9,12 @@ import flightdatabase.EntryCheckFailed
 import flightdatabase.EntryHasInvalidForeignKey
 import flightdatabase.EntryListEmpty
 import flightdatabase.EntryNotFound
+import flightdatabase.IntType
 import flightdatabase.InvalidField
 import flightdatabase.InvalidValueType
+import flightdatabase.LongType
 import flightdatabase.Operator
+import flightdatabase.StringType
 import flightdatabase.ValidatedSortAndLimit
 import flightdatabase.airline_route.AirlineRoute
 import flightdatabase.airline_route.AirlineRouteCreate
@@ -103,18 +106,24 @@ final class AirlineRouteRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting all airline routes with only route numbers" should "return the correct list" in {
-    repo.getAirlineRoutes[String](emptySortAndLimit, "route_number").value should contain only (
+    repo
+      .getAirlineRoutes[String](emptySortAndLimit, "route_number", StringType)
+      .value should contain only (
       originalAirlineRoutes.map(_.route).toList: _*
     )
 
     repo
-      .getAirlineRoutes[Long](emptySortAndLimit, "start_airport_id")
+      .getAirlineRoutes[Long](emptySortAndLimit, "start_airport_id", LongType)
       .value should contain allElementsOf originalAirlineRoutes.map(_.start).toList
   }
 
   it should "sort and return the requested fields if so required" in {
     val routeNumbers = repo
-      .getAirlineRoutes[String](ValidatedSortAndLimit.sortAscending("route_number"), "route_number")
+      .getAirlineRoutes[String](
+        ValidatedSortAndLimit.sortAscending("route_number"),
+        "route_number",
+        StringType
+      )
       .value
     routeNumbers shouldBe originalAirlineRoutes.map(_.route).sorted
   }
@@ -129,25 +138,39 @@ final class AirlineRouteRepositoryIT extends RepositoryCheck {
 
   "Selecting an airline-route by other fields" should "return the corresponding entries" in {
     def routesByNumber(routeNr: String): IO[ApiResult[Nel[AirlineRoute]]] =
-      repo.getAirlineRoutesBy("route_number", Nel.one(routeNr), Operator.Equals, emptySortAndLimit)
+      repo.getAirlineRoutesBy(
+        "route_number",
+        Nel.one(routeNr),
+        Operator.Equals,
+        emptySortAndLimit,
+        StringType
+      )
 
     def routeByAirlineAirplaneId(id: Long): IO[ApiResult[Nel[AirlineRoute]]] =
       repo.getAirlineRoutesBy(
         "airline_airplane_id",
         Nel.one(id),
         Operator.Equals,
-        emptySortAndLimit
+        emptySortAndLimit,
+        LongType
       )
 
     def routeByStartAirportId(id: Long): IO[ApiResult[Nel[AirlineRoute]]] =
-      repo.getAirlineRoutesBy("start_airport_id", Nel.one(id), Operator.Equals, emptySortAndLimit)
+      repo.getAirlineRoutesBy(
+        "start_airport_id",
+        Nel.one(id),
+        Operator.Equals,
+        emptySortAndLimit,
+        LongType
+      )
 
     def routeByDestinationAirportId(id: Long): IO[ApiResult[Nel[AirlineRoute]]] =
       repo.getAirlineRoutesBy(
         "destination_airport_id",
         Nel.one(id),
         Operator.Equals,
-        emptySortAndLimit
+        emptySortAndLimit,
+        LongType
       )
 
     val distinctAirlineAirplaneIds = originalAirlineRoutes.map(_.airlineAirplaneId).distinct
@@ -191,7 +214,8 @@ final class AirlineRouteRepositoryIT extends RepositoryCheck {
         "route_number",
         allRouteNumbers,
         Operator.In,
-        ValidatedSortAndLimit.sortDescending("route_number")
+        ValidatedSortAndLimit.sortDescending("route_number"),
+        StringType
       )
       .value
     sorted shouldBe originalAirlineRoutes.sortBy(_.route).reverse
@@ -201,7 +225,8 @@ final class AirlineRouteRepositoryIT extends RepositoryCheck {
         "route_number",
         allRouteNumbers,
         Operator.In,
-        ValidatedSortAndLimit.sortAscending("route_number").copy(limit = Some(1))
+        ValidatedSortAndLimit.sortAscending("route_number").copy(limit = Some(1)),
+        StringType
       )
       .value
     limited should contain only originalAirlineRoutes.sortBy(_.route).head
@@ -209,16 +234,40 @@ final class AirlineRouteRepositoryIT extends RepositoryCheck {
 
   "Selecting airline-routes by external airline fields" should "return the corresponding entries" in {
     def routesByAirlineId(id: Long): IO[ApiResult[Nel[AirlineRoute]]] =
-      repo.getAirlineRoutesByAirline("id", Nel.one(id), Operator.Equals, emptySortAndLimit)
+      repo.getAirlineRoutesByAirline(
+        "id",
+        Nel.one(id),
+        Operator.Equals,
+        emptySortAndLimit,
+        LongType
+      )
 
     def routesByAirlineName(name: String): IO[ApiResult[Nel[AirlineRoute]]] =
-      repo.getAirlineRoutesByAirline("name", Nel.one(name), Operator.Equals, emptySortAndLimit)
+      repo.getAirlineRoutesByAirline(
+        "name",
+        Nel.one(name),
+        Operator.Equals,
+        emptySortAndLimit,
+        StringType
+      )
 
     def routesByAirlineIata(iata: String): IO[ApiResult[Nel[AirlineRoute]]] =
-      repo.getAirlineRoutesByAirline("iata", Nel.one(iata), Operator.Equals, emptySortAndLimit)
+      repo.getAirlineRoutesByAirline(
+        "iata",
+        Nel.one(iata),
+        Operator.Equals,
+        emptySortAndLimit,
+        StringType
+      )
 
     def routesByAirlineIcao(icao: String): IO[ApiResult[Nel[AirlineRoute]]] =
-      repo.getAirlineRoutesByAirline("icao", Nel.one(icao), Operator.Equals, emptySortAndLimit)
+      repo.getAirlineRoutesByAirline(
+        "icao",
+        Nel.one(icao),
+        Operator.Equals,
+        emptySortAndLimit,
+        StringType
+      )
 
     forAll(airlineIdMap) {
       case (airlineId, (ids, name, iata, icao)) =>
@@ -238,10 +287,22 @@ final class AirlineRouteRepositoryIT extends RepositoryCheck {
 
   "Selecting airline-routes by external airplane fields" should "return the corresponding entries" in {
     def routesByAirplaneId(id: Long): IO[ApiResult[Nel[AirlineRoute]]] =
-      repo.getAirlineRoutesByAirplane("id", Nel.one(id), Operator.Equals, emptySortAndLimit)
+      repo.getAirlineRoutesByAirplane(
+        "id",
+        Nel.one(id),
+        Operator.Equals,
+        emptySortAndLimit,
+        LongType
+      )
 
     def routesByAirplaneName(name: String): IO[ApiResult[Nel[AirlineRoute]]] =
-      repo.getAirlineRoutesByAirplane("name", Nel.one(name), Operator.Equals, emptySortAndLimit)
+      repo.getAirlineRoutesByAirplane(
+        "name",
+        Nel.one(name),
+        Operator.Equals,
+        emptySortAndLimit,
+        StringType
+      )
 
     forAll(airplaneIdMap) {
       case (id, (airplaneId, name)) =>
@@ -257,14 +318,21 @@ final class AirlineRouteRepositoryIT extends RepositoryCheck {
 
   "Selecting airline-routes by external airport fields" should "return the corresponding entries" in {
     def allRoutesByAirportId(id: Long): IO[ApiResult[Nel[AirlineRoute]]] =
-      repo.getAirlineRoutesByAirport(None)("id", Nel.one(id), Operator.Equals, emptySortAndLimit)
+      repo.getAirlineRoutesByAirport(None)(
+        "id",
+        Nel.one(id),
+        Operator.Equals,
+        emptySortAndLimit,
+        LongType
+      )
 
     def inboundRoutesByAirportIata(iata: String): IO[ApiResult[Nel[AirlineRoute]]] =
       repo.getAirlineRoutesByAirport(Some(true))(
         "iata",
         Nel.one(iata),
         Operator.Equals,
-        emptySortAndLimit
+        emptySortAndLimit,
+        StringType
       )
 
     def outboundRoutesByAirportIcao(icao: String): IO[ApiResult[Nel[AirlineRoute]]] =
@@ -272,7 +340,8 @@ final class AirlineRouteRepositoryIT extends RepositoryCheck {
         "icao",
         Nel.one(icao),
         Operator.Equals,
-        emptySortAndLimit
+        emptySortAndLimit,
+        StringType
       )
 
     forAll(airportIdMap) {
@@ -295,14 +364,21 @@ final class AirlineRouteRepositoryIT extends RepositoryCheck {
 
   "Selecting a non-existent field" should "return an error" in {
     repo
-      .getAirlineRoutesBy(invalidFieldSyntax, Nel.one("value"), Operator.Equals, emptySortAndLimit)
+      .getAirlineRoutesBy(
+        invalidFieldSyntax,
+        Nel.one("value"),
+        Operator.Equals,
+        emptySortAndLimit,
+        StringType
+      )
       .error shouldBe sqlErrorInvalidSyntax
     repo
       .getAirlineRoutesByAirline(
         invalidFieldSyntax,
         Nel.one("value"),
         Operator.Equals,
-        emptySortAndLimit
+        emptySortAndLimit,
+        StringType
       )
       .error shouldBe sqlErrorInvalidSyntax
     repo
@@ -310,7 +386,8 @@ final class AirlineRouteRepositoryIT extends RepositoryCheck {
         invalidFieldSyntax,
         Nel.one("value"),
         Operator.Equals,
-        emptySortAndLimit
+        emptySortAndLimit,
+        StringType
       )
       .error shouldBe sqlErrorInvalidSyntax
     repo
@@ -318,19 +395,27 @@ final class AirlineRouteRepositoryIT extends RepositoryCheck {
         invalidFieldSyntax,
         Nel.one("value"),
         Operator.Equals,
-        emptySortAndLimit
+        emptySortAndLimit,
+        StringType
       )
       .error shouldBe sqlErrorInvalidSyntax
 
     repo
-      .getAirlineRoutesBy(invalidFieldColumn, Nel.one("value"), Operator.Equals, emptySortAndLimit)
+      .getAirlineRoutesBy(
+        invalidFieldColumn,
+        Nel.one("value"),
+        Operator.Equals,
+        emptySortAndLimit,
+        StringType
+      )
       .error shouldBe InvalidField(invalidFieldColumn)
     repo
       .getAirlineRoutesByAirline(
         invalidFieldColumn,
         Nel.one("value"),
         Operator.Equals,
-        emptySortAndLimit
+        emptySortAndLimit,
+        StringType
       )
       .error shouldBe InvalidField(invalidFieldColumn)
     repo
@@ -338,7 +423,8 @@ final class AirlineRouteRepositoryIT extends RepositoryCheck {
         invalidFieldColumn,
         Nel.one("value"),
         Operator.Equals,
-        emptySortAndLimit
+        emptySortAndLimit,
+        StringType
       )
       .error shouldBe InvalidField(invalidFieldColumn)
     repo
@@ -346,7 +432,8 @@ final class AirlineRouteRepositoryIT extends RepositoryCheck {
         invalidFieldColumn,
         Nel.one("value"),
         Operator.Equals,
-        emptySortAndLimit
+        emptySortAndLimit,
+        StringType
       )
       .error shouldBe InvalidField(invalidFieldColumn)
   }
@@ -357,7 +444,8 @@ final class AirlineRouteRepositoryIT extends RepositoryCheck {
         "route_number",
         Nel.one(invalidStringValue),
         Operator.Equals,
-        emptySortAndLimit
+        emptySortAndLimit,
+        IntType
       )
       .error shouldBe InvalidValueType(invalidStringValue.toString)
     repo
@@ -365,7 +453,8 @@ final class AirlineRouteRepositoryIT extends RepositoryCheck {
         "name",
         Nel.one(invalidStringValue),
         Operator.Equals,
-        emptySortAndLimit
+        emptySortAndLimit,
+        IntType
       )
       .error shouldBe InvalidValueType(invalidStringValue.toString)
     repo
@@ -373,7 +462,8 @@ final class AirlineRouteRepositoryIT extends RepositoryCheck {
         "capacity",
         Nel.one(invalidLongValue),
         Operator.Equals,
-        emptySortAndLimit
+        emptySortAndLimit,
+        StringType
       )
       .error shouldBe InvalidValueType(invalidLongValue)
     repo
@@ -381,7 +471,8 @@ final class AirlineRouteRepositoryIT extends RepositoryCheck {
         "number_of_runways",
         Nel.one(invalidLongValue),
         Operator.Equals,
-        emptySortAndLimit
+        emptySortAndLimit,
+        StringType
       )
       .error shouldBe InvalidValueType(invalidLongValue)
   }
@@ -454,7 +545,8 @@ final class AirlineRouteRepositoryIT extends RepositoryCheck {
         "route_number",
         Nel.one(newAirlineRoute.route),
         Operator.Equals,
-        emptySortAndLimit
+        emptySortAndLimit,
+        StringType
       )
       .value
       .head
@@ -497,7 +589,8 @@ final class AirlineRouteRepositoryIT extends RepositoryCheck {
         "route_number",
         Nel.one(updatedRouteNumber),
         Operator.Equals,
-        emptySortAndLimit
+        emptySortAndLimit,
+        StringType
       )
       .value
       .head
@@ -515,7 +608,8 @@ final class AirlineRouteRepositoryIT extends RepositoryCheck {
         "route_number",
         Nel.one(patchedRouteNumber),
         Operator.Equals,
-        emptySortAndLimit
+        emptySortAndLimit,
+        StringType
       )
       .value
       .head

@@ -19,7 +19,7 @@ final class GenericRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting all country names" should "return a correct list" in {
-    val countryNames = getFieldList[Country, String]("name").execute
+    val countryNames = getFieldList[Country, String](emptySortAndLimit, "name").execute
       .unsafeRunSync()
       .value
       .value

@@ -2,7 +2,6 @@ package flightdatabase.api.testutils.endpoints
 
 import cats.data.{NonEmptyList => Nel}
 import cats.effect.IO
-import doobie.Put
 import flightdatabase._
 import flightdatabase.api.testutils._
 import flightdatabase.partial.PartiallyAppliedGetBy
@@ -42,11 +41,16 @@ trait DirectionFilterBehavior[Model, Create, Patch] {
   ): Unit = {
     val label = if (flagQuery.isEmpty) "no flag" else flagQuery
     Scenario(s"Filtering with '$label' maps to direction $expected") {
-      implicit val put: Put[V] = fixture.put
       Given(s"a $segment filter with '$label'")
       directionStub.when(expected).returns(mockGetBy)
       mockBy[V]
-        .when(fixture.field, Nel.one(fixture.value), fixture.operator, emptySortAndLimit, *)
+        .when(
+          fixture.field,
+          Nel.one(fixture.value),
+          fixture.operator,
+          emptySortAndLimit,
+          fixture.fieldType
+        )
         .returns(Got(samples).elevate[IO])
 
       When("entities are fetched")

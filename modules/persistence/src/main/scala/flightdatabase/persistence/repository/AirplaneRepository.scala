@@ -9,6 +9,7 @@ import doobie.Put
 import doobie.Read
 import doobie.Transactor
 import flightdatabase.ApiResult
+import flightdatabase.FieldType
 import flightdatabase.Operator
 import flightdatabase.ValidatedSortAndLimit
 import flightdatabase.airplane.Airplane
@@ -84,40 +85,49 @@ object AirplaneRepository {
     override def apply(sortAndLimit: ValidatedSortAndLimit): F[ApiResult[Nel[Airplane]]] =
       selectAllAirplanes(sortAndLimit).asNel().execute
 
-    override def apply[V: Read](
+    override def apply[V](
       sortAndLimit: ValidatedSortAndLimit,
-      returnField: String
-    ): F[ApiResult[Nel[V]]] =
-      getFieldList2[Airplane, V](sortAndLimit, returnField).execute
+      returnField: String,
+      fieldType: FieldType[V]
+    ): F[ApiResult[Nel[V]]] = {
+      implicit val read: Read[V] = fieldType.asRead
+      getFieldList[Airplane, V](sortAndLimit, returnField).execute
+    }
   }
 
   private class PartiallyAppliedGetByAirplane[F[_]: Concurrent](
     implicit transactor: Transactor[F]
   ) extends PartiallyAppliedGetBy[F, Airplane] {
 
-    override def apply[V: Put](
+    override def apply[V](
       field: String,
       values: Nel[V],
       operator: Operator,
-      sortAndLimit: ValidatedSortAndLimit
-    ): F[ApiResult[Nel[Airplane]]] =
+      sortAndLimit: ValidatedSortAndLimit,
+      fieldType: FieldType[V]
+    ): F[ApiResult[Nel[Airplane]]] = {
+      implicit val put: Put[V] = fieldType.asPut
       selectAirplanesBy(field, values, operator, sortAndLimit)
         .asNel(Some(field), Some(values))
         .execute
+    }
   }
 
   private class PartiallyAppliedGetByManufacturer[F[_]: Concurrent](
     implicit transactor: Transactor[F]
   ) extends PartiallyAppliedGetBy[F, Airplane] {
 
-    override def apply[V: Put](
+    override def apply[V](
       field: String,
       values: Nel[V],
       operator: Operator,
-      sortAndLimit: ValidatedSortAndLimit
-    ): F[ApiResult[Nel[Airplane]]] =
+      sortAndLimit: ValidatedSortAndLimit,
+      fieldType: FieldType[V]
+    ): F[ApiResult[Nel[Airplane]]] = {
+      implicit val put: Put[V] = fieldType.asPut
       selectAirplanesByExternal[Manufacturer, V](field, values, operator, sortAndLimit)
         .asNel(Some(field), Some(values))
         .execute
+    }
   }
 }

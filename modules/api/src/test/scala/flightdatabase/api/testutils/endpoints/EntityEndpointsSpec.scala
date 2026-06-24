@@ -2,8 +2,6 @@ package flightdatabase.api.testutils.endpoints
 
 import cats.data.{NonEmptyList => Nel}
 import cats.effect.IO
-import doobie.Put
-import doobie.Read
 import flightdatabase._
 import flightdatabase.api.testutils._
 import flightdatabase.partial.PartiallyAppliedGetAll
@@ -99,20 +97,20 @@ abstract class EntityEndpointsSpec[Model, Create, Patch]
     mockGetAll.apply(_: ValidatedSortAndLimit)
 
   private def mockAllOnly[V]
-    : StubFunction3[ValidatedSortAndLimit, String, Read[V], IO[ApiResult[Nel[V]]]] =
-    mockGetAll.apply(_: ValidatedSortAndLimit, _: String)(_: Read[V])
+    : StubFunction3[ValidatedSortAndLimit, String, FieldType[V], IO[ApiResult[Nel[V]]]] =
+    mockGetAll.apply(_: ValidatedSortAndLimit, _: String, _: FieldType[V])
 
   protected def mockBy[V]: StubFunction5[
     String,
     Nel[V],
     Operator,
     ValidatedSortAndLimit,
-    Put[V],
+    FieldType[V],
     IO[ApiResult[Nel[Model]]]
-  ] = mockGetBy.apply(_: String, _: Nel[V], _: Operator, _: ValidatedSortAndLimit)(_: Put[V])
+  ] = mockGetBy.apply(_: String, _: Nel[V], _: Operator, _: ValidatedSortAndLimit, _: FieldType[V])
 
   /** An operator guaranteed NOT to be valid for the given field type (for WrongOperator tests). */
-  private def wrongOperatorFor(fieldType: FieldType): Operator =
+  private def wrongOperatorFor(fieldType: FieldType[_]): Operator =
     fieldType match {
       case StringType | BooleanType => Operator.GreaterThan
       case _                        => Operator.StartsWith
@@ -460,11 +458,10 @@ abstract class EntityEndpointsSpec[Model, Create, Patch]
     fx: FieldFixture[V]
   ): Unit =
     Scenario(s"Filtering by ${fx.field} (${fx.fieldType.asString})") {
-      implicit val put: Put[V] = fx.put
       armStub()
       Given(s"a value for ${fx.field}")
       mockBy[V]
-        .when(fx.field, Nel.one(fx.value), fx.operator, emptySortAndLimit, *)
+        .when(fx.field, Nel.one(fx.value), fx.operator, emptySortAndLimit, fx.fieldType)
         .returns(Got(samples).elevate[IO])
 
       When("entities are fetched")
@@ -478,7 +475,9 @@ abstract class EntityEndpointsSpec[Model, Create, Patch]
       response.extract[Nel[Model]] shouldBe samples
 
       And("the getter is called once with the parsed arguments")
-      mockBy[V].verify(fx.field, Nel.one(fx.value), fx.operator, emptySortAndLimit, *).once()
+      mockBy[V]
+        .verify(fx.field, Nel.one(fx.value), fx.operator, emptySortAndLimit, fx.fieldType)
+        .once()
     }
 
   /** An omitted `operator` parameter must default to `eq` (the endpoint matcher's default). */
@@ -488,11 +487,10 @@ abstract class EntityEndpointsSpec[Model, Create, Patch]
     fx: FieldFixture[V]
   ): Unit =
     Scenario(s"Filtering by ${fx.field} with the operator omitted defaults to eq") {
-      implicit val put: Put[V] = fx.put
       armStub()
       Given("a filter with no operator parameter")
       mockBy[V]
-        .when(fx.field, Nel.one(fx.value), Operator.Equals, emptySortAndLimit, *)
+        .when(fx.field, Nel.one(fx.value), Operator.Equals, emptySortAndLimit, fx.fieldType)
         .returns(Got(samples).elevate[IO])
 
       When("entities are fetched without an operator")
@@ -503,7 +501,9 @@ abstract class EntityEndpointsSpec[Model, Create, Patch]
       response.status shouldBe Ok
 
       And("the getter is called with the default Equals operator")
-      mockBy[V].verify(fx.field, Nel.one(fx.value), Operator.Equals, emptySortAndLimit, *).once()
+      mockBy[V]
+        .verify(fx.field, Nel.one(fx.value), Operator.Equals, emptySortAndLimit, fx.fieldType)
+        .once()
     }
 
   protected def testCrudBehavior(): Unit = {

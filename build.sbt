@@ -47,10 +47,8 @@ val circeDeps = Seq(
   "io.circe" %% "circe-generic-extras" % circeVersion
 )
 
-// doobie-core carries Put/Read/Fragment — used by `domain` only until the FieldType[V]
-// migration (step 5); hikari/postgres are persistence-only.
-val doobieCore     = Seq("org.tpolecat" %% "doobie-core" % doobieVersion)
-val doobieDeps     = doobieCore ++ Seq(
+val doobieDeps     = Seq(
+  "org.tpolecat" %% "doobie-core" % doobieVersion,
   "org.tpolecat" %% "doobie-hikari"   % doobieVersion,
   "org.tpolecat" %% "doobie-postgres" % doobieVersion
 )
@@ -110,13 +108,12 @@ lazy val domain = project
   .settings(
     name := "flight-database-domain",
     commonSettings,
-    // doobieCore is temporary — drops out in the FieldType[V] migration (step 5)
-    libraryDependencies ++= circeDeps ++ doobieCore ++ enumeratumDeps ++ testingDeps
+    libraryDependencies ++= circeDeps ++ enumeratumDeps ++ testingDeps
   )
 
 // Pure, domain-independent generic extensions (double, iterable, option, try_, path,
 // generic string). Cross-compilable in principle; the real crossProject + path/commons-io
-// extraction are deferred to frontend kickoff.
+// extraction is deferred to frontend kickoff.
 lazy val syntax = project
   .in(file("modules/syntax"))
   .settings(
@@ -152,7 +149,7 @@ lazy val api = project
   .settings(
     name := "flight-database-api",
     commonSettings,
-    // circe + doobie (Put/Read) ride in transitively via domain until step 5
+    // circe in transitively via domain until step 5
     libraryDependencies ++= http4sApiDeps ++ enumeratumDeps ++ testingDeps
   )
 

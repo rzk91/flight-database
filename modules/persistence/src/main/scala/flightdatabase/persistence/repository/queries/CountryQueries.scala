@@ -11,6 +11,7 @@ import flightdatabase.TableBase
 import flightdatabase.ValidatedSortAndLimit
 import flightdatabase.country.Country
 import flightdatabase.country.CountryCreate
+import flightdatabase.persistence.syntax.sortandlimit._
 
 private[repository] object CountryQueries {
 

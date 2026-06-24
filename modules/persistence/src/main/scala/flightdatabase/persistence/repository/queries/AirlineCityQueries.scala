@@ -11,6 +11,7 @@ import flightdatabase.TableBase
 import flightdatabase.ValidatedSortAndLimit
 import flightdatabase.airline_city.AirlineCity
 import flightdatabase.airline_city.AirlineCityCreate
+import flightdatabase.persistence.syntax.sortandlimit._
 
 private[repository] object AirlineCityQueries {
 

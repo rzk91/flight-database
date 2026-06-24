@@ -8,8 +8,14 @@ import cats.implicits._
 import doobie.Put
 import doobie.Read
 import doobie.Transactor
+import flightdatabase.ApiError
+import flightdatabase.ApiOutput
+import flightdatabase.ApiResult
+import flightdatabase.EntryNotFound
+import flightdatabase.FieldType
+import flightdatabase.Got
 import flightdatabase.Operator
-import flightdatabase._
+import flightdatabase.ValidatedSortAndLimit
 import flightdatabase.airline.Airline
 import flightdatabase.airline_airplane._
 import flightdatabase.airplane.Airplane
@@ -107,55 +113,67 @@ object AirlineAirplaneRepository {
     override def apply(sortAndLimit: ValidatedSortAndLimit): F[ApiResult[Nel[AirlineAirplane]]] =
       selectAllAirlineAirplanes(sortAndLimit).asNel().execute
 
-    override def apply[V: Read](
+    override def apply[V](
       sortAndLimit: ValidatedSortAndLimit,
-      returnField: String
-    ): F[ApiResult[Nel[V]]] =
-      getFieldList2[AirlineAirplane, V](sortAndLimit, returnField).execute
+      returnField: String,
+      fieldType: FieldType[V]
+    ): F[ApiResult[Nel[V]]] = {
+      implicit val read: Read[V] = fieldType.asRead
+      getFieldList[AirlineAirplane, V](sortAndLimit, returnField).execute
+    }
   }
 
   private class PartiallyAppliedGetByAirlineAirplane[F[_]: Concurrent](
     implicit transactor: Transactor[F]
   ) extends PartiallyAppliedGetBy[F, AirlineAirplane] {
 
-    override def apply[V: Put](
+    override def apply[V](
       field: String,
       values: Nel[V],
       operator: Operator,
-      sortAndLimit: ValidatedSortAndLimit
-    ): F[ApiResult[Nel[AirlineAirplane]]] =
+      sortAndLimit: ValidatedSortAndLimit,
+      fieldType: FieldType[V]
+    ): F[ApiResult[Nel[AirlineAirplane]]] = {
+      implicit val put: Put[V] = fieldType.asPut
       selectAirlineAirplanesBy(field, values, operator, sortAndLimit)
         .asNel(Some(field), Some(values))
         .execute
+    }
   }
 
   private class PartiallyAppliedGetByAirline[F[_]: Concurrent](
     implicit transactor: Transactor[F]
   ) extends PartiallyAppliedGetBy[F, AirlineAirplane] {
 
-    override def apply[V: Put](
+    override def apply[V](
       field: String,
       values: Nel[V],
       operator: Operator,
-      sortAndLimit: ValidatedSortAndLimit
-    ): F[ApiResult[Nel[AirlineAirplane]]] =
+      sortAndLimit: ValidatedSortAndLimit,
+      fieldType: FieldType[V]
+    ): F[ApiResult[Nel[AirlineAirplane]]] = {
+      implicit val put: Put[V] = fieldType.asPut
       selectAirlineAirplanesByExternal[Airline, V](field, values, operator, sortAndLimit)
         .asNel(Some(field), Some(values))
         .execute
+    }
   }
 
   private class PartiallyAppliedGetByAirplane[F[_]: Concurrent](
     implicit transactor: Transactor[F]
   ) extends PartiallyAppliedGetBy[F, AirlineAirplane] {
 
-    override def apply[V: Put](
+    override def apply[V](
       field: String,
       values: Nel[V],
       operator: Operator,
-      sortAndLimit: ValidatedSortAndLimit
-    ): F[ApiResult[Nel[AirlineAirplane]]] =
+      sortAndLimit: ValidatedSortAndLimit,
+      fieldType: FieldType[V]
+    ): F[ApiResult[Nel[AirlineAirplane]]] = {
+      implicit val put: Put[V] = fieldType.asPut
       selectAirlineAirplanesByExternal[Airplane, V](field, values, operator, sortAndLimit)
         .asNel(Some(field), Some(values))
         .execute
+    }
   }
 }

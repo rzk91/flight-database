@@ -8,9 +8,12 @@ import flightdatabase.EntryAlreadyExists
 import flightdatabase.EntryHasInvalidForeignKey
 import flightdatabase.EntryListEmpty
 import flightdatabase.EntryNotFound
+import flightdatabase.IntType
 import flightdatabase.InvalidField
 import flightdatabase.InvalidValueType
+import flightdatabase.LongType
 import flightdatabase.Operator
+import flightdatabase.StringType
 import flightdatabase.ValidatedSortAndLimit
 import flightdatabase.airline_airplane.AirlineAirplane
 import flightdatabase.airline_airplane.AirlineAirplaneCreate
@@ -95,17 +98,22 @@ final class AirlineAirplaneRepositoryIT extends RepositoryCheck {
   }
 
   it should "only return the requested fields if so required" in {
-    val airlineIds = repo.getAirlineAirplanes[Long](emptySortAndLimit, "airline_id").value.distinct
+    val airlineIds =
+      repo.getAirlineAirplanes(emptySortAndLimit, "airline_id", LongType).value.distinct
     airlineIds should contain only (originalAirlineAirplanes.map(_.airlineId).distinct.toList: _*)
 
     val airplaneIds =
-      repo.getAirlineAirplanes[Long](emptySortAndLimit, "airplane_id").value.distinct
+      repo.getAirlineAirplanes(emptySortAndLimit, "airplane_id", LongType).value.distinct
     airplaneIds should contain only (originalAirlineAirplanes.map(_.airplaneId).distinct.toList: _*)
   }
 
   it should "sort and return the requested fields if so required" in {
     val airlineIds = repo
-      .getAirlineAirplanes[Long](ValidatedSortAndLimit.sortAscending("airline_id"), "airline_id")
+      .getAirlineAirplanes(
+        ValidatedSortAndLimit.sortAscending("airline_id"),
+        "airline_id",
+        LongType
+      )
       .value
       .distinct
     airlineIds should contain only (
@@ -113,7 +121,11 @@ final class AirlineAirplaneRepositoryIT extends RepositoryCheck {
     )
 
     val airplaneIds = repo
-      .getAirlineAirplanes[Long](ValidatedSortAndLimit.sortDescending("airplane_id"), "airline_id")
+      .getAirlineAirplanes(
+        ValidatedSortAndLimit.sortDescending("airplane_id"),
+        "airline_id",
+        LongType
+      )
       .value
       .distinct
 
@@ -149,13 +161,25 @@ final class AirlineAirplaneRepositoryIT extends RepositoryCheck {
 
   "Selecting airline airplanes by other fields" should "return the corresponding entries" in {
     def airlineAirplaneByAirlineId(id: Long): IO[ApiResult[Nel[AirlineAirplane]]] =
-      repo.getAirlineAirplanesBy("airline_id", Nel.one(id), Operator.Equals, emptySortAndLimit)
+      repo.getAirlineAirplanesBy(
+        "airline_id",
+        Nel.one(id),
+        Operator.Equals,
+        emptySortAndLimit,
+        LongType
+      )
 
     def airlineAirplaneByAirplaneId(id: Long): IO[ApiResult[Nel[AirlineAirplane]]] =
-      repo.getAirlineAirplanesBy("airplane_id", Nel.one(id), Operator.Equals, emptySortAndLimit)
+      repo.getAirlineAirplanesBy(
+        "airplane_id",
+        Nel.one(id),
+        Operator.Equals,
+        emptySortAndLimit,
+        LongType
+      )
 
     def airlineAirplaneByAirlineIds(ids: Nel[Long]): IO[ApiResult[Nel[AirlineAirplane]]] =
-      repo.getAirlineAirplanesBy("airline_id", ids, Operator.In, emptySortAndLimit)
+      repo.getAirlineAirplanesBy("airline_id", ids, Operator.In, emptySortAndLimit, LongType)
 
     val distinctAirlineIds = originalAirlineAirplanes.map(_.airlineId).distinct
     val distinctAirplaneIds = originalAirlineAirplanes.map(_.airplaneId).distinct
@@ -186,7 +210,8 @@ final class AirlineAirplaneRepositoryIT extends RepositoryCheck {
         "airline_id",
         originalAirlineAirplanes.map(_.airlineId).distinct,
         Operator.In,
-        ValidatedSortAndLimit.sortAscending("airline_id")
+        ValidatedSortAndLimit.sortAscending("airline_id"),
+        LongType
       )
       .value should contain only (originalAirlineAirplanes.sortBy(_.airlineId).toList: _*)
 
@@ -198,7 +223,8 @@ final class AirlineAirplaneRepositoryIT extends RepositoryCheck {
         "airplane_id",
         originalAirlineAirplanes.map(_.airplaneId).distinct,
         Operator.In,
-        ValidatedSortAndLimit.limitAndOffset(limit, offset)
+        ValidatedSortAndLimit.limitAndOffset(limit, offset),
+        LongType
       )
       .value
 
@@ -210,20 +236,39 @@ final class AirlineAirplaneRepositoryIT extends RepositoryCheck {
 
   "Selecting airline airplanes by external fields" should "return the corresponding entries" in {
     def airlineAirplanesByAirlineName(name: String): IO[ApiResult[Nel[AirlineAirplane]]] =
-      repo.getAirlineAirplanesByAirline("name", Nel.one(name), Operator.Equals, emptySortAndLimit)
+      repo.getAirlineAirplanesByAirline(
+        "name",
+        Nel.one(name),
+        Operator.Equals,
+        emptySortAndLimit,
+        StringType
+      )
 
     def airlineAirplanesByAirplaneName(name: String): IO[ApiResult[Nel[AirlineAirplane]]] =
-      repo.getAirlineAirplanesByAirplane("name", Nel.one(name), Operator.Equals, emptySortAndLimit)
+      repo.getAirlineAirplanesByAirplane(
+        "name",
+        Nel.one(name),
+        Operator.Equals,
+        emptySortAndLimit,
+        StringType
+      )
 
     def airlineAirplanesByAirlineIata(iata: String): IO[ApiResult[Nel[AirlineAirplane]]] =
-      repo.getAirlineAirplanesByAirline("iata", Nel.one(iata), Operator.Equals, emptySortAndLimit)
+      repo.getAirlineAirplanesByAirline(
+        "iata",
+        Nel.one(iata),
+        Operator.Equals,
+        emptySortAndLimit,
+        StringType
+      )
 
     def airlineAirplanesByAirplaneCapacity(capacity: Int): IO[ApiResult[Nel[AirlineAirplane]]] =
       repo.getAirlineAirplanesByAirplane(
         "capacity",
         Nel.one(capacity),
         Operator.GreaterThanOrEqualTo,
-        emptySortAndLimit
+        emptySortAndLimit,
+        IntType
       )
 
     forAll(airlineIdMap) {
@@ -267,7 +312,8 @@ final class AirlineAirplaneRepositoryIT extends RepositoryCheck {
         "name",
         airlineNames,
         Operator.In,
-        ValidatedSortAndLimit.sortAscending("airline_id")
+        ValidatedSortAndLimit.sortAscending("airline_id"),
+        StringType
       )
       .value should contain only (
       originalAirlineAirplanes.filter(aa =>
@@ -287,7 +333,8 @@ final class AirlineAirplaneRepositoryIT extends RepositoryCheck {
         "capacity",
         Nel.one(maxCapacity),
         Operator.LessThanOrEqualTo,
-        ValidatedSortAndLimit.limitAndOffset(limit, offset)
+        ValidatedSortAndLimit.limitAndOffset(limit, offset),
+        IntType
       )
       .value should contain only (
       originalAirlineAirplanes
@@ -307,7 +354,8 @@ final class AirlineAirplaneRepositoryIT extends RepositoryCheck {
         invalidFieldSyntax,
         Nel.one("value"),
         Operator.Equals,
-        emptySortAndLimit
+        emptySortAndLimit,
+        StringType
       )
       .error shouldBe sqlErrorInvalidSyntax
 
@@ -316,7 +364,8 @@ final class AirlineAirplaneRepositoryIT extends RepositoryCheck {
         invalidFieldSyntax,
         Nel.one("value"),
         Operator.Equals,
-        emptySortAndLimit
+        emptySortAndLimit,
+        StringType
       )
       .error shouldBe sqlErrorInvalidSyntax
 
@@ -325,7 +374,8 @@ final class AirlineAirplaneRepositoryIT extends RepositoryCheck {
         invalidFieldSyntax,
         Nel.one("value"),
         Operator.Equals,
-        emptySortAndLimit
+        emptySortAndLimit,
+        StringType
       )
       .error shouldBe sqlErrorInvalidSyntax
 
@@ -334,7 +384,8 @@ final class AirlineAirplaneRepositoryIT extends RepositoryCheck {
         invalidFieldColumn,
         Nel.one("value"),
         Operator.Equals,
-        emptySortAndLimit
+        emptySortAndLimit,
+        StringType
       )
       .error shouldBe InvalidField(invalidFieldColumn)
 
@@ -343,7 +394,8 @@ final class AirlineAirplaneRepositoryIT extends RepositoryCheck {
         invalidFieldColumn,
         Nel.one("value"),
         Operator.Equals,
-        emptySortAndLimit
+        emptySortAndLimit,
+        StringType
       )
       .error shouldBe InvalidField(invalidFieldColumn)
 
@@ -352,7 +404,8 @@ final class AirlineAirplaneRepositoryIT extends RepositoryCheck {
         invalidFieldColumn,
         Nel.one("value"),
         Operator.Equals,
-        emptySortAndLimit
+        emptySortAndLimit,
+        StringType
       )
       .error shouldBe InvalidField(invalidFieldColumn)
   }
@@ -363,7 +416,8 @@ final class AirlineAirplaneRepositoryIT extends RepositoryCheck {
         "airline_id",
         Nel.one(invalidLongValue),
         Operator.Equals,
-        emptySortAndLimit
+        emptySortAndLimit,
+        StringType
       )
       .error shouldBe InvalidValueType(invalidLongValue)
 
@@ -372,7 +426,8 @@ final class AirlineAirplaneRepositoryIT extends RepositoryCheck {
         "country_id",
         Nel.one(invalidLongValue),
         Operator.Equals,
-        emptySortAndLimit
+        emptySortAndLimit,
+        StringType
       )
       .error shouldBe InvalidValueType(invalidLongValue)
 
@@ -381,7 +436,8 @@ final class AirlineAirplaneRepositoryIT extends RepositoryCheck {
         "capacity",
         Nel.one(invalidLongValue),
         Operator.Equals,
-        emptySortAndLimit
+        emptySortAndLimit,
+        StringType
       )
       .error shouldBe InvalidValueType(invalidLongValue)
   }

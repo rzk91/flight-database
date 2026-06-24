@@ -56,7 +56,8 @@ case class InvalidOperator(parseError: NoSuchMember[Operator]) extends ApiError 
   override val error: String = s"Error: Invalid operator! ${parseError.getMessage()}"
 }
 
-case class WrongOperator(operator: Operator, field: String, fieldType: FieldType) extends ApiError {
+case class WrongOperator(operator: Operator, field: String, fieldType: FieldType[_])
+    extends ApiError {
 
   override val error: String =
     s"Error: Wrong operator '$operator' for field '$field' of type '$fieldType'"

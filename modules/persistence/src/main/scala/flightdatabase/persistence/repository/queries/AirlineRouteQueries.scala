@@ -11,6 +11,7 @@ import flightdatabase.TableBase
 import flightdatabase.ValidatedSortAndLimit
 import flightdatabase.airline_route.AirlineRoute
 import flightdatabase.airline_route.AirlineRouteCreate
+import flightdatabase.persistence.syntax.sortandlimit._
 
 private[repository] object AirlineRouteQueries {
 

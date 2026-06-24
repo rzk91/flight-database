@@ -11,6 +11,7 @@ import flightdatabase.TableBase
 import flightdatabase.ValidatedSortAndLimit
 import flightdatabase.manufacturer.Manufacturer
 import flightdatabase.manufacturer.ManufacturerCreate
+import flightdatabase.persistence.syntax.sortandlimit._
 
 private[repository] object ManufacturerQueries {
 

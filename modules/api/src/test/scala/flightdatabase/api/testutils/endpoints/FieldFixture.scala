@@ -1,7 +1,5 @@
 package flightdatabase.api.testutils.endpoints
 
-import doobie.Put
-import doobie.Read
 import flightdatabase.FieldType
 import flightdatabase.Operator
 import io.circe.Decoder
@@ -20,11 +18,7 @@ final case class FieldFixture[V](
   field: String,
   value: V,
   operator: Operator,
-  fieldType: FieldType
-)(
-  implicit val put: Put[V],
-  val read: Read[V],
-  val decoder: Decoder[V]
-) {
+  fieldType: FieldType[V]
+)(implicit val decoder: Decoder[V]) {
   def valueString: String = value.toString
 }

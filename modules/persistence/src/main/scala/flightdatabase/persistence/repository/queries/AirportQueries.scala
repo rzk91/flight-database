@@ -11,6 +11,7 @@ import flightdatabase.TableBase
 import flightdatabase.ValidatedSortAndLimit
 import flightdatabase.airport.Airport
 import flightdatabase.airport.AirportCreate
+import flightdatabase.persistence.syntax.sortandlimit._
 
 private[repository] object AirportQueries {
 
