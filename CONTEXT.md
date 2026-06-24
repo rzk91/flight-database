@@ -70,4 +70,5 @@ _Avoid_: HQ city (ambiguous — could mean operational vs legal HQ), home city, 
 
 **CountryLanguages**:
 A country's official languages, ranked by official-status priority — main is constitutionally the primary official language; secondary and tertiary are co-official languages when they exist. Currently capped at three slots on `Country` (`mainLanguageId`, `secondaryLanguageId`, `tertiaryLanguageId`); countries with more co-official languages (e.g. South Africa, India) only have their top three captured. The cap is provisional; a future `CountryLanguage` join table may replace the three-column layout.
+A country **has** a language if it occupies *any* of the three slots — the slot rank (main/secondary/tertiary) sets priority, not membership. It follows that *excluding* a language must drop every country where it appears in *any* slot (the complement of "has"), never merely those where it sits in one slot. This any/none rule governs every filter over a multi-slot relationship, including a Route's start/destination airports.
 _Avoid_: Spoken languages, popular languages (these would imply speaker-count ranking, not official status)
