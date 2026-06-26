@@ -280,28 +280,30 @@ final class CityRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting a non-existent field" should "return an error" in {
+    val nelValue = Nel.one("value")
+
     repo
       .getCitiesBy(
         invalidFieldSyntax,
-        Nel.one("value"),
+        nelValue,
         Operator.Equals,
         emptySortAndLimit,
         StringType
       )
-      .error shouldBe sqlErrorInvalidSyntax
+      .error shouldBe sqlErrorInvalidSyntax(Some(invalidFieldSyntax), Some(nelValue))
     repo
       .getCitiesByCountry(
         invalidFieldSyntax,
-        Nel.one("value"),
+        nelValue,
         Operator.Equals,
         emptySortAndLimit,
         StringType
       )
-      .error shouldBe sqlErrorInvalidSyntax
+      .error shouldBe sqlErrorInvalidSyntax(Some(invalidFieldSyntax), Some(nelValue))
     repo
       .getCitiesBy(
         invalidFieldColumn,
-        Nel.one("value"),
+        nelValue,
         Operator.Equals,
         emptySortAndLimit,
         StringType
@@ -310,7 +312,7 @@ final class CityRepositoryIT extends RepositoryCheck {
     repo
       .getCitiesByCountry(
         invalidFieldColumn,
-        Nel.one("value"),
+        nelValue,
         Operator.Equals,
         emptySortAndLimit,
         StringType

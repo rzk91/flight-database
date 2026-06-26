@@ -68,7 +68,7 @@ final class AirportEndpointsTest extends EntityEndpointsSpec[Airport, AirportCre
       3,
       92500000,
       international = true,
-      junction = false
+      junction = true
     )
   )
 

@@ -12,7 +12,6 @@ import flightdatabase.IntType
 import flightdatabase.InvalidField
 import flightdatabase.InvalidValueType
 import flightdatabase.Operator
-import flightdatabase.SqlError
 import flightdatabase.StringType
 import flightdatabase.ValidatedSortAndLimit
 import flightdatabase.language.Language
@@ -39,7 +38,6 @@ final class LanguageRepositoryIT extends RepositoryCheck {
   val idNotPresent: Long = 100
   val valueNotPresent: String = "Not present"
   val veryLongIdNotPresent: Long = 1000000000000000000L
-  val sqlErrorStringTooLong: SqlError = SqlError("22001")
   val invalidFieldSyntax: String = "Field with spaces"
   val invalidFieldColumn: String = "non_existent_field"
   val invalidStringValue: Int = 1
@@ -175,19 +173,21 @@ final class LanguageRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting a non-existent field" should "return an error" in {
+    val nelValue = Nel.one("value")
+
     repo
       .getLanguagesBy(
         invalidFieldSyntax,
-        Nel.one("value"),
+        nelValue,
         Operator.Equals,
         emptySortAndLimit,
         StringType
       )
-      .error shouldBe sqlErrorInvalidSyntax
+      .error shouldBe sqlErrorInvalidSyntax(Some(invalidFieldSyntax), Some(nelValue))
     repo
       .getLanguagesBy(
         invalidFieldColumn,
-        Nel.one("value"),
+        nelValue,
         Operator.Equals,
         emptySortAndLimit,
         StringType
@@ -227,7 +227,7 @@ final class LanguageRepositoryIT extends RepositoryCheck {
     )
 
     forAll(invalidLanguages2) { language =>
-      repo.createLanguage(language).error shouldBe sqlErrorStringTooLong
+      repo.createLanguage(language).error shouldBe sqlErrorStringTooLong()
     }
   }
 
@@ -275,7 +275,7 @@ final class LanguageRepositoryIT extends RepositoryCheck {
     )
 
     forAll(invalidLanguages2) { language =>
-      repo.updateLanguage(language).error shouldBe sqlErrorStringTooLong
+      repo.updateLanguage(language).error shouldBe sqlErrorStringTooLong()
     }
   }
 
@@ -338,7 +338,7 @@ final class LanguageRepositoryIT extends RepositoryCheck {
     forAll(invalidLanguages2) { language =>
       repo
         .partiallyUpdateLanguage(existingLanguage.id, language)
-        .error shouldBe sqlErrorStringTooLong
+        .error shouldBe sqlErrorStringTooLong()
     }
   }
 

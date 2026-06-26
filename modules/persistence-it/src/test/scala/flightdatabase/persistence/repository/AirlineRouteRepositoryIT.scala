@@ -363,47 +363,49 @@ final class AirlineRouteRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting a non-existent field" should "return an error" in {
+    val nelValue = Nel.one("value")
+
     repo
       .getAirlineRoutesBy(
         invalidFieldSyntax,
-        Nel.one("value"),
+        nelValue,
         Operator.Equals,
         emptySortAndLimit,
         StringType
       )
-      .error shouldBe sqlErrorInvalidSyntax
+      .error shouldBe sqlErrorInvalidSyntax(Some(invalidFieldSyntax), Some(nelValue))
     repo
       .getAirlineRoutesByAirline(
         invalidFieldSyntax,
-        Nel.one("value"),
+        nelValue,
         Operator.Equals,
         emptySortAndLimit,
         StringType
       )
-      .error shouldBe sqlErrorInvalidSyntax
+      .error shouldBe sqlErrorInvalidSyntax(Some(invalidFieldSyntax), Some(nelValue))
     repo
       .getAirlineRoutesByAirplane(
         invalidFieldSyntax,
-        Nel.one("value"),
+        nelValue,
         Operator.Equals,
         emptySortAndLimit,
         StringType
       )
-      .error shouldBe sqlErrorInvalidSyntax
+      .error shouldBe sqlErrorInvalidSyntax(Some(invalidFieldSyntax), Some(nelValue))
     repo
       .getAirlineRoutesByAirport(None)(
         invalidFieldSyntax,
-        Nel.one("value"),
+        nelValue,
         Operator.Equals,
         emptySortAndLimit,
         StringType
       )
-      .error shouldBe sqlErrorInvalidSyntax
+      .error shouldBe sqlErrorInvalidSyntax(Some(invalidFieldSyntax), Some(nelValue))
 
     repo
       .getAirlineRoutesBy(
         invalidFieldColumn,
-        Nel.one("value"),
+        nelValue,
         Operator.Equals,
         emptySortAndLimit,
         StringType
@@ -412,7 +414,7 @@ final class AirlineRouteRepositoryIT extends RepositoryCheck {
     repo
       .getAirlineRoutesByAirline(
         invalidFieldColumn,
-        Nel.one("value"),
+        nelValue,
         Operator.Equals,
         emptySortAndLimit,
         StringType
@@ -421,7 +423,7 @@ final class AirlineRouteRepositoryIT extends RepositoryCheck {
     repo
       .getAirlineRoutesByAirplane(
         invalidFieldColumn,
-        Nel.one("value"),
+        nelValue,
         Operator.Equals,
         emptySortAndLimit,
         StringType
@@ -430,7 +432,7 @@ final class AirlineRouteRepositoryIT extends RepositoryCheck {
     repo
       .getAirlineRoutesByAirport(None)(
         invalidFieldColumn,
-        Nel.one("value"),
+        nelValue,
         Operator.Equals,
         emptySortAndLimit,
         StringType

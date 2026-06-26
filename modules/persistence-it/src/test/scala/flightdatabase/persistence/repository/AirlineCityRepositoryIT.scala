@@ -265,40 +265,42 @@ final class AirlineCityRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting a non-existent field" should "return an error" in {
+    val nelValue = Nel.one("value")
+    
     repo
       .getAirlineCitiesBy(
         invalidFieldSyntax,
-        Nel.one(valueNotPresent),
+        nelValue,
         Operator.Equals,
         emptySortAndLimit,
         StringType
       )
-      .error shouldBe sqlErrorInvalidSyntax
+      .error shouldBe sqlErrorInvalidSyntax(Some(invalidFieldSyntax), Some(nelValue))
 
     repo
       .getAirlineCitiesByCity(
         invalidFieldSyntax,
-        Nel.one(valueNotPresent),
+        nelValue,
         Operator.Equals,
         emptySortAndLimit,
         StringType
       )
-      .error shouldBe sqlErrorInvalidSyntax
+      .error shouldBe sqlErrorInvalidSyntax(Some(invalidFieldSyntax), Some(nelValue))
 
     repo
       .getAirlineCitiesByAirline(
         invalidFieldSyntax,
-        Nel.one(valueNotPresent),
+        nelValue,
         Operator.Equals,
         emptySortAndLimit,
         StringType
       )
-      .error shouldBe sqlErrorInvalidSyntax
+      .error shouldBe sqlErrorInvalidSyntax(Some(invalidFieldSyntax), Some(nelValue))
 
     repo
       .getAirlineCitiesBy(
         invalidFieldColumn,
-        Nel.one(valueNotPresent),
+        nelValue,
         Operator.Equals,
         emptySortAndLimit,
         StringType
@@ -308,7 +310,7 @@ final class AirlineCityRepositoryIT extends RepositoryCheck {
     repo
       .getAirlineCitiesByCity(
         invalidFieldColumn,
-        Nel.one(valueNotPresent),
+        nelValue,
         Operator.Equals,
         emptySortAndLimit,
         StringType
@@ -318,7 +320,7 @@ final class AirlineCityRepositoryIT extends RepositoryCheck {
     repo
       .getAirlineCitiesByAirline(
         invalidFieldColumn,
-        Nel.one(valueNotPresent),
+        nelValue,
         Operator.Equals,
         emptySortAndLimit,
         StringType

@@ -59,6 +59,8 @@ package object queries {
       case Operator.Contains   => Fragment.const(field) ++ fr"ILIKE ${values.map(s => s"%$s%").head}"
       case Operator.NotContains =>
         Fragment.const(field) ++ fr"NOT ILIKE ${values.map(s => s"%$s%").head}"
+      case Operator.Is | Operator.IsNot =>
+        Fragment.const(field) ++ Fragment.const(operator.inSql) ++ booleanFragment(values.head)
       case _ => Fragment.const(field) ++ Fragment.const(operator.inSql) ++ fr"${values.head}"
     })
 
@@ -76,4 +78,11 @@ package object queries {
     fr"=" ++ Fragment.const(s"$externalTable.id") ++
     whereFragment(s"$externalTable.$externalField", externalValues, operator)
   }
+
+  private def booleanFragment[A: Put](value: A): Fragment =
+    value.toString.toLowerCase match {
+      case "true"  => Fragment.const("TRUE")
+      case "false" => Fragment.const("FALSE")
+      case _       => fr"$value" // Will lead to a syntax error ¯\_(ツ)_/¯
+    }
 }

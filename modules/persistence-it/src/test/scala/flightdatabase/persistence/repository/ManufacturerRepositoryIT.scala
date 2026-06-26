@@ -227,38 +227,40 @@ final class ManufacturerRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting a non-existent field" should "return an error" in {
+    val nelValue = Nel.one("value")
+
     repo
       .getManufacturersBy(
         invalidFieldSyntax,
-        Nel.one("value"),
+        nelValue,
         Operator.Equals,
         emptySortAndLimit,
         StringType
       )
-      .error shouldBe sqlErrorInvalidSyntax
+      .error shouldBe sqlErrorInvalidSyntax(Some(invalidFieldSyntax), Some(nelValue))
     repo
       .getManufacturersByCity(
         invalidFieldSyntax,
-        Nel.one("value"),
+        nelValue,
         Operator.Equals,
         emptySortAndLimit,
         StringType
       )
-      .error shouldBe sqlErrorInvalidSyntax
+      .error shouldBe sqlErrorInvalidSyntax(Some(invalidFieldSyntax), Some(nelValue))
     repo
       .getManufacturersByCountry(
         invalidFieldSyntax,
-        Nel.one("value"),
+        nelValue,
         Operator.Equals,
         emptySortAndLimit,
         StringType
       )
-      .error shouldBe sqlErrorInvalidSyntax
+      .error shouldBe sqlErrorInvalidSyntax(Some(invalidFieldSyntax), Some(nelValue))
 
     repo
       .getManufacturersBy(
         invalidFieldColumn,
-        Nel.one("value"),
+        nelValue,
         Operator.Equals,
         emptySortAndLimit,
         StringType
@@ -267,7 +269,7 @@ final class ManufacturerRepositoryIT extends RepositoryCheck {
     repo
       .getManufacturersByCity(
         invalidFieldColumn,
-        Nel.one("value"),
+        nelValue,
         Operator.Equals,
         emptySortAndLimit,
         StringType
@@ -276,7 +278,7 @@ final class ManufacturerRepositoryIT extends RepositoryCheck {
     repo
       .getManufacturersByCountry(
         invalidFieldColumn,
-        Nel.one("value"),
+        nelValue,
         Operator.Equals,
         emptySortAndLimit,
         StringType

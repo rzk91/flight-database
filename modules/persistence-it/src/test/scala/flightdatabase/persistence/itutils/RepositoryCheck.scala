@@ -1,5 +1,6 @@
 package flightdatabase.persistence.itutils
 
+import cats.data.{NonEmptyList => Nel}
 import cats.effect.Async
 import cats.effect.IO
 import doobie.util.transactor.Transactor
@@ -12,7 +13,18 @@ trait RepositoryCheck extends PostgreSqlContainerSpec[IO] with Matchers with Eit
   implicit override val async: Async[IO] = IO.asyncForIO
   implicit lazy val xa: Transactor[IO] = transactor
 
-  // Helper values
+  // Helpers
   protected val emptySortAndLimit: ValidatedSortAndLimit = ValidatedSortAndLimit.empty
-  protected val sqlErrorInvalidSyntax: SqlError = SqlError("42601")
+
+  protected def sqlErrorInvalidSyntax(
+    field: Option[String] = None,
+    values: Option[Nel[_]] = None
+  ): SqlError =
+    SqlError("42601", field, values)
+
+  protected def sqlErrorStringTooLong(
+    field: Option[String] = None,
+    values: Option[Nel[_]] = None
+  ): SqlError =
+    SqlError("22001", field, values)
 }

@@ -28,7 +28,7 @@ INSERT INTO airport
        'Dubai International Airport', 'OMDB', 'DXB',
        (SELECT id FROM city WHERE name = 'Dubai'),
        2, 3, 92500000,
-       true, false
+       true, true
    );
  
 ALTER SEQUENCE airport_id_seq RESTART WITH 4;

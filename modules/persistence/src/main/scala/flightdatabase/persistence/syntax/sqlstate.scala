@@ -27,7 +27,7 @@ final class SqlStateOps(private val state: SqlState) {
       case class42.UNDEFINED_COLUMN      => InvalidField(invalidField.debug)
       case class42.UNDEFINED_FUNCTION =>
         InvalidValueType(invalidValues.map(_.toList.mkString(", ")).debug)
-      case _ => SqlError(state.value)
+      case _ => SqlError(state.value, invalidField, invalidValues)
     }
 }
 

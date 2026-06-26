@@ -316,38 +316,40 @@ final class CountryRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting a non-existent field" should "return an error" in {
+    val nelValue = Nel.one("value")
+
     repo
       .getCountriesBy(
         invalidFieldSyntax,
-        Nel.one("value"),
+        nelValue,
         Operator.Equals,
         emptySortAndLimit,
         StringType
       )
-      .error shouldBe sqlErrorInvalidSyntax
+      .error shouldBe sqlErrorInvalidSyntax(Some(invalidFieldSyntax), Some(nelValue))
     repo
       .getCountriesByLanguage(
         invalidFieldSyntax,
-        Nel.one("value"),
+        nelValue,
         Operator.Equals,
         emptySortAndLimit,
         StringType
       )
-      .error shouldBe sqlErrorInvalidSyntax
+      .error shouldBe sqlErrorInvalidSyntax(Some(invalidFieldSyntax), Some(nelValue))
     repo
       .getCountriesByCurrency(
         invalidFieldSyntax,
-        Nel.one("value"),
+        nelValue,
         Operator.Equals,
         emptySortAndLimit,
         StringType
       )
-      .error shouldBe sqlErrorInvalidSyntax
+      .error shouldBe sqlErrorInvalidSyntax(Some(invalidFieldSyntax), Some(nelValue))
 
     repo
       .getCountriesBy(
         invalidFieldColumn,
-        Nel.one("value"),
+        nelValue,
         Operator.Equals,
         emptySortAndLimit,
         StringType
@@ -356,7 +358,7 @@ final class CountryRepositoryIT extends RepositoryCheck {
     repo
       .getCountriesByLanguage(
         invalidFieldColumn,
-        Nel.one("value"),
+        nelValue,
         Operator.Equals,
         emptySortAndLimit,
         StringType
@@ -365,7 +367,7 @@ final class CountryRepositoryIT extends RepositoryCheck {
     repo
       .getCountriesByCurrency(
         invalidFieldColumn,
-        Nel.one("value"),
+        nelValue,
         Operator.Equals,
         emptySortAndLimit,
         StringType

@@ -30,6 +30,6 @@
         "number_of_terminals": 3,
         "capacity": 92500000,
         "international": true,
-        "junction": false
+        "junction": true
     }
 ]

@@ -1,6 +1,7 @@
 package flightdatabase
 
 import cats.Applicative
+import cats.data.{NonEmptyList => Nel}
 import cats.syntax.either._
 import enumeratum.NoSuchMember
 
@@ -67,11 +68,27 @@ case class InvalidValueType(value: String) extends ApiError {
   override val error: String = s"Error: Invalid type for value(s) '$value'"
 }
 
-case class SqlError(sqlState: String) extends ApiError {
+case class SqlError(
+  sqlState: String,
+  relevantField: Option[String],
+  relevantValues: Option[Nel[_]]
+) extends ApiError {
+
+  def addendum: String =
+    (relevantField, relevantValues) match {
+      case (Some(field), Some(values)) =>
+        s"\nThe error occurred while processing field '$field' with value(s): '${values.toList.mkString(", ")}'."
+      case (Some(field), None) =>
+        s"\nThe error occurred while processing field '$field'."
+      case (None, Some(values)) =>
+        s"\nThe error occurred while processing value(s): '${values.toList.mkString(", ")}'."
+      case _ => ""
+    }
 
   override val error: String =
-    s"Encountered PostgreSQL error: '$sqlState'.\n" +
-      "Here is a link to all SQL state error codes: " +
+    s"Encountered PostgreSQL error: '$sqlState'." +
+      addendum +
+      "\nHere is a link to all SQL state error codes: " +
       "https://www.postgresql.org/docs/current/errcodes-appendix.html"
 }
 

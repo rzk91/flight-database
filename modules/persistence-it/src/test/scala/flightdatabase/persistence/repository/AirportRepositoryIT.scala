@@ -21,6 +21,7 @@ import flightdatabase.airport.Airport
 import flightdatabase.airport.AirportCreate
 import flightdatabase.airport.AirportPatch
 import flightdatabase.persistence.itutils.RepositoryCheck
+import flightdatabase.syntax.string._
 import flightdatabase.test.syntax.all._
 import org.scalatest.Inspectors.forAll
 
@@ -63,7 +64,7 @@ final class AirportRepositoryIT extends RepositoryCheck {
       3,
       92500000,
       international = true,
-      junction = false
+      junction = true
     )
   )
 
@@ -162,6 +163,8 @@ final class AirportRepositoryIT extends RepositoryCheck {
       repo.getAirportsBy("iata", Nel.one(iata), Operator.Equals, emptySortAndLimit, StringType)
     def airportByCityId(id: Long): IO[ApiResult[Nel[Airport]]] =
       repo.getAirportsBy("city_id", Nel.one(id), Operator.Equals, emptySortAndLimit, LongType)
+    def airportByJunction(junction: String): IO[ApiResult[Nel[Airport]]] =
+      repo.getAirportsBy("junction", Nel.one(junction), Operator.Is, emptySortAndLimit, StringType)
 
     val distinctCityIds = originalAirports.map(_.cityId).distinct
 
@@ -174,6 +177,19 @@ final class AirportRepositoryIT extends RepositoryCheck {
     forAll(distinctCityIds) { id =>
       val expectedAirports = originalAirports.filter(_.cityId == id)
       airportByCityId(id).value should contain only (expectedAirports: _*)
+    }
+
+    forAll(List("TRUE", "False", "Invalid")) { junction =>
+      junction.asBoolean match {
+        case Some(j) =>
+          val expectedAirports = originalAirports.filter(_.junction == j)
+          airportByJunction(junction).value should contain only (expectedAirports: _*)
+        case None =>
+          airportByJunction(junction).error shouldBe sqlErrorInvalidSyntax(
+            Some("junction"),
+            Some(Nel.one(junction))
+          )
+      }
     }
 
     airportByName(valueNotPresent).error shouldBe EntryListEmpty
@@ -270,38 +286,40 @@ final class AirportRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting a non-existent field" should "return an error" in {
+    val nelValue = Nel.one("value")
+
     repo
       .getAirportsBy(
         invalidFieldSyntax,
-        Nel.one("value"),
+        nelValue,
         Operator.Equals,
         emptySortAndLimit,
         StringType
       )
-      .error shouldBe sqlErrorInvalidSyntax
+      .error shouldBe sqlErrorInvalidSyntax(Some(invalidFieldSyntax), Some(nelValue))
     repo
       .getAirportsByCity(
         invalidFieldSyntax,
-        Nel.one("value"),
+        nelValue,
         Operator.Equals,
         emptySortAndLimit,
         StringType
       )
-      .error shouldBe sqlErrorInvalidSyntax
+      .error shouldBe sqlErrorInvalidSyntax(Some(invalidFieldSyntax), Some(nelValue))
     repo
       .getAirportsByCountry(
         invalidFieldSyntax,
-        Nel.one("value"),
+        nelValue,
         Operator.Equals,
         emptySortAndLimit,
         StringType
       )
-      .error shouldBe sqlErrorInvalidSyntax
+      .error shouldBe sqlErrorInvalidSyntax(Some(invalidFieldSyntax), Some(nelValue))
 
     repo
       .getAirportsBy(
         invalidFieldColumn,
-        Nel.one("value"),
+        nelValue,
         Operator.Equals,
         emptySortAndLimit,
         StringType
@@ -310,7 +328,7 @@ final class AirportRepositoryIT extends RepositoryCheck {
     repo
       .getAirportsByCity(
         invalidFieldColumn,
-        Nel.one("value"),
+        nelValue,
         Operator.Equals,
         emptySortAndLimit,
         StringType
@@ -319,7 +337,7 @@ final class AirportRepositoryIT extends RepositoryCheck {
     repo
       .getAirportsByCountry(
         invalidFieldColumn,
-        Nel.one("value"),
+        nelValue,
         Operator.Equals,
         emptySortAndLimit,
         StringType

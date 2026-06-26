@@ -349,40 +349,42 @@ final class AirlineAirplaneRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting a non-existing field" should "return an error" in {
+    val nelValue = Nel.one("value")
+
     repo
       .getAirlineAirplanesBy(
         invalidFieldSyntax,
-        Nel.one("value"),
+        nelValue,
         Operator.Equals,
         emptySortAndLimit,
         StringType
       )
-      .error shouldBe sqlErrorInvalidSyntax
+      .error shouldBe sqlErrorInvalidSyntax(Some(invalidFieldSyntax), Some(nelValue))
 
     repo
       .getAirlineAirplanesByAirline(
         invalidFieldSyntax,
-        Nel.one("value"),
+        nelValue,
         Operator.Equals,
         emptySortAndLimit,
         StringType
       )
-      .error shouldBe sqlErrorInvalidSyntax
+      .error shouldBe sqlErrorInvalidSyntax(Some(invalidFieldSyntax), Some(nelValue))
 
     repo
       .getAirlineAirplanesByAirplane(
         invalidFieldSyntax,
-        Nel.one("value"),
+        nelValue,
         Operator.Equals,
         emptySortAndLimit,
         StringType
       )
-      .error shouldBe sqlErrorInvalidSyntax
+      .error shouldBe sqlErrorInvalidSyntax(Some(invalidFieldSyntax), Some(nelValue))
 
     repo
       .getAirlineAirplanesBy(
         invalidFieldColumn,
-        Nel.one("value"),
+        nelValue,
         Operator.Equals,
         emptySortAndLimit,
         StringType
@@ -392,7 +394,7 @@ final class AirlineAirplaneRepositoryIT extends RepositoryCheck {
     repo
       .getAirlineAirplanesByAirline(
         invalidFieldColumn,
-        Nel.one("value"),
+        nelValue,
         Operator.Equals,
         emptySortAndLimit,
         StringType
@@ -402,7 +404,7 @@ final class AirlineAirplaneRepositoryIT extends RepositoryCheck {
     repo
       .getAirlineAirplanesByAirplane(
         invalidFieldColumn,
-        Nel.one("value"),
+        nelValue,
         Operator.Equals,
         emptySortAndLimit,
         StringType

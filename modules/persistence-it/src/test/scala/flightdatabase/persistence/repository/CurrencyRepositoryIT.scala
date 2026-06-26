@@ -12,7 +12,6 @@ import flightdatabase.IntType
 import flightdatabase.InvalidField
 import flightdatabase.InvalidValueType
 import flightdatabase.Operator
-import flightdatabase.SqlError
 import flightdatabase.StringType
 import flightdatabase.ValidatedSortAndLimit
 import flightdatabase.currency.Currency
@@ -37,7 +36,6 @@ final class CurrencyRepositoryIT extends RepositoryCheck {
   val idNotPresent: Long = 100
   val valueNotPresent: String = "Not present"
   val veryLongIdNotPresent: Long = 1000000000000000000L
-  val stringTooLongSqlState: String = "22001"
 
   val newCurrency: CurrencyCreate = CurrencyCreate("New Currency", "NCR", Some("NCR"))
   val updatedName: String = "Updated Currency"
@@ -153,19 +151,21 @@ final class CurrencyRepositoryIT extends RepositoryCheck {
   }
 
   "Selecting a non-existent field" should "return an error" in {
+    val nelValue = Nel.one("value")
+
     repo
       .getCurrenciesBy(
         invalidFieldSyntax,
-        Nel.one("value"),
+        nelValue,
         Operator.Equals,
         emptySortAndLimit,
         StringType
       )
-      .error shouldBe sqlErrorInvalidSyntax
+      .error shouldBe sqlErrorInvalidSyntax(Some(invalidFieldSyntax), Some(nelValue))
     repo
       .getCurrenciesBy(
         invalidFieldColumn,
-        Nel.one("value"),
+        nelValue,
         Operator.Equals,
         emptySortAndLimit,
         StringType
@@ -198,7 +198,7 @@ final class CurrencyRepositoryIT extends RepositoryCheck {
     }
 
     val invalidSymbol = newCurrency.copy(symbol = Some("Something too long"))
-    repo.createCurrency(invalidSymbol).error shouldBe SqlError(stringTooLongSqlState)
+    repo.createCurrency(invalidSymbol).error shouldBe sqlErrorStringTooLong()
   }
 
   it should "not take place for a currency with existing unique fields" in {
@@ -238,7 +238,7 @@ final class CurrencyRepositoryIT extends RepositoryCheck {
     }
 
     val invalidSymbol = existingCurrency.copy(symbol = Some("Something too long"))
-    repo.updateCurrency(invalidSymbol).error shouldBe SqlError(stringTooLongSqlState)
+    repo.updateCurrency(invalidSymbol).error shouldBe sqlErrorStringTooLong()
   }
 
   it should "not take place for a currency with existing unique fields" in {
@@ -294,7 +294,7 @@ final class CurrencyRepositoryIT extends RepositoryCheck {
     val invalidSymbol = CurrencyPatch(symbol = Some("Something too long"))
     repo
       .partiallyUpdateCurrency(existingCurrency.id, invalidSymbol)
-      .error shouldBe SqlError(stringTooLongSqlState)
+      .error shouldBe sqlErrorStringTooLong()
   }
 
   it should "not take place for a currency with existing unique fields" in {
