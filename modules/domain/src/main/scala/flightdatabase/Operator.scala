@@ -26,4 +26,11 @@ object Operator extends Enum[Operator] {
   case object EndsWith extends Operator("ends_with") { val inSql = "ILIKE" }
   case object Contains extends Operator("contains") { val inSql = "ILIKE" }
   case object NotContains extends Operator("not_contains") { val inSql = "NOT ILIKE" }
+
+  val negativeOperatorMap: Map[Operator, Operator] = Map(
+    NotEquals   -> Equals,
+    IsNot       -> Is,
+    NotIn       -> In,
+    NotContains -> Contains
+  )
 }

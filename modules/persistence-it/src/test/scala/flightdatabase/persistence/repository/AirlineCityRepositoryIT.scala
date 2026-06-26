@@ -266,7 +266,7 @@ final class AirlineCityRepositoryIT extends RepositoryCheck {
 
   "Selecting a non-existent field" should "return an error" in {
     val nelValue = Nel.one("value")
-    
+
     repo
       .getAirlineCitiesBy(
         invalidFieldSyntax,

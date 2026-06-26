@@ -5,8 +5,7 @@ import doobie.syntax.string._
 import flightdatabase.ResultOrder
 import flightdatabase.ValidatedSortAndLimit
 
-final class SortAndLimitOps(private val self: ValidatedSortAndLimit)
-    extends AnyVal {
+final class SortAndLimitOps(private val self: ValidatedSortAndLimit) extends AnyVal {
 
   def fragment: Fragment = {
     val sort = self.sortBy.fold(fr"") { s =>

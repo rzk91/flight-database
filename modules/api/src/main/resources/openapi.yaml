@@ -30,15 +30,13 @@ info:
     `eq` `neq` `is` `is_not` `gt` `gteq` `lt` `lteq` `regex_match` `range`
     `in` `not_in` `starts_with` `ends_with` `contains` `not_contains`.
 
-    > **Known limitation (multi-slot filters).** `GET /countries/language/filter`
-    > spans the three language slots (main/secondary/tertiary) and
-    > `GET /airline-routes/airport/filter` (with neither `inbound` nor `outbound`)
-    > spans start/destination. They are implemented as a `UNION` of per-slot
-    > matches, which is correct for positive operators but **wrong for the
-    > exclusion operators** (`neq`, `is_not`, `not_in`, `not_contains`): a row is
-    > wrongly kept when the excluded value sits in a *different* slot. The intended
-    > semantics is any/none — a country/route matches an exclusion filter only when
-    > the value appears in *no* slot. Fix is pending.
+    ### Multi-slot filters (any/none)
+    `GET /countries/language/filter` spans the three language slots
+    (main/secondary/tertiary) and `GET /airline-routes/airport/filter` (with
+    neither `inbound` nor `outbound`) spans start/destination. They use any/none
+    semantics: a positive operator matches when the value is in *any* slot, while
+    an exclusion operator (`neq`, `is_not`, `not_in`, `not_contains`) matches only
+    when the value is in *no* slot.
 
     ### Status codes
     `200` ok (lists return `200` with a message when empty) · `201` created ·
@@ -877,10 +875,10 @@ paths:
       tags: [Airline-Routes]
       summary: Filter routes by an airport field (start and/or destination)
       description: >-
-        Without inbound/outbound, matches routes where the airport is either the
-        start OR the destination (a UNION). See the known-limitation note for
-        exclusion-operator behaviour. `inbound` restricts to destination;
-        `outbound` restricts to start.
+        Without inbound/outbound, matches routes where the airport is the start
+        or the destination (any/none across both endpoints — see Multi-slot
+        filters). `inbound` restricts to destination; `outbound` restricts to
+        start.
       parameters:
         - $ref: '#/components/parameters/Field'
         - $ref: '#/components/parameters/Operator'
@@ -1255,10 +1253,10 @@ paths:
       tags: [Countries]
       summary: Filter countries by a language field (any of the 3 slots)
       description: >-
-        Matches countries holding the language in any of main/secondary/tertiary
-        slots. See the known-limitation note: exclusion operators
-        (neq, is_not, not_in, not_contains) do not yet behave as "none of the
-        slots" — fix pending.
+        Matches countries holding the language in any of the main/secondary/
+        tertiary slots (any/none semantics — see Multi-slot filters). Exclusion
+        operators (neq, is_not, not_in, not_contains) match only countries where
+        the language is in none of the three slots.
       parameters:
         - $ref: '#/components/parameters/Field'
         - $ref: '#/components/parameters/Operator'

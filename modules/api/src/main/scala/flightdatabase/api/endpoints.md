@@ -98,16 +98,14 @@ curl -i -X POST http://localhost:18181/v1/flightdb/currencies \
 
 ---
 
-## Known limitations
+## Multi-slot filters (any/none)
 
-- **Exclusion operators on multi-slot filters are wrong.**
-  `GET /countries/language/filter` (across main/secondary/tertiary) and
+- `GET /countries/language/filter` (across main/secondary/tertiary) and
   `GET /airline-routes/airport/filter` without `inbound`/`outbound` (across
-  start/destination) are implemented as a `UNION` of per-slot matches. That is
-  correct for positive operators but, for `neq`/`is_not`/`not_in`/`not_contains`,
-  wrongly keeps a row when the excluded value sits in a *different* slot. Intended
-  semantics: a row matches an exclusion filter only when the value appears in
-  **no** slot. Fix pending.
+  start/destination) use **any/none** semantics: a positive operator matches when
+  the value is in *any* slot, while an exclusion operator
+  (`neq`/`is_not`/`not_in`/`not_contains`) matches only when the value is in
+  **no** slot.
 
 ---
 

@@ -6,10 +6,8 @@ import cats.effect.Concurrent
 import cats.effect.Resource
 import cats.implicits._
 import doobie.Put
-import doobie.Query0
 import doobie.Read
 import doobie.Transactor
-import doobie.syntax.string._
 import flightdatabase.ApiResult
 import flightdatabase.FieldType
 import flightdatabase.Operator
@@ -152,6 +150,7 @@ object AirlineRouteRepository {
       ).flatMapF { airlineIds =>
           val ids = airlineIds.value
           selectAirlineRoutesByExternal[AirlineAirplane, Long](
+            Nel.of("airline_airplane_id"),
             "airline_id",
             ids,
             Operator.In,
@@ -181,6 +180,7 @@ object AirlineRouteRepository {
       ).flatMapF { airplaneIds =>
           val ids = airplaneIds.value
           selectAirlineRoutesByExternal[AirlineAirplane, Long](
+            Nel.of("airline_airplane_id"),
             "airplane_id",
             ids,
             Operator.In,
@@ -205,15 +205,21 @@ object AirlineRouteRepository {
       fieldType: FieldType[V]
     ): F[ApiResult[Nel[AirlineRoute]]] = {
       implicit val put: Put[V] = fieldType.asPut
-      def q(f: String, sl: ValidatedSortAndLimit): Query0[AirlineRoute] =
-        selectAirlineRoutesByExternal[Airport, V](field, values, operator, sl, Some(f))
-      inbound.fold {
-        // For the UNION, keep the legs unsorted and apply sort/limit to the whole result
-        val startQuery = q("start_airport_id", ValidatedSortAndLimit.empty)
-        val destinationQuery = q("destination_airport_id", ValidatedSortAndLimit.empty)
-        (startQuery.toFragment ++ fr"UNION" ++ destinationQuery.toFragment ++ sortAndLimit.fragment)
-          .query[AirlineRoute]
-      }(in => q(if (in) "destination_airport_id" else "start_airport_id", sortAndLimit))
-    }.asNel(Some(field), Some(values)).execute
+      val airlineRouteFields = {
+        inbound match {
+          case Some(true)  => Nel.of("destination_airport_id")
+          case Some(false) => Nel.of("start_airport_id")
+          case None        => Nel.of("start_airport_id", "destination_airport_id")
+        }
+      }
+
+      selectAirlineRoutesByExternal[Airport, V](
+        airlineRouteFields,
+        field,
+        values,
+        operator,
+        sortAndLimit
+      ).asNel(Some(field), Some(values)).execute
+    }
   }
 }

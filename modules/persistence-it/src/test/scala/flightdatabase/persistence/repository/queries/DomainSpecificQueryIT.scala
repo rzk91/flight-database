@@ -8,6 +8,7 @@ import flightdatabase.airplane.AirplaneCreate
 import flightdatabase.airport.Airport
 import flightdatabase.city.City
 import flightdatabase.country.Country
+import flightdatabase.language.Language
 import flightdatabase.manufacturer.Manufacturer
 import flightdatabase.persistence.itutils.DbChecker
 
@@ -77,6 +78,15 @@ final class DomainSpecificQueryIT extends DbChecker {
     check(CountryQueries.selectAllCountries(emptySortAndLimit))
     check(CountryQueries.selectAllCountries(someSortAndLimit))
     check(CountryQueries.selectCountriesBy("id", Nel.one(1L), Operator.Equals, emptySortAndLimit))
+    check(
+      CountryQueries.selectCountriesByExternal[Language, String](
+        Nel.of("main_language_id", "secondary_language_id", "tertiary_language_id"),
+        "iso2",
+        Nel.of("EN", "DE"),
+        Operator.NotIn,
+        emptySortAndLimit
+      )
+    )
     check(CountryQueries.deleteCountry(1))
   }
 
@@ -140,11 +150,11 @@ final class DomainSpecificQueryIT extends DbChecker {
     check(
       AirlineRouteQueries
         .selectAirlineRoutesByExternal[Airport, String](
+          Nel.of("start_airport_id"),
           "iata",
           Nel.one("FRA"),
-          Operator.Equals,
-          emptySortAndLimit,
-          Some("start_airport_id")
+          Operator.NotEquals,
+          emptySortAndLimit
         )
     )
     check(AirlineRouteQueries.deleteAirlineRoute(1))

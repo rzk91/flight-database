@@ -5,11 +5,9 @@ import cats.data.{NonEmptyList => Nel}
 import cats.effect.Concurrent
 import cats.effect.Resource
 import cats.implicits._
-import doobie.Fragment
 import doobie.Put
 import doobie.Read
 import doobie.Transactor
-import doobie.syntax.string._
 import flightdatabase.ApiResult
 import flightdatabase.FieldType
 import flightdatabase.Operator
@@ -137,23 +135,12 @@ object CountryRepository {
       fieldType: FieldType[V]
     ): F[ApiResult[Nel[Country]]] = {
       implicit val put: Put[V] = fieldType.asPut
-      // A country may reference a language as its main, secondary, or tertiary
-      // language; union the three matches. Sort/limit applies to the whole union,
-      // so each arm is built with an empty sort/limit.
-      def q(idField: String): Fragment =
-        selectCountriesByExternal[Language, V](
-          field,
-          values,
-          operator,
-          ValidatedSortAndLimit.empty,
-          Some(idField)
-        ).toFragment
+      val languageFields =
+        Nel.of("main_language_id", "secondary_language_id", "tertiary_language_id")
 
-      {
-        q("main_language_id") ++ fr"UNION" ++
-        q("secondary_language_id") ++ fr"UNION" ++
-        q("tertiary_language_id") ++ sortAndLimit.fragment
-      }.query[Country].asNel(Some(field), Some(values)).execute
+      selectCountriesByExternal[Language, V](languageFields, field, values, operator, sortAndLimit)
+        .asNel(Some(field), Some(values))
+        .execute
     }
   }
 
@@ -169,9 +156,13 @@ object CountryRepository {
       fieldType: FieldType[V]
     ): F[ApiResult[Nel[Country]]] = {
       implicit val put: Put[V] = fieldType.asPut
-      selectCountriesByExternal[Currency, V](field, values, operator, sortAndLimit)
-        .asNel(Some(field), Some(values))
-        .execute
+      selectCountriesByExternal[Currency, V](
+        Nel.one("currency_id"),
+        field,
+        values,
+        operator,
+        sortAndLimit
+      ).asNel(Some(field), Some(values)).execute
     }
   }
 }

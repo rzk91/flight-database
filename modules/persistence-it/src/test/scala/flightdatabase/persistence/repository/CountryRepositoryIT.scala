@@ -315,6 +315,71 @@ final class CountryRepositoryIT extends RepositoryCheck {
     limited should contain only expected.minBy(_.name)
   }
 
+  "Filtering countries by language with an exclusion operator" should
+    "return the complement across all three slots (any/none semantics)" in {
+    def byLanguageId(ids: Nel[Long], op: Operator): IO[ApiResult[Nel[Country]]] =
+      repo.getCountriesByLanguage("id", ids, op, emptySortAndLimit, LongType)
+
+    def excluding(ids: Set[Long]): List[Country] =
+      originalCountries.filterNot(c => allLanguageIds(c).exists(ids.contains))
+
+    def including(ids: Set[Long]): List[Country] =
+      originalCountries.filter(c => allLanguageIds(c).exists(ids.contains))
+
+    // English (id 1) is India's and UAE's secondary language and USA's main one.
+    // Excluding it must drop all three, while countries with NULL secondary/tertiary
+    // slots (Germany, Sweden, Netherlands) must survive the filter.
+    val notEnglish = excluding(Set(1L))
+    byLanguageId(Nel.one(1L), Operator.NotIn).value should contain only (notEnglish: _*)
+    byLanguageId(Nel.one(1L), Operator.NotEquals).value should contain only (notEnglish: _*)
+
+    // Multiple excluded ids: drop any country using English (1) or German (2)
+    val notEnglishOrGerman = excluding(Set(1L, 2L))
+    byLanguageId(Nel.of(1L, 2L), Operator.NotIn).value should contain only (notEnglishOrGerman: _*)
+
+    // The positive `in` still ORs across the three slots
+    val englishOrGerman = including(Set(1L, 2L))
+    byLanguageId(Nel.of(1L, 2L), Operator.In).value should contain only (englishOrGerman: _*)
+
+    // Sort/limit applies to the whole (single-select) result
+    val sortedDesc = repo
+      .getCountriesByLanguage(
+        "id",
+        Nel.one(1L),
+        Operator.NotIn,
+        ValidatedSortAndLimit.sortDescending("name"),
+        LongType
+      )
+      .value
+    sortedDesc.toList shouldBe notEnglish.sortBy(_.name).reverse
+  }
+
+  it should "apply the same semantics to external language fields" in {
+    val notEnglish = originalCountries.filterNot(allLanguageIds(_).exists(_ == 1L))
+    repo
+      .getCountriesByLanguage(
+        "iso2",
+        Nel.one("EN"),
+        Operator.NotEquals,
+        emptySortAndLimit,
+        StringType
+      )
+      .value should contain only (notEnglish: _*)
+
+    // "ish" matches English (1) and Swedish (4); only countries using neither remain
+    val ishIds = Set(1L, 4L)
+    val notIsh = originalCountries.filterNot(c => allLanguageIds(c).exists(ishIds.contains))
+    repo
+      .getCountriesByLanguage(
+        "name",
+        Nel.one("ish"),
+        Operator.NotContains,
+        emptySortAndLimit,
+        StringType
+      )
+      .value should contain only (notIsh: _*)
+  }
+
   "Selecting a non-existent field" should "return an error" in {
     val nelValue = Nel.one("value")
 

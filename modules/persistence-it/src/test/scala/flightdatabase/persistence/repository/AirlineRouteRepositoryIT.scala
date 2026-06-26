@@ -362,6 +362,48 @@ final class AirlineRouteRepositoryIT extends RepositoryCheck {
     outboundRoutesByAirportIcao(valueNotPresent).error shouldBe EntryListEmpty
   }
 
+  "Selecting airline-routes by airport with an exclusion operator" should
+    "exclude routes across both endpoints (any/none semantics)" in {
+    def excludeByAirportId(id: Long, inbound: Option[Boolean]): IO[ApiResult[Nel[AirlineRoute]]] =
+      repo.getAirlineRoutesByAirport(inbound)(
+        "id",
+        Nel.one(id),
+        Operator.NotIn,
+        emptySortAndLimit,
+        LongType
+      )
+
+    def excludeByAirportIata(iata: String): IO[ApiResult[Nel[AirlineRoute]]] =
+      repo.getAirlineRoutesByAirport(None)(
+        "iata",
+        Nel.one(iata),
+        Operator.NotEquals,
+        emptySortAndLimit,
+        StringType
+      )
+
+    forAll(airportIdMap) {
+      case (id, (iata, _)) =>
+        // None: a route is excluded if the airport is the start OR the destination.
+        // Without the fix, the per-leg UNION would wrongly keep routes where the
+        // airport is the *other* endpoint.
+        val notEitherEndpoint =
+          originalAirlineRoutes.filterNot(r => r.start == id || r.destination == id)
+        excludeByAirportId(id, None).value should contain only (notEitherEndpoint: _*)
+        excludeByAirportIata(iata).value should contain only (notEitherEndpoint: _*)
+
+        // inbound = arrivals -> exclude where the airport is the destination
+        excludeByAirportId(id, Some(true)).value should contain only (
+          originalAirlineRoutes.filterNot(_.destination == id): _*
+        )
+
+        // outbound = departures -> exclude where the airport is the start
+        excludeByAirportId(id, Some(false)).value should contain only (
+          originalAirlineRoutes.filterNot(_.start == id): _*
+        )
+    }
+  }
+
   "Selecting a non-existent field" should "return an error" in {
     val nelValue = Nel.one("value")
 

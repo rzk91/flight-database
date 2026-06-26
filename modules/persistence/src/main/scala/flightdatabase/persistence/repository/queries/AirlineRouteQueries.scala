@@ -30,17 +30,17 @@ private[repository] object AirlineRouteQueries {
       .query[AirlineRoute]
 
   def selectAirlineRoutesByExternal[ET: TableBase, EV: Put](
+    fields: Nel[String],
     externalField: String,
     externalValues: Nel[EV],
     operator: Operator,
-    sortAndLimit: ValidatedSortAndLimit,
-    overrideExternalIdField: Option[String] = None
+    sortAndLimit: ValidatedSortAndLimit
   ): Query0[AirlineRoute] = {
-    selectAll ++ innerJoinWhereFragment[AirlineRoute, ET, EV](
+    selectAll ++ fr"WHERE" ++ multiFieldMembership[AirlineRoute, ET, EV](
+      fields,
       externalField,
       externalValues,
-      operator,
-      overrideExternalIdField
+      operator
     ) ++ sortAndLimit.fragment
   }.query[AirlineRoute]
 

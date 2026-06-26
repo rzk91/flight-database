@@ -79,6 +79,33 @@ package object queries {
     whereFragment(s"$externalTable.$externalField", externalValues, operator)
   }
 
+  def multiFieldMembership[MT: TableBase, ET: TableBase, EV: Put](
+    fields: Nel[String],
+    externalField: String,
+    values: Nel[EV],
+    operator: Operator
+  ): Fragment = {
+    val mainTable = implicitly[TableBase[MT]].asString
+    val externalTable = implicitly[TableBase[ET]].asString
+    val qualifiedFields = fields.map(f => s"$mainTable.$f")
+    val qualifiedExternalField = s"$externalTable.$externalField"
+    val positiveOperator = Operator.negativeOperatorMap.get(operator)
+
+    val matchedIds = selectFragment[ET](s"$externalTable.id") ++ whereFragment(
+      qualifiedExternalField,
+      values,
+      positiveOperator.getOrElse(operator)
+    )
+
+    val membership = Fragments.or(
+      qualifiedFields
+        .map(f => Fragment.const(f) ++ fr"IN (" ++ matchedIds ++ fr")")
+    )
+
+    val guarded = fr"COALESCE(" ++ membership ++ fr", FALSE)"
+    if (positiveOperator.isDefined) fr"NOT" ++ guarded else guarded
+  }
+
   private def booleanFragment[A: Put](value: A): Fragment =
     value.toString.toLowerCase match {
       case "true"  => Fragment.const("TRUE")
