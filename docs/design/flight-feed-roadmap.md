@@ -24,6 +24,24 @@ The geo-core (Scala: haversine distance + great-circle interpolation) is shared
 by the ETL (to compute durations) and the simulator (distance + the moving dot).
 One module, three consumers: ETL, simulator, and a future analytics layer.
 
+## Current module layout
+
+The backend was restructured (PR #15) into seven modules with clean separation
+of concerns. New flight-feed modules slot in without touching the existing
+domain or API layers.
+
+| Module | Contents |
+|---|---|
+| `domain` | Entities, algebras, `FieldType` GADT, `ApiError`. **No doobie dependency.** |
+| `persistence` | Repositories, doobie queries, `DatabaseConfig`, Flyway migrations + seed data, doobie syntax (`FieldType → Put/Read` bridge). |
+| `api` | http4s endpoints, `ApiConfig`/`ApiLogging`, http4s + enum-string syntax, endpoint unit tests. |
+| `app` | `FlightDbMain`, `Server`, aggregate `Configuration`, pureconfig loader. Composition root. |
+| `syntax` | Pure, domain-independent generic extensions (formerly `utils`). |
+| `testkit` | Shared test-support helpers (`matchers`, `ioresult`, `response`) under `flightdatabase.test.syntax`. |
+| `persistence-it` | Repository and query integration tests (formerly `backend-it`). Requires Docker. |
+
+Planned additions: `geo-core` (pure, no DB dependency — fits the `domain`/`syntax` tier), `simulator`, `etl`, `frontend` (ScalaJS), and a Kafka processor.
+
 ## Domain model additions
 
 See `CONTEXT.md` for the canonical definitions. In brief:
@@ -56,11 +74,14 @@ scheduled In = scheduled Out + taxi-out + (great-circle distance ÷ cruise_speed
 ## Roadmap
 
 ### Phase 0 — backend groundwork
+- ~~Module restructure~~ ✓ — domain is doobie-free (`FieldType` GADT); persistence /
+  api / app separated; `syntax` and `testkit` extracted. Seven clean modules.
 - Schema migration: scheduled Out (and decide store-vs-derive for scheduled In),
   `cruise_speed` on `airplane`, taxi-out/taxi-in times on `airport`, and **lat/long
   on `airport`** (today coordinates live only on `city`).
 - Geo-core module: haversine distance + great-circle position interpolation. Pure,
-  unit-testable without a DB — a good quick win and a dependency of the ETL.
+  no doobie — can live at the `domain` tier or as a standalone module.
+  Unit-testable without a DB. A dependency of both the ETL and the simulator.
 - fs2 ETL: import a chosen **subset of hub airports** + the routes among them, from
   OurAirports (airports + coordinates, CC0) and OpenFlights / curated data
   (routes; accepted as somewhat stale). Schedule times: use a supplied time if the
