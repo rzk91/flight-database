@@ -1,0 +1,37 @@
+package flightdatabase.currency
+
+import flightdatabase.FlightDbTable.CURRENCY
+import flightdatabase._
+import io.circe.generic.extras.ConfiguredJsonCodec
+
+@ConfiguredJsonCodec final case class Currency(
+  id: Long,
+  name: String,
+  iso: String,
+  symbol: Option[String]
+)
+
+object Currency {
+
+  implicit val currencyTableBase: TableBase[Currency] =
+    TableBase.instance(
+      CURRENCY,
+      Map("id" -> LongType, "name" -> StringType, "iso" -> StringType, "symbol" -> StringType)
+    )
+
+  def fromCreate(id: Long, model: CurrencyCreate): Currency =
+    Currency(
+      id,
+      model.name,
+      model.iso,
+      model.symbol
+    )
+
+  def fromPatch(id: Long, patch: CurrencyPatch, currency: Currency): Currency =
+    Currency(
+      id,
+      patch.name.getOrElse(currency.name),
+      patch.iso.getOrElse(currency.iso),
+      patch.symbol.orElse(currency.symbol)
+    )
+}

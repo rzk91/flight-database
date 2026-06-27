@@ -14,8 +14,8 @@ The codebase also includes a comprehensive list of entries in the database.
 - testcontainers
 
 ## Requirements (at the moment)
-- sbt 1.8.3
-- JDK 17
+- sbt 1.12.13
+- JDK 21
 - PostgreSQL 16
 
 ## Future plans

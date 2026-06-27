@@ -1,0 +1,1572 @@
+openapi: 3.1.0
+
+info:
+  title: Flight Database API
+  version: "1.0.0"
+  description: |
+    A catalogue of the static aviation world — airlines, airports, airplane models,
+    and the scheduled routes between them.
+
+    ## Query grammar (applies to every resource)
+
+    Almost every resource shares one uniform shape. `{res}` is the resource path
+    segment (e.g. `airports`, `countries`).
+
+    | Purpose      | Shape |
+    |--------------|-------|
+    | List         | `GET /{res}?return-only={field}&sort-by={field}&order={asc\|desc}&limit={n}&offset={n}` |
+    | Filter       | `GET /{res}/filter?field={f}&operator={op}&value={v}&sort-by=&order=&limit=&offset=` |
+    | Sub-filter   | `GET /{res}/{relation}/filter?field={f}&operator={op}&value={v}&…` (filter `{res}` by a field of a related entity) |
+    | Single by id | `GET\|HEAD\|PUT\|PATCH\|DELETE /{res}/{id}` |
+    | Create       | `POST /{res}` |
+
+    - **`field`** is any property name of the targeted entity's schema, in
+      `snake_case` (e.g. `country_code`, `main_language_id`).
+    - **`value`** is a single value for most operators; a **comma-separated list**
+      for `in` / `not_in`; and exactly **two** comma-separated bounds for `range`.
+    - **`return-only`** projects a list down to a single field.
+
+    ### Operators
+    `eq` `neq` `is` `is_not` `gt` `gteq` `lt` `lteq` `regex_match` `range`
+    `in` `not_in` `starts_with` `ends_with` `contains` `not_contains`.
+
+    ### Multi-slot filters (any/none)
+    `GET /countries/language/filter` spans the three language slots
+    (main/secondary/tertiary) and `GET /airline-routes/airport/filter` (with
+    neither `inbound` nor `outbound`) spans start/destination. They use any/none
+    semantics: a positive operator matches when the value is in *any* slot, while
+    an exclusion operator (`neq`, `is_not`, `not_in`, `not_contains`) matches only
+    when the value is in *no* slot.
+
+    ### Status codes
+    `200` ok (lists return `200` with a message when empty) · `201` created ·
+    `204` deleted · `400` invalid field/operator/value/id or inconsistent ids ·
+    `404` not found · `409` already exists · `422` SQL/constraint error ·
+    `500` unknown error · `501` not implemented.
+
+servers:
+  - url: http://localhost:18181/v1/flightdb
+    description: Local development
+
+tags:
+  - name: Hello-World
+  - name: Airlines
+  - name: Airline-Airplanes (Fleet)
+  - name: Airline-Cities (HubCity)
+  - name: Airline-Routes
+  - name: Airplanes
+  - name: Airports
+  - name: Cities
+  - name: Countries
+  - name: Currencies
+  - name: Languages
+  - name: Manufacturers
+
+# ---------------------------------------------------------------------------
+# Reusable building blocks
+# ---------------------------------------------------------------------------
+components:
+  parameters:
+    Id:
+      name: id
+      in: path
+      required: true
+      schema: { type: integer, format: int64 }
+    Field:
+      name: field
+      in: query
+      required: true
+      description: A property of the targeted entity's schema (snake_case).
+      schema: { type: string }
+    Operator:
+      name: operator
+      in: query
+      required: false
+      schema:
+        $ref: '#/components/schemas/Operator'
+    Value:
+      name: value
+      in: query
+      required: true
+      description: >-
+        Single value for most operators; comma-separated list for in/not_in;
+        exactly two comma-separated bounds for range.
+      schema: { type: string }
+    ReturnOnly:
+      name: return-only
+      in: query
+      required: false
+      description: Project the list down to a single field.
+      schema: { type: string }
+    SortBy:
+      name: sort-by
+      in: query
+      required: false
+      schema: { type: string }
+    Order:
+      name: order
+      in: query
+      required: false
+      schema: { type: string, enum: [asc, desc] }
+    Limit:
+      name: limit
+      in: query
+      required: false
+      schema: { type: integer, format: int64, minimum: 0 }
+    Offset:
+      name: offset
+      in: query
+      required: false
+      schema: { type: integer, format: int64, minimum: 0 }
+
+  responses:
+    BadRequest:
+      description: Invalid field, operator, value, id format, or inconsistent ids.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Message' }
+    NotFound:
+      description: No entry with the given id.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Message' }
+    Conflict:
+      description: Entry already exists.
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Message' }
+    Unprocessable:
+      description: SQL / constraint error (e.g. invalid foreign key).
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Message' }
+
+  schemas:
+    Operator:
+      type: string
+      default: eq
+      enum:
+        [eq, neq, is, is_not, gt, gteq, lt, lteq, regex_match, range, in,
+         not_in, starts_with, ends_with, contains, not_contains]
+    Message:
+      type: object
+      properties:
+        error: { type: string }
+
+    # ---- Entity schemas -------------------------------------------------
+    Airline:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+        iata: { type: string }
+        icao: { type: string }
+        call_sign: { type: string }
+        country_id: { type: integer, format: int64 }
+    AirlineCreate:
+      type: object
+      required: [name, iata, icao, call_sign, country_id]
+      properties:
+        id: { type: [integer, "null"], format: int64 }
+        name: { type: string }
+        iata: { type: string }
+        icao: { type: string }
+        call_sign: { type: string }
+        country_id: { type: integer, format: int64 }
+    AirlinePatch:
+      type: object
+      properties:
+        name: { type: string }
+        iata: { type: string }
+        icao: { type: string }
+        call_sign: { type: string }
+        country_id: { type: integer, format: int64 }
+
+    AirlineAirplane:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        airline_id: { type: integer, format: int64 }
+        airplane_id: { type: integer, format: int64 }
+    AirlineAirplaneCreate:
+      type: object
+      required: [airline_id, airplane_id]
+      properties:
+        id: { type: [integer, "null"], format: int64 }
+        airline_id: { type: integer, format: int64 }
+        airplane_id: { type: integer, format: int64 }
+    AirlineAirplanePatch:
+      type: object
+      properties:
+        airline_id: { type: integer, format: int64 }
+        airplane_id: { type: integer, format: int64 }
+
+    AirlineCity:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        airline_id: { type: integer, format: int64 }
+        city_id: { type: integer, format: int64 }
+    AirlineCityCreate:
+      type: object
+      required: [airline_id, city_id]
+      properties:
+        id: { type: [integer, "null"], format: int64 }
+        airline_id: { type: integer, format: int64 }
+        city_id: { type: integer, format: int64 }
+    AirlineCityPatch:
+      type: object
+      properties:
+        airline_id: { type: integer, format: int64 }
+        city_id: { type: integer, format: int64 }
+
+    AirlineRoute:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        airline_airplane_id: { type: integer, format: int64 }
+        route_number: { type: string }
+        start_airport_id: { type: integer, format: int64 }
+        destination_airport_id: { type: integer, format: int64 }
+    AirlineRouteCreate:
+      type: object
+      required: [airline_airplane_id, route_number, start_airport_id, destination_airport_id]
+      properties:
+        id: { type: [integer, "null"], format: int64 }
+        airline_airplane_id: { type: integer, format: int64 }
+        route_number: { type: string }
+        start_airport_id: { type: integer, format: int64 }
+        destination_airport_id: { type: integer, format: int64 }
+    AirlineRoutePatch:
+      type: object
+      properties:
+        airline_airplane_id: { type: integer, format: int64 }
+        route_number: { type: string }
+        start_airport_id: { type: integer, format: int64 }
+        destination_airport_id: { type: integer, format: int64 }
+
+    Airplane:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+        manufacturer_id: { type: integer, format: int64 }
+        capacity: { type: integer }
+        max_range_in_km: { type: integer }
+    AirplaneCreate:
+      type: object
+      required: [name, manufacturer_id, capacity, max_range_in_km]
+      properties:
+        id: { type: [integer, "null"], format: int64 }
+        name: { type: string }
+        manufacturer_id: { type: integer, format: int64 }
+        capacity: { type: integer }
+        max_range_in_km: { type: integer }
+    AirplanePatch:
+      type: object
+      properties:
+        name: { type: string }
+        manufacturer_id: { type: integer, format: int64 }
+        capacity: { type: integer }
+        max_range_in_km: { type: integer }
+
+    Airport:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+        icao: { type: string }
+        iata: { type: string }
+        city_id: { type: integer, format: int64 }
+        number_of_runways: { type: integer }
+        number_of_terminals: { type: integer }
+        capacity: { type: integer, format: int64 }
+        international: { type: boolean }
+        junction: { type: boolean }
+    AirportCreate:
+      type: object
+      required: [name, icao, iata, city_id, number_of_runways, number_of_terminals, capacity, international, junction]
+      properties:
+        id: { type: [integer, "null"], format: int64 }
+        name: { type: string }
+        icao: { type: string }
+        iata: { type: string }
+        city_id: { type: integer, format: int64 }
+        number_of_runways: { type: integer }
+        number_of_terminals: { type: integer }
+        capacity: { type: integer, format: int64 }
+        international: { type: boolean }
+        junction: { type: boolean }
+    AirportPatch:
+      type: object
+      properties:
+        name: { type: string }
+        icao: { type: string }
+        iata: { type: string }
+        city_id: { type: integer, format: int64 }
+        number_of_runways: { type: integer }
+        number_of_terminals: { type: integer }
+        capacity: { type: integer, format: int64 }
+        international: { type: boolean }
+        junction: { type: boolean }
+
+    City:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+        country_id: { type: integer, format: int64 }
+        capital: { type: boolean }
+        population: { type: integer, format: int64 }
+        latitude: { type: number }
+        longitude: { type: number }
+        timezone: { type: string }
+    CityCreate:
+      type: object
+      required: [name, country_id, capital, population, latitude, longitude, timezone]
+      properties:
+        id: { type: [integer, "null"], format: int64 }
+        name: { type: string }
+        country_id: { type: integer, format: int64 }
+        capital: { type: boolean }
+        population: { type: integer, format: int64 }
+        latitude: { type: number }
+        longitude: { type: number }
+        timezone: { type: string }
+    CityPatch:
+      type: object
+      properties:
+        name: { type: string }
+        country_id: { type: integer, format: int64 }
+        capital: { type: boolean }
+        population: { type: integer, format: int64 }
+        latitude: { type: number }
+        longitude: { type: number }
+        timezone: { type: string }
+
+    Country:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+        iso2: { type: string }
+        iso3: { type: string }
+        country_code: { type: integer }
+        domain_name: { type: [string, "null"] }
+        main_language_id: { type: integer, format: int64 }
+        secondary_language_id: { type: [integer, "null"], format: int64 }
+        tertiary_language_id: { type: [integer, "null"], format: int64 }
+        currency_id: { type: integer, format: int64 }
+        nationality: { type: string }
+    CountryCreate:
+      type: object
+      required: [name, iso2, iso3, country_code, main_language_id, currency_id, nationality]
+      properties:
+        id: { type: [integer, "null"], format: int64 }
+        name: { type: string }
+        iso2: { type: string }
+        iso3: { type: string }
+        country_code: { type: integer }
+        domain_name: { type: [string, "null"] }
+        main_language_id: { type: integer, format: int64 }
+        secondary_language_id: { type: [integer, "null"], format: int64 }
+        tertiary_language_id: { type: [integer, "null"], format: int64 }
+        currency_id: { type: integer, format: int64 }
+        nationality: { type: string }
+    CountryPatch:
+      type: object
+      properties:
+        name: { type: string }
+        iso2: { type: string }
+        iso3: { type: string }
+        country_code: { type: integer }
+        domain_name: { type: [string, "null"] }
+        main_language_id: { type: integer, format: int64 }
+        secondary_language_id: { type: [integer, "null"], format: int64 }
+        tertiary_language_id: { type: [integer, "null"], format: int64 }
+        currency_id: { type: integer, format: int64 }
+        nationality: { type: string }
+
+    Currency:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+        iso: { type: string }
+        symbol: { type: [string, "null"] }
+    CurrencyCreate:
+      type: object
+      required: [name, iso]
+      properties:
+        id: { type: [integer, "null"], format: int64 }
+        name: { type: string }
+        iso: { type: string }
+        symbol: { type: [string, "null"] }
+    CurrencyPatch:
+      type: object
+      properties:
+        name: { type: string }
+        iso: { type: string }
+        symbol: { type: [string, "null"] }
+
+    Language:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+        iso2: { type: string }
+        iso3: { type: [string, "null"] }
+        original_name: { type: string }
+    LanguageCreate:
+      type: object
+      required: [name, iso2, original_name]
+      properties:
+        id: { type: [integer, "null"], format: int64 }
+        name: { type: string }
+        iso2: { type: string }
+        iso3: { type: [string, "null"] }
+        original_name: { type: string }
+    LanguagePatch:
+      type: object
+      properties:
+        name: { type: string }
+        iso2: { type: string }
+        iso3: { type: [string, "null"] }
+        original_name: { type: string }
+
+    Manufacturer:
+      type: object
+      properties:
+        id: { type: integer, format: int64 }
+        name: { type: string }
+        base_city_id: { type: integer, format: int64 }
+    ManufacturerCreate:
+      type: object
+      required: [name, base_city_id]
+      properties:
+        id: { type: [integer, "null"], format: int64 }
+        name: { type: string }
+        base_city_id: { type: integer, format: int64 }
+    ManufacturerPatch:
+      type: object
+      properties:
+        name: { type: string }
+        base_city_id: { type: integer, format: int64 }
+
+# ---------------------------------------------------------------------------
+# Paths
+# ---------------------------------------------------------------------------
+paths:
+
+  /hello/{name}:
+    get:
+      tags: [Hello-World]
+      summary: Greeting
+      parameters:
+        - { name: name, in: path, required: true, schema: { type: string } }
+      responses:
+        '200': { description: Greeting text }
+
+  # ===================== Airlines =====================
+  /airlines:
+    get:
+      tags: [Airlines]
+      summary: List airlines
+      parameters:
+        - $ref: '#/components/parameters/ReturnOnly'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/Airline' } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+    post:
+      tags: [Airlines]
+      summary: Create airline
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AirlineCreate' }
+      responses:
+        '201':
+          description: Created
+          content: { application/json: { schema: { type: integer, format: int64 } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+  /airlines/filter:
+    get:
+      tags: [Airlines]
+      summary: Filter airlines by an airline field
+      parameters:
+        - $ref: '#/components/parameters/Field'
+        - $ref: '#/components/parameters/Operator'
+        - $ref: '#/components/parameters/Value'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/Airline' } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /airlines/country/filter:
+    get:
+      tags: [Airlines]
+      summary: Filter airlines by a country field
+      parameters:
+        - $ref: '#/components/parameters/Field'
+        - $ref: '#/components/parameters/Operator'
+        - $ref: '#/components/parameters/Value'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: '#/components/schemas/Airline' } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /airlines/{id}:
+    parameters: [ { $ref: '#/components/parameters/Id' } ]
+    head:
+      tags: [Airlines]
+      summary: Airline exists?
+      responses: { '200': { description: Exists }, '404': { $ref: '#/components/responses/NotFound' } }
+    get:
+      tags: [Airlines]
+      summary: Get airline by id
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Airline' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [Airlines]
+      summary: Replace airline
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AirlineCreate' } } } }
+      responses:
+        '200': { description: Updated, content: { application/json: { schema: { type: integer, format: int64 } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+    patch:
+      tags: [Airlines]
+      summary: Partially update airline
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AirlinePatch' } } } }
+      responses:
+        '200': { description: Updated, content: { application/json: { schema: { $ref: '#/components/schemas/Airline' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+    delete:
+      tags: [Airlines]
+      summary: Delete airline
+      responses: { '204': { description: Deleted }, '404': { $ref: '#/components/responses/NotFound' } }
+
+  # ===================== Airline-Airplanes (Fleet) =====================
+  /airline-airplanes:
+    get:
+      tags: [Airline-Airplanes (Fleet)]
+      summary: List fleet entries
+      parameters:
+        - $ref: '#/components/parameters/ReturnOnly'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/AirlineAirplane' } } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+    post:
+      tags: [Airline-Airplanes (Fleet)]
+      summary: Create fleet entry
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AirlineAirplaneCreate' } } } }
+      responses:
+        '201': { description: Created, content: { application/json: { schema: { type: integer, format: int64 } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+  /airline-airplanes/filter:
+    get:
+      tags: [Airline-Airplanes (Fleet)]
+      summary: Filter fleet entries by a fleet-entry field
+      parameters:
+        - $ref: '#/components/parameters/Field'
+        - $ref: '#/components/parameters/Operator'
+        - $ref: '#/components/parameters/Value'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/AirlineAirplane' } } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /airline-airplanes/airline/filter:
+    get:
+      tags: [Airline-Airplanes (Fleet)]
+      summary: Filter fleet entries by an airline field
+      parameters:
+        - $ref: '#/components/parameters/Field'
+        - $ref: '#/components/parameters/Operator'
+        - $ref: '#/components/parameters/Value'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/AirlineAirplane' } } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /airline-airplanes/airplane/filter:
+    get:
+      tags: [Airline-Airplanes (Fleet)]
+      summary: Filter fleet entries by an airplane field
+      parameters:
+        - $ref: '#/components/parameters/Field'
+        - $ref: '#/components/parameters/Operator'
+        - $ref: '#/components/parameters/Value'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/AirlineAirplane' } } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /airline-airplanes/airline/{airline_id}/airplane/{airplane_id}:
+    get:
+      tags: [Airline-Airplanes (Fleet)]
+      summary: Get the fleet entry for an (airline, airplane) pair
+      parameters:
+        - { name: airline_id, in: path, required: true, schema: { type: integer, format: int64 } }
+        - { name: airplane_id, in: path, required: true, schema: { type: integer, format: int64 } }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/AirlineAirplane' } } } }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /airline-airplanes/{id}:
+    parameters: [ { $ref: '#/components/parameters/Id' } ]
+    head:
+      tags: [Airline-Airplanes (Fleet)]
+      summary: Fleet entry exists?
+      responses: { '200': { description: Exists }, '404': { $ref: '#/components/responses/NotFound' } }
+    get:
+      tags: [Airline-Airplanes (Fleet)]
+      summary: Get fleet entry by id
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/AirlineAirplane' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [Airline-Airplanes (Fleet)]
+      summary: Replace fleet entry
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AirlineAirplaneCreate' } } } }
+      responses:
+        '200': { description: Updated, content: { application/json: { schema: { type: integer, format: int64 } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+    patch:
+      tags: [Airline-Airplanes (Fleet)]
+      summary: Partially update fleet entry
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AirlineAirplanePatch' } } } }
+      responses:
+        '200': { description: Updated, content: { application/json: { schema: { $ref: '#/components/schemas/AirlineAirplane' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+    delete:
+      tags: [Airline-Airplanes (Fleet)]
+      summary: Delete fleet entry
+      responses: { '204': { description: Deleted }, '404': { $ref: '#/components/responses/NotFound' } }
+
+  # ===================== Airline-Cities (HubCity) =====================
+  /airline-cities:
+    get:
+      tags: [Airline-Cities (HubCity)]
+      summary: List hub-city links
+      parameters:
+        - $ref: '#/components/parameters/ReturnOnly'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/AirlineCity' } } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+    post:
+      tags: [Airline-Cities (HubCity)]
+      summary: Create hub-city link
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AirlineCityCreate' } } } }
+      responses:
+        '201': { description: Created, content: { application/json: { schema: { type: integer, format: int64 } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+  /airline-cities/filter:
+    get:
+      tags: [Airline-Cities (HubCity)]
+      summary: Filter hub-city links by a link field
+      parameters:
+        - $ref: '#/components/parameters/Field'
+        - $ref: '#/components/parameters/Operator'
+        - $ref: '#/components/parameters/Value'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/AirlineCity' } } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /airline-cities/airline/filter:
+    get:
+      tags: [Airline-Cities (HubCity)]
+      summary: Filter hub-city links by an airline field
+      parameters:
+        - $ref: '#/components/parameters/Field'
+        - $ref: '#/components/parameters/Operator'
+        - $ref: '#/components/parameters/Value'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/AirlineCity' } } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /airline-cities/city/filter:
+    get:
+      tags: [Airline-Cities (HubCity)]
+      summary: Filter hub-city links by a city field
+      parameters:
+        - $ref: '#/components/parameters/Field'
+        - $ref: '#/components/parameters/Operator'
+        - $ref: '#/components/parameters/Value'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/AirlineCity' } } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /airline-cities/airline/{airline_id}/city/{city_id}:
+    get:
+      tags: [Airline-Cities (HubCity)]
+      summary: Get the link for an (airline, city) pair
+      parameters:
+        - { name: airline_id, in: path, required: true, schema: { type: integer, format: int64 } }
+        - { name: city_id, in: path, required: true, schema: { type: integer, format: int64 } }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/AirlineCity' } } } }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /airline-cities/{id}:
+    parameters: [ { $ref: '#/components/parameters/Id' } ]
+    head:
+      tags: [Airline-Cities (HubCity)]
+      summary: Link exists?
+      responses: { '200': { description: Exists }, '404': { $ref: '#/components/responses/NotFound' } }
+    get:
+      tags: [Airline-Cities (HubCity)]
+      summary: Get link by id
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/AirlineCity' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [Airline-Cities (HubCity)]
+      summary: Replace link
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AirlineCityCreate' } } } }
+      responses:
+        '200': { description: Updated, content: { application/json: { schema: { type: integer, format: int64 } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+    patch:
+      tags: [Airline-Cities (HubCity)]
+      summary: Partially update link
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AirlineCityPatch' } } } }
+      responses:
+        '200': { description: Updated, content: { application/json: { schema: { $ref: '#/components/schemas/AirlineCity' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+    delete:
+      tags: [Airline-Cities (HubCity)]
+      summary: Delete link
+      responses: { '204': { description: Deleted }, '404': { $ref: '#/components/responses/NotFound' } }
+
+  # ===================== Airline-Routes =====================
+  /airline-routes:
+    get:
+      tags: [Airline-Routes]
+      summary: List routes
+      parameters:
+        - $ref: '#/components/parameters/ReturnOnly'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/AirlineRoute' } } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+    post:
+      tags: [Airline-Routes]
+      summary: Create route
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AirlineRouteCreate' } } } }
+      responses:
+        '201': { description: Created, content: { application/json: { schema: { type: integer, format: int64 } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+  /airline-routes/filter:
+    get:
+      tags: [Airline-Routes]
+      summary: Filter routes by a route field
+      parameters:
+        - $ref: '#/components/parameters/Field'
+        - $ref: '#/components/parameters/Operator'
+        - $ref: '#/components/parameters/Value'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/AirlineRoute' } } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /airline-routes/airline/filter:
+    get:
+      tags: [Airline-Routes]
+      summary: Filter routes by an airline field
+      parameters:
+        - $ref: '#/components/parameters/Field'
+        - $ref: '#/components/parameters/Operator'
+        - $ref: '#/components/parameters/Value'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/AirlineRoute' } } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /airline-routes/airplane/filter:
+    get:
+      tags: [Airline-Routes]
+      summary: Filter routes by an airplane field
+      parameters:
+        - $ref: '#/components/parameters/Field'
+        - $ref: '#/components/parameters/Operator'
+        - $ref: '#/components/parameters/Value'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/AirlineRoute' } } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /airline-routes/airport/filter:
+    get:
+      tags: [Airline-Routes]
+      summary: Filter routes by an airport field (start and/or destination)
+      description: >-
+        Without inbound/outbound, matches routes where the airport is the start
+        or the destination (any/none across both endpoints — see Multi-slot
+        filters). `inbound` restricts to destination; `outbound` restricts to
+        start.
+      parameters:
+        - $ref: '#/components/parameters/Field'
+        - $ref: '#/components/parameters/Operator'
+        - $ref: '#/components/parameters/Value'
+        - { name: inbound, in: query, required: false, description: "Presence flag — match destination airport only.", schema: { type: boolean } }
+        - { name: outbound, in: query, required: false, description: "Presence flag — match start airport only.", schema: { type: boolean } }
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/AirlineRoute' } } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /airline-routes/{id}:
+    parameters: [ { $ref: '#/components/parameters/Id' } ]
+    head:
+      tags: [Airline-Routes]
+      summary: Route exists?
+      responses: { '200': { description: Exists }, '404': { $ref: '#/components/responses/NotFound' } }
+    get:
+      tags: [Airline-Routes]
+      summary: Get route by id
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/AirlineRoute' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [Airline-Routes]
+      summary: Replace route
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AirlineRouteCreate' } } } }
+      responses:
+        '200': { description: Updated, content: { application/json: { schema: { type: integer, format: int64 } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+    patch:
+      tags: [Airline-Routes]
+      summary: Partially update route
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AirlineRoutePatch' } } } }
+      responses:
+        '200': { description: Updated, content: { application/json: { schema: { $ref: '#/components/schemas/AirlineRoute' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+    delete:
+      tags: [Airline-Routes]
+      summary: Delete route
+      responses: { '204': { description: Deleted }, '404': { $ref: '#/components/responses/NotFound' } }
+
+  # ===================== Airplanes =====================
+  /airplanes:
+    get:
+      tags: [Airplanes]
+      summary: List airplane models
+      parameters:
+        - $ref: '#/components/parameters/ReturnOnly'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Airplane' } } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+    post:
+      tags: [Airplanes]
+      summary: Create airplane model
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AirplaneCreate' } } } }
+      responses:
+        '201': { description: Created, content: { application/json: { schema: { type: integer, format: int64 } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+  /airplanes/filter:
+    get:
+      tags: [Airplanes]
+      summary: Filter airplane models by an airplane field
+      parameters:
+        - $ref: '#/components/parameters/Field'
+        - $ref: '#/components/parameters/Operator'
+        - $ref: '#/components/parameters/Value'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Airplane' } } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /airplanes/manufacturer/filter:
+    get:
+      tags: [Airplanes]
+      summary: Filter airplane models by a manufacturer field
+      parameters:
+        - $ref: '#/components/parameters/Field'
+        - $ref: '#/components/parameters/Operator'
+        - $ref: '#/components/parameters/Value'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Airplane' } } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /airplanes/{id}:
+    parameters: [ { $ref: '#/components/parameters/Id' } ]
+    head:
+      tags: [Airplanes]
+      summary: Airplane model exists?
+      responses: { '200': { description: Exists }, '404': { $ref: '#/components/responses/NotFound' } }
+    get:
+      tags: [Airplanes]
+      summary: Get airplane model by id
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Airplane' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [Airplanes]
+      summary: Replace airplane model
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AirplaneCreate' } } } }
+      responses:
+        '200': { description: Updated, content: { application/json: { schema: { type: integer, format: int64 } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+    patch:
+      tags: [Airplanes]
+      summary: Partially update airplane model
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AirplanePatch' } } } }
+      responses:
+        '200': { description: Updated, content: { application/json: { schema: { $ref: '#/components/schemas/Airplane' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+    delete:
+      tags: [Airplanes]
+      summary: Delete airplane model
+      responses: { '204': { description: Deleted }, '404': { $ref: '#/components/responses/NotFound' } }
+
+  # ===================== Airports =====================
+  /airports:
+    get:
+      tags: [Airports]
+      summary: List airports
+      parameters:
+        - $ref: '#/components/parameters/ReturnOnly'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Airport' } } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+    post:
+      tags: [Airports]
+      summary: Create airport
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AirportCreate' } } } }
+      responses:
+        '201': { description: Created, content: { application/json: { schema: { type: integer, format: int64 } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+  /airports/filter:
+    get:
+      tags: [Airports]
+      summary: Filter airports by an airport field
+      parameters:
+        - $ref: '#/components/parameters/Field'
+        - $ref: '#/components/parameters/Operator'
+        - $ref: '#/components/parameters/Value'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Airport' } } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /airports/city/filter:
+    get:
+      tags: [Airports]
+      summary: Filter airports by a city field
+      parameters:
+        - $ref: '#/components/parameters/Field'
+        - $ref: '#/components/parameters/Operator'
+        - $ref: '#/components/parameters/Value'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Airport' } } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /airports/country/filter:
+    get:
+      tags: [Airports]
+      summary: Filter airports by a country field
+      parameters:
+        - $ref: '#/components/parameters/Field'
+        - $ref: '#/components/parameters/Operator'
+        - $ref: '#/components/parameters/Value'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Airport' } } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /airports/{id}:
+    parameters: [ { $ref: '#/components/parameters/Id' } ]
+    head:
+      tags: [Airports]
+      summary: Airport exists?
+      responses: { '200': { description: Exists }, '404': { $ref: '#/components/responses/NotFound' } }
+    get:
+      tags: [Airports]
+      summary: Get airport by id
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Airport' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [Airports]
+      summary: Replace airport
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AirportCreate' } } } }
+      responses:
+        '200': { description: Updated, content: { application/json: { schema: { type: integer, format: int64 } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+    patch:
+      tags: [Airports]
+      summary: Partially update airport
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/AirportPatch' } } } }
+      responses:
+        '200': { description: Updated, content: { application/json: { schema: { $ref: '#/components/schemas/Airport' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+    delete:
+      tags: [Airports]
+      summary: Delete airport
+      responses: { '204': { description: Deleted }, '404': { $ref: '#/components/responses/NotFound' } }
+
+  # ===================== Cities =====================
+  /cities:
+    get:
+      tags: [Cities]
+      summary: List cities
+      parameters:
+        - $ref: '#/components/parameters/ReturnOnly'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/City' } } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+    post:
+      tags: [Cities]
+      summary: Create city
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/CityCreate' } } } }
+      responses:
+        '201': { description: Created, content: { application/json: { schema: { type: integer, format: int64 } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+  /cities/filter:
+    get:
+      tags: [Cities]
+      summary: Filter cities by a city field
+      parameters:
+        - $ref: '#/components/parameters/Field'
+        - $ref: '#/components/parameters/Operator'
+        - $ref: '#/components/parameters/Value'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/City' } } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /cities/country/filter:
+    get:
+      tags: [Cities]
+      summary: Filter cities by a country field
+      parameters:
+        - $ref: '#/components/parameters/Field'
+        - $ref: '#/components/parameters/Operator'
+        - $ref: '#/components/parameters/Value'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/City' } } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /cities/{id}:
+    parameters: [ { $ref: '#/components/parameters/Id' } ]
+    head:
+      tags: [Cities]
+      summary: City exists?
+      responses: { '200': { description: Exists }, '404': { $ref: '#/components/responses/NotFound' } }
+    get:
+      tags: [Cities]
+      summary: Get city by id
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/City' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [Cities]
+      summary: Replace city
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/CityCreate' } } } }
+      responses:
+        '200': { description: Updated, content: { application/json: { schema: { type: integer, format: int64 } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+    patch:
+      tags: [Cities]
+      summary: Partially update city
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/CityPatch' } } } }
+      responses:
+        '200': { description: Updated, content: { application/json: { schema: { $ref: '#/components/schemas/City' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+    delete:
+      tags: [Cities]
+      summary: Delete city
+      responses: { '204': { description: Deleted }, '404': { $ref: '#/components/responses/NotFound' } }
+
+  # ===================== Countries =====================
+  /countries:
+    get:
+      tags: [Countries]
+      summary: List countries
+      parameters:
+        - $ref: '#/components/parameters/ReturnOnly'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Country' } } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+    post:
+      tags: [Countries]
+      summary: Create country
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/CountryCreate' } } } }
+      responses:
+        '201': { description: Created, content: { application/json: { schema: { type: integer, format: int64 } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+  /countries/filter:
+    get:
+      tags: [Countries]
+      summary: Filter countries by a country field
+      parameters:
+        - $ref: '#/components/parameters/Field'
+        - $ref: '#/components/parameters/Operator'
+        - $ref: '#/components/parameters/Value'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Country' } } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /countries/language/filter:
+    get:
+      tags: [Countries]
+      summary: Filter countries by a language field (any of the 3 slots)
+      description: >-
+        Matches countries holding the language in any of the main/secondary/
+        tertiary slots (any/none semantics — see Multi-slot filters). Exclusion
+        operators (neq, is_not, not_in, not_contains) match only countries where
+        the language is in none of the three slots.
+      parameters:
+        - $ref: '#/components/parameters/Field'
+        - $ref: '#/components/parameters/Operator'
+        - $ref: '#/components/parameters/Value'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Country' } } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /countries/currency/filter:
+    get:
+      tags: [Countries]
+      summary: Filter countries by a currency field
+      parameters:
+        - $ref: '#/components/parameters/Field'
+        - $ref: '#/components/parameters/Operator'
+        - $ref: '#/components/parameters/Value'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Country' } } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /countries/{id}:
+    parameters: [ { $ref: '#/components/parameters/Id' } ]
+    head:
+      tags: [Countries]
+      summary: Country exists?
+      responses: { '200': { description: Exists }, '404': { $ref: '#/components/responses/NotFound' } }
+    get:
+      tags: [Countries]
+      summary: Get country by id
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Country' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [Countries]
+      summary: Replace country
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/CountryCreate' } } } }
+      responses:
+        '200': { description: Updated, content: { application/json: { schema: { type: integer, format: int64 } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+    patch:
+      tags: [Countries]
+      summary: Partially update country
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/CountryPatch' } } } }
+      responses:
+        '200': { description: Updated, content: { application/json: { schema: { $ref: '#/components/schemas/Country' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+    delete:
+      tags: [Countries]
+      summary: Delete country
+      responses: { '204': { description: Deleted }, '404': { $ref: '#/components/responses/NotFound' } }
+
+  # ===================== Currencies =====================
+  /currencies:
+    get:
+      tags: [Currencies]
+      summary: List currencies
+      parameters:
+        - $ref: '#/components/parameters/ReturnOnly'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Currency' } } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+    post:
+      tags: [Currencies]
+      summary: Create currency
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/CurrencyCreate' } } } }
+      responses:
+        '201': { description: Created, content: { application/json: { schema: { type: integer, format: int64 } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+  /currencies/filter:
+    get:
+      tags: [Currencies]
+      summary: Filter currencies by a currency field
+      parameters:
+        - $ref: '#/components/parameters/Field'
+        - $ref: '#/components/parameters/Operator'
+        - $ref: '#/components/parameters/Value'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Currency' } } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /currencies/{id}:
+    parameters: [ { $ref: '#/components/parameters/Id' } ]
+    head:
+      tags: [Currencies]
+      summary: Currency exists?
+      responses: { '200': { description: Exists }, '404': { $ref: '#/components/responses/NotFound' } }
+    get:
+      tags: [Currencies]
+      summary: Get currency by id
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Currency' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [Currencies]
+      summary: Replace currency
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/CurrencyCreate' } } } }
+      responses:
+        '200': { description: Updated, content: { application/json: { schema: { type: integer, format: int64 } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+    patch:
+      tags: [Currencies]
+      summary: Partially update currency
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/CurrencyPatch' } } } }
+      responses:
+        '200': { description: Updated, content: { application/json: { schema: { $ref: '#/components/schemas/Currency' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+    delete:
+      tags: [Currencies]
+      summary: Delete currency
+      responses: { '204': { description: Deleted }, '404': { $ref: '#/components/responses/NotFound' } }
+
+  # ===================== Languages =====================
+  /languages:
+    get:
+      tags: [Languages]
+      summary: List languages
+      parameters:
+        - $ref: '#/components/parameters/ReturnOnly'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Language' } } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+    post:
+      tags: [Languages]
+      summary: Create language
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/LanguageCreate' } } } }
+      responses:
+        '201': { description: Created, content: { application/json: { schema: { type: integer, format: int64 } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+  /languages/filter:
+    get:
+      tags: [Languages]
+      summary: Filter languages by a language field
+      parameters:
+        - $ref: '#/components/parameters/Field'
+        - $ref: '#/components/parameters/Operator'
+        - $ref: '#/components/parameters/Value'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Language' } } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /languages/{id}:
+    parameters: [ { $ref: '#/components/parameters/Id' } ]
+    head:
+      tags: [Languages]
+      summary: Language exists?
+      responses: { '200': { description: Exists }, '404': { $ref: '#/components/responses/NotFound' } }
+    get:
+      tags: [Languages]
+      summary: Get language by id
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Language' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [Languages]
+      summary: Replace language
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/LanguageCreate' } } } }
+      responses:
+        '200': { description: Updated, content: { application/json: { schema: { type: integer, format: int64 } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+    patch:
+      tags: [Languages]
+      summary: Partially update language
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/LanguagePatch' } } } }
+      responses:
+        '200': { description: Updated, content: { application/json: { schema: { $ref: '#/components/schemas/Language' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+    delete:
+      tags: [Languages]
+      summary: Delete language
+      responses: { '204': { description: Deleted }, '404': { $ref: '#/components/responses/NotFound' } }
+
+  # ===================== Manufacturers =====================
+  /manufacturers:
+    get:
+      tags: [Manufacturers]
+      summary: List manufacturers
+      parameters:
+        - $ref: '#/components/parameters/ReturnOnly'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Manufacturer' } } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+    post:
+      tags: [Manufacturers]
+      summary: Create manufacturer
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ManufacturerCreate' } } } }
+      responses:
+        '201': { description: Created, content: { application/json: { schema: { type: integer, format: int64 } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+  /manufacturers/filter:
+    get:
+      tags: [Manufacturers]
+      summary: Filter manufacturers by a manufacturer field
+      parameters:
+        - $ref: '#/components/parameters/Field'
+        - $ref: '#/components/parameters/Operator'
+        - $ref: '#/components/parameters/Value'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Manufacturer' } } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /manufacturers/city/filter:
+    get:
+      tags: [Manufacturers]
+      summary: Filter manufacturers by a city field
+      parameters:
+        - $ref: '#/components/parameters/Field'
+        - $ref: '#/components/parameters/Operator'
+        - $ref: '#/components/parameters/Value'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Manufacturer' } } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /manufacturers/country/filter:
+    get:
+      tags: [Manufacturers]
+      summary: Filter manufacturers by a country field
+      parameters:
+        - $ref: '#/components/parameters/Field'
+        - $ref: '#/components/parameters/Operator'
+        - $ref: '#/components/parameters/Value'
+        - $ref: '#/components/parameters/SortBy'
+        - $ref: '#/components/parameters/Order'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Manufacturer' } } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+  /manufacturers/{id}:
+    parameters: [ { $ref: '#/components/parameters/Id' } ]
+    head:
+      tags: [Manufacturers]
+      summary: Manufacturer exists?
+      responses: { '200': { description: Exists }, '404': { $ref: '#/components/responses/NotFound' } }
+    get:
+      tags: [Manufacturers]
+      summary: Get manufacturer by id
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Manufacturer' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [Manufacturers]
+      summary: Replace manufacturer
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ManufacturerCreate' } } } }
+      responses:
+        '200': { description: Updated, content: { application/json: { schema: { type: integer, format: int64 } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+    patch:
+      tags: [Manufacturers]
+      summary: Partially update manufacturer
+      requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ManufacturerPatch' } } } }
+      responses:
+        '200': { description: Updated, content: { application/json: { schema: { $ref: '#/components/schemas/Manufacturer' } } } }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+    delete:
+      tags: [Manufacturers]
+      summary: Delete manufacturer
+      responses: { '204': { description: Deleted }, '404': { $ref: '#/components/responses/NotFound' } }
