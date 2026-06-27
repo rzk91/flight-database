@@ -8,6 +8,7 @@ import flightdatabase.EntryAlreadyExists
 import flightdatabase.EntryCheckFailed
 import flightdatabase.EntryListEmpty
 import flightdatabase.EntryNotFound
+import flightdatabase.EntryValueTooLong
 import flightdatabase.IntType
 import flightdatabase.InvalidField
 import flightdatabase.InvalidValueType
@@ -198,7 +199,7 @@ final class CurrencyRepositoryIT extends RepositoryCheck {
     }
 
     val invalidSymbol = newCurrency.copy(symbol = Some("Something too long"))
-    repo.createCurrency(invalidSymbol).error shouldBe sqlErrorStringTooLong()
+    repo.createCurrency(invalidSymbol).error shouldBe EntryValueTooLong(None)
   }
 
   it should "not take place for a currency with existing unique fields" in {
@@ -238,7 +239,7 @@ final class CurrencyRepositoryIT extends RepositoryCheck {
     }
 
     val invalidSymbol = existingCurrency.copy(symbol = Some("Something too long"))
-    repo.updateCurrency(invalidSymbol).error shouldBe sqlErrorStringTooLong()
+    repo.updateCurrency(invalidSymbol).error shouldBe EntryValueTooLong(None)
   }
 
   it should "not take place for a currency with existing unique fields" in {
@@ -294,7 +295,7 @@ final class CurrencyRepositoryIT extends RepositoryCheck {
     val invalidSymbol = CurrencyPatch(symbol = Some("Something too long"))
     repo
       .partiallyUpdateCurrency(existingCurrency.id, invalidSymbol)
-      .error shouldBe sqlErrorStringTooLong()
+      .error shouldBe EntryValueTooLong(None)
   }
 
   it should "not take place for a currency with existing unique fields" in {

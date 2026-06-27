@@ -102,10 +102,11 @@ package object endpoints {
         case Left(value: InvalidOperator)            => BadRequest(value.error)
         case Left(value: WrongOperator)              => BadRequest(value.error)
         case Left(value: InvalidValueType)           => BadRequest(value.error)
+        case Left(value: EntryValueTooLong)          => BadRequest(value.error)
         case Left(value @ EntryAlreadyExists)        => Conflict(value.error)
         case Left(value @ FeatureNotImplemented)     => NotImplemented(value.error)
         case Left(value: EntryNotFound[_])           => NotFound(value.error)
-        case Left(value: SqlError)                   => UnprocessableEntity(value.error)
+        case Left(value: SqlError)                   => InternalServerError(value.error)
         case Left(value: UnknownDbError)             => InternalServerError(value.error)
       }
     }

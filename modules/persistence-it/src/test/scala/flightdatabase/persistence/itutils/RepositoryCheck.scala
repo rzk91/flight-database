@@ -21,10 +21,4 @@ trait RepositoryCheck extends PostgreSqlContainerSpec[IO] with Matchers with Eit
     values: Option[Nel[_]] = None
   ): SqlError =
     SqlError("42601", field, values)
-
-  protected def sqlErrorStringTooLong(
-    field: Option[String] = None,
-    values: Option[Nel[_]] = None
-  ): SqlError =
-    SqlError("22001", field, values)
 }

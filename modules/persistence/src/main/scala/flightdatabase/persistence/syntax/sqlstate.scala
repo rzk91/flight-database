@@ -8,6 +8,7 @@ import flightdatabase.EntryAlreadyExists
 import flightdatabase.EntryCheckFailed
 import flightdatabase.EntryHasInvalidForeignKey
 import flightdatabase.EntryNullCheckFailed
+import flightdatabase.EntryValueTooLong
 import flightdatabase.InvalidField
 import flightdatabase.InvalidValueType
 import flightdatabase.SqlError
@@ -27,7 +28,8 @@ final class SqlStateOps(private val state: SqlState) {
       case class42.UNDEFINED_COLUMN      => InvalidField(invalidField.debug)
       case class42.UNDEFINED_FUNCTION =>
         InvalidValueType(invalidValues.map(_.toList.mkString(", ")).debug)
-      case _ => SqlError(state.value, invalidField, invalidValues)
+      case class22.STRING_DATA_RIGHT_TRUNCATION => EntryValueTooLong(invalidField)
+      case _                                    => SqlError(state.value, invalidField, invalidValues)
     }
 }
 

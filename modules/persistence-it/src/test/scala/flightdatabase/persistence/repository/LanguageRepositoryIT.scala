@@ -8,6 +8,7 @@ import flightdatabase.EntryAlreadyExists
 import flightdatabase.EntryCheckFailed
 import flightdatabase.EntryListEmpty
 import flightdatabase.EntryNotFound
+import flightdatabase.EntryValueTooLong
 import flightdatabase.IntType
 import flightdatabase.InvalidField
 import flightdatabase.InvalidValueType
@@ -227,7 +228,7 @@ final class LanguageRepositoryIT extends RepositoryCheck {
     )
 
     forAll(invalidLanguages2) { language =>
-      repo.createLanguage(language).error shouldBe sqlErrorStringTooLong()
+      repo.createLanguage(language).error shouldBe EntryValueTooLong(None)
     }
   }
 
@@ -275,7 +276,7 @@ final class LanguageRepositoryIT extends RepositoryCheck {
     )
 
     forAll(invalidLanguages2) { language =>
-      repo.updateLanguage(language).error shouldBe sqlErrorStringTooLong()
+      repo.updateLanguage(language).error shouldBe EntryValueTooLong(None)
     }
   }
 
@@ -338,7 +339,7 @@ final class LanguageRepositoryIT extends RepositoryCheck {
     forAll(invalidLanguages2) { language =>
       repo
         .partiallyUpdateLanguage(existingLanguage.id, language)
-        .error shouldBe sqlErrorStringTooLong()
+        .error shouldBe EntryValueTooLong(None)
     }
   }
 

@@ -45,6 +45,14 @@ case class EntryNotFound[A](entry: A) extends ApiError {
   override val error: String = s"Error: Entry '$entry' not found"
 }
 
+case class EntryValueTooLong(field: Option[String]) extends ApiError {
+
+  override val error: String = field match {
+    case Some(value) => s"Error: Value for field '$value' exceeds maximum allowed length"
+    case None        => s"Error: A value exceeds maximum allowed length"
+  }
+}
+
 case class InvalidTimezone(timezone: String) extends ApiError {
   override val error: String = s"Error: Invalid timezone '$timezone'"
 }
