@@ -1,4 +1,4 @@
-val scalaV = "2.13.13"
+val scalaV = "2.13.18"
 
 lazy val commonSettings = Seq(
   organization := "rzk.scala",
@@ -20,18 +20,17 @@ lazy val commonSettings = Seq(
   ),
   semanticdbEnabled          := true,
   semanticdbVersion          := scalafixSemanticdb.revision,
-  scalafixScalaBinaryVersion := scalaV.split('.').take(2).mkString("."),
   addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"),
-  addCompilerPlugin(("org.typelevel" % "kind-projector" % "0.13.3").cross(CrossVersion.full))
+  addCompilerPlugin(("org.typelevel" % "kind-projector" % "0.13.4").cross(CrossVersion.full))
 )
 
-val catsVersion = "2.12.0"
+val catsVersion = "2.13.0"
 val circeVersion = "0.14.4"
-val doobieVersion = "1.0.0-RC8"
-val http4sVersion = "0.23.30"
-val pureconfigVersion = "0.17.8"
-val flywayVersion = "11.4.0"
-val scalaTestVersion = "3.2.19"
+val doobieVersion = "1.0.0-RC12"
+val http4sVersion = "0.23.34"
+val pureconfigVersion = "0.17.10"
+val flywayVersion = "12.9.0"
+val scalaTestVersion = "3.2.20"
 val testcontainersVersion = "0.44.1"
 
 // ── dependency groups ──────────────────────────────────────────────────────
@@ -63,7 +62,7 @@ val http4sApiDeps    = Seq(
 // `app`: the concrete server that actually binds a port (ember-client was unused — dropped)
 val http4sServerDeps = Seq("org.http4s" %% "http4s-ember-server" % http4sVersion)
 
-val enumeratumDeps = Seq("com.beachape" %% "enumeratum" % "1.7.5")
+val enumeratumDeps = Seq("com.beachape" %% "enumeratum" % "1.9.8")
 
 val pureconfigDeps = Seq(
   "com.github.pureconfig" %% "pureconfig"             % pureconfigVersion,
@@ -75,11 +74,11 @@ val flywayDeps = Seq(
   "org.flywaydb" % "flyway-database-postgresql" % flywayVersion
 )
 
-val loggingDeps        = Seq("com.typesafe.scala-logging" %% "scala-logging" % "3.9.5")
-val loggingRuntimeDeps = Seq("org.slf4j" % "slf4j-reload4j" % "2.0.17") // binding — app only
+val loggingDeps        = Seq("com.typesafe.scala-logging" %% "scala-logging" % "3.9.6")
+val loggingRuntimeDeps = Seq("org.slf4j" % "slf4j-reload4j" % "2.0.18") // binding — app only
 
-val commonsIoDeps = Seq("commons-io" % "commons-io" % "2.18.0")
-val icuDeps       = Seq("com.ibm.icu" % "icu4j" % "77.1")
+val commonsIoDeps = Seq("commons-io" % "commons-io" % "2.22.0")
+val icuDeps       = Seq("com.ibm.icu" % "icu4j" % "78.3")
 
 // testkit helpers live in src/main, so ScalaTest/scalactic are COMPILE deps here.
 // http4s-core gives Response[IO] and transitively brings cats-effect.
@@ -92,7 +91,7 @@ val testkitDeps = catsCoreDeps ++ Seq(
 val testingDeps = Seq(
   "org.scalactic" %% "scalactic" % scalaTestVersion % Test,
   "org.scalatest" %% "scalatest" % scalaTestVersion % Test,
-  "org.scalamock" %% "scalamock" % "6.2.0"          % Test
+  "org.scalamock" %% "scalamock" % "7.5.5"          % Test
 )
 
 val itDeps = Seq(
