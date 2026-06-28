@@ -18,15 +18,15 @@ lazy val commonSettings = Seq(
     "-language:postfixOps",
     "-Wunused:imports"
   ),
-  semanticdbEnabled          := true,
-  semanticdbVersion          := scalafixSemanticdb.revision,
+  semanticdbEnabled := true,
+  semanticdbVersion := scalafixSemanticdb.revision,
   addCompilerPlugin("com.olegpy" %% "better-monadic-for" % "0.3.1"),
   addCompilerPlugin(("org.typelevel" % "kind-projector" % "0.13.4").cross(CrossVersion.full))
 )
 
 val catsVersion = "2.13.0"
 val circeVersion = "0.14.4"
-val doobieVersion = "1.0.0-RC12"
+val doobieVersion = "1.0.0-RC13"
 val http4sVersion = "0.23.34"
 val pureconfigVersion = "0.17.10"
 val flywayVersion = "12.9.0"
@@ -46,15 +46,15 @@ val circeDeps = Seq(
   "io.circe" %% "circe-generic-extras" % circeVersion
 )
 
-val doobieDeps     = Seq(
-  "org.tpolecat" %% "doobie-core" % doobieVersion,
-  "org.tpolecat" %% "doobie-hikari"   % doobieVersion,
-  "org.tpolecat" %% "doobie-postgres" % doobieVersion
+val doobieDeps = Seq(
+  "org.typelevel" %% "doobie-core"     % doobieVersion,
+  "org.tpolecat"  %% "doobie-hikari"   % doobieVersion,
+  "org.tpolecat"  %% "doobie-postgres" % doobieVersion
 )
 val doobieTestDeps = Seq("org.tpolecat" %% "doobie-scalatest" % doobieVersion % Test)
 
 // `api`: route DSL + Router/middleware + circe entity codec (no concrete server backend here)
-val http4sApiDeps    = Seq(
+val http4sApiDeps = Seq(
   "org.http4s" %% "http4s-server" % http4sVersion,
   "org.http4s" %% "http4s-dsl"    % http4sVersion,
   "org.http4s" %% "http4s-circe"  % http4sVersion
@@ -74,11 +74,11 @@ val flywayDeps = Seq(
   "org.flywaydb" % "flyway-database-postgresql" % flywayVersion
 )
 
-val loggingDeps        = Seq("com.typesafe.scala-logging" %% "scala-logging" % "3.9.6")
-val loggingRuntimeDeps = Seq("org.slf4j" % "slf4j-reload4j" % "2.0.18") // binding — app only
+val loggingDeps = Seq("com.typesafe.scala-logging" %% "scala-logging" % "3.9.6")
+val loggingRuntimeDeps = Seq("org.slf4j"           % "slf4j-reload4j" % "2.0.18") // binding — app only
 
 val commonsIoDeps = Seq("commons-io" % "commons-io" % "2.22.0")
-val icuDeps       = Seq("com.ibm.icu" % "icu4j" % "78.3")
+val icuDeps = Seq("com.ibm.icu"      % "icu4j"      % "78.3")
 
 // testkit helpers live in src/main, so ScalaTest/scalactic are COMPILE deps here.
 // http4s-core gives Response[IO] and transitively brings cats-effect.
