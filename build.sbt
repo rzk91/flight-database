@@ -48,7 +48,7 @@ val circeDeps = Seq(
 
 val doobieDeps = Seq(
   "org.typelevel" %% "doobie-core"     % doobieVersion,
-  "org.tpolecat"  %% "doobie-hikari"   % doobieVersion,
+  "org.typelevel" %% "doobie-hikari"   % doobieVersion,
   "org.tpolecat"  %% "doobie-postgres" % doobieVersion
 )
 val doobieTestDeps = Seq("org.tpolecat" %% "doobie-scalatest" % doobieVersion % Test)
