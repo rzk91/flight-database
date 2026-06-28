@@ -1,7 +1,7 @@
 package flightdatabase.persistence.syntax
 
-import doobie.Put
-import doobie.Read
+import org.typelevel.doobie.Put
+import org.typelevel.doobie.Read
 import flightdatabase.BigDecimalType
 import flightdatabase.BooleanType
 import flightdatabase.FieldType

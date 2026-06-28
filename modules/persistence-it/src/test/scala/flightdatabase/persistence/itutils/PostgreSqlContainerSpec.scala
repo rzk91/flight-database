@@ -3,7 +3,7 @@ package flightdatabase.persistence.itutils
 import cats.effect.Async
 import com.dimafeng.testcontainers.ForAllTestContainer
 import com.dimafeng.testcontainers.PostgreSQLContainer
-import doobie.util.transactor.Transactor
+import org.typelevel.doobie.util.transactor.Transactor
 import flightdatabase.persistence.config.DatabaseConfig
 import flightdatabase.persistence.db.Database
 import org.scalatest.flatspec.AnyFlatSpec

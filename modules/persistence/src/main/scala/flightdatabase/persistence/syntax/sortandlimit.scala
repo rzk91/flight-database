@@ -1,7 +1,7 @@
 package flightdatabase.persistence.syntax
 
-import doobie.Fragment
-import doobie.syntax.string._
+import org.typelevel.doobie.Fragment
+import org.typelevel.doobie.syntax.string._
 import flightdatabase.ResultOrder
 import flightdatabase.ValidatedSortAndLimit
 

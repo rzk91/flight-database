@@ -3,7 +3,7 @@ package flightdatabase.persistence.itutils
 import cats.data.{NonEmptyList => Nel}
 import cats.effect.Async
 import cats.effect.IO
-import doobie.util.transactor.Transactor
+import org.typelevel.doobie.util.transactor.Transactor
 import flightdatabase.SqlError
 import flightdatabase.ValidatedSortAndLimit
 import org.scalatest.EitherValues

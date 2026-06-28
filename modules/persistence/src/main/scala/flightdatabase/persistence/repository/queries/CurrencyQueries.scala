@@ -1,11 +1,11 @@
 package flightdatabase.persistence.repository.queries
 
 import cats.data.{NonEmptyList => Nel}
-import doobie.Fragment
-import doobie.Put
-import doobie.Query0
-import doobie.Update0
-import doobie.implicits._
+import org.typelevel.doobie.Fragment
+import org.typelevel.doobie.Put
+import org.typelevel.doobie.Query0
+import org.typelevel.doobie.Update0
+import org.typelevel.doobie.implicits._
 import flightdatabase.Operator
 import flightdatabase.ValidatedSortAndLimit
 import flightdatabase.currency.Currency

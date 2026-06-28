@@ -3,7 +3,7 @@ package flightdatabase.persistence.repository
 import cats.effect.Concurrent
 import cats.effect.Resource
 import cats.implicits._
-import doobie.Transactor
+import org.typelevel.doobie.Transactor
 import flightdatabase.Repositories
 
 class RepositoryContainer[F[_]: Concurrent] private (

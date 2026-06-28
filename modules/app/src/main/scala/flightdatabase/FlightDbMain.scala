@@ -1,7 +1,7 @@
 package flightdatabase
 
 import cats.effect._
-import doobie.Transactor
+import org.typelevel.doobie.Transactor
 import flightdatabase.api.FlightDbApi
 import flightdatabase.config.Configuration
 import flightdatabase.persistence.db.Database

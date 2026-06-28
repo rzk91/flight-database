@@ -5,9 +5,9 @@ import cats.data.{NonEmptyList => Nel}
 import cats.effect.Concurrent
 import cats.effect.Resource
 import cats.implicits._
-import doobie.Put
-import doobie.Read
-import doobie.Transactor
+import org.typelevel.doobie.Put
+import org.typelevel.doobie.Read
+import org.typelevel.doobie.Transactor
 import flightdatabase.ApiResult
 import flightdatabase.FieldType
 import flightdatabase.FieldValues

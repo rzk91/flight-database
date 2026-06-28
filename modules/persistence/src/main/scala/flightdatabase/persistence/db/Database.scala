@@ -2,10 +2,10 @@ package flightdatabase.persistence.db
 
 import cats.effect._
 import cats.syntax.applicative._
-import doobie.hikari.HikariTransactor
-import doobie.util.ExecutionContexts
-import doobie.util.log.LogHandler
-import doobie.util.transactor.Transactor
+import org.typelevel.doobie.hikari.HikariTransactor
+import org.typelevel.doobie.util.ExecutionContexts
+import org.typelevel.doobie.util.log.LogHandler
+import org.typelevel.doobie.util.transactor.Transactor
 import flightdatabase.persistence.config.DatabaseConfig
 import org.flywaydb.core.Flyway
 

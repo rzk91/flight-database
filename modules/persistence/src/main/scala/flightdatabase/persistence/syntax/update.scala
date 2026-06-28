@@ -1,9 +1,9 @@
 package flightdatabase.persistence.syntax
 
 import cats.syntax.bifunctor._
-import doobie.ConnectionIO
-import doobie.Update0
-import doobie.syntax.applicativeerror._
+import org.typelevel.doobie.ConnectionIO
+import org.typelevel.doobie.Update0
+import org.typelevel.doobie.syntax.applicativeerror._
 import flightdatabase.ApiResult
 import flightdatabase.Created
 import flightdatabase.Deleted

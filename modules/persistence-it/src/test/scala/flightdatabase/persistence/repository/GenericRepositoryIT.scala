@@ -2,7 +2,7 @@ package flightdatabase.persistence.repository
 
 import cats.data.{NonEmptyList => Nel}
 import cats.effect.unsafe.implicits.global
-import doobie.syntax.string._
+import org.typelevel.doobie.syntax.string._
 import flightdatabase.EntryListEmpty
 import flightdatabase.FieldValues
 import flightdatabase.Operator
