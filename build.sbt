@@ -51,7 +51,7 @@ val doobieDeps = Seq(
   "org.typelevel" %% "doobie-hikari"   % doobieVersion,
   "org.typelevel" %% "doobie-postgres" % doobieVersion
 )
-val doobieTestDeps = Seq("org.tpolecat" %% "doobie-scalatest" % doobieVersion % Test)
+val doobieTestDeps = Seq("org.typelevel" %% "doobie-scalatest" % doobieVersion % Test)
 
 // `api`: route DSL + Router/middleware + circe entity codec (no concrete server backend here)
 val http4sApiDeps = Seq(
