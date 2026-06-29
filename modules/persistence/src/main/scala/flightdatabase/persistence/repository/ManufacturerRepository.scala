@@ -5,9 +5,6 @@ import cats.data.{NonEmptyList => Nel}
 import cats.effect.Concurrent
 import cats.effect.Resource
 import cats.implicits._
-import org.typelevel.doobie.Put
-import org.typelevel.doobie.Read
-import org.typelevel.doobie.Transactor
 import flightdatabase.ApiResult
 import flightdatabase.FieldType
 import flightdatabase.FieldValues
@@ -27,6 +24,9 @@ import flightdatabase.persistence.repository.ManufacturerRepository.PartiallyApp
 import flightdatabase.persistence.repository.ManufacturerRepository.PartiallyAppliedGetByManufacturer
 import flightdatabase.persistence.repository.queries.ManufacturerQueries._
 import flightdatabase.persistence.syntax.all._
+import org.typelevel.doobie.Put
+import org.typelevel.doobie.Read
+import org.typelevel.doobie.Transactor
 
 class ManufacturerRepository[F[_]: Concurrent] private (
   implicit transactor: Transactor[F]

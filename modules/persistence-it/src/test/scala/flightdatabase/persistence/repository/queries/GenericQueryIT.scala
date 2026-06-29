@@ -1,13 +1,13 @@
 package flightdatabase.persistence.repository.queries
 
 import cats.data.{NonEmptyList => Nel}
-import org.typelevel.doobie.implicits._
 import flightdatabase.Operator
 import flightdatabase.airplane.Airplane
 import flightdatabase.city.City
 import flightdatabase.country.Country
 import flightdatabase.manufacturer.Manufacturer
 import flightdatabase.persistence.itutils.DbChecker
+import org.typelevel.doobie.implicits._
 
 final class GenericQueryIT extends DbChecker {
 

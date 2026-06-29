@@ -1,9 +1,9 @@
 package flightdatabase.persistence.syntax
 
-import org.typelevel.doobie.Fragment
-import org.typelevel.doobie.syntax.string._
 import flightdatabase.ResultOrder
 import flightdatabase.ValidatedSortAndLimit
+import org.typelevel.doobie.Fragment
+import org.typelevel.doobie.syntax.string._
 
 final class SortAndLimitOps(private val self: ValidatedSortAndLimit) extends AnyVal {
 

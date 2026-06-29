@@ -5,9 +5,6 @@ import cats.data.{NonEmptyList => Nel}
 import cats.effect.Concurrent
 import cats.effect.Resource
 import cats.implicits._
-import org.typelevel.doobie.Put
-import org.typelevel.doobie.Read
-import org.typelevel.doobie.Transactor
 import flightdatabase.ApiResult
 import flightdatabase.FieldType
 import flightdatabase.Operator
@@ -22,6 +19,9 @@ import flightdatabase.persistence.repository.CurrencyRepository.PartiallyApplied
 import flightdatabase.persistence.repository.CurrencyRepository.PartiallyAppliedGetByCurrency
 import flightdatabase.persistence.repository.queries.CurrencyQueries._
 import flightdatabase.persistence.syntax.all._
+import org.typelevel.doobie.Put
+import org.typelevel.doobie.Read
+import org.typelevel.doobie.Transactor
 
 class CurrencyRepository[F[_]: Concurrent] private (
   implicit transactor: Transactor[F]

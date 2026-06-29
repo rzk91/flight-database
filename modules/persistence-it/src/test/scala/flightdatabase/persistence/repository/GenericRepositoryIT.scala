@@ -2,7 +2,6 @@ package flightdatabase.persistence.repository
 
 import cats.data.{NonEmptyList => Nel}
 import cats.effect.unsafe.implicits.global
-import org.typelevel.doobie.syntax.string._
 import flightdatabase.EntryListEmpty
 import flightdatabase.FieldValues
 import flightdatabase.Operator
@@ -11,6 +10,7 @@ import flightdatabase.country.Country
 import flightdatabase.persistence.itutils.RepositoryCheck
 import flightdatabase.persistence.syntax.all._
 import flightdatabase.test.syntax.all._
+import org.typelevel.doobie.syntax.string._
 
 final class GenericRepositoryIT extends RepositoryCheck {
 

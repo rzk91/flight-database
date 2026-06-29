@@ -1,8 +1,6 @@
 package flightdatabase.persistence.syntax
 
 import cats.data.{NonEmptyList => Nel}
-import org.typelevel.doobie.SqlState
-import org.typelevel.doobie.postgres.sqlstate._
 import flightdatabase.ApiError
 import flightdatabase.EntryAlreadyExists
 import flightdatabase.EntryCheckFailed
@@ -13,6 +11,8 @@ import flightdatabase.InvalidField
 import flightdatabase.InvalidValueType
 import flightdatabase.SqlError
 import flightdatabase.syntax.option._
+import org.typelevel.doobie.SqlState
+import org.typelevel.doobie.postgres.sqlstate._
 
 final class SqlStateOps(private val state: SqlState) {
 

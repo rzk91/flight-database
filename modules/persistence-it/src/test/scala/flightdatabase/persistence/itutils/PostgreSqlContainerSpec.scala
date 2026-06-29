@@ -3,11 +3,11 @@ package flightdatabase.persistence.itutils
 import cats.effect.Async
 import com.dimafeng.testcontainers.ForAllTestContainer
 import com.dimafeng.testcontainers.PostgreSQLContainer
-import org.typelevel.doobie.util.transactor.Transactor
 import flightdatabase.persistence.config.DatabaseConfig
 import flightdatabase.persistence.db.Database
 import org.scalatest.flatspec.AnyFlatSpec
 import org.testcontainers.utility.DockerImageName
+import org.typelevel.doobie.util.transactor.Transactor
 
 trait PostgreSqlContainerSpec[F[_]] extends AnyFlatSpec with ForAllTestContainer {
   implicit def async: Async[F]

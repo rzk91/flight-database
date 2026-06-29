@@ -1,15 +1,15 @@
 package flightdatabase.persistence.syntax
 
 import cats.syntax.bifunctor._
-import org.typelevel.doobie.ConnectionIO
-import org.typelevel.doobie.Update0
-import org.typelevel.doobie.syntax.applicativeerror._
 import flightdatabase.ApiResult
 import flightdatabase.Created
 import flightdatabase.Deleted
 import flightdatabase.EntryNotFound
 import flightdatabase.Updated
 import flightdatabase.persistence.syntax.sqlstate._
+import org.typelevel.doobie.ConnectionIO
+import org.typelevel.doobie.Update0
+import org.typelevel.doobie.syntax.applicativeerror._
 
 final class UpdateOps(private val update: Update0) extends AnyVal {
 

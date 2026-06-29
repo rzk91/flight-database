@@ -5,9 +5,6 @@ import cats.data.{NonEmptyList => Nel}
 import cats.effect.Concurrent
 import cats.effect.Resource
 import cats.syntax.all._
-import org.typelevel.doobie.Put
-import org.typelevel.doobie.Read
-import org.typelevel.doobie.Transactor
 import flightdatabase.ApiResult
 import flightdatabase.FieldType
 import flightdatabase.Operator
@@ -27,6 +24,9 @@ import flightdatabase.persistence.repository.queries.LanguageQueries.modifyLangu
 import flightdatabase.persistence.repository.queries.LanguageQueries.selectAllLanguages
 import flightdatabase.persistence.repository.queries.LanguageQueries.selectLanguageBy
 import flightdatabase.persistence.syntax.all._
+import org.typelevel.doobie.Put
+import org.typelevel.doobie.Read
+import org.typelevel.doobie.Transactor
 
 class LanguageRepository[F[_]: Concurrent] private (
   implicit transactor: Transactor[F]

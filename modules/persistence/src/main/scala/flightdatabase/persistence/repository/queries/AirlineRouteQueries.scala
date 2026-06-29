@@ -1,17 +1,17 @@
 package flightdatabase.persistence.repository.queries
 
 import cats.data.{NonEmptyList => Nel}
-import org.typelevel.doobie.Fragment
-import org.typelevel.doobie.Put
-import org.typelevel.doobie.Query0
-import org.typelevel.doobie.Update0
-import org.typelevel.doobie.implicits._
 import flightdatabase.Operator
 import flightdatabase.TableBase
 import flightdatabase.ValidatedSortAndLimit
 import flightdatabase.airline_route.AirlineRoute
 import flightdatabase.airline_route.AirlineRouteCreate
 import flightdatabase.persistence.syntax.sortandlimit._
+import org.typelevel.doobie.Fragment
+import org.typelevel.doobie.Put
+import org.typelevel.doobie.Query0
+import org.typelevel.doobie.Update0
+import org.typelevel.doobie.implicits._
 
 private[repository] object AirlineRouteQueries {
 

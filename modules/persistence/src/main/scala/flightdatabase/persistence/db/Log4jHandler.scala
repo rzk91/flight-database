@@ -2,13 +2,13 @@ package flightdatabase.persistence.db
 
 import cats.effect.Sync
 import com.typesafe.scalalogging.Logger
+import org.slf4j.LoggerFactory
 import org.typelevel.doobie.LogHandler
 import org.typelevel.doobie.util.log.ExecFailure
 import org.typelevel.doobie.util.log.LogEvent
 import org.typelevel.doobie.util.log.Parameters
 import org.typelevel.doobie.util.log.ProcessingFailure
 import org.typelevel.doobie.util.log.Success
-import org.slf4j.LoggerFactory
 
 class Log4jHandler[F[_]: Sync] private (className: String) extends LogHandler[F] {
 

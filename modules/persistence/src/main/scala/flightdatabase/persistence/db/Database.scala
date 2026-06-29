@@ -2,12 +2,12 @@ package flightdatabase.persistence.db
 
 import cats.effect._
 import cats.syntax.applicative._
+import flightdatabase.persistence.config.DatabaseConfig
+import org.flywaydb.core.Flyway
 import org.typelevel.doobie.hikari.HikariTransactor
 import org.typelevel.doobie.util.ExecutionContexts
 import org.typelevel.doobie.util.log.LogHandler
 import org.typelevel.doobie.util.transactor.Transactor
-import flightdatabase.persistence.config.DatabaseConfig
-import org.flywaydb.core.Flyway
 
 /**
   *  A class that manages the database connection and migration.
