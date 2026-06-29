@@ -43,7 +43,7 @@ val circeDeps = Seq(
   "io.circe" %% "circe-core"           % circeVersion,
   "io.circe" %% "circe-generic"        % circeVersion,
   "io.circe" %% "circe-parser"         % circeVersion,
-  "io.circe" %% "circe-generic-extras" % circeVersion
+  "io.circe" %% "circe-generic-extras" % "0.14.4"
 )
 
 val doobieDeps = Seq(
