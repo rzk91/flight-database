@@ -2,11 +2,6 @@ package flightdatabase.persistence.syntax
 
 import cats.data.{NonEmptyList => Nel}
 import cats.syntax.applicativeError._
-import doobie.ConnectionIO
-import doobie.Query0
-import doobie.enumerated.SqlState
-import doobie.implicits._
-import doobie.util.invariant.UnexpectedEnd
 import flightdatabase.ApiResult
 import flightdatabase.EntryListEmpty
 import flightdatabase.EntryNotFound
@@ -14,6 +9,11 @@ import flightdatabase.Got
 import flightdatabase.UnknownDbError
 import flightdatabase.persistence.syntax.sqlstate._
 import fs2.Stream
+import org.typelevel.doobie.ConnectionIO
+import org.typelevel.doobie.Query0
+import org.typelevel.doobie.enumerated.SqlState
+import org.typelevel.doobie.implicits._
+import org.typelevel.doobie.util.invariant.UnexpectedEnd
 
 import java.sql.SQLException
 

@@ -2,10 +2,10 @@ package flightdatabase.persistence.syntax
 
 import cats.effect.Concurrent
 import cats.effect.Resource
-import doobie.ConnectionIO
-import doobie.Transactor
-import doobie.hikari.HikariTransactor
-import doobie.implicits._
+import org.typelevel.doobie.ConnectionIO
+import org.typelevel.doobie.Transactor
+import org.typelevel.doobie.hikari.HikariTransactor
+import org.typelevel.doobie.implicits._
 
 final class MoreConnectionIOOps[A](private val stmt: ConnectionIO[A]) extends AnyVal {
 

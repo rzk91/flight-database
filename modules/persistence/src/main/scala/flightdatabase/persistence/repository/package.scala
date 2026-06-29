@@ -3,12 +3,12 @@ package flightdatabase.persistence
 import cats.Applicative
 import cats.data.EitherT
 import cats.data.{NonEmptyList => Nel}
-import doobie._
-import doobie.implicits._
 import flightdatabase._
 import flightdatabase.persistence.repository.queries._
 import flightdatabase.persistence.syntax.query._
 import flightdatabase.persistence.syntax.sortandlimit._
+import org.typelevel.doobie._
+import org.typelevel.doobie.implicits._
 
 package object repository {
 

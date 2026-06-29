@@ -6,9 +6,6 @@ import cats.effect.Concurrent
 import cats.effect.Resource
 import cats.implicits._
 import com.ibm.icu.util.TimeZone
-import doobie.Put
-import doobie.Read
-import doobie.Transactor
 import flightdatabase.ApiError
 import flightdatabase.ApiOutput
 import flightdatabase.ApiResult
@@ -32,6 +29,9 @@ import flightdatabase.persistence.repository.CityRepository.PartiallyAppliedGetB
 import flightdatabase.persistence.repository.queries.CityQueries._
 import flightdatabase.persistence.repository.queries.CountryQueries
 import flightdatabase.persistence.syntax.all._
+import org.typelevel.doobie.Put
+import org.typelevel.doobie.Read
+import org.typelevel.doobie.Transactor
 
 class CityRepository[F[_]: Concurrent] private (
   implicit transactor: Transactor[F]

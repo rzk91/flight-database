@@ -1,13 +1,13 @@
 package flightdatabase.persistence.syntax
 
-import doobie.Put
-import doobie.Read
 import flightdatabase.BigDecimalType
 import flightdatabase.BooleanType
 import flightdatabase.FieldType
 import flightdatabase.IntType
 import flightdatabase.LongType
 import flightdatabase.StringType
+import org.typelevel.doobie.Put
+import org.typelevel.doobie.Read
 
 final class FieldTypeOps[A](private val fieldType: FieldType[A]) extends AnyVal {
   def asPut: Put[A] = FieldTypeOps.putFor(fieldType)

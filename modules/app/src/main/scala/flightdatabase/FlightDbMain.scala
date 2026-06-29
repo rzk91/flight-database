@@ -1,11 +1,11 @@
 package flightdatabase
 
 import cats.effect._
-import doobie.Transactor
 import flightdatabase.api.FlightDbApi
 import flightdatabase.config.Configuration
 import flightdatabase.persistence.db.Database
 import flightdatabase.persistence.repository.RepositoryContainer
+import org.typelevel.doobie.Transactor
 
 object FlightDbMain extends IOApp.Simple {
 

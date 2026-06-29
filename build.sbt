@@ -26,7 +26,7 @@ lazy val commonSettings = Seq(
 
 val catsVersion = "2.13.0"
 val circeVersion = "0.14.15"
-val doobieVersion = "1.0.0-RC12"
+val doobieVersion = "1.0.0-RC13"
 val http4sVersion = "0.23.34"
 val pureconfigVersion = "0.17.10"
 val flywayVersion = "12.9.0"
@@ -47,11 +47,11 @@ val circeDeps = Seq(
 )
 
 val doobieDeps = Seq(
-  "org.tpolecat" %% "doobie-core"     % doobieVersion,
-  "org.tpolecat" %% "doobie-hikari"   % doobieVersion,
-  "org.tpolecat" %% "doobie-postgres" % doobieVersion
+  "org.typelevel" %% "doobie-core"     % doobieVersion,
+  "org.typelevel" %% "doobie-hikari"   % doobieVersion,
+  "org.typelevel" %% "doobie-postgres" % doobieVersion
 )
-val doobieTestDeps = Seq("org.tpolecat" %% "doobie-scalatest" % doobieVersion % Test)
+val doobieTestDeps = Seq("org.typelevel" %% "doobie-scalatest" % doobieVersion % Test)
 
 // `api`: route DSL + Router/middleware + circe entity codec (no concrete server backend here)
 val http4sApiDeps = Seq(

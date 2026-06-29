@@ -1,10 +1,10 @@
 package flightdatabase.persistence.repository
 
 import cats.data.{NonEmptyList => Nel}
-import doobie._
-import doobie.implicits._
 import flightdatabase.Operator
 import flightdatabase.TableBase
+import org.typelevel.doobie._
+import org.typelevel.doobie.implicits._
 
 package object queries {
 

@@ -3,11 +3,11 @@ package flightdatabase.persistence.itutils
 import cats.data.{NonEmptyList => Nel}
 import cats.effect.Async
 import cats.effect.IO
-import doobie.util.transactor.Transactor
 import flightdatabase.SqlError
 import flightdatabase.ValidatedSortAndLimit
 import org.scalatest.EitherValues
 import org.scalatest.matchers.should.Matchers
+import org.typelevel.doobie.util.transactor.Transactor
 
 trait RepositoryCheck extends PostgreSqlContainerSpec[IO] with Matchers with EitherValues {
   implicit override val async: Async[IO] = IO.asyncForIO
