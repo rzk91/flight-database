@@ -25,7 +25,7 @@ lazy val commonSettings = Seq(
 )
 
 val catsVersion = "2.13.0"
-val circeVersion = "0.14.4"
+val circeVersion = "0.14.15"
 val doobieVersion = "1.0.0-RC13"
 val http4sVersion = "0.23.34"
 val pureconfigVersion = "0.17.10"
@@ -43,7 +43,7 @@ val circeDeps = Seq(
   "io.circe" %% "circe-core"           % circeVersion,
   "io.circe" %% "circe-generic"        % circeVersion,
   "io.circe" %% "circe-parser"         % circeVersion,
-  "io.circe" %% "circe-generic-extras" % circeVersion
+  "io.circe" %% "circe-generic-extras" % "0.14.4"
 )
 
 val doobieDeps = Seq(
