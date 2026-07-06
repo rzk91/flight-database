@@ -26,7 +26,11 @@ private[repository] object AirlineAirplaneQueries {
     operator: Operator,
     sortAndLimit: ValidatedSortAndLimit
   ): Query0[AirlineAirplane] =
-    (selectAll ++ whereFragment(s"airline_airplane.$field", values, operator) ++ sortAndLimit.fragment)
+    (selectAll ++ whereFragment(
+      s"airline_airplane.$field",
+      values,
+      operator
+    ) ++ sortAndLimit.fragment)
       .query[AirlineAirplane]
 
   def selectAirlineAirplanesByExternal[ET: TableBase, EV: Put](

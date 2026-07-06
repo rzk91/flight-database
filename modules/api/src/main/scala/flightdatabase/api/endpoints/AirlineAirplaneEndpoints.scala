@@ -41,8 +41,8 @@ class AirlineAirplaneEndpoints[F[_]: Concurrent] private (
 
     // GET /airline-airplanes/filter?field={airline_airplane_field}&operator={operator; default: eq}&value={value}&sort-by={airline_airplane_field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root / "filter" :?
-          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
-            ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
+        FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
+        ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
       withSortAndLimitValidation[AirlineAirplane](sortAndLimit) {
         processFilter[AirlineAirplane, AirlineAirplane](field, operator, values, _)(
           algebra.getAirlineAirplanesBy
@@ -51,8 +51,8 @@ class AirlineAirplaneEndpoints[F[_]: Concurrent] private (
 
     // GET /airline-airplanes/airline/filter?field={airline_field}&operator={operator; default: eq}&value={value}&sort-by={airline_field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root / "airline" / "filter" :?
-          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
-            ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
+        FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
+        ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
       withSortAndLimitValidation[Airline](sortAndLimit) {
         processFilter[Airline, AirlineAirplane](field, operator, values, _)(
           algebra.getAirlineAirplanesByAirline
@@ -61,8 +61,8 @@ class AirlineAirplaneEndpoints[F[_]: Concurrent] private (
 
     // GET /airline-airplanes/airplane/filter?field={airplane_field}&operator={operator; default: eq}&value={value}&sort-by={airplane_field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root / "airplane" / "filter" :?
-          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
-            ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
+        FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
+        ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
       withSortAndLimitValidation[Airplane](sortAndLimit) {
         processFilter[Airplane, AirlineAirplane](field, operator, values, _)(
           algebra.getAirlineAirplanesByAirplane

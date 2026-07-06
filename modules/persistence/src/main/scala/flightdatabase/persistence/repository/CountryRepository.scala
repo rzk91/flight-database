@@ -27,8 +27,8 @@ import org.typelevel.doobie.Put
 import org.typelevel.doobie.Read
 import org.typelevel.doobie.Transactor
 
-class CountryRepository[F[_]: Concurrent] private (
-  implicit transactor: Transactor[F]
+class CountryRepository[F[_]: Concurrent] private (implicit
+  transactor: Transactor[F]
 ) extends CountryAlgebra[F] {
 
   override def doesCountryExist(id: Long): F[Boolean] =
@@ -73,13 +73,13 @@ class CountryRepository[F[_]: Concurrent] private (
 
 object CountryRepository {
 
-  def make[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  def make[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ): F[CountryRepository[F]] =
     new CountryRepository[F].pure[F]
 
-  def resource[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  def resource[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ): Resource[F, CountryRepository[F]] =
     Resource.pure(new CountryRepository[F])
 
@@ -88,8 +88,8 @@ object CountryRepository {
   implicit private val readCountry: Read[Country] = Read.derived
 
   // Partially applied algebra
-  private class PartiallyAppliedGetAllCountries[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  private class PartiallyAppliedGetAllCountries[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ) extends PartiallyAppliedGetAll[F, Country] {
 
     override def apply(sortAndLimit: ValidatedSortAndLimit): F[ApiResult[Nel[Country]]] =
@@ -105,8 +105,8 @@ object CountryRepository {
     }
   }
 
-  private class PartiallyAppliedGetByCountry[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  private class PartiallyAppliedGetByCountry[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ) extends PartiallyAppliedGetBy[F, Country] {
 
     override def apply[V](
@@ -123,8 +123,8 @@ object CountryRepository {
     }
   }
 
-  private class PartiallyAppliedGetByLanguage[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  private class PartiallyAppliedGetByLanguage[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ) extends PartiallyAppliedGetBy[F, Country] {
 
     override def apply[V](
@@ -144,8 +144,8 @@ object CountryRepository {
     }
   }
 
-  private class PartiallyAppliedGetByCurrency[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  private class PartiallyAppliedGetByCurrency[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ) extends PartiallyAppliedGetBy[F, Country] {
 
     override def apply[V](

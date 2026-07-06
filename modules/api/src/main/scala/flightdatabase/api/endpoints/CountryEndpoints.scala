@@ -32,8 +32,8 @@ class CountryEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Count
 
     // GET /countries/filter?field={country_field}&operator={operator; default: eq}&value={value}&sort-by={country_field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root / "filter" :?
-          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
-            ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
+        FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
+        ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
       withSortAndLimitValidation[Country](sortAndLimit) {
         processFilter[Country, Country](field, operator, values, _)(algebra.getCountriesBy)
       }
@@ -44,16 +44,16 @@ class CountryEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Count
 
     // GET /countries/language/filter?field={language_field}&operator={operator; default: eq}&value={value}&sort-by={language_field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root / "language" / "filter" :?
-          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
-            ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
+        FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
+        ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
       withSortAndLimitValidation[Language](sortAndLimit) {
         processFilter[Language, Country](field, operator, values, _)(algebra.getCountriesByLanguage)
       }
 
     // GET /countries/currency/filter?field={currency_field}&operator={operator; default: eq}&value={value}&sort-by={currency_field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root / "currency" / "filter" :?
-          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
-            ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
+        FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
+        ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
       withSortAndLimitValidation[Currency](sortAndLimit) {
         processFilter[Currency, Country](field, operator, values, _)(algebra.getCountriesByCurrency)
       }

@@ -28,8 +28,8 @@ import org.typelevel.doobie.Put
 import org.typelevel.doobie.Read
 import org.typelevel.doobie.Transactor
 
-class AirportRepository[F[_]: Concurrent] private (
-  implicit transactor: Transactor[F]
+class AirportRepository[F[_]: Concurrent] private (implicit
+  transactor: Transactor[F]
 ) extends AirportAlgebra[F] {
 
   override def doesAirportExist(id: Long): F[Boolean] = airportExists(id).unique.execute
@@ -70,19 +70,19 @@ class AirportRepository[F[_]: Concurrent] private (
 
 object AirportRepository {
 
-  def make[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  def make[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ): F[AirportRepository[F]] =
     new AirportRepository[F].pure[F]
 
-  def resource[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  def resource[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ): Resource[F, AirportRepository[F]] =
     Resource.pure(new AirportRepository[F])
 
   // Partially applied algebra
-  private class PartiallyAppliedGetAllAirports[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  private class PartiallyAppliedGetAllAirports[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ) extends PartiallyAppliedGetAll[F, Airport] {
 
     override def apply(sortAndLimit: ValidatedSortAndLimit): F[ApiResult[Nel[Airport]]] =
@@ -98,8 +98,8 @@ object AirportRepository {
     }
   }
 
-  private class PartiallyAppliedGetByAirport[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  private class PartiallyAppliedGetByAirport[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ) extends PartiallyAppliedGetBy[F, Airport] {
 
     override def apply[V](
@@ -116,8 +116,8 @@ object AirportRepository {
     }
   }
 
-  private class PartiallyAppliedGetByCity[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  private class PartiallyAppliedGetByCity[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ) extends PartiallyAppliedGetBy[F, Airport] {
 
     override def apply[V](
@@ -134,8 +134,8 @@ object AirportRepository {
     }
   }
 
-  private class PartiallyAppliedGetByCountry[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  private class PartiallyAppliedGetByCountry[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ) extends PartiallyAppliedGetBy[F, Airport] {
 
     override def apply[V](

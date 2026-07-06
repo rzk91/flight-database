@@ -9,8 +9,7 @@ import org.typelevel.doobie.util.ExecutionContexts
 import org.typelevel.doobie.util.log.LogHandler
 import org.typelevel.doobie.util.transactor.Transactor
 
-/**
-  *  A class that manages the database connection and migration.
+/**  A class that manages the database connection and migration.
   *  This class is responsible for creating a transactor for executing database operations.
   *  It also initialises the database using Flyway migration.
   *  The database can be cleaned before migration, which is useful for testing purposes.
@@ -20,14 +19,13 @@ import org.typelevel.doobie.util.transactor.Transactor
   *                This includes the driver, URL, access credentials, and other settings (e.g., logging active).
   *  @param clean  A flag that indicates whether to clean the database before migration.
   * @tparam F The effect type, which must have an instance of `Async`.
-  *  */
+  */
 class Database[F[_]: Async] private (config: DatabaseConfig, clean: Boolean) {
 
   private val logHandler: Option[LogHandler[F]] =
     Option(Log4jHandler.create(getClass.getName)).filter(_ => config.loggingActive)
 
-  /**
-    * Creates a Hikari transactor for executing database operations.
+  /** Creates a Hikari transactor for executing database operations.
     *
     * @return A resource that manages the lifecycle of the Hikari transactor.
     */
@@ -44,8 +42,7 @@ class Database[F[_]: Async] private (config: DatabaseConfig, clean: Boolean) {
       )
     } yield xa
 
-  /**
-    * Creates a simple transactor for the flight database.
+  /** Creates a simple transactor for the flight database.
     *
     * Note that this function is not wrapped in any effect type.
     * It is intended to only be used in tests or for non-production use cases.
@@ -64,15 +61,13 @@ class Database[F[_]: Async] private (config: DatabaseConfig, clean: Boolean) {
     )
   }
 
-  /**
-    * Initialises the database using Flyway migration.
+  /** Initialises the database using Flyway migration.
     *
     * @return A resource that encapsulates the database initialization process.
     */
   def initialise(): Resource[F, Boolean] = Resource.pure(flywayMigration())
 
-  /**
-    * Performs Flyway migration for the database.
+  /** Performs Flyway migration for the database.
     *
     * @return True if the migration is successful, false otherwise.
     */

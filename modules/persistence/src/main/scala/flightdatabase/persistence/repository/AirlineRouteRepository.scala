@@ -31,8 +31,8 @@ import org.typelevel.doobie.Put
 import org.typelevel.doobie.Read
 import org.typelevel.doobie.Transactor
 
-class AirlineRouteRepository[F[_]: Concurrent] private (
-  implicit transactor: Transactor[F]
+class AirlineRouteRepository[F[_]: Concurrent] private (implicit
+  transactor: Transactor[F]
 ) extends AirlineRouteAlgebra[F] {
 
   override def doesAirlineRouteExist(id: Long): F[Boolean] =
@@ -82,13 +82,13 @@ class AirlineRouteRepository[F[_]: Concurrent] private (
 
 object AirlineRouteRepository {
 
-  def make[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  def make[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ): F[AirlineRouteRepository[F]] =
     new AirlineRouteRepository[F].pure[F]
 
-  def resource[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  def resource[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ): Resource[F, AirlineRouteRepository[F]] =
     Resource.pure(new AirlineRouteRepository[F])
 
@@ -96,8 +96,8 @@ object AirlineRouteRepository {
   implicit private val readAirlineRoute: Read[AirlineRoute] = Read.derived
 
   // Partially applied algebra
-  private class PartiallyAppliedGetAllAirlineRoutes[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  private class PartiallyAppliedGetAllAirlineRoutes[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ) extends PartiallyAppliedGetAll[F, AirlineRoute] {
 
     override def apply(sortAndLimit: ValidatedSortAndLimit): F[ApiResult[Nel[AirlineRoute]]] =
@@ -113,8 +113,8 @@ object AirlineRouteRepository {
     }
   }
 
-  private class PartiallyAppliedGetByAirlineRoute[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  private class PartiallyAppliedGetByAirlineRoute[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ) extends PartiallyAppliedGetBy[F, AirlineRoute] {
 
     override def apply[V](
@@ -131,8 +131,8 @@ object AirlineRouteRepository {
     }
   }
 
-  private class PartiallyAppliedGetByAirline[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  private class PartiallyAppliedGetByAirline[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ) extends PartiallyAppliedGetBy[F, AirlineRoute] {
 
     override def apply[V](
@@ -148,22 +148,21 @@ object AirlineRouteRepository {
         selectWhereQuery[Airline, Long, V]("id", field, values, operator)
           .asNel(Some(field), Some(values))
       ).flatMapF { airlineIds =>
-          val ids = airlineIds.value
-          selectAirlineRoutesByExternal[AirlineAirplane, Long](
-            Nel.of("airline_airplane_id"),
-            "airline_id",
-            ids,
-            Operator.In,
-            sortAndLimit
-          ).asNel(invalidValues = Some(ids))
-        }
-        .value
+        val ids = airlineIds.value
+        selectAirlineRoutesByExternal[AirlineAirplane, Long](
+          Nel.of("airline_airplane_id"),
+          "airline_id",
+          ids,
+          Operator.In,
+          sortAndLimit
+        ).asNel(invalidValues = Some(ids))
+      }.value
         .execute
     }
   }
 
-  private class PartiallyAppliedGetByAirplane[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  private class PartiallyAppliedGetByAirplane[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ) extends PartiallyAppliedGetBy[F, AirlineRoute] {
 
     override def apply[V](
@@ -178,16 +177,15 @@ object AirlineRouteRepository {
         selectWhereQuery[Airplane, Long, V]("id", field, values, operator)
           .asNel(Some(field), Some(values))
       ).flatMapF { airplaneIds =>
-          val ids = airplaneIds.value
-          selectAirlineRoutesByExternal[AirlineAirplane, Long](
-            Nel.of("airline_airplane_id"),
-            "airplane_id",
-            ids,
-            Operator.In,
-            sortAndLimit
-          ).asNel(invalidValues = Some(ids))
-        }
-        .value
+        val ids = airplaneIds.value
+        selectAirlineRoutesByExternal[AirlineAirplane, Long](
+          Nel.of("airline_airplane_id"),
+          "airplane_id",
+          ids,
+          Operator.In,
+          sortAndLimit
+        ).asNel(invalidValues = Some(ids))
+      }.value
         .execute
     }
   }

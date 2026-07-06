@@ -30,8 +30,8 @@ class CurrencyEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Curr
 
     // GET /currencies/filter?field={currency_field}&operator={operator; default: eq}&value={value}&sort-by={currency_field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root / "filter" :?
-          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
-            ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
+        FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
+        ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
       withSortAndLimitValidation[Currency](sortAndLimit) {
         processFilter[Currency, Currency](field, operator, values, _)(algebra.getCurrenciesBy)
       }

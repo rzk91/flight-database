@@ -48,13 +48,12 @@ class AirlineCityRepository[F[_]: Concurrent] private (implicit transactor: Tran
       selectAirlineCitiesBy("airline_id", idAsNel, Operator.Equals, ValidatedSortAndLimit.empty)
         .asNel(invalidValues = Some(idAsNel))
     ).subflatMap[ApiError, ApiOutput[AirlineCity]] { output =>
-        val airlineCities = output.value
-        airlineCities.find(_.cityId == cityId) match {
-          case Some(airlineCity) => Right(Got(airlineCity))
-          case None              => Left(EntryNotFound((airlineId, cityId)))
-        }
+      val airlineCities = output.value
+      airlineCities.find(_.cityId == cityId) match {
+        case Some(airlineCity) => Right(Got(airlineCity))
+        case None              => Left(EntryNotFound((airlineId, cityId)))
       }
-      .value
+    }.value
       .execute
   }
 
@@ -89,19 +88,19 @@ class AirlineCityRepository[F[_]: Concurrent] private (implicit transactor: Tran
 
 object AirlineCityRepository {
 
-  def make[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  def make[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ): F[AirlineCityRepository[F]] =
     new AirlineCityRepository[F].pure[F]
 
-  def resource[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  def resource[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ): Resource[F, AirlineCityRepository[F]] =
     Resource.pure(new AirlineCityRepository[F])
 
   // Partially applied algebra
-  private class PartiallyAppliedGetAllAirlineCities[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  private class PartiallyAppliedGetAllAirlineCities[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ) extends PartiallyAppliedGetAll[F, AirlineCity] {
 
     override def apply(sortAndLimit: ValidatedSortAndLimit): F[ApiResult[Nel[AirlineCity]]] =
@@ -117,8 +116,8 @@ object AirlineCityRepository {
     }
   }
 
-  private class PartiallyAppliedGetByAirlineCity[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  private class PartiallyAppliedGetByAirlineCity[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ) extends PartiallyAppliedGetBy[F, AirlineCity] {
 
     override def apply[V](
@@ -135,8 +134,8 @@ object AirlineCityRepository {
     }
   }
 
-  private class PartiallyAppliedGetByCity[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  private class PartiallyAppliedGetByCity[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ) extends PartiallyAppliedGetBy[F, AirlineCity] {
 
     override def apply[V](
@@ -153,8 +152,8 @@ object AirlineCityRepository {
     }
   }
 
-  private class PartiallyAppliedGetByAirline[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  private class PartiallyAppliedGetByAirline[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ) extends PartiallyAppliedGetBy[F, AirlineCity] {
 
     override def apply[V](

@@ -50,8 +50,8 @@ object RepositoryContainer {
       manufacturerRepository
     )
 
-  def resource[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  def resource[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ): Resource[F, RepositoryContainer[F]] =
     for {
       airplaneRepository        <- AirplaneRepository.resource[F]

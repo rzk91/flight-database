@@ -8,13 +8,12 @@ import org.http4s.Uri
 class HelloWorldEndpoints[F[_]: Monad](prefix: String, flightDbBaseUri: Uri)
     extends Endpoints[F](prefix) {
 
-  override val endpoints: HttpRoutes[F] = HttpRoutes.of {
-    case GET -> Root / name =>
-      Ok {
-        s"Hello, $name! Check out our amazing flight database!\n" +
-        s"For example, look up all the airplanes: ${flightDbBaseUri.renderString}/airplanes\n" +
-        s"Or look up all the airlines: ${flightDbBaseUri.renderString}/airlines.\n"
-      }
+  override val endpoints: HttpRoutes[F] = HttpRoutes.of { case GET -> Root / name =>
+    Ok {
+      s"Hello, $name! Check out our amazing flight database!\n" +
+      s"For example, look up all the airplanes: ${flightDbBaseUri.renderString}/airplanes\n" +
+      s"Or look up all the airlines: ${flightDbBaseUri.renderString}/airlines.\n"
+    }
   }
 }
 

@@ -31,8 +31,8 @@ class AirportEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airpo
 
     // GET /airports/filter?field={airport_field}&operator={operator; default: eq}&value={value}&sort-by={airport_field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root / "filter" :?
-          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
-            ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
+        FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
+        ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
       withSortAndLimitValidation[Airport](sortAndLimit) {
         processFilter[Airport, Airport](field, operator, values, _)(algebra.getAirportsBy)
       }
@@ -43,16 +43,16 @@ class AirportEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airpo
 
     // GET /airports/city/filter?field={city_field}&operator={operator; default: eq}&value={value}&sort-by={city_field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root / "city" / "filter" :?
-          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
-            ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
+        FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
+        ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
       withSortAndLimitValidation[City](sortAndLimit) {
         processFilter[City, Airport](field, operator, values, _)(algebra.getAirportsByCity)
       }
 
     // GET /airports/country/filter?field={country_field}&operator={operator; default: eq}&value={value}&sort-by={country_field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root / "country" / "filter" :?
-          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
-            ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
+        FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
+        ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
       withSortAndLimitValidation[Country](sortAndLimit) {
         processFilter[Country, Airport](field, operator, values, _)(algebra.getAirportsByCountry)
       }

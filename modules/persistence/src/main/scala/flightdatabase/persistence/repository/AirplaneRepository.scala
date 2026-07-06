@@ -25,8 +25,8 @@ import org.typelevel.doobie.Put
 import org.typelevel.doobie.Read
 import org.typelevel.doobie.Transactor
 
-class AirplaneRepository[F[_]: Concurrent] private (
-  implicit transactor: Transactor[F]
+class AirplaneRepository[F[_]: Concurrent] private (implicit
+  transactor: Transactor[F]
 ) extends AirplaneAlgebra[F] {
 
   override def doesAirplaneExist(id: Long): F[Boolean] = airplaneExists(id).unique.execute
@@ -67,19 +67,19 @@ class AirplaneRepository[F[_]: Concurrent] private (
 
 object AirplaneRepository {
 
-  def make[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  def make[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ): F[AirplaneRepository[F]] =
     new AirplaneRepository[F].pure[F]
 
-  def resource[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  def resource[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ): Resource[F, AirplaneRepository[F]] =
     Resource.pure(new AirplaneRepository[F])
 
   // Partially applied algebra
-  private class PartiallyAppliedGetAllAirplanes[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  private class PartiallyAppliedGetAllAirplanes[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ) extends PartiallyAppliedGetAll[F, Airplane] {
 
     override def apply(sortAndLimit: ValidatedSortAndLimit): F[ApiResult[Nel[Airplane]]] =
@@ -95,8 +95,8 @@ object AirplaneRepository {
     }
   }
 
-  private class PartiallyAppliedGetByAirplane[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  private class PartiallyAppliedGetByAirplane[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ) extends PartiallyAppliedGetBy[F, Airplane] {
 
     override def apply[V](
@@ -113,8 +113,8 @@ object AirplaneRepository {
     }
   }
 
-  private class PartiallyAppliedGetByManufacturer[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  private class PartiallyAppliedGetByManufacturer[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ) extends PartiallyAppliedGetBy[F, Airplane] {
 
     override def apply[V](

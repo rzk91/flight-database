@@ -4,8 +4,7 @@ import flightdatabase.FieldType
 import flightdatabase.Operator
 import io.circe.Decoder
 
-/**
-  * A single filterable field of a known DB type, paired with a sample value and an operator that is
+/** A single filterable field of a known DB type, paired with a sample value and an operator that is
   * valid for that type. Used to drive the generic `/filter` and `return-only` scenarios: an entity
   * declares one fixture per field type it actually has, and coverage scales with the data rather
   * than with copy-pasted, type-specialised scenarios.

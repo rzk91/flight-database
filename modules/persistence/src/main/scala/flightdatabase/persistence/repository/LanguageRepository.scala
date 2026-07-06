@@ -28,8 +28,8 @@ import org.typelevel.doobie.Put
 import org.typelevel.doobie.Read
 import org.typelevel.doobie.Transactor
 
-class LanguageRepository[F[_]: Concurrent] private (
-  implicit transactor: Transactor[F]
+class LanguageRepository[F[_]: Concurrent] private (implicit
+  transactor: Transactor[F]
 ) extends LanguageAlgebra[F] {
 
   override def doesLanguageExist(id: Long): F[Boolean] = languageExists(id).unique.execute
@@ -64,19 +64,19 @@ class LanguageRepository[F[_]: Concurrent] private (
 
 object LanguageRepository {
 
-  def make[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  def make[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ): F[LanguageRepository[F]] =
     new LanguageRepository[F].pure[F]
 
-  def resource[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  def resource[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ): Resource[F, LanguageRepository[F]] =
     Resource.pure(new LanguageRepository[F])
 
   // Partially applied algebra
-  private class PartiallyAppliedGetAllLanguages[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  private class PartiallyAppliedGetAllLanguages[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ) extends PartiallyAppliedGetAll[F, Language] {
 
     override def apply(sortAndLimit: ValidatedSortAndLimit): F[ApiResult[Nel[Language]]] =
@@ -92,8 +92,8 @@ object LanguageRepository {
     }
   }
 
-  private class PartiallyAppliedGetByLanguage[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  private class PartiallyAppliedGetByLanguage[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ) extends PartiallyAppliedGetBy[F, Language] {
 
     override def apply[V](

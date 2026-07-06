@@ -34,16 +34,16 @@ class AirlineEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Airli
 
     // GET /airlines/filter?field={airline_field}&operator={operator, default: eq}&value={values}&sort-by={airline_field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root / "filter" :?
-          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
-            ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
+        FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
+        ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
       withSortAndLimitValidation[Airline](sortAndLimit) {
         processFilter[Airline, Airline](field, operator, values, _)(algebra.getAirlinesBy)
       }
 
     // GET /airlines/country/filter?field={country_field}&operator={operator, default: eq}&value={value}&sort-by={country_field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root / "country" / "filter" :?
-          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
-            ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
+        FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
+        ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
       withSortAndLimitValidation[Country](sortAndLimit) {
         processFilter[Country, Airline](field, operator, values, _)(algebra.getAirlinesByCountry)
       }

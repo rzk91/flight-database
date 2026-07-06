@@ -81,8 +81,8 @@ package object endpoints {
   // Extension methods for various API-related functions
   implicit class RichApiResult[A](private val result: ApiResult[A]) extends AnyVal {
 
-    def toResponse[F[_]: Monad](
-      implicit dsl: Http4sDsl[F],
+    def toResponse[F[_]: Monad](implicit
+      dsl: Http4sDsl[F],
       enc: EntityEncoder[F, A]
     ): F[Response[F]] = {
       import dsl._

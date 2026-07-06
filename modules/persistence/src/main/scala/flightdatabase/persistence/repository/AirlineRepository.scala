@@ -24,8 +24,8 @@ import org.typelevel.doobie.Put
 import org.typelevel.doobie.Read
 import org.typelevel.doobie.Transactor
 
-class AirlineRepository[F[_]: Concurrent] private (
-  implicit transactor: Transactor[F]
+class AirlineRepository[F[_]: Concurrent] private (implicit
+  transactor: Transactor[F]
 ) extends AirlineAlgebra[F] {
 
   override def doesAirlineExist(id: Long): F[Boolean] = airlineExists(id).unique.execute
@@ -63,19 +63,19 @@ class AirlineRepository[F[_]: Concurrent] private (
 
 object AirlineRepository {
 
-  def make[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  def make[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ): F[AirlineRepository[F]] =
     new AirlineRepository[F].pure[F]
 
-  def resource[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  def resource[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ): Resource[F, AirlineRepository[F]] =
     Resource.pure(new AirlineRepository[F])
 
   // Partially applied algebra
-  private class PartiallyAppliedGetAllAirlines[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  private class PartiallyAppliedGetAllAirlines[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ) extends PartiallyAppliedGetAll[F, Airline] {
 
     override def apply(sortAndLimit: ValidatedSortAndLimit): F[ApiResult[Nel[Airline]]] =
@@ -91,8 +91,8 @@ object AirlineRepository {
     }
   }
 
-  private class PartiallyAppliedGetByAirline[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  private class PartiallyAppliedGetByAirline[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ) extends PartiallyAppliedGetBy[F, Airline] {
 
     override def apply[V](
@@ -109,8 +109,8 @@ object AirlineRepository {
     }
   }
 
-  private class PartiallyAppliedGetByCountry[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  private class PartiallyAppliedGetByCountry[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ) extends PartiallyAppliedGetBy[F, Airline] {
 
     override def apply[V](

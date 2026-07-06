@@ -23,8 +23,8 @@ import org.typelevel.doobie.Put
 import org.typelevel.doobie.Read
 import org.typelevel.doobie.Transactor
 
-class CurrencyRepository[F[_]: Concurrent] private (
-  implicit transactor: Transactor[F]
+class CurrencyRepository[F[_]: Concurrent] private (implicit
+  transactor: Transactor[F]
 ) extends CurrencyAlgebra[F] {
 
   override def doesCurrencyExist(id: Long): F[Boolean] = currencyExists(id).unique.execute
@@ -59,19 +59,19 @@ class CurrencyRepository[F[_]: Concurrent] private (
 
 object CurrencyRepository {
 
-  def make[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  def make[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ): F[CurrencyRepository[F]] =
     new CurrencyRepository[F].pure[F]
 
-  def resource[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  def resource[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ): Resource[F, CurrencyRepository[F]] =
     Resource.pure(new CurrencyRepository[F])
 
   // Partially applied algebra
-  private class PartiallyAppliedGetAllCurrencies[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  private class PartiallyAppliedGetAllCurrencies[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ) extends PartiallyAppliedGetAll[F, Currency] {
 
     override def apply(sortAndLimit: ValidatedSortAndLimit): F[ApiResult[Nel[Currency]]] =
@@ -87,8 +87,8 @@ object CurrencyRepository {
     }
   }
 
-  private class PartiallyAppliedGetByCurrency[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  private class PartiallyAppliedGetByCurrency[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ) extends PartiallyAppliedGetBy[F, Currency] {
 
     override def apply[V](

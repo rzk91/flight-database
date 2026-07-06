@@ -33,8 +33,8 @@ import org.typelevel.doobie.Put
 import org.typelevel.doobie.Read
 import org.typelevel.doobie.Transactor
 
-class CityRepository[F[_]: Concurrent] private (
-  implicit transactor: Transactor[F]
+class CityRepository[F[_]: Concurrent] private (implicit
+  transactor: Transactor[F]
 ) extends CityAlgebra[F] {
 
   override def doesCityExist(id: Long): F[Boolean] = cityExists(id).unique.execute
@@ -86,16 +86,14 @@ class CityRepository[F[_]: Concurrent] private (
         .map(_.iso2)
         .asSingle(countryId)
     ).leftMap {
-        case EntryNotFound(_) => EntryHasInvalidForeignKey
-        case other            => other
-      }
-      .subflatMap[ApiError, ApiOutput[Unit]] { countryIso2Output =>
-        val countryIso2 = countryIso2Output.value
-        Either
-          .raiseUnless(timezoneMatchesCountry(timezone, countryIso2))(InvalidTimezone(timezone))
-          .map(Got(_))
-      }
-      .value
+      case EntryNotFound(_) => EntryHasInvalidForeignKey
+      case other            => other
+    }.subflatMap[ApiError, ApiOutput[Unit]] { countryIso2Output =>
+      val countryIso2 = countryIso2Output.value
+      Either
+        .raiseUnless(timezoneMatchesCountry(timezone, countryIso2))(InvalidTimezone(timezone))
+        .map(Got(_))
+    }.value
       .execute
 
   private def timezoneMatchesCountry(tz: String, country: String): Boolean =
@@ -104,17 +102,17 @@ class CityRepository[F[_]: Concurrent] private (
 
 object CityRepository {
 
-  def make[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  def make[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ): F[CityRepository[F]] = new CityRepository[F].pure[F]
 
-  def resource[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  def resource[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ): Resource[F, CityRepository[F]] = Resource.pure(new CityRepository[F])
 
   // Partially applied algebra
-  private class PartiallyAppliedGetAllCities[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  private class PartiallyAppliedGetAllCities[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ) extends PartiallyAppliedGetAll[F, City] {
 
     override def apply(sortAndLimit: ValidatedSortAndLimit): F[ApiResult[Nel[City]]] =
@@ -130,8 +128,8 @@ object CityRepository {
     }
   }
 
-  private class PartiallyAppliedGetByCity[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  private class PartiallyAppliedGetByCity[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ) extends PartiallyAppliedGetBy[F, City] {
 
     override def apply[V](
@@ -148,8 +146,8 @@ object CityRepository {
     }
   }
 
-  private class PartiallyAppliedGetByCountry[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  private class PartiallyAppliedGetByCountry[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ) extends PartiallyAppliedGetBy[F, City] {
 
     override def apply[V](

@@ -28,8 +28,8 @@ import org.typelevel.doobie.Put
 import org.typelevel.doobie.Read
 import org.typelevel.doobie.Transactor
 
-class ManufacturerRepository[F[_]: Concurrent] private (
-  implicit transactor: Transactor[F]
+class ManufacturerRepository[F[_]: Concurrent] private (implicit
+  transactor: Transactor[F]
 ) extends ManufacturerAlgebra[F] {
 
   override def doesManufacturerExist(id: Long): F[Boolean] =
@@ -74,19 +74,19 @@ class ManufacturerRepository[F[_]: Concurrent] private (
 
 object ManufacturerRepository {
 
-  def make[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  def make[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ): F[ManufacturerRepository[F]] =
     new ManufacturerRepository[F].pure[F]
 
-  def resource[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  def resource[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ): Resource[F, ManufacturerRepository[F]] =
     Resource.pure(new ManufacturerRepository[F])
 
   // Partially applied algebra
-  private class PartiallyAppliedGetAllManufacturers[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  private class PartiallyAppliedGetAllManufacturers[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ) extends PartiallyAppliedGetAll[F, Manufacturer] {
 
     override def apply(sortAndLimit: ValidatedSortAndLimit): F[ApiResult[Nel[Manufacturer]]] =
@@ -102,8 +102,8 @@ object ManufacturerRepository {
     }
   }
 
-  private class PartiallyAppliedGetByManufacturer[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  private class PartiallyAppliedGetByManufacturer[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ) extends PartiallyAppliedGetBy[F, Manufacturer] {
 
     override def apply[V](
@@ -120,8 +120,8 @@ object ManufacturerRepository {
     }
   }
 
-  private class PartiallyAppliedGetByCity[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  private class PartiallyAppliedGetByCity[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ) extends PartiallyAppliedGetBy[F, Manufacturer] {
 
     override def apply[V](
@@ -138,8 +138,8 @@ object ManufacturerRepository {
     }
   }
 
-  private class PartiallyAppliedGetByCountry[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  private class PartiallyAppliedGetByCountry[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ) extends PartiallyAppliedGetBy[F, Manufacturer] {
 
     override def apply[V](

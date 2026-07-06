@@ -10,8 +10,7 @@ import org.http4s.server.{Server => ApiServer}
 
 object Server {
 
-  /**
-    * Starts the API server with the specified host, port, and HTTP app.
+  /** Starts the API server with the specified host, port, and HTTP app.
     *
     * @param host     An optional host to bind the server to.
     * @param port     The port number to listen on.

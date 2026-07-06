@@ -28,8 +28,8 @@ import org.typelevel.doobie.Put
 import org.typelevel.doobie.Read
 import org.typelevel.doobie.Transactor
 
-class AirlineAirplaneRepository[F[_]: Concurrent] private (
-  implicit transactor: Transactor[F]
+class AirlineAirplaneRepository[F[_]: Concurrent] private (implicit
+  transactor: Transactor[F]
 ) extends AirlineAirplaneAlgebra[F] {
 
   override def doesAirlineAirplaneExist(id: Long): F[Boolean] =
@@ -52,13 +52,12 @@ class AirlineAirplaneRepository[F[_]: Concurrent] private (
       selectAirlineAirplanesBy("airline_id", idAsNel, Operator.Equals, ValidatedSortAndLimit.empty)
         .asNel(invalidValues = Some(idAsNel))
     ).subflatMap[ApiError, ApiOutput[AirlineAirplane]] { output =>
-        val airlineAirplanes = output.value
-        airlineAirplanes.find(_.airplaneId == airplaneId) match {
-          case Some(airlineAirplane) => Right(Got(airlineAirplane))
-          case None                  => Left(EntryNotFound((airlineId, airplaneId)))
-        }
+      val airlineAirplanes = output.value
+      airlineAirplanes.find(_.airplaneId == airplaneId) match {
+        case Some(airlineAirplane) => Right(Got(airlineAirplane))
+        case None                  => Left(EntryNotFound((airlineId, airplaneId)))
       }
-      .value
+    }.value
       .execute
   }
 
@@ -95,19 +94,19 @@ class AirlineAirplaneRepository[F[_]: Concurrent] private (
 
 object AirlineAirplaneRepository {
 
-  def make[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  def make[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ): F[AirlineAirplaneRepository[F]] =
     new AirlineAirplaneRepository[F].pure[F]
 
-  def resource[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  def resource[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ): Resource[F, AirlineAirplaneRepository[F]] =
     Resource.pure(new AirlineAirplaneRepository[F])
 
   // Partially applied algebra
-  private class PartiallyAppliedGetAllAirlineAirplanes[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  private class PartiallyAppliedGetAllAirlineAirplanes[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ) extends PartiallyAppliedGetAll[F, AirlineAirplane] {
 
     override def apply(sortAndLimit: ValidatedSortAndLimit): F[ApiResult[Nel[AirlineAirplane]]] =
@@ -123,8 +122,8 @@ object AirlineAirplaneRepository {
     }
   }
 
-  private class PartiallyAppliedGetByAirlineAirplane[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  private class PartiallyAppliedGetByAirlineAirplane[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ) extends PartiallyAppliedGetBy[F, AirlineAirplane] {
 
     override def apply[V](
@@ -141,8 +140,8 @@ object AirlineAirplaneRepository {
     }
   }
 
-  private class PartiallyAppliedGetByAirline[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  private class PartiallyAppliedGetByAirline[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ) extends PartiallyAppliedGetBy[F, AirlineAirplane] {
 
     override def apply[V](
@@ -159,8 +158,8 @@ object AirlineAirplaneRepository {
     }
   }
 
-  private class PartiallyAppliedGetByAirplane[F[_]: Concurrent](
-    implicit transactor: Transactor[F]
+  private class PartiallyAppliedGetByAirplane[F[_]: Concurrent](implicit
+    transactor: Transactor[F]
   ) extends PartiallyAppliedGetBy[F, AirlineAirplane] {
 
     override def apply[V](

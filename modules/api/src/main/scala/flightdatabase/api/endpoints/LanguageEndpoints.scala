@@ -29,8 +29,8 @@ class LanguageEndpoints[F[_]: Concurrent] private (prefix: String, algebra: Lang
 
     // GET /languages/filter?field={language_field}&operator={operator; default: eq}&value={value}&sort-by={language_field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root / "filter" :?
-          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
-            ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
+        FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
+        ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
       withSortAndLimitValidation[Language](sortAndLimit) {
         processFilter[Language, Language](field, operator, values, _)(algebra.getLanguagesBy)
       }

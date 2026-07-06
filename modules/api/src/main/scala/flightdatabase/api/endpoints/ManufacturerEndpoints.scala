@@ -33,8 +33,8 @@ class ManufacturerEndpoints[F[_]: Concurrent] private (
 
     // GET /manufacturers/filter?field={manufacturer_field}&operator={operator; default: eq}&value={value}&sort-by={manufacturer_field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root / "filter" :?
-          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
-            ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
+        FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
+        ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
       withSortAndLimitValidation[Manufacturer](sortAndLimit) {
         processFilter[Manufacturer, Manufacturer](field, operator, values, _)(
           algebra.getManufacturersBy
@@ -47,8 +47,8 @@ class ManufacturerEndpoints[F[_]: Concurrent] private (
 
     // GET /manufacturers/city/filter?field={city_field}&operator={operator; default: eq}&value={value}&sort-by={city_field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root / "city" / "filter" :?
-          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
-            ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
+        FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
+        ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
       withSortAndLimitValidation[City](sortAndLimit) {
         processFilter[City, Manufacturer](field, operator, values, _)(
           algebra.getManufacturersByCity
@@ -57,8 +57,8 @@ class ManufacturerEndpoints[F[_]: Concurrent] private (
 
     // GET /manufacturers/country/filter?field={country_field}&operator={operator; default: eq}&value={value}&sort-by={country_field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root / "country" / "filter" :?
-          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
-            ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
+        FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
+        ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
       withSortAndLimitValidation[Country](sortAndLimit) {
         processFilter[Country, Manufacturer](field, operator, values, _)(
           algebra.getManufacturersByCountry

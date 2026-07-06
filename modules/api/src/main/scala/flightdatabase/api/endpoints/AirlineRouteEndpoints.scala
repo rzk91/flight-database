@@ -37,8 +37,8 @@ class AirlineRouteEndpoints[F[_]: Concurrent] private (
 
     // GET /airline-routes/filter?field={airline-route-field}&operator={operator; default: eq}&value={value}&sort-by={airline-route-field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root / "filter" :?
-          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
-            ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
+        FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
+        ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
       withSortAndLimitValidation[AirlineRoute](sortAndLimit) {
         processFilter[AirlineRoute, AirlineRoute](field, operator, values, _)(
           algebra.getAirlineRoutesBy
@@ -51,8 +51,8 @@ class AirlineRouteEndpoints[F[_]: Concurrent] private (
 
     // GET /airline-routes/airline/filter?field={airline_field}&operator={operator; default: eq}&value={value}&sort-by={airline_field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root / "airline" / "filter" :?
-          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
-            ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
+        FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
+        ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
       withSortAndLimitValidation[Airline](sortAndLimit) {
         processFilter[Airline, AirlineRoute](field, operator, values, _)(
           algebra.getAirlineRoutesByAirline
@@ -61,8 +61,8 @@ class AirlineRouteEndpoints[F[_]: Concurrent] private (
 
     // GET /airline-routes/airplane/filter?field={airplane_field}&operator={operator; default: eq}&value={value}&sort-by={airplane_field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root / "airplane" / "filter" :?
-          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
-            ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
+        FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +&
+        ValueMatcher(values) +& SortAndLimit(sortAndLimit) =>
       withSortAndLimitValidation[Airplane](sortAndLimit) {
         processFilter[Airplane, AirlineRoute](field, operator, values, _)(
           algebra.getAirlineRoutesByAirplane
@@ -71,9 +71,9 @@ class AirlineRouteEndpoints[F[_]: Concurrent] private (
 
     // GET /airline-routes/airport/filter?field={airport_field}&operator={operator; default: eq}&value={value}&inbound&outbound&sort-by={airport_field}&order={asc, desc}&limit={number}&offset={number}
     case GET -> Root / "airport" / "filter" :?
-          FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +& ValueMatcher(values) +&
-            InboundFlagMatcher(inbound) +& OutboundFlagMatcher(outbound) +&
-            SortAndLimit(sortAndLimit) =>
+        FieldMatcher(field) +& OperatorMatcherEqDefault(operator) +& ValueMatcher(values) +&
+        InboundFlagMatcher(inbound) +& OutboundFlagMatcher(outbound) +&
+        SortAndLimit(sortAndLimit) =>
       val direction = (inbound, outbound) match {
         case (true, false) => Some(true)
         case (false, true) => Some(false)
