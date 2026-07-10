@@ -46,7 +46,8 @@ private[repository] object AirportQueries {
     sql"""INSERT INTO airport
          |       (name, icao, iata, city_id,
          |       number_of_runways, number_of_terminals, capacity,
-         |       international, junction)
+         |       international, junction,
+         |       latitude, longitude, typical_taxi_out_minutes, typical_taxi_in_minutes)
          |   VALUES (
          |       ${model.name},
          |       ${model.icao.toUpperCase},
@@ -56,7 +57,11 @@ private[repository] object AirportQueries {
          |       ${model.numTerminals},
          |       ${model.capacity},
          |       ${model.international},
-         |       ${model.junction}
+         |       ${model.junction},
+         |       ${model.latitude},
+         |       ${model.longitude},
+         |       ${model.typicalTaxiOutMinutes},
+         |       ${model.typicalTaxiInMinutes}
          |   )
          | """.stripMargin.update
 
@@ -72,7 +77,11 @@ private[repository] object AirportQueries {
          |  number_of_terminals = ${model.numTerminals},
          |  capacity = ${model.capacity},
          |  international = ${model.international},
-         |  junction = ${model.junction}
+         |  junction = ${model.junction},
+         |  latitude = ${model.latitude},
+         |  longitude = ${model.longitude},
+         |  typical_taxi_out_minutes = ${model.typicalTaxiOutMinutes},
+         |  typical_taxi_in_minutes = ${model.typicalTaxiInMinutes}
          | WHERE id = ${model.id}
        """.stripMargin.update
 
@@ -83,7 +92,9 @@ private[repository] object AirportQueries {
         |SELECT
         |  airport.id, airport.name, airport.icao, airport.iata, airport.city_id,
         |  airport.number_of_runways, airport.number_of_terminals, airport.capacity,
-        |  airport.international, airport.junction
+        |  airport.international, airport.junction,
+        |  airport.latitude, airport.longitude,
+        |  airport.typical_taxi_out_minutes, airport.typical_taxi_in_minutes
         |FROM airport
       """.stripMargin
 

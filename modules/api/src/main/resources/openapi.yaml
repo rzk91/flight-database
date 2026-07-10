@@ -283,9 +283,13 @@ components:
         capacity: { type: integer, format: int64 }
         international: { type: boolean }
         junction: { type: boolean }
+        latitude: { type: number }
+        longitude: { type: number }
+        typical_taxi_out_minutes: { type: integer }
+        typical_taxi_in_minutes: { type: integer }
     AirportCreate:
       type: object
-      required: [name, icao, iata, city_id, number_of_runways, number_of_terminals, capacity, international, junction]
+      required: [name, icao, iata, city_id, number_of_runways, number_of_terminals, capacity, international, junction, latitude, longitude, typical_taxi_out_minutes, typical_taxi_in_minutes]
       properties:
         id: { type: [integer, "null"], format: int64 }
         name: { type: string }
@@ -297,6 +301,10 @@ components:
         capacity: { type: integer, format: int64 }
         international: { type: boolean }
         junction: { type: boolean }
+        latitude: { type: number }
+        longitude: { type: number }
+        typical_taxi_out_minutes: { type: integer }
+        typical_taxi_in_minutes: { type: integer }
     AirportPatch:
       type: object
       properties:
@@ -309,6 +317,10 @@ components:
         capacity: { type: integer, format: int64 }
         international: { type: boolean }
         junction: { type: boolean }
+        latitude: { type: number }
+        longitude: { type: number }
+        typical_taxi_out_minutes: { type: integer }
+        typical_taxi_in_minutes: { type: integer }
 
     City:
       type: object

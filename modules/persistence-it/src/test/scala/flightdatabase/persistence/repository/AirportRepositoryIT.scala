@@ -40,7 +40,11 @@ final class AirportRepositoryIT extends RepositoryCheck {
       3,
       65000000,
       international = true,
-      junction = true
+      junction = true,
+      latitude = BigDecimal("50.0333"),
+      longitude = BigDecimal("8.5706"),
+      typicalTaxiOutMinutes = 18,
+      typicalTaxiInMinutes = 8
     ),
     Airport(
       2,
@@ -52,7 +56,11 @@ final class AirportRepositoryIT extends RepositoryCheck {
       2,
       16800000,
       international = true,
-      junction = false
+      junction = false,
+      latitude = BigDecimal("13.1986"),
+      longitude = BigDecimal("77.7066"),
+      typicalTaxiOutMinutes = 12,
+      typicalTaxiInMinutes = 6
     ),
     Airport(
       3,
@@ -64,7 +72,11 @@ final class AirportRepositoryIT extends RepositoryCheck {
       3,
       92500000,
       international = true,
-      junction = true
+      junction = true,
+      latitude = BigDecimal("25.2532"),
+      longitude = BigDecimal("55.3657"),
+      typicalTaxiOutMinutes = 15,
+      typicalTaxiInMinutes = 7
     )
   )
 
@@ -89,7 +101,11 @@ final class AirportRepositoryIT extends RepositoryCheck {
     2,
     50000000,
     international = true,
-    junction = false
+    junction = false,
+    latitude = BigDecimal("19.0896"),
+    longitude = BigDecimal("72.8656"),
+    typicalTaxiOutMinutes = 20,
+    typicalTaxiInMinutes = 10
   )
 
   val updatedName: String = "Chhatrapati Shivaji Maharaj International Airport Updated"
@@ -424,6 +440,25 @@ final class AirportRepositoryIT extends RepositoryCheck {
 
   it should "throw a conflict error if we try to create the same airport again" in {
     repo.createAirport(newAirport).error shouldBe EntryAlreadyExists
+  }
+
+  it should "persist distinct coordinates for two airports sharing the same city" in {
+    val sameCityId = originalAirports.head.cityId
+    val second = newAirport.copy(
+      name = "Frankfurt-Hahn Airport",
+      icao = "EDFH",
+      iata = "HHN",
+      cityId = sameCityId,
+      latitude = BigDecimal("49.9487"),
+      longitude = BigDecimal("7.2639")
+    )
+
+    val secondId = repo.createAirport(second).value
+    val created = repo.getAirport(secondId).value
+    val original = originalAirports.head
+
+    created.cityId shouldBe original.cityId
+    (created.latitude, created.longitude) should not be ((original.latitude, original.longitude))
   }
 
   "Updating an airport" should "work and return the updated airport ID" in {

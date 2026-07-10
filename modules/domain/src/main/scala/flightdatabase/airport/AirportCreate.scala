@@ -13,7 +13,11 @@ import io.circe.generic.extras._
   @JsonKey("number_of_terminals") numTerminals: Int,
   capacity: Long,
   international: Boolean,
-  junction: Boolean
+  junction: Boolean,
+  latitude: BigDecimal,
+  longitude: BigDecimal,
+  typicalTaxiOutMinutes: Int,
+  typicalTaxiInMinutes: Int
 )
 
 object AirportCreate {
@@ -27,7 +31,11 @@ object AirportCreate {
     numTerminals: Int,
     capacity: Long,
     international: Boolean,
-    junction: Boolean
+    junction: Boolean,
+    latitude: BigDecimal,
+    longitude: BigDecimal,
+    typicalTaxiOutMinutes: Int,
+    typicalTaxiInMinutes: Int
   ): AirportCreate =
     new AirportCreate(
       None,
@@ -39,6 +47,10 @@ object AirportCreate {
       numTerminals,
       capacity,
       international,
-      junction
+      junction,
+      latitude,
+      longitude,
+      typicalTaxiOutMinutes,
+      typicalTaxiInMinutes
     )
 }

@@ -44,7 +44,11 @@ final class AirportEndpointsTest extends EntityEndpointsSpec[Airport, AirportCre
       3,
       65000000,
       international = true,
-      junction = true
+      junction = true,
+      latitude = BigDecimal("50.0333"),
+      longitude = BigDecimal("8.5706"),
+      typicalTaxiOutMinutes = 18,
+      typicalTaxiInMinutes = 8
     ),
     Airport(
       2,
@@ -56,7 +60,11 @@ final class AirportEndpointsTest extends EntityEndpointsSpec[Airport, AirportCre
       2,
       16800000,
       international = true,
-      junction = false
+      junction = false,
+      latitude = BigDecimal("13.1986"),
+      longitude = BigDecimal("77.7066"),
+      typicalTaxiOutMinutes = 12,
+      typicalTaxiInMinutes = 6
     ),
     Airport(
       3,
@@ -68,7 +76,11 @@ final class AirportEndpointsTest extends EntityEndpointsSpec[Airport, AirportCre
       3,
       92500000,
       international = true,
-      junction = true
+      junction = true,
+      latitude = BigDecimal("25.2532"),
+      longitude = BigDecimal("55.3657"),
+      typicalTaxiOutMinutes = 15,
+      typicalTaxiInMinutes = 7
     )
   )
 
@@ -80,7 +92,10 @@ final class AirportEndpointsTest extends EntityEndpointsSpec[Airport, AirportCre
     FieldFixture("iata", "FRA", Operator.NotIn, StringType),
     FieldFixture("number_of_runways", 2, Operator.GreaterThan, IntType),
     FieldFixture("capacity", 1000000L, Operator.GreaterThan, LongType),
-    FieldFixture("international", true, Operator.Is, BooleanType)
+    FieldFixture("international", true, Operator.Is, BooleanType),
+    FieldFixture("latitude", BigDecimal("20.0"), Operator.GreaterThan, BigDecimalType),
+    FieldFixture("longitude", BigDecimal("60.0"), Operator.LessThan, BigDecimalType),
+    FieldFixture("typical_taxi_out_minutes", 10, Operator.GreaterThan, IntType)
   )
 
   // City is the external table reachable via /airports/city/filter.
@@ -124,7 +139,11 @@ final class AirportEndpointsTest extends EntityEndpointsSpec[Airport, AirportCre
     2,
     50000000,
     international = true,
-    junction = false
+    junction = false,
+    latitude = BigDecimal("19.0896"),
+    longitude = BigDecimal("72.8656"),
+    typicalTaxiOutMinutes = 20,
+    typicalTaxiInMinutes = 10
   )
   def fromCreate(id: Long, create: AirportCreate): Airport = Airport.fromCreate(id, create)
   def withCreateId(create: AirportCreate, id: Long): AirportCreate = create.copy(id = Some(id))

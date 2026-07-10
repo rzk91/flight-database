@@ -13,5 +13,9 @@ import io.circe.generic.extras.JsonKey
   @JsonKey("number_of_terminals") numTerminals: Option[Int] = None,
   capacity: Option[Long] = None,
   international: Option[Boolean] = None,
-  junction: Option[Boolean] = None
+  junction: Option[Boolean] = None,
+  latitude: Option[BigDecimal] = None,
+  longitude: Option[BigDecimal] = None,
+  typicalTaxiOutMinutes: Option[Int] = None,
+  typicalTaxiInMinutes: Option[Int] = None
 )
