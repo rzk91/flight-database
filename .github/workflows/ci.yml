@@ -1,5 +1,9 @@
 name: CI
 
+# A push to a branch that also has an open PR fires both `push` and
+# `pull_request`. We keep both triggers so fork PRs (which produce no push
+# event here) still get checked, but the `if` guard on the `lint` job below
+# skips the duplicate `pull_request` run for same-repo branches.
 on:
   push:
   pull_request:
@@ -12,6 +16,10 @@ jobs:
   lint:
     name: Lint & Format
     runs-on: ubuntu-latest
+    # Run on every push, but on pull_request only for forks — a same-repo
+    # branch's push already covers it. `test` and `integration-test` chain off
+    # this job via `needs`, so skipping it here skips the whole pipeline.
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
     steps:
       - &checkout
         uses: actions/checkout@v4
@@ -36,12 +44,11 @@ jobs:
       - *checkout
       - *setup-java
       - *setup-sbt
-      - name: Run domain tests
-        run: sbt domain/test
-      - name: Run syntax tests
-        run: sbt syntax/test
-      - name: Run api tests
-        run: sbt api/test
+      - name: Run unit tests
+        # Single sbt invocation so all modules share one server. Separate
+        # `sbt <module>/test` calls occasionally fail on the sbtn thin-client
+        # handoff to the leftover background server (exit 1, no output).
+        run: sbt "domain/test; syntax/test; api/test"
 
   integration-test:
     name: Integration Tests
