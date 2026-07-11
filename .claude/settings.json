@@ -1,0 +1,18 @@
+{
+  "env": {
+    "TESTCONTAINERS_RYUK_DISABLED": "true"
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "dockerd > /var/log/dockerd.log 2>&1 &"
+          }
+        ]
+      }
+    ]
+  }
+}
