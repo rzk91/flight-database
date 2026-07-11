@@ -283,9 +283,13 @@ components:
         capacity: { type: integer, format: int64 }
         international: { type: boolean }
         junction: { type: boolean }
+        latitude: { type: number }
+        longitude: { type: number }
+        taxi_out_duration: { type: integer, description: "Typical taxi-out duration, in minutes." }
+        taxi_in_duration: { type: integer, description: "Typical taxi-in duration, in minutes." }
     AirportCreate:
       type: object
-      required: [name, icao, iata, city_id, number_of_runways, number_of_terminals, capacity, international, junction]
+      required: [name, icao, iata, city_id, number_of_runways, number_of_terminals, capacity, international, junction, latitude, longitude, taxi_out_duration, taxi_in_duration]
       properties:
         id: { type: [integer, "null"], format: int64 }
         name: { type: string }
@@ -297,6 +301,10 @@ components:
         capacity: { type: integer, format: int64 }
         international: { type: boolean }
         junction: { type: boolean }
+        latitude: { type: number }
+        longitude: { type: number }
+        taxi_out_duration: { type: integer, description: "Typical taxi-out duration, in minutes." }
+        taxi_in_duration: { type: integer, description: "Typical taxi-in duration, in minutes." }
     AirportPatch:
       type: object
       properties:
@@ -309,6 +317,10 @@ components:
         capacity: { type: integer, format: int64 }
         international: { type: boolean }
         junction: { type: boolean }
+        latitude: { type: number }
+        longitude: { type: number }
+        taxi_out_duration: { type: integer, description: "Typical taxi-out duration, in minutes." }
+        taxi_in_duration: { type: integer, description: "Typical taxi-in duration, in minutes." }
 
     City:
       type: object

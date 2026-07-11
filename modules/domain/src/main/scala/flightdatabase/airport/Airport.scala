@@ -15,7 +15,11 @@ import io.circe.generic.extras.JsonKey
   @JsonKey("number_of_terminals") numTerminals: Int,
   capacity: Long,
   international: Boolean,
-  junction: Boolean
+  junction: Boolean,
+  latitude: BigDecimal,
+  longitude: BigDecimal,
+  taxiOutDuration: TaxiDuration,
+  taxiInDuration: TaxiDuration
 )
 
 object Airport {
@@ -32,7 +36,11 @@ object Airport {
       "number_of_terminals" -> IntType,
       "capacity"            -> LongType,
       "international"       -> BooleanType,
-      "junction"            -> BooleanType
+      "junction"            -> BooleanType,
+      "latitude"            -> BigDecimalType,
+      "longitude"           -> BigDecimalType,
+      "taxi_out_duration"   -> IntType,
+      "taxi_in_duration"    -> IntType
     )
   )
 
@@ -47,7 +55,11 @@ object Airport {
       model.numTerminals,
       model.capacity,
       model.international,
-      model.junction
+      model.junction,
+      model.latitude,
+      model.longitude,
+      model.taxiOutDuration,
+      model.taxiInDuration
     )
 
   def fromPatch(id: Long, patch: AirportPatch, airport: Airport): Airport =
@@ -61,6 +73,10 @@ object Airport {
       patch.numTerminals.getOrElse(airport.numTerminals),
       patch.capacity.getOrElse(airport.capacity),
       patch.international.getOrElse(airport.international),
-      patch.junction.getOrElse(airport.junction)
+      patch.junction.getOrElse(airport.junction),
+      patch.latitude.getOrElse(airport.latitude),
+      patch.longitude.getOrElse(airport.longitude),
+      patch.taxiOutDuration.getOrElse(airport.taxiOutDuration),
+      patch.taxiInDuration.getOrElse(airport.taxiInDuration)
     )
 }

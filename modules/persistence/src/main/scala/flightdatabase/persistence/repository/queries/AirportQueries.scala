@@ -6,14 +6,19 @@ import flightdatabase.TableBase
 import flightdatabase.ValidatedSortAndLimit
 import flightdatabase.airport.Airport
 import flightdatabase.airport.AirportCreate
+import flightdatabase.airport.TaxiDuration
 import flightdatabase.persistence.syntax.sortandlimit._
 import org.typelevel.doobie.Fragment
+import org.typelevel.doobie.Meta
 import org.typelevel.doobie.Put
 import org.typelevel.doobie.Query0
 import org.typelevel.doobie.Update0
 import org.typelevel.doobie.implicits._
 
 private[repository] object AirportQueries {
+
+  implicit private val taxiDurationMeta: Meta[TaxiDuration] =
+    Meta[Int].imap(TaxiDuration.apply)(_.minutes)
 
   def airportExists(id: Long): Query0[Boolean] = idExistsQuery[Airport](id)
 
@@ -46,7 +51,8 @@ private[repository] object AirportQueries {
     sql"""INSERT INTO airport
          |       (name, icao, iata, city_id,
          |       number_of_runways, number_of_terminals, capacity,
-         |       international, junction)
+         |       international, junction,
+         |       latitude, longitude, taxi_out_duration, taxi_in_duration)
          |   VALUES (
          |       ${model.name},
          |       ${model.icao.toUpperCase},
@@ -56,7 +62,11 @@ private[repository] object AirportQueries {
          |       ${model.numTerminals},
          |       ${model.capacity},
          |       ${model.international},
-         |       ${model.junction}
+         |       ${model.junction},
+         |       ${model.latitude},
+         |       ${model.longitude},
+         |       ${model.taxiOutDuration},
+         |       ${model.taxiInDuration}
          |   )
          | """.stripMargin.update
 
@@ -72,7 +82,11 @@ private[repository] object AirportQueries {
          |  number_of_terminals = ${model.numTerminals},
          |  capacity = ${model.capacity},
          |  international = ${model.international},
-         |  junction = ${model.junction}
+         |  junction = ${model.junction},
+         |  latitude = ${model.latitude},
+         |  longitude = ${model.longitude},
+         |  taxi_out_duration = ${model.taxiOutDuration},
+         |  taxi_in_duration = ${model.taxiInDuration}
          | WHERE id = ${model.id}
        """.stripMargin.update
 
@@ -83,7 +97,9 @@ private[repository] object AirportQueries {
         |SELECT
         |  airport.id, airport.name, airport.icao, airport.iata, airport.city_id,
         |  airport.number_of_runways, airport.number_of_terminals, airport.capacity,
-        |  airport.international, airport.junction
+        |  airport.international, airport.junction,
+        |  airport.latitude, airport.longitude,
+        |  airport.taxi_out_duration, airport.taxi_in_duration
         |FROM airport
       """.stripMargin
 
