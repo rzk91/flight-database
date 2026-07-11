@@ -21,25 +21,31 @@
 `\d`
 - List all tables  
 `\dt`
-- Describe table name "airports" (or any relation for that matter)  
-`\d airports`
+- Describe table name "airport" (or any relation for that matter — table names are singular)  
+`\d airport`
 - List all users  
 `\du`
 - Show help  
 `\h`
 
 ## cURL commands
+> Full endpoint reference, incl. the general query grammar (filtering, sorting, pagination):
+> [`endpoints.md`](modules/api/src/main/scala/flightdatabase/api/endpoints.md)
+
 - Simple API GET request with `-i` to include HTTP header info  
 `curl -i http://localhost:18181/v1/flightdb/hello/rahul`
 - Get currencies and pretty print JSON output (`-s` suppresses any other output)  
 `curl -s http://localhost:18181/v1/flightdb/currencies | jq .` 
-- Get airplanes of a certain manufacturer (e.g. Airbus)
-`curl -s "http://localhost:18181/v1/flightdb/airplanes?manufacturer=Airbus" | jq .`
-- Get only names of cities in a certain country (e.g. Germany)
-`curl -s "http://localhost:18181/v1/flightdb/cities?country=Germany&only-names" | jq .`
+- Get airplanes of a certain manufacturer (e.g. Airbus), via the `manufacturer` sub-filter  
+`curl -s "http://localhost:18181/v1/flightdb/airplanes/manufacturer/filter?field=name&value=Airbus" | jq .`
+- Get only the names of cities in a certain country (e.g. Germany): filter by the `country`
+  sub-filter, then pick out `.name` client-side (filter and `return-only` can't be combined)  
+`curl -s "http://localhost:18181/v1/flightdb/cities/country/filter?field=name&value=Germany" | jq '.[].name'`
+- Get only the `name` field for every city, using `return-only`  
+`curl -s "http://localhost:18181/v1/flightdb/cities?return-only=name" | jq .`
 - Post a new language with JSON input  
 ```sh
 curl -X POST -H "Content-Type: application/json" \
      -d '{"name": "LANGUAGE_NAME", "iso2": "LN", "iso3": "LNA", "original_name": "Original_Language_Name"}' \
-     http://localhost:18181/flightdb/languages
+     http://localhost:18181/v1/flightdb/languages
 ```
