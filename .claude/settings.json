@@ -10,6 +10,10 @@
           {
             "type": "command",
             "command": "dockerd > /var/log/dockerd.log 2>&1 &"
+          },
+          {
+            "type": "command",
+            "command": "printf '#!/bin/bash\\nexec /usr/bin/sbt --jvm-client \"$@\"\\n' > /usr/local/bin/sbt && chmod +x /usr/local/bin/sbt"
           }
         ]
       }
