@@ -4,6 +4,8 @@ and [circe](https://circe.github.io/circe/). These microservices allow for CRUD 
 
 The codebase also includes a comprehensive list of entries in the database.
 
+See [`docs/erd.md`](docs/erd.md) for an entity-relationship diagram of the database schema.
+
 > Currently a work in progress (database is also incomplete)
 
 ## Application stack (at the moment)
