@@ -1,6 +1,7 @@
 # Flight Database
 
 [![CI](https://github.com/rzk91/flight-database/actions/workflows/ci.yml/badge.svg)](https://github.com/rzk91/flight-database/actions/workflows/ci.yml)
+[![Scala Steward badge](https://img.shields.io/badge/Scala_Steward-helping-blue.svg?style=flat&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAAAAAAeCAMAAADbg5aLAAAAM1BMVEUAAAB%2BflaHh2GHh2GHh2GLi2WPj2WLi2WLi2WLi2VNTUmHh2GLi2VUVEpZWUpgYF3CmTKUAAAAEXRSTlMAEHCAv9%2B%2Fv8%2BAUFCwzxCS%2BAdWAAAAGUlEQVR42mMkQAOMQwoAxjcm7oyygcqAsmAAcCUE%2Bj1jw3cAAAAASUVORK5CYII%3D)](https://scala-steward.org)
 
 A Scala backend modelling the static aviation world — airlines, airports, airplane models (with
 manufacturers), countries, cities, and the scheduled routes between them — exposed over an HTTP
