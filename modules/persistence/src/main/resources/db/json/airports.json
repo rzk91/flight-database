@@ -11,8 +11,8 @@
         "junction": true,
         "latitude": 50.0333,
         "longitude": 8.5706,
-        "typical_taxi_out_minutes": 18,
-        "typical_taxi_in_minutes": 8
+        "taxi_out_duration": 18,
+        "taxi_in_duration": 8
     },
     {
         "name": "Kempegowda International Airport",
@@ -26,8 +26,8 @@
         "junction": false,
         "latitude": 13.1986,
         "longitude": 77.7066,
-        "typical_taxi_out_minutes": 12,
-        "typical_taxi_in_minutes": 6
+        "taxi_out_duration": 12,
+        "taxi_in_duration": 6
     },
     {
         "name": "Dubai International Airport",
@@ -41,7 +41,7 @@
         "junction": true,
         "latitude": 25.2532,
         "longitude": 55.3657,
-        "typical_taxi_out_minutes": 15,
-        "typical_taxi_in_minutes": 7
+        "taxi_out_duration": 15,
+        "taxi_in_duration": 7
     }
 ]

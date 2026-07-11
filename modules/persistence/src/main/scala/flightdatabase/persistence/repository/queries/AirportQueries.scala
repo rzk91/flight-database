@@ -6,14 +6,19 @@ import flightdatabase.TableBase
 import flightdatabase.ValidatedSortAndLimit
 import flightdatabase.airport.Airport
 import flightdatabase.airport.AirportCreate
+import flightdatabase.airport.TaxiDuration
 import flightdatabase.persistence.syntax.sortandlimit._
 import org.typelevel.doobie.Fragment
+import org.typelevel.doobie.Meta
 import org.typelevel.doobie.Put
 import org.typelevel.doobie.Query0
 import org.typelevel.doobie.Update0
 import org.typelevel.doobie.implicits._
 
 private[repository] object AirportQueries {
+
+  implicit private val taxiDurationMeta: Meta[TaxiDuration] =
+    Meta[Int].imap(TaxiDuration.apply)(_.minutes)
 
   def airportExists(id: Long): Query0[Boolean] = idExistsQuery[Airport](id)
 
@@ -47,7 +52,7 @@ private[repository] object AirportQueries {
          |       (name, icao, iata, city_id,
          |       number_of_runways, number_of_terminals, capacity,
          |       international, junction,
-         |       latitude, longitude, typical_taxi_out_minutes, typical_taxi_in_minutes)
+         |       latitude, longitude, taxi_out_duration, taxi_in_duration)
          |   VALUES (
          |       ${model.name},
          |       ${model.icao.toUpperCase},
@@ -60,8 +65,8 @@ private[repository] object AirportQueries {
          |       ${model.junction},
          |       ${model.latitude},
          |       ${model.longitude},
-         |       ${model.typicalTaxiOutMinutes},
-         |       ${model.typicalTaxiInMinutes}
+         |       ${model.taxiOutDuration},
+         |       ${model.taxiInDuration}
          |   )
          | """.stripMargin.update
 
@@ -80,8 +85,8 @@ private[repository] object AirportQueries {
          |  junction = ${model.junction},
          |  latitude = ${model.latitude},
          |  longitude = ${model.longitude},
-         |  typical_taxi_out_minutes = ${model.typicalTaxiOutMinutes},
-         |  typical_taxi_in_minutes = ${model.typicalTaxiInMinutes}
+         |  taxi_out_duration = ${model.taxiOutDuration},
+         |  taxi_in_duration = ${model.taxiInDuration}
          | WHERE id = ${model.id}
        """.stripMargin.update
 
@@ -94,7 +99,7 @@ private[repository] object AirportQueries {
         |  airport.number_of_runways, airport.number_of_terminals, airport.capacity,
         |  airport.international, airport.junction,
         |  airport.latitude, airport.longitude,
-        |  airport.typical_taxi_out_minutes, airport.typical_taxi_in_minutes
+        |  airport.taxi_out_duration, airport.taxi_in_duration
         |FROM airport
       """.stripMargin
 

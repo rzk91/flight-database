@@ -20,6 +20,7 @@ import flightdatabase.ValidatedSortAndLimit
 import flightdatabase.airport.Airport
 import flightdatabase.airport.AirportCreate
 import flightdatabase.airport.AirportPatch
+import flightdatabase.airport.TaxiDuration
 import flightdatabase.persistence.itutils.RepositoryCheck
 import flightdatabase.syntax.string._
 import flightdatabase.test.syntax.all._
@@ -43,8 +44,8 @@ final class AirportRepositoryIT extends RepositoryCheck {
       junction = true,
       latitude = BigDecimal("50.0333"),
       longitude = BigDecimal("8.5706"),
-      typicalTaxiOutMinutes = 18,
-      typicalTaxiInMinutes = 8
+      taxiOutDuration = TaxiDuration(18),
+      taxiInDuration = TaxiDuration(8)
     ),
     Airport(
       2,
@@ -59,8 +60,8 @@ final class AirportRepositoryIT extends RepositoryCheck {
       junction = false,
       latitude = BigDecimal("13.1986"),
       longitude = BigDecimal("77.7066"),
-      typicalTaxiOutMinutes = 12,
-      typicalTaxiInMinutes = 6
+      taxiOutDuration = TaxiDuration(12),
+      taxiInDuration = TaxiDuration(6)
     ),
     Airport(
       3,
@@ -75,8 +76,8 @@ final class AirportRepositoryIT extends RepositoryCheck {
       junction = true,
       latitude = BigDecimal("25.2532"),
       longitude = BigDecimal("55.3657"),
-      typicalTaxiOutMinutes = 15,
-      typicalTaxiInMinutes = 7
+      taxiOutDuration = TaxiDuration(15),
+      taxiInDuration = TaxiDuration(7)
     )
   )
 
@@ -104,8 +105,8 @@ final class AirportRepositoryIT extends RepositoryCheck {
     junction = false,
     latitude = BigDecimal("19.0896"),
     longitude = BigDecimal("72.8656"),
-    typicalTaxiOutMinutes = 20,
-    typicalTaxiInMinutes = 10
+    taxiOutDuration = TaxiDuration(20),
+    taxiInDuration = TaxiDuration(10)
   )
 
   val updatedName: String = "Chhatrapati Shivaji Maharaj International Airport Updated"

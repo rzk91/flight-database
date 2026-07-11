@@ -7,6 +7,7 @@ import flightdatabase.airport.Airport
 import flightdatabase.airport.AirportAlgebra
 import flightdatabase.airport.AirportCreate
 import flightdatabase.airport.AirportPatch
+import flightdatabase.airport.TaxiDuration
 import flightdatabase.api.testutils.endpoints._
 import flightdatabase.partial.PartiallyAppliedGetAll
 import flightdatabase.partial.PartiallyAppliedGetBy
@@ -47,8 +48,8 @@ final class AirportEndpointsTest extends EntityEndpointsSpec[Airport, AirportCre
       junction = true,
       latitude = BigDecimal("50.0333"),
       longitude = BigDecimal("8.5706"),
-      typicalTaxiOutMinutes = 18,
-      typicalTaxiInMinutes = 8
+      taxiOutDuration = TaxiDuration(18),
+      taxiInDuration = TaxiDuration(8)
     ),
     Airport(
       2,
@@ -63,8 +64,8 @@ final class AirportEndpointsTest extends EntityEndpointsSpec[Airport, AirportCre
       junction = false,
       latitude = BigDecimal("13.1986"),
       longitude = BigDecimal("77.7066"),
-      typicalTaxiOutMinutes = 12,
-      typicalTaxiInMinutes = 6
+      taxiOutDuration = TaxiDuration(12),
+      taxiInDuration = TaxiDuration(6)
     ),
     Airport(
       3,
@@ -79,8 +80,8 @@ final class AirportEndpointsTest extends EntityEndpointsSpec[Airport, AirportCre
       junction = true,
       latitude = BigDecimal("25.2532"),
       longitude = BigDecimal("55.3657"),
-      typicalTaxiOutMinutes = 15,
-      typicalTaxiInMinutes = 7
+      taxiOutDuration = TaxiDuration(15),
+      taxiInDuration = TaxiDuration(7)
     )
   )
 
@@ -95,7 +96,7 @@ final class AirportEndpointsTest extends EntityEndpointsSpec[Airport, AirportCre
     FieldFixture("international", true, Operator.Is, BooleanType),
     FieldFixture("latitude", BigDecimal("20.0"), Operator.GreaterThan, BigDecimalType),
     FieldFixture("longitude", BigDecimal("60.0"), Operator.LessThan, BigDecimalType),
-    FieldFixture("typical_taxi_out_minutes", 10, Operator.GreaterThan, IntType)
+    FieldFixture("taxi_out_duration", 10, Operator.GreaterThan, IntType)
   )
 
   // City is the external table reachable via /airports/city/filter.
@@ -142,8 +143,8 @@ final class AirportEndpointsTest extends EntityEndpointsSpec[Airport, AirportCre
     junction = false,
     latitude = BigDecimal("19.0896"),
     longitude = BigDecimal("72.8656"),
-    typicalTaxiOutMinutes = 20,
-    typicalTaxiInMinutes = 10
+    taxiOutDuration = TaxiDuration(20),
+    taxiInDuration = TaxiDuration(10)
   )
   def fromCreate(id: Long, create: AirportCreate): Airport = Airport.fromCreate(id, create)
   def withCreateId(create: AirportCreate, id: Long): AirportCreate = create.copy(id = Some(id))

@@ -16,8 +16,8 @@ import io.circe.generic.extras._
   junction: Boolean,
   latitude: BigDecimal,
   longitude: BigDecimal,
-  typicalTaxiOutMinutes: Int,
-  typicalTaxiInMinutes: Int
+  taxiOutDuration: TaxiDuration,
+  taxiInDuration: TaxiDuration
 )
 
 object AirportCreate {
@@ -34,8 +34,8 @@ object AirportCreate {
     junction: Boolean,
     latitude: BigDecimal,
     longitude: BigDecimal,
-    typicalTaxiOutMinutes: Int,
-    typicalTaxiInMinutes: Int
+    taxiOutDuration: TaxiDuration,
+    taxiInDuration: TaxiDuration
   ): AirportCreate =
     new AirportCreate(
       None,
@@ -50,7 +50,7 @@ object AirportCreate {
       junction,
       latitude,
       longitude,
-      typicalTaxiOutMinutes,
-      typicalTaxiInMinutes
+      taxiOutDuration,
+      taxiInDuration
     )
 }

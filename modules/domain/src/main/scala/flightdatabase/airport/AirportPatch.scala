@@ -16,6 +16,6 @@ import io.circe.generic.extras.JsonKey
   junction: Option[Boolean] = None,
   latitude: Option[BigDecimal] = None,
   longitude: Option[BigDecimal] = None,
-  typicalTaxiOutMinutes: Option[Int] = None,
-  typicalTaxiInMinutes: Option[Int] = None
+  taxiOutDuration: Option[TaxiDuration] = None,
+  taxiInDuration: Option[TaxiDuration] = None
 )

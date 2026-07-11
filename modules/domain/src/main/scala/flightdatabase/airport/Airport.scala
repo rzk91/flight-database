@@ -18,8 +18,8 @@ import io.circe.generic.extras.JsonKey
   junction: Boolean,
   latitude: BigDecimal,
   longitude: BigDecimal,
-  typicalTaxiOutMinutes: Int,
-  typicalTaxiInMinutes: Int
+  taxiOutDuration: TaxiDuration,
+  taxiInDuration: TaxiDuration
 )
 
 object Airport {
@@ -27,20 +27,20 @@ object Airport {
   implicit val airportTableBase: TableBase[Airport] = TableBase.instance(
     AIRPORT,
     Map(
-      "id"                       -> LongType,
-      "name"                     -> StringType,
-      "icao"                     -> StringType,
-      "iata"                     -> StringType,
-      "city_id"                  -> LongType,
-      "number_of_runways"        -> IntType,
-      "number_of_terminals"      -> IntType,
-      "capacity"                 -> LongType,
-      "international"            -> BooleanType,
-      "junction"                 -> BooleanType,
-      "latitude"                 -> BigDecimalType,
-      "longitude"                -> BigDecimalType,
-      "typical_taxi_out_minutes" -> IntType,
-      "typical_taxi_in_minutes"  -> IntType
+      "id"                  -> LongType,
+      "name"                -> StringType,
+      "icao"                -> StringType,
+      "iata"                -> StringType,
+      "city_id"             -> LongType,
+      "number_of_runways"   -> IntType,
+      "number_of_terminals" -> IntType,
+      "capacity"            -> LongType,
+      "international"       -> BooleanType,
+      "junction"            -> BooleanType,
+      "latitude"            -> BigDecimalType,
+      "longitude"           -> BigDecimalType,
+      "taxi_out_duration"   -> IntType,
+      "taxi_in_duration"    -> IntType
     )
   )
 
@@ -58,8 +58,8 @@ object Airport {
       model.junction,
       model.latitude,
       model.longitude,
-      model.typicalTaxiOutMinutes,
-      model.typicalTaxiInMinutes
+      model.taxiOutDuration,
+      model.taxiInDuration
     )
 
   def fromPatch(id: Long, patch: AirportPatch, airport: Airport): Airport =
@@ -76,7 +76,7 @@ object Airport {
       patch.junction.getOrElse(airport.junction),
       patch.latitude.getOrElse(airport.latitude),
       patch.longitude.getOrElse(airport.longitude),
-      patch.typicalTaxiOutMinutes.getOrElse(airport.typicalTaxiOutMinutes),
-      patch.typicalTaxiInMinutes.getOrElse(airport.typicalTaxiInMinutes)
+      patch.taxiOutDuration.getOrElse(airport.taxiOutDuration),
+      patch.taxiInDuration.getOrElse(airport.taxiInDuration)
     )
 }
