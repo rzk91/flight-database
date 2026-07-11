@@ -9,6 +9,18 @@ Every table also has `created_at` and `last_updated_at` timestamp columns (omitt
 brevity — see [`V2__create_update_triggers.sql`](../modules/persistence/src/main/resources/db/migration/V2__create_update_triggers.sql)
 for the triggers that maintain them).
 
+![Flight database ERD](erd.png)
+
+<details>
+<summary>Mermaid source (edit this, then regenerate <code>erd.png</code>)</summary>
+
+After editing the diagram below, regenerate `erd.png`: copy the `erDiagram ... ` block
+into a file (e.g. `/tmp/erd.mmd`) and run (requires Node/npx):
+
+```sh
+npx --yes @mermaid-js/mermaid-cli@latest -i /tmp/erd.mmd -o docs/erd.png -b white -t neutral -s 2
+```
+
 ```mermaid
 erDiagram
     LANGUAGE {
@@ -129,3 +141,5 @@ erDiagram
     AIRPORT ||--o{ AIRLINE_ROUTE : "is origin of"
     AIRPORT ||--o{ AIRLINE_ROUTE : "is destination of"
 ```
+
+</details>
