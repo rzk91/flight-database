@@ -253,15 +253,17 @@ components:
         manufacturer_id: { type: integer, format: int64 }
         capacity: { type: integer }
         max_range_in_km: { type: integer }
+        cruise_speed: { type: integer, description: "Typical cruise speed, in km/h." }
     AirplaneCreate:
       type: object
-      required: [name, manufacturer_id, capacity, max_range_in_km]
+      required: [name, manufacturer_id, capacity, max_range_in_km, cruise_speed]
       properties:
         id: { type: [integer, "null"], format: int64 }
         name: { type: string }
         manufacturer_id: { type: integer, format: int64 }
         capacity: { type: integer }
         max_range_in_km: { type: integer }
+        cruise_speed: { type: integer, description: "Typical cruise speed, in km/h." }
     AirplanePatch:
       type: object
       properties:
@@ -269,6 +271,7 @@ components:
         manufacturer_id: { type: integer, format: int64 }
         capacity: { type: integer }
         max_range_in_km: { type: integer }
+        cruise_speed: { type: integer, description: "Typical cruise speed, in km/h." }
 
     Airport:
       type: object

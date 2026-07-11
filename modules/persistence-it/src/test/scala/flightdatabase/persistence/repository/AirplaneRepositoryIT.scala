@@ -28,10 +28,10 @@ final class AirplaneRepositoryIT extends RepositoryCheck {
   lazy val repo: AirplaneRepository[IO] = AirplaneRepository.make[IO].unsafeRunSync()
 
   val originalAirplanes: Nel[Airplane] = Nel.of(
-    Airplane(1, "A380", 1, 853, 14800),
-    Airplane(2, "747-8", 2, 410, 14310),
-    Airplane(3, "A320neo", 1, 194, 6300),
-    Airplane(4, "787-8", 2, 248, 13530)
+    Airplane(1, "A380", 1, 853, 14800, 903),
+    Airplane(2, "747-8", 2, 410, 14310, 907),
+    Airplane(3, "A320neo", 1, 194, 6300, 828),
+    Airplane(4, "787-8", 2, 248, 13530, 903)
   )
   val manufacturerToIdMap: Map[String, Long] = Map("Airbus" -> 1, "Boeing" -> 2)
   val idNotPresent: Long = 10
@@ -42,7 +42,7 @@ final class AirplaneRepositoryIT extends RepositoryCheck {
   val invalidLongValue: String = "invalid"
   val invalidStringValue: Int = 1
 
-  val newAirplane: AirplaneCreate = AirplaneCreate("A350", 1, 325, 13900)
+  val newAirplane: AirplaneCreate = AirplaneCreate("A350", 1, 325, 13900, 903)
   val updatedName: String = "A350_updated"
   val patchedName: String = "A350_patched"
 
@@ -137,6 +137,26 @@ final class AirplaneRepositoryIT extends RepositoryCheck {
     airplaneByName(valueNotPresent).error shouldBe EntryListEmpty
     airplaneByManufacturerId(idNotPresent).error shouldBe EntryListEmpty
     airplaneByManufacturerId(veryLongIdNotPresent).error shouldBe EntryListEmpty
+  }
+
+  it should "return the corresponding entries when filtering by cruise speed" in {
+    def airplaneByCruiseSpeed(cruiseSpeed: Int): IO[ApiResult[Nel[Airplane]]] =
+      repo.getAirplanesBy(
+        "cruise_speed",
+        Nel.one(cruiseSpeed),
+        Operator.Equals,
+        emptySortAndLimit,
+        IntType
+      )
+
+    val distinctCruiseSpeeds = originalAirplanes.map(_.cruiseSpeed).distinct
+
+    forAll(distinctCruiseSpeeds) { cruiseSpeed =>
+      val expectedAirplanes = originalAirplanes.filter(_.cruiseSpeed == cruiseSpeed)
+      airplaneByCruiseSpeed(cruiseSpeed).value should contain only (expectedAirplanes: _*)
+    }
+
+    airplaneByCruiseSpeed(0).error shouldBe EntryListEmpty
   }
 
   it should "sort and limit the filtered entries if so required" in {
@@ -301,7 +321,7 @@ final class AirplaneRepositoryIT extends RepositoryCheck {
       .error shouldBe EntryHasInvalidForeignKey
   }
 
-  it should "throw a check error if we pass negative values for capacity or maxRangeInKm" in {
+  it should "throw a check error if we pass negative values for capacity, maxRangeInKm or cruiseSpeed" in {
     val newAirplaneWithNegativeCapacity = newAirplane.copy(capacity = -1)
     repo
       .createAirplane(newAirplaneWithNegativeCapacity)
@@ -310,6 +330,11 @@ final class AirplaneRepositoryIT extends RepositoryCheck {
     val newAirplaneWithNegativeMaxRange = newAirplane.copy(maxRangeInKm = -1)
     repo
       .createAirplane(newAirplaneWithNegativeMaxRange)
+      .error shouldBe EntryCheckFailed
+
+    val newAirplaneWithNegativeCruiseSpeed = newAirplane.copy(cruiseSpeed = -1)
+    repo
+      .createAirplane(newAirplaneWithNegativeCruiseSpeed)
       .error shouldBe EntryCheckFailed
   }
 

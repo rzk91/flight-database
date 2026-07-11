@@ -35,7 +35,7 @@ final class DomainSpecificQueryIT extends DbChecker {
           emptySortAndLimit
         )
     )
-    check(AirplaneQueries.insertAirplane(AirplaneCreate(None, "Boeing 747", 2, 416, 13400)))
+    check(AirplaneQueries.insertAirplane(AirplaneCreate(None, "Boeing 747", 2, 416, 13400, 907)))
     check(AirplaneQueries.deleteAirplane(1))
   }
 

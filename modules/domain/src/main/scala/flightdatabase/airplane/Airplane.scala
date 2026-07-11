@@ -9,7 +9,8 @@ import io.circe.generic.extras._
   name: String,
   manufacturerId: Long,
   capacity: Int,
-  maxRangeInKm: Int
+  maxRangeInKm: Int,
+  cruiseSpeed: Int
 )
 
 object Airplane {
@@ -21,7 +22,8 @@ object Airplane {
       "name"            -> StringType,
       "manufacturer_id" -> LongType,
       "capacity"        -> IntType,
-      "max_range_in_km" -> IntType
+      "max_range_in_km" -> IntType,
+      "cruise_speed"    -> IntType
     )
   )
 
@@ -31,7 +33,8 @@ object Airplane {
       model.name,
       model.manufacturerId,
       model.capacity,
-      model.maxRangeInKm
+      model.maxRangeInKm,
+      model.cruiseSpeed
     )
 
   def fromPatch(id: Long, patch: AirplanePatch, original: Airplane): Airplane =
@@ -40,7 +43,8 @@ object Airplane {
       patch.name.getOrElse(original.name),
       patch.manufacturerId.getOrElse(original.manufacturerId),
       patch.capacity.getOrElse(original.capacity),
-      patch.maxRangeInKm.getOrElse(original.maxRangeInKm)
+      patch.maxRangeInKm.getOrElse(original.maxRangeInKm),
+      patch.cruiseSpeed.getOrElse(original.cruiseSpeed)
     )
 
 }
