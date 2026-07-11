@@ -5,32 +5,50 @@ name: CI
 # event here) still get checked, but the `if` guard on the `lint` job below
 # skips the duplicate `pull_request` run for same-repo branches.
 #
-# `paths` restricts both triggers to changes that can actually affect the
-# build: the sbt modules, the root build definition (build.sbt affects every
-# module; project/ pins the sbt version and plugins), and this workflow file
-# itself. README/docs-only changes are skipped.
+# No `paths` filter here: filtering at the trigger level means the workflow
+# never runs at all for a docs-only change, so a required check never gets a
+# check run and stays "Expected" forever, permanently blocking merge. Instead,
+# the `changes` job below detects whether the diff touches anything that can
+# affect the build, and every other job's `if:` skips when it doesn't. A
+# skipped job still reports a `success`-equivalent conclusion to branch
+# protection / rulesets, so required checks are satisfied either way.
 on:
   push:
-    paths: &ci-paths
-      - 'modules/**'
-      - 'build.sbt'
-      - 'project/**'
-      - '.github/workflows/ci.yml'
   pull_request:
-    paths: *ci-paths
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
+  changes:
+    name: Detect relevant changes
+    runs-on: ubuntu-latest
+    outputs:
+      relevant: ${{ steps.filter.outputs.relevant }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            relevant:
+              - 'modules/**'
+              - 'build.sbt'
+              - 'project/**'
+              - '.github/workflows/ci.yml'
+
   lint:
     name: Lint & Format
     runs-on: ubuntu-latest
-    # Run on every push, but on pull_request only for forks — a same-repo
-    # branch's push already covers it. `test` and `integration-test` chain off
-    # this job via `needs`, so skipping it here skips the whole pipeline.
-    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+    needs: changes
+    # Run only when something relevant changed, and on every push, but on
+    # pull_request only for forks — a same-repo branch's push already covers
+    # it. `test` and `integration-test` chain off this job's result via
+    # `needs`, so skipping it here skips the whole pipeline.
+    if: >
+      needs.changes.outputs.relevant == 'true' &&
+      (github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository)
     steps:
       - &checkout
         uses: actions/checkout@v4
@@ -51,7 +69,8 @@ jobs:
   test:
     name: Unit Tests
     runs-on: ubuntu-latest
-    needs: lint
+    needs: [changes, lint]
+    if: needs.changes.outputs.relevant == 'true' && needs.lint.result == 'success'
     steps:
       - *checkout
       - *setup-java
@@ -65,7 +84,8 @@ jobs:
   integration-test:
     name: Integration Tests
     runs-on: ubuntu-latest
-    needs: test
+    needs: [changes, test]
+    if: needs.changes.outputs.relevant == 'true' && needs.test.result == 'success'
     steps:
       - *checkout
       - *setup-java
