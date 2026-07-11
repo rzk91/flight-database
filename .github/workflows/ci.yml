@@ -4,9 +4,20 @@ name: CI
 # `pull_request`. We keep both triggers so fork PRs (which produce no push
 # event here) still get checked, but the `if` guard on the `lint` job below
 # skips the duplicate `pull_request` run for same-repo branches.
+#
+# `paths` restricts both triggers to changes that can actually affect the
+# build: the sbt modules, the root build definition (build.sbt affects every
+# module; project/ pins the sbt version and plugins), and this workflow file
+# itself. README/docs-only changes are skipped.
 on:
   push:
+    paths: &ci-paths
+      - 'modules/**'
+      - 'build.sbt'
+      - 'project/**'
+      - '.github/workflows/ci.yml'
   pull_request:
+    paths: *ci-paths
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
