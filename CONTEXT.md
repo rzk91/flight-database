@@ -41,8 +41,12 @@ _Avoid_: Aircraft assignment, operated model
 ### Equipment
 
 **AirplaneModel**:
-A make-and-model of airplane (e.g. A380, 747-400, ATR 72), defined by its manufacturer, capacity, and max range. Not a physical aircraft — there are no tail numbers in this domain. (The persisted entity is named `Airplane` in code; the domain concept is AirplaneModel.)
+A make-and-model of airplane (e.g. A380, 747-400, ATR 72), defined by its manufacturer, capacity, max range, and cruise speed. Not a physical aircraft — there are no tail numbers in this domain. (The persisted entity is named `Airplane` in code; the domain concept is AirplaneModel.)
 _Avoid_: Airplane (ambiguous between model and physical aircraft), aircraft type
+
+**AirplaneCruiseSpeed**:
+The typical cruising speed of an AirplaneModel, in km/h — a manufacturer-published property of the model itself, used to compare aircraft and reason about journey times. Persisted as `Airplane.cruiseSpeed`.
+_Avoid_: Airspeed (ambiguous — could mean instantaneous/real-time speed of a future Flight), max speed (this is cruise, not top speed)
 
 **Aircraft** / **Airframe** *(reserved)*:
 Reserved for a future physical tail-numbered aircraft, distinct from AirplaneModel. Not in the schema today. Likely arrives alongside Flight.

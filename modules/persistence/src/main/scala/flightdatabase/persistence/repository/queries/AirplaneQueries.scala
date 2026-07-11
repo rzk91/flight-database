@@ -44,12 +44,13 @@ private[repository] object AirplaneQueries {
 
   def insertAirplane(model: AirplaneCreate): Update0 =
     sql"""INSERT INTO airplane
-         |       (name, manufacturer_id, capacity, max_range_in_km)
+         |       (name, manufacturer_id, capacity, max_range_in_km, cruise_speed)
          |   VALUES (
          |       ${model.name},
          |       ${model.manufacturerId},
          |       ${model.capacity},
-         |       ${model.maxRangeInKm}
+         |       ${model.maxRangeInKm},
+         |       ${model.cruiseSpeed}
          |   )
          | """.stripMargin.update
 
@@ -60,7 +61,8 @@ private[repository] object AirplaneQueries {
          |  name = ${model.name},
          |  manufacturer_id = ${model.manufacturerId},
          |  capacity = ${model.capacity},
-         |  max_range_in_km = ${model.maxRangeInKm}
+         |  max_range_in_km = ${model.maxRangeInKm},
+         |  cruise_speed = ${model.cruiseSpeed}
          | WHERE id = ${model.id}
        """.stripMargin.update
 
@@ -70,7 +72,7 @@ private[repository] object AirplaneQueries {
     fr"""
          | SELECT
          |  airplane.id, airplane.name, airplane.manufacturer_id,
-         |  airplane.capacity, airplane.max_range_in_km
+         |  airplane.capacity, airplane.max_range_in_km, airplane.cruise_speed
          | FROM airplane
        """.stripMargin
 }

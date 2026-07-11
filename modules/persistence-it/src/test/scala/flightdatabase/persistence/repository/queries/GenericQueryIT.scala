@@ -44,7 +44,7 @@ final class GenericQueryIT extends DbChecker {
     val allAirplanes = fr"""
        | SELECT
        |  airplane.id, airplane.name, airplane.manufacturer_id,
-       |  airplane.capacity, airplane.max_range_in_km
+       |  airplane.capacity, airplane.max_range_in_km, airplane.cruise_speed
        | FROM airplane
      """.stripMargin
     check(
@@ -60,7 +60,7 @@ final class GenericQueryIT extends DbChecker {
     val allAirplanes = fr"""
        | SELECT
        |  airplane.id, airplane.name, airplane.manufacturer_id,
-       |  airplane.capacity, airplane.max_range_in_km
+       |  airplane.capacity, airplane.max_range_in_km, airplane.cruise_speed
        | FROM airplane
      """.stripMargin
     check(

@@ -35,16 +35,17 @@ final class AirplaneEndpointsTest
 
   // Mirrors `originalAirplanes` in AirplaneRepositoryIT.
   val samples: Nel[Airplane] = Nel.of(
-    Airplane(1, "A380", 1, 853, 14800),
-    Airplane(2, "747-8", 2, 410, 14310),
-    Airplane(3, "A320neo", 1, 194, 6300),
-    Airplane(4, "787-8", 2, 248, 13530)
+    Airplane(1, "A380", 1, 853, 14800, 903),
+    Airplane(2, "747-8", 2, 410, 14310, 907),
+    Airplane(3, "A320neo", 1, 194, 6300, 828),
+    Airplane(4, "787-8", 2, 248, 13530, 903)
   )
 
   val fieldFixtures: List[FieldFixture[_]] = List(
     FieldFixture("name", "A380", Operator.Equals, StringType),
     FieldFixture("capacity", 200, Operator.GreaterThan, IntType),
-    FieldFixture("id", 1L, Operator.In, LongType)
+    FieldFixture("id", 1L, Operator.In, LongType),
+    FieldFixture("cruise_speed", 900, Operator.GreaterThan, IntType)
   )
 
   // Manufacturer is the external table reachable via /airplanes/manufacturer/filter.
@@ -68,7 +69,7 @@ final class AirplaneEndpointsTest
   private def armGetByManufacturer(): Unit =
     (() => mockAlgebra.getAirplanesByManufacturer).when().returns(mockGetBy)
 
-  val sampleCreate: AirplaneCreate = AirplaneCreate("A350", 1, 325, 13900)
+  val sampleCreate: AirplaneCreate = AirplaneCreate("A350", 1, 325, 13900, 903)
   def fromCreate(id: Long, create: AirplaneCreate): Airplane = Airplane.fromCreate(id, create)
   def withCreateId(create: AirplaneCreate, id: Long): AirplaneCreate = create.copy(id = Some(id))
   val samplePatch: AirplanePatch = AirplanePatch(name = Some("A350_patched"))

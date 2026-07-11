@@ -7,5 +7,6 @@ import io.circe.generic.extras._
   name: Option[String] = None,
   manufacturerId: Option[Long] = None,
   capacity: Option[Int] = None,
-  maxRangeInKm: Option[Int] = None
+  maxRangeInKm: Option[Int] = None,
+  cruiseSpeed: Option[Int] = None
 )

@@ -8,11 +8,18 @@ import io.circe.generic.extras._
   name: String,
   manufacturerId: Long,
   capacity: Int,
-  maxRangeInKm: Int
+  maxRangeInKm: Int,
+  cruiseSpeed: Int
 )
 
 object AirplaneCreate {
 
-  def apply(name: String, manufacturerId: Long, capacity: Int, maxRangeInKm: Int): AirplaneCreate =
-    new AirplaneCreate(None, name, manufacturerId, capacity, maxRangeInKm)
+  def apply(
+    name: String,
+    manufacturerId: Long,
+    capacity: Int,
+    maxRangeInKm: Int,
+    cruiseSpeed: Int
+  ): AirplaneCreate =
+    new AirplaneCreate(None, name, manufacturerId, capacity, maxRangeInKm, cruiseSpeed)
 }
