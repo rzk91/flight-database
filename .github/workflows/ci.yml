@@ -31,10 +31,11 @@ jobs:
           cache: 'sbt'
       - &setup-sbt
         uses: sbt/setup-sbt@v1
-      - name: Check formatting (scalafmt)
-        run: sbt scalafmtCheckAll
-      - name: Check linting (scalafix)
-        run: sbt "scalafixAll --check"
+      - name: Check formatting and linting (scalafmt, scalafix)
+        # Single sbt invocation, same reasoning as the unit-test job below: separate
+        # `sbt` calls occasionally fail on the sbtn thin-client handoff to the
+        # leftover background server (exit 1, no output).
+        run: sbt "scalafmtCheckAll; scalafixAll --check"
 
   test:
     name: Unit Tests
