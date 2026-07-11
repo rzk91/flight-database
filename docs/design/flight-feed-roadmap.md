@@ -20,9 +20,11 @@ Simulator  ── emits FlightEvents against a sim-clock ──►  Kafka topic
    └───────────────────────────────────────────►  ScalaJS map
 ```
 
-The geo-core (Scala: haversine distance + great-circle interpolation) is shared
-by the ETL (to compute durations) and the simulator (distance + the moving dot).
-One module, three consumers: ETL, simulator, and a future analytics layer.
+The geo core (Scala: haversine distance + great-circle interpolation) lives in
+`domain` — a `flightdatabase.geo` package, not a separate sbt module — and is
+shared by the ETL (to compute durations) and the simulator (distance + the
+moving dot). One implementation, three consumers: ETL, simulator, and a future
+analytics layer.
 
 ## Current module layout
 
@@ -32,7 +34,7 @@ domain or API layers.
 
 | Module | Contents |
 |---|---|
-| `domain` | Entities, algebras, `FieldType` GADT, `ApiError`. **No doobie dependency.** |
+| `domain` | Entities, algebras, `FieldType` GADT, `ApiError`, geo core (`flightdatabase.geo`: haversine distance + great-circle interpolation). **No doobie dependency.** |
 | `persistence` | Repositories, doobie queries, `DatabaseConfig`, Flyway migrations + seed data, doobie syntax (`FieldType → Put/Read` bridge). |
 | `api` | http4s endpoints, `ApiConfig`/`ApiLogging`, http4s + enum-string syntax, endpoint unit tests. |
 | `app` | `FlightDbMain`, `Server`, aggregate `Configuration`, pureconfig loader. Composition root. |
@@ -40,7 +42,7 @@ domain or API layers.
 | `testkit` | Shared test-support helpers (`matchers`, `ioresult`, `response`) under `flightdatabase.test.syntax`. |
 | `persistence-it` | Repository and query integration tests (formerly `backend-it`). Requires Docker. |
 
-Planned additions: `geo-core` (pure, no DB dependency — fits the `domain`/`syntax` tier), `simulator`, `etl`, `frontend` (ScalaJS), and a Kafka processor.
+Planned additions: `simulator`, `etl`, `frontend` (ScalaJS), and a Kafka processor. Geo core is not a new module — it lands in `domain` (see above).
 
 ## Domain model additions
 
@@ -79,9 +81,10 @@ scheduled In = scheduled Out + taxi-out + (great-circle distance ÷ cruise_speed
 - Schema migration: scheduled Out (and decide store-vs-derive for scheduled In),
   `cruise_speed` on `airplane`, taxi-out/taxi-in times on `airport`, and **lat/long
   on `airport`** (today coordinates live only on `city`).
-- Geo-core module: haversine distance + great-circle position interpolation. Pure,
-  no doobie — can live at the `domain` tier or as a standalone module.
-  Unit-testable without a DB. A dependency of both the ETL and the simulator.
+- Geo core: haversine distance + great-circle position interpolation, as a
+  `flightdatabase.geo` package in `domain` (pure, no doobie — domain is already
+  dependency-free at that tier, and both the ETL and the simulator will depend
+  on `domain` anyway for `Route`/`Airport`). Unit-testable without a DB.
 - fs2 ETL: import a chosen **subset of hub airports** + the routes among them, from
   OurAirports (airports + coordinates, CC0) and OpenFlights / curated data
   (routes; accepted as somewhat stale). Schedule times: use a supplied time if the
