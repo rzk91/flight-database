@@ -122,8 +122,17 @@ final class AirplaneRepositoryIT extends RepositoryCheck {
         emptySortAndLimit,
         LongType
       )
+    def airplaneByCruiseSpeed(cruiseSpeed: Int): IO[ApiResult[Nel[Airplane]]] =
+      repo.getAirplanesBy(
+        "cruise_speed",
+        Nel.one(cruiseSpeed),
+        Operator.Equals,
+        emptySortAndLimit,
+        IntType
+      )
 
     val distinctManufacturerIds = originalAirplanes.map(_.manufacturerId).distinct
+    val distinctCruiseSpeeds = originalAirplanes.map(_.cruiseSpeed).distinct
 
     forAll(originalAirplanes) { airplane =>
       airplaneByName(airplane.name).value should contain only airplane
@@ -134,28 +143,14 @@ final class AirplaneRepositoryIT extends RepositoryCheck {
       airplaneByManufacturerId(id).value should contain only (expectedAirplanes: _*)
     }
 
-    airplaneByName(valueNotPresent).error shouldBe EntryListEmpty
-    airplaneByManufacturerId(idNotPresent).error shouldBe EntryListEmpty
-    airplaneByManufacturerId(veryLongIdNotPresent).error shouldBe EntryListEmpty
-  }
-
-  it should "return the corresponding entries when filtering by cruise speed" in {
-    def airplaneByCruiseSpeed(cruiseSpeed: Int): IO[ApiResult[Nel[Airplane]]] =
-      repo.getAirplanesBy(
-        "cruise_speed",
-        Nel.one(cruiseSpeed),
-        Operator.Equals,
-        emptySortAndLimit,
-        IntType
-      )
-
-    val distinctCruiseSpeeds = originalAirplanes.map(_.cruiseSpeed).distinct
-
     forAll(distinctCruiseSpeeds) { cruiseSpeed =>
       val expectedAirplanes = originalAirplanes.filter(_.cruiseSpeed == cruiseSpeed)
       airplaneByCruiseSpeed(cruiseSpeed).value should contain only (expectedAirplanes: _*)
     }
 
+    airplaneByName(valueNotPresent).error shouldBe EntryListEmpty
+    airplaneByManufacturerId(idNotPresent).error shouldBe EntryListEmpty
+    airplaneByManufacturerId(veryLongIdNotPresent).error shouldBe EntryListEmpty
     airplaneByCruiseSpeed(0).error shouldBe EntryListEmpty
   }
 
