@@ -35,7 +35,7 @@ final class ApiDocsEndpointsTest
       And("the base-path template has been substituted")
       val body = response.as[String].unsafeRunSync()
       body should include("Scalar.createApiReference")
-      body should not include "{{base}}"
+      (body should not).include("{{base}}")
     }
 
     Scenario("The raw OpenAPI spec") {
