@@ -64,6 +64,15 @@ val http4sServerDeps = Seq("org.http4s" %% "http4s-ember-server" % http4sVersion
 
 val enumeratumDeps = Seq("com.beachape" %% "enumeratum" % "1.9.8")
 
+// Scalar's browser bundle for /docs, served from the classpath (no CDN). scalar-core is
+// Scalar's first-party artifact (not the community npm->Maven mirror) — its version tracks
+// the Scalar JS release directly, and it ships the bundle at a version-less classpath path
+// (META-INF/resources/webjars/scalar/scalar.js), so no version needs threading into code.
+// Used purely as a webjar for that asset, not for its Java rendering API (which needs
+// jackson-databind at runtime; this project has none).
+val scalarApiReferenceVersion = "0.6.54"
+val scalarApiReferenceDeps = Seq("com.scalar.maven" % "scalar-core" % scalarApiReferenceVersion)
+
 val pureconfigDeps = Seq(
   "com.github.pureconfig" %% "pureconfig"             % pureconfigVersion,
   "com.github.pureconfig" %% "pureconfig-cats-effect" % pureconfigVersion
@@ -149,7 +158,7 @@ lazy val api = project
     name := "flight-database-api",
     commonSettings,
     // circe in transitively via domain until step 5
-    libraryDependencies ++= http4sApiDeps ++ enumeratumDeps ++ testingDeps
+    libraryDependencies ++= http4sApiDeps ++ enumeratumDeps ++ scalarApiReferenceDeps ++ testingDeps
   )
 
 lazy val app = project

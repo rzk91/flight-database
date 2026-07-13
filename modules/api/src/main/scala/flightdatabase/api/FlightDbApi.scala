@@ -21,6 +21,8 @@ class FlightDbApi[F[_]: Async] private (apiConfig: ApiConfig, repos: Repositorie
   private val helloWorldEndpoints =
     HelloWorldEndpoints[F](HELLO_WORLD.prefix, apiConfig.flightDbBaseUri)
 
+  private val apiDocsEndpoints = ApiDocsEndpoints[F](DOCS.prefix)
+
   private val airplaneEndpoints = AirplaneEndpoints[F](AIRPLANE.prefix, repos.airplaneRepository)
   private val airlineEndpoints = AirlineEndpoints[F](AIRLINE.prefix, repos.airlineRepository)
 
@@ -45,6 +47,7 @@ class FlightDbApi[F[_]: Async] private (apiConfig: ApiConfig, repos: Repositorie
   val flightDbServices: HttpRoutes[F] =
     List(
       helloWorldEndpoints,
+      apiDocsEndpoints,
       airplaneEndpoints,
       airlineEndpoints,
       airlineAirplaneEndpoints,

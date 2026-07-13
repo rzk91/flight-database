@@ -28,4 +28,5 @@ object FlightDbTable extends Enum[FlightDbTable] {
   case object LANGUAGE extends FlightDbTable("language") { val prefix = "/languages" }
   case object MANUFACTURER extends FlightDbTable("manufacturer") { val prefix = "/manufacturers" }
   case object HELLO_WORLD extends FlightDbTable("hello") { val prefix = "/hello" }
+  case object DOCS extends FlightDbTable("docs") { val prefix = "/docs" }
 }

@@ -48,7 +48,8 @@ The codebase is a modular monolith of seven sbt modules (see
    [`HELP.md`](HELP.md).
 2. `sbt app/run` — this runs the Flyway migrations (incl. seed data) and starts the API at
    `http://localhost:18181/v1/flightdb`.
-3. Explore with the curl examples in [`HELP.md`](HELP.md) or the endpoint reference linked above.
+3. Browse the interactive API reference at `http://localhost:18181/v1/flightdb/docs/`, explore
+   with the curl examples in [`HELP.md`](HELP.md), or read the endpoint reference linked above.
 
 ## Roadmap
 

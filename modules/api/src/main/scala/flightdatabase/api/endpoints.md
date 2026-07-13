@@ -1,11 +1,10 @@
 # Flight Database — API overview
 
 - **Base URL:** `http://localhost:18181/v1/flightdb`
-- **Full reference:** [`openapi.yaml`](../../../resources/openapi.yaml) — render it in Swagger UI
-  for an interactive, per-endpoint reference with request/response schemas and a
-  "try it" console.
-  > Swagger UI is **not wired up yet** (see _Serving Swagger UI_ below). Until then,
-  > paste `openapi.yaml` into <https://editor.swagger.io> to browse it.
+- **Full reference:** [`openapi.yaml`](../../../resources/openapi.yaml), or browse it
+  interactively at `http://localhost:18181/v1/flightdb/docs/` once the server is running — a
+  per-endpoint reference with request/response schemas and a "try it out" console (see
+  _API reference UI_ below).
 
 This file is the at-a-glance map. The OpenAPI spec is the source of truth for the
 exact shapes.
@@ -109,16 +108,18 @@ curl -i -X POST http://localhost:18181/v1/flightdb/currencies \
 
 ---
 
-## Serving Swagger UI (TODO — not yet implemented)
+## API reference UI
+
+`http://localhost:18181/v1/flightdb/docs/` serves an interactive
+[Scalar](https://github.com/scalar/scalar) reference for `openapi.yaml`, incl. a "try it
+out" console that hits the running server directly. The raw spec is also served on its
+own at `http://localhost:18181/v1/flightdb/docs/openapi.yaml`.
 
 The routes are hand-written `HttpRoutes.of` blocks, so the spec is **not generated**
-from code — `openapi.yaml` is maintained by hand and must be updated when routes
-change. To make it browsable, serve the static spec + Swagger UI without touching
-any route definitions:
-
-1. Add a `swagger-ui` webjar (or vendor the static assets).
-2. Add one static route in `FlightDbApi` that serves `openapi.yaml` (classpath
-   resource) and the Swagger UI assets, pointed at the spec URL.
+from code — `openapi.yaml` is maintained by hand and must be updated when routes change.
+The Scalar UI itself is a pinned `org.webjars.npm:scalar__api-reference` dependency
+served from the classpath (see `ApiDocsEndpoints`), not fetched from a CDN, so it works
+fully offline once built.
 
 A later, larger alternative is migrating the routes to **tapir**, which would make
 them self-describing and generate the OpenAPI spec from code (no hand-maintenance,
