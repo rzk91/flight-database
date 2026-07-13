@@ -50,8 +50,8 @@ final class ApiDocsEndpointsTest
     }
 
     Scenario("A webjar asset") {
-      Given("a request for a pinned Scalar webjar asset")
-      val uri = Uri.unsafeFromString("/dist/browser/standalone.js")
+      Given("a request for the Scalar webjar's bundled JS")
+      val uri = Uri.unsafeFromString("/scalar.js")
 
       When("the asset is requested")
       val response = getResponse(uri)
