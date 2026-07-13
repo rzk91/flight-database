@@ -34,6 +34,9 @@
 
 - Simple API GET request with `-i` to include HTTP header info  
 `curl -i http://localhost:18181/v1/flightdb/hello/rahul`
+- Fetch the raw OpenAPI spec (or open `http://localhost:18181/v1/flightdb/docs/` in a browser for
+  the interactive Scalar reference, incl. "try it out")  
+`curl -s http://localhost:18181/v1/flightdb/docs/openapi.yaml`
 - Get currencies and pretty print JSON output (`-s` suppresses any other output)  
 `curl -s http://localhost:18181/v1/flightdb/currencies | jq .` 
 - Get airplanes of a certain manufacturer (e.g. Airbus), via the `manufacturer` sub-filter  

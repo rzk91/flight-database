@@ -64,6 +64,19 @@ val http4sServerDeps = Seq("org.http4s" %% "http4s-ember-server" % http4sVersion
 
 val enumeratumDeps = Seq("com.beachape" %% "enumeratum" % "1.9.8")
 
+// Scalar's standalone browser bundle for /docs, served from the classpath (no CDN).
+// Keep in sync with ApiDocsEndpoints.WebjarVersion. `dist/browser/standalone.js` is a
+// fully self-contained bundle (that's the point of a "browser" build) — none of its
+// transitive npm/webjar "dependencies" are needed at Java-classpath-serving time, and
+// webjars.org's auto-mirroring doesn't cover all of them (some 404 on Maven Central), so
+// they're excluded rather than pulled in.
+val scalarApiReferenceVersion = "1.47.0"
+val scalarApiReferenceDeps =
+  Seq(
+    ("org.webjars.npm" % "scalar__api-reference" % scalarApiReferenceVersion)
+      .excludeAll(ExclusionRule(organization = "org.webjars.npm"))
+  )
+
 val pureconfigDeps = Seq(
   "com.github.pureconfig" %% "pureconfig"             % pureconfigVersion,
   "com.github.pureconfig" %% "pureconfig-cats-effect" % pureconfigVersion
@@ -149,7 +162,7 @@ lazy val api = project
     name := "flight-database-api",
     commonSettings,
     // circe in transitively via domain until step 5
-    libraryDependencies ++= http4sApiDeps ++ enumeratumDeps ++ testingDeps
+    libraryDependencies ++= http4sApiDeps ++ enumeratumDeps ++ scalarApiReferenceDeps ++ testingDeps
   )
 
 lazy val app = project
