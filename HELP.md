@@ -1,18 +1,22 @@
 # Some useful commands
 
 ## Docker commands
-- Pull required PostgreSQL image (currently, 16)  
-`docker pull postgres:16`
-- Run PostgreSQL in the background and perform port forwarding to 5432  
-`docker run --name postgres -e POSTGRES_PASSWORD=postgres -d -p 5432:5432 postgres:16`
-- Jump into the PostgreSQL container to the default database  
-`docker exec -it postgres psql -U postgres`
+- Copy the example env file (holds the Postgres credentials shared by Compose and the app) and
+  adjust it if needed  
+`cp docker/.env.example docker/.env`
+- Start PostgreSQL in the background, creating the `flightdb` database and `docker` role from
+  `docker/.env`  
+`docker compose -f docker/docker-compose.yml up -d`
+- Export the same credentials into your shell so `sbt app/run` (see below) can pick them up  
+`set -a && source docker/.env && set +a`
+- Jump into the PostgreSQL container's default database  
+`docker compose -f docker/docker-compose.yml exec postgres psql -U docker`
 - Jump into the PostgreSQL container to the database "flightdb"  (only possible if the database "flightdb" already exists)  
-`docker exec -it postgres psql -U postgres -d flightdb`
+`docker compose -f docker/docker-compose.yml exec postgres psql -U docker -d flightdb`
+- Stop PostgreSQL (data persists in the `flightdb-data` volume)  
+`docker compose -f docker/docker-compose.yml down`
 
 ## psql commands
-- Create a new database named "flightdb" (should be executed before running `FlightDbMain`)  
-`CREATE DATABASE flightdb;`
 - List all databases  
 `\l`
 - Switch to database "flightdb"  

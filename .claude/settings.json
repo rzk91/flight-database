@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "service postgresql start; printf '#!/bin/bash\\nexec /usr/bin/sbt --jvm-client \"$@\"\\n' > /usr/local/bin/sbt && chmod +x /usr/local/bin/sbt"
+            "command": "bash /home/user/flight-database/.claude/session-start-postgres.sh"
           }
         ]
       }

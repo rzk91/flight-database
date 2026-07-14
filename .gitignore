@@ -31,8 +31,11 @@ target/
 *.swp
 *.txt
 null/
-src/main/resources/local*.conf
+**/src/main/resources/local*.conf
 .java-version
+
+# docker compose env file (see docker/.env.example)
+docker/.env
 
 #general
 *.class
