@@ -44,9 +44,11 @@ The codebase is a modular monolith of seven sbt modules (see
 - PostgreSQL 16 (Docker recommended — see [`HELP.md`](HELP.md))
 
 ## Quick start
-1. Start Postgres and create the `flightdb` database — see the Docker/psql commands in
-   [`HELP.md`](HELP.md).
-2. `sbt app/run` — this runs the Flyway migrations (incl. seed data) and starts the API at
+1. `cp docker/.env.example docker/.env` and `docker compose -f docker/docker-compose.yml up -d`
+   to start Postgres with the `flightdb` database already created — see [`HELP.md`](HELP.md) for
+   the full Docker/psql command reference.
+2. `set -a && source docker/.env && set +a` to put the matching credentials in your shell, then
+   `sbt app/run` — this runs the Flyway migrations (incl. seed data) and starts the API at
    `http://localhost:18181/v1/flightdb`.
 3. Browse the interactive API reference at `http://localhost:18181/v1/flightdb/docs/`, explore
    with the curl examples in [`HELP.md`](HELP.md), or read the endpoint reference linked above.
