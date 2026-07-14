@@ -10,9 +10,18 @@
 - Export the same credentials into your shell so `sbt app/run` (see below) can pick them up  
 `set -a && source docker/.env && set +a`
 - Running `FlightDbMain` from an IDE instead of the CLI? The IDE launches the JVM directly, so it
-  won't inherit vars exported in a shell — add `DB_USERNAME`, `DB_PASSWORD`, `DB_NAME`, and
-  `DB_BASE_URL` (same values as `docker/.env`) to the run configuration's environment variables
-  instead.
+  won't inherit vars exported in a shell. Instead, create `modules/app/src/main/resources/local.conf`
+  (gitignored) with the same values as `docker/.env`:
+  ```hocon
+  db-config {
+    base-url = "jdbc:postgresql://localhost:5432"
+    db-name  = "flightdb"
+    access {
+      username = "docker"
+      password = "docker"
+    }
+  }
+  ```
 - Jump into the PostgreSQL container's default database  
 `docker compose -f docker/docker-compose.yml exec postgres psql -U docker`
 - Jump into the PostgreSQL container to the database "flightdb"  (only possible if the database "flightdb" already exists)  

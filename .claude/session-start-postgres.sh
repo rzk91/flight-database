@@ -18,8 +18,8 @@ su postgres -c "psql -tAc \"SELECT 1 FROM pg_roles WHERE rolname='docker'\"" | g
 su postgres -c "psql -tAc \"SELECT 1 FROM pg_database WHERE datname='flightdb'\"" | grep -q 1 \
   || su postgres -c "psql -c \"CREATE DATABASE flightdb OWNER docker;\""
 
-mkdir -p /home/user/flight-database/modules/app/src/main/resources
-cat > /home/user/flight-database/modules/app/src/main/resources/local.conf <<'CONF'
+mkdir -p "$CLAUDE_PROJECT_DIR/modules/app/src/main/resources"
+cat > "$CLAUDE_PROJECT_DIR/modules/app/src/main/resources/local.conf" <<'CONF'
 db-config {
   base-url = "jdbc:postgresql://localhost:5432"
   db-name  = "flightdb"
