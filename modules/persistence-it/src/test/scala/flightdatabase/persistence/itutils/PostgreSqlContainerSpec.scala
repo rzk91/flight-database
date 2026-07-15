@@ -22,11 +22,6 @@ trait PostgreSqlContainerSpec[F[_]] extends AnyFlatSpec with ForAllTestContainer
     baseUrl = s"jdbc:postgresql://${container.host}:${container.firstMappedPort}",
     dbName = container.databaseName,
     access = Access(container.username, container.password),
-    // Only takes effect together with `baselineOnMigrate`/an explicit `flyway.baseline()`
-    // call, neither of which `Database.flywayMigration()` does — so this is inert either
-    // way here, but "0" is the semantically correct value: nothing predates V1 on a fresh
-    // testcontainers instance.
-    baseline = "0",
     threadPoolSize = 32,
     cleanDatabase = false,
     loggingActive = true
