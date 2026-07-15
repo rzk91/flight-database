@@ -81,7 +81,6 @@ class Database[F[_]: Async] private (config: DatabaseConfig, clean: Boolean) {
       .configure()
       .cleanDisabled(!clean)
       .dataSource(config.url, config.access.username, config.access.password)
-      .baselineVersion(config.baseline)
       .load()
     if (clean) flyway.clean()
     flyway.migrate().success
