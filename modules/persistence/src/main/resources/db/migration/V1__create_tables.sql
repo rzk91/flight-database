@@ -98,9 +98,16 @@ CREATE TABLE airport
     capacity            bigint               NOT NULL CHECK (capacity > 0),
     international       boolean              NOT NULL,
     junction            boolean              NOT NULL,
+    latitude            numeric              NOT NULL,
+    longitude           numeric              NOT NULL,
+    taxi_out_duration   integer              NOT NULL CHECK (taxi_out_duration > 0),
+    taxi_in_duration    integer              NOT NULL CHECK (taxi_in_duration > 0),
     created_at          TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+COMMENT ON COLUMN airport.taxi_out_duration IS 'Typical taxi-out duration, in minutes.';
+COMMENT ON COLUMN airport.taxi_in_duration IS 'Typical taxi-in duration, in minutes.';
 
 -- Create airline table
 CREATE TABLE airline
@@ -125,9 +132,12 @@ CREATE TABLE airplane
     manufacturer_id bigint            NOT NULL REFERENCES manufacturer (id) ON DELETE CASCADE,
     capacity        integer           NOT NULL CHECK (capacity > 0),
     max_range_in_km integer           NOT NULL CHECK (max_range_in_km > 0),
+    cruise_speed    integer           NOT NULL CHECK (cruise_speed > 0),
     created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     last_updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+COMMENT ON COLUMN airplane.cruise_speed IS 'Typical cruise speed, in km/h.';
 
 -- Create airline-airplane table
 CREATE TABLE airline_airplane
