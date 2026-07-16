@@ -64,7 +64,10 @@ final class ApiErrorSpec extends AnyFlatSpec with Matchers {
     EntryListEmpty.asResult[Int] shouldBe Left(EntryListEmpty)
   }
 
-  "elevate" should "wrap the result in the applicative" in {
+  "elevate" should "wrap the error result in any Applicative" in {
     EntryListEmpty.elevate[Id, Int] shouldBe Left(EntryListEmpty)
+    EntryListEmpty.elevate[Option, Int] shouldBe Some(Left(EntryListEmpty))
+    EntryListEmpty.elevate[List, Int] shouldBe List(Left(EntryListEmpty))
+    EntryListEmpty.elevate[Either[String, *], Int] shouldBe Right(Left(EntryListEmpty))
   }
 }

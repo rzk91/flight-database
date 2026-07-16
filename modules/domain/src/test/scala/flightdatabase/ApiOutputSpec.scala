@@ -20,8 +20,11 @@ final class ApiOutputSpec extends AnyFlatSpec with Matchers {
     Deleted.asResult shouldBe Right(Deleted)
   }
 
-  "elevate" should "wrap the result in the applicative" in {
+  "elevate" should "wrap the output result in any Applicative" in {
     Got(42).elevate[Id] shouldBe Right(Got(42))
+    Got(42).elevate[Option] shouldBe Some(Right(Got(42)))
+    Got(42).elevate[List] shouldBe List(Right(Got(42)))
+    Got(42).elevate[Either[String, *]] shouldBe Right(Right(Got(42)))
     Deleted.elevate[Id] shouldBe Right(Deleted)
   }
 
