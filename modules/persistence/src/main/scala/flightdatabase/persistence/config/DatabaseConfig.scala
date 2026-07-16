@@ -12,7 +12,6 @@ final case class DatabaseConfig(
   private val baseUrl: String,
   dbName: String,
   access: Access,
-  baseline: String,
   threadPoolSize: Int,
   cleanDatabase: Boolean,
   loggingActive: Boolean
