@@ -48,13 +48,15 @@ final class TableBaseSpec extends AnyFlatSpec with Matchers with OptionValues {
   // One fully-populated sample per entity (values are irrelevant — only the encoded key set is
   // used). Optionals are Some so the key still appears; @JsonKey overrides (e.g. route_number,
   // number_of_runways) come through because circe applies them during encoding.
-  private val samples: Map[String, (TableBase[_], Json)] = Map(
-    "Airline"         -> (TableBase[Airline], Airline(1L, "n", "IA", "ICA", "CS", 1L).asJson),
-    "AirlineAirplane" -> (TableBase[AirlineAirplane], AirlineAirplane(1L, 1L, 1L).asJson),
-    "AirlineCity"     -> (TableBase[AirlineCity], AirlineCity(1L, 1L, 1L).asJson),
-    "AirlineRoute"    -> (TableBase[AirlineRoute], AirlineRoute(1L, 1L, "R1", 1L, 1L).asJson),
-    "Airplane"        -> (TableBase[Airplane], Airplane(1L, "n", 1L, 100, 5000, 800).asJson),
-    "Airport" -> (
+  private val samples: Map[String, EntitySample] = Map(
+    "Airline" -> EntitySample(TableBase[Airline], Airline(1L, "n", "IA", "ICA", "CS", 1L).asJson),
+    "AirlineAirplane" ->
+      EntitySample(TableBase[AirlineAirplane], AirlineAirplane(1L, 1L, 1L).asJson),
+    "AirlineCity" -> EntitySample(TableBase[AirlineCity], AirlineCity(1L, 1L, 1L).asJson),
+    "AirlineRoute" ->
+      EntitySample(TableBase[AirlineRoute], AirlineRoute(1L, 1L, "R1", 1L, 1L).asJson),
+    "Airplane" -> EntitySample(TableBase[Airplane], Airplane(1L, "n", 1L, 100, 5000, 800).asJson),
+    "Airport" -> EntitySample(
       TableBase[Airport],
       Airport(
         1L,
@@ -73,17 +75,18 @@ final class TableBaseSpec extends AnyFlatSpec with Matchers with OptionValues {
         TaxiDuration(12)
       ).asJson
     ),
-    "City" -> (
+    "City" -> EntitySample(
       TableBase[City],
       City(1L, "n", 1L, true, 1000L, BigDecimal(1.0), BigDecimal(2.0), "UTC").asJson
     ),
-    "Country" -> (
+    "Country" -> EntitySample(
       TableBase[Country],
       Country(1L, "Germany", "DE", "DEU", 49, Some("de"), 1L, Some(2L), Some(3L), 1L, "German").asJson
     ),
-    "Currency"     -> (TableBase[Currency], Currency(1L, "Euro", "EUR", Some("€")).asJson),
-    "Language"     -> (TableBase[Language], Language(1L, "n", "en", Some("eng"), "English").asJson),
-    "Manufacturer" -> (TableBase[Manufacturer], Manufacturer(1L, "n", 1L).asJson)
+    "Currency" -> EntitySample(TableBase[Currency], Currency(1L, "Euro", "EUR", Some("€")).asJson),
+    "Language" ->
+      EntitySample(TableBase[Language], Language(1L, "n", "en", Some("eng"), "English").asJson),
+    "Manufacturer" -> EntitySample(TableBase[Manufacturer], Manufacturer(1L, "n", 1L).asJson)
   )
 
   // Cross-checks each hand-written fieldTypeMap key set against an independent source (the entity's
@@ -92,15 +95,20 @@ final class TableBaseSpec extends AnyFlatSpec with Matchers with OptionValues {
   // DB schema in #55, with the compiler-guarantee derivation tracked in #56.
   "every entity's fieldTypeMap keys" should "match its circe member names" in {
     samples.foreach {
-      case (label, (tableBase, json)) =>
+      case (label, sample) =>
         withClue(s"$label: ") {
-          tableBase.fields shouldBe json.asObject.value.keys.toSet
+          sample.tableBase.fields shouldBe sample.encoded.asObject.value.keys.toSet
         }
     }
   }
 
   it should "cover every entity that has a data table" in {
     val dataTables = FlightDbTable.values.toSet - FlightDbTable.HELLO_WORLD - FlightDbTable.DOCS
-    samples.values.map(_._1.table).toSet shouldBe dataTables
+    samples.values.map(_.tableBase.table).toSet shouldBe dataTables
   }
 }
+
+// Pairs an entity's TableBase with a circe encoding of a sample instance. `encoded` is the
+// independent source of truth for the expected column names. Top-level (not nested in the spec)
+// to avoid the "outer reference in this type test" warning on a path-dependent case class.
+final private case class EntitySample(tableBase: TableBase[_], encoded: Json)

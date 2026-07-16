@@ -9,6 +9,9 @@ import java.nio.file.Paths
 
 final class PathOpsSpec extends AnyFlatSpec with Matchers {
 
+  // The name/extension helpers are purely lexical (java.nio.file.Path operations on the path
+  // string), so the paths below need not exist on disk. Only the directory/listContents test
+  // touches the real filesystem, and it creates a temp directory for that.
   "fileName / folderName" should "extract the file and its parent folder" in {
     val p = Paths.get("/home/user/docs/report.json")
     p.fileName shouldBe "report.json"
