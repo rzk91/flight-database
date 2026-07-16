@@ -4,7 +4,8 @@ import flightdatabase.syntax.path._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import java.nio.file.{Files, Paths}
+import java.nio.file.Files
+import java.nio.file.Paths
 
 final class PathOpsSpec extends AnyFlatSpec with Matchers {
 

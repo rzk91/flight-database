@@ -35,7 +35,7 @@ final class FieldTypeSpec extends AnyFlatSpec with Matchers {
 
   "numeric type operators" should "include ordering and range operators" in {
     List(IntType, LongType, BigDecimalType).foreach { ft =>
-      ft.operators should contain allOf (GreaterThan, LessThan, Range, In, NotIn)
+      (ft.operators should contain).allOf(GreaterThan, LessThan, Range, In, NotIn)
       ft.operators should not contain RegexMatch
       ft.operators should not contain Is
     }

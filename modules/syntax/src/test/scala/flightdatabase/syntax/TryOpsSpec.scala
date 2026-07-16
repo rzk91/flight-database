@@ -4,7 +4,9 @@ import flightdatabase.syntax.try_._
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 
-import scala.util.{Failure, Success, Try}
+import scala.util.Failure
+import scala.util.Success
+import scala.util.Try
 
 final class TryOpsSpec extends AnyFlatSpec with Matchers {
 

@@ -37,7 +37,7 @@ final class CirceRoundTripSpec extends AnyFlatSpec with Matchers with EitherValu
     json should include("country_code")
     json should include("main_language_id")
     json should include("secondary_language_id")
-    json should not include "countryCode"
+    (json should not).include("countryCode")
   }
 
   "Currency" should "round-trip with and without an optional symbol" in {

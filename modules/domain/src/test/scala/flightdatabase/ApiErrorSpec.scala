@@ -18,7 +18,7 @@ final class ApiErrorSpec extends AnyFlatSpec with Matchers {
   }
 
   "InconsistentIds" should "mention both ids" in {
-    InconsistentIds(1L, 2L).error should (include("1") and include("2"))
+    InconsistentIds(1L, 2L).error should (include("1").and(include("2")))
   }
 
   "EntryNotFound" should "render the missing entry" in {
@@ -38,7 +38,7 @@ final class ApiErrorSpec extends AnyFlatSpec with Matchers {
 
   "WrongOperator" should "mention the operator, field and type" in {
     val err = WrongOperator(Operator.Equals, "age", IntType)
-    err.error should (include("age") and include("IntType"))
+    err.error should (include("age").and(include("IntType")))
   }
 
   "UnknownDbError" should "carry its raw error verbatim" in {
@@ -54,7 +54,7 @@ final class ApiErrorSpec extends AnyFlatSpec with Matchers {
 
   it should "build an addendum from the relevant field and values" in {
     SqlError("23505", Some("iso"), Some(Nel.of("DE", "IN"))).addendum should (
-      include("iso") and include("DE, IN")
+      include("iso").and(include("DE, IN"))
     )
     SqlError("23505", Some("iso"), None).addendum should include("iso")
     SqlError("23505", None, Some(Nel.of("DE"))).addendum should include("DE")
