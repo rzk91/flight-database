@@ -33,7 +33,7 @@
 `sbt app/run` only applies the schema (`persistence`'s Flyway migrations) — the app's own database
 starts **empty**. Until the ETL pipeline (#28/#29) can populate it automatically, load the same
 seed data the integration tests use by hand, in version order (uses the credentials from
-`docker/.env` — run `set -a && source docker/.env && set +a` first if you haven't already):
+`docker/.env`):
 ```sh
 for f in modules/persistence-it/src/test/resources/db/migration/V*.sql; do
   docker compose -f docker/docker-compose.yml exec -T postgres psql -U "$DB_USERNAME" -d "$DB_NAME" -f - < "$f"
