@@ -27,6 +27,15 @@ trait PostgreSqlContainerSpec[F[_]] extends AnyFlatSpec with ForAllTestContainer
     loggingActive = true
   )
 
+  /**
+    * Schema comes from the app's own DDL migrations (`persistence`'s `db/migration/schema`);
+    * seed data comes from a test-owned location, kept in sync with (but independent of) the
+    * app's production seed migrations. This lets the seed catalogue this suite asserts against
+    * evolve without being coupled to the app's production migration path.
+    */
+  final lazy val migrationLocations: List[String] =
+    List("classpath:db/migration/schema", "classpath:db/test-seed")
+
   final lazy val transactor: Transactor[F] =
-    Database.makeUnsafe[F](testConfig, clean = false).simpleTransactor
+    Database.makeUnsafe[F](testConfig, clean = false, migrationLocations).simpleTransactor
 }

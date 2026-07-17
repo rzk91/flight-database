@@ -22,12 +22,12 @@ The codebase is a modular monolith of seven sbt modules (see
 | Module | Contents |
 |---|---|
 | `domain` | Entities, algebras, `FieldType` GADT, `ApiError`, geo core (haversine distance + great-circle interpolation). No doobie dependency. |
-| `persistence` | Repositories, doobie queries, `DatabaseConfig`, Flyway migrations + seed data. |
+| `persistence` | Repositories, doobie queries, `DatabaseConfig`, Flyway schema migrations (`db/migration/schema`) + app seed data (`db/migration/seed`). |
 | `api` | http4s endpoints, `ApiConfig`/`ApiLogging`, endpoint unit tests. |
 | `app` | `FlightDbMain`, `Server`, aggregate configuration, pureconfig loader — the composition root. |
 | `syntax` | Pure, domain-independent generic extensions. |
 | `testkit` | Shared test-support helpers. |
-| `persistence-it` | Repository/query integration tests (needs Docker — uses testcontainers). |
+| `persistence-it` | Repository/query integration tests (needs Docker — uses testcontainers). Schema comes from `persistence`; seed data is its own test-owned copy (`db/test-seed`), independent of the app's seed migrations. |
 
 ## Documentation map
 
