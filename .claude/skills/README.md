@@ -18,12 +18,14 @@ Everything under `skills/engineering/` and `skills/productivity/` from the fork,
 flattened one level (each skill is a directory containing `SKILL.md` plus any
 supporting reference files and `agents/` subdirectories it relies on).
 
-Note: the fork's `code-review` skill is vendored here as `spec-review` (its
-directory and frontmatter `name` were changed) so it doesn't shadow the Claude
-Code built-in `code-review` skill — both stay invocable. The built-in reviews
-the working diff for correctness bugs and cleanups; `spec-review` reviews a
-branch against this repo's standards and the originating spec. When re-syncing
-from the fork, re-apply this rename (the fork ships it as `code-review`).
+Note: the fork's `code-review` skill is vendored here as `spec-review` — its
+directory, frontmatter `name`, agent display name, and every cross-reference
+to it from other vendored skills (`ask-matt`, `tdd`, `implement`) were renamed
+— so it doesn't shadow the Claude Code built-in `code-review` skill; both stay
+invocable. The built-in reviews the working diff for correctness bugs and
+cleanups; `spec-review` reviews a branch against this repo's standards and the
+originating spec. When re-syncing from the fork, re-apply this rename (the
+fork ships it as `code-review` throughout).
 
 ## Re-syncing with the fork
 
@@ -38,10 +40,15 @@ for cat in engineering productivity; do
     cp -R "$d" ".claude/skills/$name"
   done
 done
-# Re-apply the local rename: code-review -> spec-review (avoids shadowing the built-in)
+# Re-apply the local rename: code-review -> spec-review (avoids shadowing the built-in),
+# including every cross-reference to it from other vendored skills.
 rm -rf .claude/skills/spec-review
 mv .claude/skills/code-review .claude/skills/spec-review
 sed -i 's/^name: code-review$/name: spec-review/' .claude/skills/spec-review/SKILL.md
+sed -i 's/display_name: "Code Review"/display_name: "Spec Review"/' .claude/skills/spec-review/agents/openai.yaml
+grep -rl '`code-review`\|/code-review' .claude/skills --include=SKILL.md | xargs -r sed -i \
+  -e 's/`code-review`/`spec-review`/g' \
+  -e 's#/code-review#/spec-review#g'
 rm -rf /tmp/matt-skills
 ```
 
