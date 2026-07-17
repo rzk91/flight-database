@@ -7,7 +7,9 @@ A Scala backend modelling the static aviation world — airlines, airports, airp
 manufacturers), countries, cities, and the scheduled routes between them — exposed over an HTTP
 API. Built with [http4s](http://http4s.org/), [doobie](http://tpolecat.github.io/doobie/), and
 [circe](https://circe.github.io/circe/) on PostgreSQL, with schema managed by
-[Flyway](https://flywaydb.org/), and a seeded, comprehensive set of entries in the database.
+[Flyway](https://flywaydb.org/). A comprehensive, seeded catalogue backs the integration tests;
+the app's own database starts empty until the ETL pipeline (#28/#29) can populate it (see
+[`HELP.md`](HELP.md) for loading the seed data by hand in the meantime).
 
 > Work in progress, and a learning project rather than a production service. Current direction:
 > layering a **simulated** live flight feed on top of the existing catalogue (see
@@ -22,12 +24,12 @@ The codebase is a modular monolith of seven sbt modules (see
 | Module | Contents |
 |---|---|
 | `domain` | Entities, algebras, `FieldType` GADT, `ApiError`, geo core (haversine distance + great-circle interpolation). No doobie dependency. |
-| `persistence` | Repositories, doobie queries, `DatabaseConfig`, Flyway migrations + seed data. |
+| `persistence` | Repositories, doobie queries, `DatabaseConfig`, Flyway schema migrations. |
 | `api` | http4s endpoints, `ApiConfig`/`ApiLogging`, endpoint unit tests. |
 | `app` | `FlightDbMain`, `Server`, aggregate configuration, pureconfig loader — the composition root. |
 | `syntax` | Pure, domain-independent generic extensions. |
 | `testkit` | Shared test-support helpers. |
-| `persistence-it` | Repository/query integration tests (needs Docker — uses testcontainers). |
+| `persistence-it` | Repository/query integration tests (needs Docker — uses testcontainers). Owns the seed data the tests assert against, applied on top of `persistence`'s schema migrations. |
 
 ## Documentation map
 
@@ -48,8 +50,9 @@ The codebase is a modular monolith of seven sbt modules (see
    to start Postgres with the `flightdb` database already created — see [`HELP.md`](HELP.md) for
    the full Docker/psql command reference.
 2. `set -a && source docker/.env && set +a` to put the matching credentials in your shell, then
-   `sbt app/run` — this runs the Flyway migrations (incl. seed data) and starts the API at
-   `http://localhost:18181/v1/flightdb`.
+   `sbt app/run` — this runs the Flyway schema migrations and starts the API at
+   `http://localhost:18181/v1/flightdb`. The catalogue starts **empty** until the ETL pipeline
+   (#28/#29) lands; see [`HELP.md`](HELP.md) for loading the seed data by hand until then.
 3. Browse the interactive API reference at `http://localhost:18181/v1/flightdb/docs/`, explore
    with the curl examples in [`HELP.md`](HELP.md), or read the endpoint reference linked above.
 
