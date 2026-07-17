@@ -16,17 +16,12 @@ import org.typelevel.doobie.util.transactor.Transactor
   *  The database can be cleaned before migration, which is useful for testing purposes.
   *  Use the companion object methods to create an appropriate instance of this class.
   *
-  *  @param config    The database configuration.
-  *                   This includes the driver, URL, access credentials, and other settings (e.g., logging active).
-  *  @param clean     A flag that indicates whether to clean the database before migration.
-  *  @param locations The Flyway migration locations to scan, in classpath notation.
+  *  @param config The database configuration.
+  *                This includes the driver, URL, access credentials, and other settings (e.g., logging active).
+  *  @param clean  A flag that indicates whether to clean the database before migration.
   * @tparam F The effect type, which must have an instance of `Async`.
   *  */
-class Database[F[_]: Async] private (
-  config: DatabaseConfig,
-  clean: Boolean,
-  locations: List[String]
-) {
+class Database[F[_]: Async] private (config: DatabaseConfig, clean: Boolean) {
 
   private val logHandler: Option[LogHandler[F]] =
     Option(Log4jHandler.create(getClass.getName)).filter(_ => config.loggingActive)
@@ -85,7 +80,6 @@ class Database[F[_]: Async] private (
     val flyway = Flyway
       .configure()
       .cleanDisabled(!clean)
-      .locations(locations: _*)
       .dataSource(config.url, config.access.username, config.access.password)
       .load()
     if (clean) flyway.clean()
@@ -95,35 +89,12 @@ class Database[F[_]: Async] private (
 
 object Database {
 
-  /**
-    * The default Flyway locations used in production and local runs: the app-owned schema
-    * migrations plus the seed data that ships with them (see `db/migration/schema` and
-    * `db/migration/seed` under the `persistence` module's resources).
-    *
-    * `persistence-it` overrides this to combine the shared schema location with a test-owned
-    * seed location, so integration tests no longer depend on the app's seed migrations.
-    */
-  val DefaultLocations: List[String] =
-    List("classpath:db/migration/schema", "classpath:db/migration/seed")
+  def makeUnsafe[F[_]: Async](config: DatabaseConfig, clean: Boolean): Database[F] =
+    new Database[F](config, clean)
 
-  def makeUnsafe[F[_]: Async](
-    config: DatabaseConfig,
-    clean: Boolean,
-    locations: List[String] = DefaultLocations
-  ): Database[F] =
-    new Database[F](config, clean, locations)
+  def make[F[_]: Async](config: DatabaseConfig, clean: Boolean): F[Database[F]] =
+    makeUnsafe(config, clean).pure[F]
 
-  def make[F[_]: Async](
-    config: DatabaseConfig,
-    clean: Boolean,
-    locations: List[String] = DefaultLocations
-  ): F[Database[F]] =
-    makeUnsafe(config, clean, locations).pure[F]
-
-  def resource[F[_]: Async](
-    config: DatabaseConfig,
-    clean: Boolean,
-    locations: List[String] = DefaultLocations
-  ): Resource[F, Database[F]] =
-    Resource.pure(makeUnsafe(config, clean, locations))
+  def resource[F[_]: Async](config: DatabaseConfig, clean: Boolean): Resource[F, Database[F]] =
+    Resource.pure(makeUnsafe(config, clean))
 }

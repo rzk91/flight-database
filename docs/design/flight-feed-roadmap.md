@@ -35,7 +35,7 @@ domain or API layers.
 | Module | Contents |
 |---|---|
 | `domain` | Entities, algebras, `FieldType` GADT, `ApiError`, geo core (`flightdatabase.geo`: haversine distance + great-circle interpolation). **No doobie dependency.** |
-| `persistence` | Repositories, doobie queries, `DatabaseConfig`, Flyway migrations + seed data, doobie syntax (`FieldType → Put/Read` bridge). |
+| `persistence` | Repositories, doobie queries, `DatabaseConfig`, Flyway schema migrations, doobie syntax (`FieldType → Put/Read` bridge). Seed data lives with `persistence-it` until ETL (#28/#29) can populate the catalogue. |
 | `api` | http4s endpoints, `ApiConfig`/`ApiLogging`, http4s + enum-string syntax, endpoint unit tests. |
 | `app` | `FlightDbMain`, `Server`, aggregate `Configuration`, pureconfig loader. Composition root. |
 | `syntax` | Pure, domain-independent generic extensions (formerly `utils`). |

@@ -29,6 +29,17 @@
 - Stop PostgreSQL (data persists in the `flightdb-data` volume)  
 `docker compose -f docker/docker-compose.yml down`
 
+## Seed data
+`sbt app/run` only applies the schema (`persistence`'s Flyway migrations) — the app's own database
+starts **empty**. Until the ETL pipeline (#28/#29) can populate it automatically, load the same
+seed data the integration tests use by hand, in version order:
+```sh
+for f in modules/persistence-it/src/test/resources/db/migration/V*.sql; do
+  docker compose -f docker/docker-compose.yml exec -T postgres psql -U docker -d flightdb -f - < "$f"
+done
+```
+(The curl examples below assume this seed data has been loaded.)
+
 ## psql commands
 - List all databases  
 `\l`
