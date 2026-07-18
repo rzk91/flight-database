@@ -19,6 +19,7 @@ import flightdatabase.language.Language
 import flightdatabase.language.LanguageCreate
 import flightdatabase.language.LanguagePatch
 import flightdatabase.persistence.itutils.RepositoryCheck
+import flightdatabase.test.fixtures.language
 import flightdatabase.test.syntax.all._
 import org.scalatest.Inspectors.forAll
 
@@ -26,7 +27,7 @@ final class LanguageRepositoryIT extends RepositoryCheck {
 
   lazy val repo: LanguageRepository[IO] = LanguageRepository.make[IO].unsafeRunSync()
 
-  val originalLanguages: Nel[Language] = flightdatabase.test.fixtures.language.languages
+  val originalLanguages: Nel[Language] = language.languages
 
   val idNotPresent: Long = 100
   val valueNotPresent: String = "Not present"

@@ -4,6 +4,7 @@ import cats.data.{NonEmptyList => Nel}
 import flightdatabase.airline_route.AirlineRoute
 
 trait AirlineRouteFixtures {
+
   val airlineRoutes: Nel[AirlineRoute] = Nel.of(
     AirlineRoute(1, 1, "LH754", 1, 2),
     AirlineRoute(2, 1, "LH755", 2, 1),
@@ -14,4 +15,4 @@ trait AirlineRouteFixtures {
   )
 }
 
-object airlineRoute extends AirlineRouteFixtures
+object airline_route extends AirlineRouteFixtures

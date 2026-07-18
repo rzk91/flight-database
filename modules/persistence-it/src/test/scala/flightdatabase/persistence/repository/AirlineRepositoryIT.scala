@@ -20,6 +20,7 @@ import flightdatabase.airline.Airline
 import flightdatabase.airline.AirlineCreate
 import flightdatabase.airline.AirlinePatch
 import flightdatabase.persistence.itutils.RepositoryCheck
+import flightdatabase.test.fixtures.airline
 import flightdatabase.test.syntax.all._
 import org.scalatest.Inspectors.forAll
 
@@ -27,7 +28,7 @@ final class AirlineRepositoryIT extends RepositoryCheck {
 
   lazy val repo: AirlineRepository[IO] = AirlineRepository.make[IO].unsafeRunSync()
 
-  val originalAirlines: Nel[Airline] = flightdatabase.test.fixtures.airline.airlines
+  val originalAirlines: Nel[Airline] = airline.airlines
 
   val idNotPresent: Long = 100
   val valueNotPresent: String = "Not present"

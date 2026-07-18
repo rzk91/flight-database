@@ -21,6 +21,7 @@ import flightdatabase.city.City
 import flightdatabase.city.CityCreate
 import flightdatabase.city.CityPatch
 import flightdatabase.persistence.itutils.RepositoryCheck
+import flightdatabase.test.fixtures.city
 import flightdatabase.test.syntax.all._
 import org.scalatest.Inspectors.forAll
 
@@ -28,7 +29,7 @@ final class CityRepositoryIT extends RepositoryCheck {
 
   lazy val repo: CityRepository[IO] = CityRepository.make[IO].unsafeRunSync()
 
-  val originalCities: Nel[City] = flightdatabase.test.fixtures.city.cities
+  val originalCities: Nel[City] = city.cities
 
   val countryToIdMap: Map[String, Long] = Map(
     "India"                    -> 1,

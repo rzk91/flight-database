@@ -4,6 +4,7 @@ import cats.data.{NonEmptyList => Nel}
 import flightdatabase.airplane.Airplane
 
 trait AirplaneFixtures {
+
   val airplanes: Nel[Airplane] = Nel.of(
     Airplane(1, "A380", 1, 853, 14800, 903),
     Airplane(2, "747-8", 2, 410, 14310, 907),

@@ -20,6 +20,7 @@ import flightdatabase.airplane.Airplane
 import flightdatabase.airplane.AirplaneCreate
 import flightdatabase.airplane.AirplanePatch
 import flightdatabase.persistence.itutils.RepositoryCheck
+import flightdatabase.test.fixtures.airplane
 import flightdatabase.test.syntax.all._
 import org.scalatest.Inspectors.forAll
 
@@ -27,7 +28,7 @@ final class AirplaneRepositoryIT extends RepositoryCheck {
 
   lazy val repo: AirplaneRepository[IO] = AirplaneRepository.make[IO].unsafeRunSync()
 
-  val originalAirplanes: Nel[Airplane] = flightdatabase.test.fixtures.airplane.airplanes
+  val originalAirplanes: Nel[Airplane] = airplane.airplanes
   val manufacturerToIdMap: Map[String, Long] = Map("Airbus" -> 1, "Boeing" -> 2)
   val idNotPresent: Long = 10
   val valueNotPresent: String = "Not present"

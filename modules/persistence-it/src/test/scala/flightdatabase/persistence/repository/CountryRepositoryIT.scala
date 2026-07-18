@@ -20,6 +20,7 @@ import flightdatabase.country.Country
 import flightdatabase.country.CountryCreate
 import flightdatabase.country.CountryPatch
 import flightdatabase.persistence.itutils.RepositoryCheck
+import flightdatabase.test.fixtures.country
 import flightdatabase.test.syntax.all._
 import org.scalatest.Inspectors.forAll
 
@@ -27,7 +28,7 @@ final class CountryRepositoryIT extends RepositoryCheck {
 
   lazy val repo: CountryRepository[IO] = CountryRepository.make[IO].unsafeRunSync()
 
-  val originalCountries: Nel[Country] = flightdatabase.test.fixtures.country.countries
+  val originalCountries: Nel[Country] = country.countries
 
   val idNotPresent: Long = 100
   val valueNotPresent: String = "NotPresent"

@@ -10,6 +10,7 @@ import flightdatabase.city.CityCreate
 import flightdatabase.city.CityPatch
 import flightdatabase.partial.PartiallyAppliedGetAll
 import flightdatabase.partial.PartiallyAppliedGetBy
+import flightdatabase.test.fixtures.city
 import io.circe.Decoder
 import io.circe.Encoder
 import org.scalamock.function.StubFunction1
@@ -32,7 +33,7 @@ final class CityEndpointsTest extends EntityEndpointsSpec[City, CityCreate, City
   val createEncoder: Encoder[CityCreate] = Encoder[CityCreate]
   val patchEncoder: Encoder[CityPatch] = Encoder[CityPatch]
 
-  val samples: Nel[City] = flightdatabase.test.fixtures.city.cities
+  val samples: Nel[City] = city.cities
 
   // Exercises every field-type dispatch branch, including the Boolean-only `is` operator and the
   // BigDecimal branch that no other entity in this slice reaches.

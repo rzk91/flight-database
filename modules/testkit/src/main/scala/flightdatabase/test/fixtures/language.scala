@@ -4,6 +4,7 @@ import cats.data.{NonEmptyList => Nel}
 import flightdatabase.language.Language
 
 trait LanguageFixtures {
+
   val languages: Nel[Language] = Nel.of(
     Language(1, "English", "EN", Some("ENG"), "English"),
     Language(2, "German", "DE", Some("DEU"), "Deutsch"),

@@ -11,6 +11,7 @@ import flightdatabase.airport.TaxiDuration
 import flightdatabase.api.testutils.endpoints._
 import flightdatabase.partial.PartiallyAppliedGetAll
 import flightdatabase.partial.PartiallyAppliedGetBy
+import flightdatabase.test.fixtures.airport
 import io.circe.Decoder
 import io.circe.Encoder
 import org.scalamock.function.StubFunction1
@@ -33,7 +34,7 @@ final class AirportEndpointsTest extends EntityEndpointsSpec[Airport, AirportCre
   val createEncoder: Encoder[AirportCreate] = Encoder[AirportCreate]
   val patchEncoder: Encoder[AirportPatch] = Encoder[AirportPatch]
 
-  val samples: Nel[Airport] = flightdatabase.test.fixtures.airport.airports
+  val samples: Nel[Airport] = airport.airports
 
   // Covers every field-type dispatch branch: String, Int, Long, and the Boolean-only `is` operator.
   // Uses the space-free `icao` for the String branch (names contain spaces that the raw query

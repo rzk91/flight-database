@@ -20,6 +20,7 @@ import flightdatabase.airline_route.AirlineRoute
 import flightdatabase.airline_route.AirlineRouteCreate
 import flightdatabase.airline_route.AirlineRoutePatch
 import flightdatabase.persistence.itutils.RepositoryCheck
+import flightdatabase.test.fixtures.airline_route
 import flightdatabase.test.syntax.all._
 import org.scalatest.Inspectors.forAll
 
@@ -27,7 +28,7 @@ final class AirlineRouteRepositoryIT extends RepositoryCheck {
 
   lazy val repo: AirlineRouteRepository[IO] = AirlineRouteRepository.make[IO].unsafeRunSync()
 
-  val originalAirlineRoutes: Nel[AirlineRoute] = flightdatabase.test.fixtures.airlineRoute.airlineRoutes
+  val originalAirlineRoutes: Nel[AirlineRoute] = airline_route.airlineRoutes
 
   val idNotPresent: Long = 100
   val valueNotPresent: String = "NotPresent"

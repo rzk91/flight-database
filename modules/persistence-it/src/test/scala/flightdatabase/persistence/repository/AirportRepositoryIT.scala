@@ -23,6 +23,7 @@ import flightdatabase.airport.AirportPatch
 import flightdatabase.airport.TaxiDuration
 import flightdatabase.persistence.itutils.RepositoryCheck
 import flightdatabase.syntax.string._
+import flightdatabase.test.fixtures.airport
 import flightdatabase.test.syntax.all._
 import org.scalatest.Inspectors.forAll
 
@@ -30,7 +31,7 @@ final class AirportRepositoryIT extends RepositoryCheck {
 
   lazy val repo: AirportRepository[IO] = AirportRepository.make[IO].unsafeRunSync()
 
-  val originalAirports: Nel[Airport] = flightdatabase.test.fixtures.airport.airports
+  val originalAirports: Nel[Airport] = airport.airports
 
   val cityToIdMap: Map[String, Long] = Map("Frankfurt am Main" -> 2, "Bangalore" -> 1, "Dubai" -> 4)
 

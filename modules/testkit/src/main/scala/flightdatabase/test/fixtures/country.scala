@@ -4,6 +4,7 @@ import cats.data.{NonEmptyList => Nel}
 import flightdatabase.country.Country
 
 trait CountryFixtures {
+
   val countries: Nel[Country] = Nel.of(
     Country(1, "India", "IN", "IND", 91, Some(".in"), 7, Some(1), Some(3), 1, "Indian"),
     Country(2, "Germany", "DE", "DEU", 49, Some(".de"), 2, None, None, 2, "German"),

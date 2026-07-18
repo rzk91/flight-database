@@ -5,6 +5,7 @@ import flightdatabase.airport.Airport
 import flightdatabase.airport.TaxiDuration
 
 trait AirportFixtures {
+
   val airports: Nel[Airport] = Nel.of(
     Airport(
       1,

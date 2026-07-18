@@ -4,6 +4,7 @@ import cats.data.{NonEmptyList => Nel}
 import flightdatabase.airline_airplane.AirlineAirplane
 
 trait AirlineAirplaneFixtures {
+
   val airlineAirplanes: Nel[AirlineAirplane] = Nel.of(
     AirlineAirplane(1, 1, 2),
     AirlineAirplane(2, 1, 1),
@@ -13,4 +14,4 @@ trait AirlineAirplaneFixtures {
   )
 }
 
-object airlineAirplane extends AirlineAirplaneFixtures
+object airline_airplane extends AirlineAirplaneFixtures

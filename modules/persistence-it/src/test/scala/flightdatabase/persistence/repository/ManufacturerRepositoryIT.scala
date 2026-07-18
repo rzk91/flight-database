@@ -21,6 +21,7 @@ import flightdatabase.manufacturer.Manufacturer
 import flightdatabase.manufacturer.ManufacturerCreate
 import flightdatabase.manufacturer.ManufacturerPatch
 import flightdatabase.persistence.itutils.RepositoryCheck
+import flightdatabase.test.fixtures.manufacturer
 import flightdatabase.test.syntax.all._
 import org.scalatest.Inspectors.forAll
 
@@ -28,7 +29,7 @@ final class ManufacturerRepositoryIT extends RepositoryCheck {
 
   lazy val repo: ManufacturerRepository[IO] = ManufacturerRepository.make[IO].unsafeRunSync()
 
-  val originalManufacturers: Nel[Manufacturer] = flightdatabase.test.fixtures.manufacturer.manufacturers
+  val originalManufacturers: Nel[Manufacturer] = manufacturer.manufacturers
 
   val idNotPresent: Long = 100
   val valueNotPresent: String = "NotPresent"

@@ -4,6 +4,7 @@ import cats.data.{NonEmptyList => Nel}
 import flightdatabase.currency.Currency
 
 trait CurrencyFixtures {
+
   val currencies: Nel[Currency] = Nel.of(
     Currency(1, "Indian Rupee", "INR", Some("₹")),
     Currency(2, "Euro", "EUR", Some("€")),

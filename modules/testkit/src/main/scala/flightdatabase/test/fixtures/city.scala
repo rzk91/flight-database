@@ -4,6 +4,7 @@ import cats.data.{NonEmptyList => Nel}
 import flightdatabase.city.City
 
 trait CityFixtures {
+
   val cities: Nel[City] = Nel.of(
     City(
       1,

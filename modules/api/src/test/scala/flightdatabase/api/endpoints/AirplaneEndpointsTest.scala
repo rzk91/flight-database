@@ -10,6 +10,7 @@ import flightdatabase.airplane.AirplanePatch
 import flightdatabase.api.testutils.endpoints._
 import flightdatabase.partial.PartiallyAppliedGetAll
 import flightdatabase.partial.PartiallyAppliedGetBy
+import flightdatabase.test.fixtures.airplane
 import io.circe.Decoder
 import io.circe.Encoder
 import org.scalamock.function.StubFunction1
@@ -33,7 +34,7 @@ final class AirplaneEndpointsTest
   val createEncoder: Encoder[AirplaneCreate] = Encoder[AirplaneCreate]
   val patchEncoder: Encoder[AirplanePatch] = Encoder[AirplanePatch]
 
-  val samples: Nel[Airplane] = flightdatabase.test.fixtures.airplane.airplanes
+  val samples: Nel[Airplane] = airplane.airplanes
 
   val fieldFixtures: List[FieldFixture[_]] = List(
     FieldFixture("name", "A380", Operator.Equals, StringType),
