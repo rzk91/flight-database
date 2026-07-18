@@ -38,18 +38,25 @@ final class AirlineRouteRepositoryIT extends RepositoryCheck {
   val invalidLongValue: String = "invalid"
   val invalidStringValue: Int = 1
 
-  // airline-id -> (airline_airplane_ids, airline_name, airline_iata, airline_icao)
-  val airlineIdMap: Map[Long, (List[Long], String, String, String)] = Map(
-    1L -> (List(1L), "Lufthansa", "LH", "DLH"),
-    2L -> (List(4L, 5L), "Emirates", "EK", "UAE")
-  )
+  private val airplaneNameById: Map[Long, String] =
+    fixtures.airplanes.map(p => p.id -> p.name).toList.toMap
 
-  // airline-airplane-id -> (airplane_id, airplane_name)
-  val airplaneIdMap: Map[Long, (Long, String)] = Map(
-    1L -> (2, "747-8"),
-    4L -> (1, "A380"),
-    5L -> (3, "A320neo")
-  )
+  // airline-id -> (its airline_airplane ids, name, iata, icao), joined from the shared fixtures
+  val airlineIdMap: Map[Long, (List[Long], String, String, String)] =
+    fixtures.airlines
+      .map { a =>
+        val airlineAirplaneIds = fixtures.airlineAirplanes.filter(_.airlineId == a.id).map(_.id)
+        a.id -> (airlineAirplaneIds, a.name, a.iata, a.icao)
+      }
+      .toList
+      .toMap
+
+  // airline-airplane-id -> (airplane_id, airplane_name), for the airline-airplanes used by a route
+  val airplaneIdMap: Map[Long, (Long, String)] =
+    fixtures.airlineAirplanes
+      .filter(aa => fixtures.airlineRoutes.exists(_.airlineAirplaneId == aa.id))
+      .map(aa => aa.id -> (aa.airplaneId, airplaneNameById(aa.airplaneId)))
+      .toMap
 
   // airport-id -> (airport_iata, airport_icao), projected from the shared airport fixtures
   val airportIdMap: Map[Long, (String, String)] =

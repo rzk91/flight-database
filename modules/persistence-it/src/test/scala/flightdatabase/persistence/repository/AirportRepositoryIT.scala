@@ -40,8 +40,15 @@ final class AirportRepositoryIT extends RepositoryCheck {
       .map(c => c.name -> c.id)
       .toMap
 
+  private val countryNameById: Map[Long, String] =
+    fixtures.countries.map(c => c.id -> c.name).toList.toMap
+
+  // country name -> city id, for the cities referenced by an airport
   val countryToCityIdMap: Map[String, Long] =
-    Map("Germany" -> 2, "India" -> 1, "United Arab Emirates" -> 4)
+    fixtures.cities
+      .filter(c => fixtures.airports.exists(_.cityId == c.id))
+      .map(c => countryNameById(c.countryId) -> c.id)
+      .toMap
   val idNotPresent: Long = 10
   val valueNotPresent: String = "Not present"
   val veryLongIdNotPresent: Long = 1039495454540034858L

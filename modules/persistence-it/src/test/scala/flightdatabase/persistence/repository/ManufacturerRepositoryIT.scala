@@ -46,8 +46,15 @@ final class ManufacturerRepositoryIT extends RepositoryCheck {
       .map(c => c.id -> c.name)
       .toMap
 
+  private val countryNameById: Map[Long, String] =
+    fixtures.countries.map(c => c.id -> c.name).toList.toMap
+
+  // city id -> country name, for the cities that are a manufacturer's base city
   val cityIdCountryMap: Map[Long, String] =
-    Map(5L -> "Netherlands", 6L -> "United States of America")
+    fixtures.cities
+      .filter(c => fixtures.manufacturers.exists(_.baseCityId == c.id))
+      .map(c => c.id -> countryNameById(c.countryId))
+      .toMap
 
   val newManufacturer: ManufacturerCreate = ManufacturerCreate("ADA", 1)
   val updatedName: String = "Aeronautical Agency"
