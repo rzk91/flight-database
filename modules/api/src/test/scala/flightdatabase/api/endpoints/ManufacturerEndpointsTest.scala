@@ -33,11 +33,7 @@ final class ManufacturerEndpointsTest
   val createEncoder: Encoder[ManufacturerCreate] = Encoder[ManufacturerCreate]
   val patchEncoder: Encoder[ManufacturerPatch] = Encoder[ManufacturerPatch]
 
-  // Mirrors `originalManufacturers` in ManufacturerRepositoryIT.
-  val samples: Nel[Manufacturer] = Nel.of(
-    Manufacturer(1, "Airbus", 5),
-    Manufacturer(2, "Boeing", 6)
-  )
+  val samples: Nel[Manufacturer] = flightdatabase.test.fixtures.manufacturer.manufacturers
 
   val fieldFixtures: List[FieldFixture[_]] = List(
     FieldFixture("name", "Airbus", Operator.Equals, StringType),

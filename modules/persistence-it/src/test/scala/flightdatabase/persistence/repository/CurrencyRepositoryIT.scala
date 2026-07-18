@@ -26,13 +26,7 @@ final class CurrencyRepositoryIT extends RepositoryCheck {
 
   lazy val repo: CurrencyRepository[IO] = CurrencyRepository.make[IO].unsafeRunSync()
 
-  val originalCurrencies: Nel[Currency] = Nel.of(
-    Currency(1, "Indian Rupee", "INR", Some("₹")),
-    Currency(2, "Euro", "EUR", Some("€")),
-    Currency(3, "Swedish Krona", "SEK", Some("kr")),
-    Currency(4, "Dirham", "AED", None),
-    Currency(5, "US Dollar", "USD", Some("$"))
-  )
+  val originalCurrencies: Nel[Currency] = flightdatabase.test.fixtures.currency.currencies
 
   val idNotPresent: Long = 100
   val valueNotPresent: String = "Not present"

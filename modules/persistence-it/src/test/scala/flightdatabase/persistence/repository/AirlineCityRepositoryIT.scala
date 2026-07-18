@@ -26,10 +26,7 @@ final class AirlineCityRepositoryIT extends RepositoryCheck {
 
   lazy val repo: AirlineCityRepository[IO] = AirlineCityRepository.make[IO].unsafeRunSync()
 
-  val originalAirlineCities: Nel[AirlineCity] = Nel.of(
-    AirlineCity(1, 1, 2),
-    AirlineCity(2, 2, 4)
-  )
+  val originalAirlineCities: Nel[AirlineCity] = flightdatabase.test.fixtures.airlineCity.airlineCities
 
   val idNotPresent: Long = 100
   val valueNotPresent: String = "Not Present"

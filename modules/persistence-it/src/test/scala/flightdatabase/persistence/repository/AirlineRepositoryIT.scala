@@ -27,10 +27,7 @@ final class AirlineRepositoryIT extends RepositoryCheck {
 
   lazy val repo: AirlineRepository[IO] = AirlineRepository.make[IO].unsafeRunSync()
 
-  val originalAirlines: Nel[Airline] = Nel.of(
-    Airline(1, "Lufthansa", "LH", "DLH", "LUFTHANSA", 2),
-    Airline(2, "Emirates", "EK", "UAE", "EMIRATES", 4)
-  )
+  val originalAirlines: Nel[Airline] = flightdatabase.test.fixtures.airline.airlines
 
   val idNotPresent: Long = 100
   val valueNotPresent: String = "Not present"

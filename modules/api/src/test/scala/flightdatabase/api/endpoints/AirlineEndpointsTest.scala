@@ -32,11 +32,7 @@ final class AirlineEndpointsTest extends EntityEndpointsSpec[Airline, AirlineCre
   val createEncoder: Encoder[AirlineCreate] = Encoder[AirlineCreate]
   val patchEncoder: Encoder[AirlinePatch] = Encoder[AirlinePatch]
 
-  // Mirrors `originalAirlines` in AirlineRepositoryIT.
-  val samples: Nel[Airline] = Nel.of(
-    Airline(1, "Lufthansa", "LH", "DLH", "LUFTHANSA", 2),
-    Airline(2, "Emirates", "EK", "UAE", "EMIRATES", 4)
-  )
+  val samples: Nel[Airline] = flightdatabase.test.fixtures.airline.airlines
 
   val fieldFixtures: List[FieldFixture[_]] = List(
     FieldFixture("name", "Lufthansa", Operator.Equals, StringType),

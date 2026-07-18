@@ -34,11 +34,7 @@ final class AirlineCityEndpointsTest
   val createEncoder: Encoder[AirlineCityCreate] = Encoder[AirlineCityCreate]
   val patchEncoder: Encoder[AirlineCityPatch] = Encoder[AirlineCityPatch]
 
-  // Mirrors `originalAirlineCities` in AirlineCityRepositoryIT.
-  val samples: Nel[AirlineCity] = Nel.of(
-    AirlineCity(1, 1, 2),
-    AirlineCity(2, 2, 4)
-  )
+  val samples: Nel[AirlineCity] = flightdatabase.test.fixtures.airlineCity.airlineCities
 
   // Own fields are all Long.
   val fieldFixtures: List[FieldFixture[_]] = List(

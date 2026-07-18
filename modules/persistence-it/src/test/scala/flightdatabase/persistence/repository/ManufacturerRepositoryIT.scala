@@ -28,10 +28,7 @@ final class ManufacturerRepositoryIT extends RepositoryCheck {
 
   lazy val repo: ManufacturerRepository[IO] = ManufacturerRepository.make[IO].unsafeRunSync()
 
-  val originalManufacturers: Nel[Manufacturer] = Nel.of(
-    Manufacturer(1, "Airbus", 5),
-    Manufacturer(2, "Boeing", 6)
-  )
+  val originalManufacturers: Nel[Manufacturer] = flightdatabase.test.fixtures.manufacturer.manufacturers
 
   val idNotPresent: Long = 100
   val valueNotPresent: String = "NotPresent"

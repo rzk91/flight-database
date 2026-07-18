@@ -36,14 +36,7 @@ final class AirlineAirplaneEndpointsTest
   val createEncoder: Encoder[AirlineAirplaneCreate] = Encoder[AirlineAirplaneCreate]
   val patchEncoder: Encoder[AirlineAirplanePatch] = Encoder[AirlineAirplanePatch]
 
-  // Mirrors `originalAirlineAirplanes` in AirlineAirplaneRepositoryIT.
-  val samples: Nel[AirlineAirplane] = Nel.of(
-    AirlineAirplane(1, 1, 2),
-    AirlineAirplane(2, 1, 1),
-    AirlineAirplane(3, 1, 3),
-    AirlineAirplane(4, 2, 1),
-    AirlineAirplane(5, 2, 3)
-  )
+  val samples: Nel[AirlineAirplane] = flightdatabase.test.fixtures.airlineAirplane.airlineAirplanes
 
   // Own fields are all Long.
   val fieldFixtures: List[FieldFixture[_]] = List(
