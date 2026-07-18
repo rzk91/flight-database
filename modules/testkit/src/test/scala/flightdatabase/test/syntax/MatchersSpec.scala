@@ -57,4 +57,11 @@ final class MatchersSpec extends AnyFlatSpec with Matchers {
   it should "fail an Inspectors count check that doesn't hold" in {
     a[TestFailedException] should be thrownBy forExactly(2, many)(_ shouldBe 2)
   }
+
+  // No ScalaTest matcher routes through Collecting#sizeOf (`have size` resolves against Nel's
+  // own size method instead), so it is exercised directly here rather than via the DSL.
+  it should "report the correct size via Collecting#sizeOf" in {
+    collectingNel[Int].sizeOf(single) shouldBe 1
+    collectingNel[Int].sizeOf(many) shouldBe 3
+  }
 }
