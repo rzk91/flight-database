@@ -79,7 +79,7 @@ jobs:
         # Single sbt invocation so all modules share one server. Separate
         # `sbt <module>/test` calls occasionally fail on the sbtn thin-client
         # handoff to the leftover background server (exit 1, no output).
-        run: sbt "domain/test; syntax/test; api/test"
+        run: sbt "domain/test; syntax/test; testkit/test; api/test"
 
   integration-test:
     name: Integration Tests
