@@ -20,7 +20,7 @@ import flightdatabase.airline_route.AirlineRoute
 import flightdatabase.airline_route.AirlineRouteCreate
 import flightdatabase.airline_route.AirlineRoutePatch
 import flightdatabase.persistence.itutils.RepositoryCheck
-import flightdatabase.test.fixtures.airline_route
+import flightdatabase.test.fixtures
 import flightdatabase.test.syntax.all._
 import org.scalatest.Inspectors.forAll
 
@@ -28,7 +28,7 @@ final class AirlineRouteRepositoryIT extends RepositoryCheck {
 
   lazy val repo: AirlineRouteRepository[IO] = AirlineRouteRepository.make[IO].unsafeRunSync()
 
-  val originalAirlineRoutes: Nel[AirlineRoute] = airline_route.airlineRoutes
+  val originalAirlineRoutes: Nel[AirlineRoute] = fixtures.airlineRoutes
 
   val idNotPresent: Long = 100
   val valueNotPresent: String = "NotPresent"
@@ -51,12 +51,9 @@ final class AirlineRouteRepositoryIT extends RepositoryCheck {
     5L -> (3, "A320neo")
   )
 
-  // airport-id -> (airport_iata, airport_icao)
-  val airportIdMap: Map[Long, (String, String)] = Map(
-    1L -> ("FRA", "EDDF"),
-    2L -> ("BLR", "VOBL"),
-    3L -> ("DXB", "OMDB")
-  )
+  // airport-id -> (airport_iata, airport_icao), projected from the shared airport fixtures
+  val airportIdMap: Map[Long, (String, String)] =
+    fixtures.airports.map(a => a.id -> (a.iata, a.icao)).toList.toMap
 
   val newAirlineRoute: AirlineRouteCreate = AirlineRouteCreate(4, "EK48", 3, 1)
   val updatedRouteNumber: String = "EK49"

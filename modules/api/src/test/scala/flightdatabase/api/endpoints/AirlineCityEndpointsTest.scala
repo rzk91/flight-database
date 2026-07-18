@@ -10,7 +10,7 @@ import flightdatabase.airline_city.AirlineCityPatch
 import flightdatabase.api.testutils.endpoints._
 import flightdatabase.partial.PartiallyAppliedGetAll
 import flightdatabase.partial.PartiallyAppliedGetBy
-import flightdatabase.test.fixtures.airline_city
+import flightdatabase.test.fixtures
 import io.circe.Decoder
 import io.circe.Encoder
 import org.scalamock.function.StubFunction1
@@ -35,7 +35,7 @@ final class AirlineCityEndpointsTest
   val createEncoder: Encoder[AirlineCityCreate] = Encoder[AirlineCityCreate]
   val patchEncoder: Encoder[AirlineCityPatch] = Encoder[AirlineCityPatch]
 
-  val samples: Nel[AirlineCity] = airline_city.airlineCities
+  val samples: Nel[AirlineCity] = fixtures.airlineCities
 
   // Own fields are all Long.
   val fieldFixtures: List[FieldFixture[_]] = List(

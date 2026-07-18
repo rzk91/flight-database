@@ -19,7 +19,7 @@ import flightdatabase.currency.Currency
 import flightdatabase.currency.CurrencyCreate
 import flightdatabase.currency.CurrencyPatch
 import flightdatabase.persistence.itutils.RepositoryCheck
-import flightdatabase.test.fixtures.currency
+import flightdatabase.test.fixtures
 import flightdatabase.test.syntax.all._
 import org.scalatest.Inspectors.forAll
 
@@ -27,7 +27,7 @@ final class CurrencyRepositoryIT extends RepositoryCheck {
 
   lazy val repo: CurrencyRepository[IO] = CurrencyRepository.make[IO].unsafeRunSync()
 
-  val originalCurrencies: Nel[Currency] = currency.currencies
+  val originalCurrencies: Nel[Currency] = fixtures.currencies
 
   val idNotPresent: Long = 100
   val valueNotPresent: String = "Not present"

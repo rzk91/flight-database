@@ -10,7 +10,7 @@ import flightdatabase.country.CountryCreate
 import flightdatabase.country.CountryPatch
 import flightdatabase.partial.PartiallyAppliedGetAll
 import flightdatabase.partial.PartiallyAppliedGetBy
-import flightdatabase.test.fixtures.country
+import flightdatabase.test.fixtures
 import io.circe.Decoder
 import io.circe.Encoder
 import org.scalamock.function.StubFunction1
@@ -33,7 +33,7 @@ final class CountryEndpointsTest extends EntityEndpointsSpec[Country, CountryCre
   val createEncoder: Encoder[CountryCreate] = Encoder[CountryCreate]
   val patchEncoder: Encoder[CountryPatch] = Encoder[CountryPatch]
 
-  val samples: Nel[Country] = country.countries
+  val samples: Nel[Country] = fixtures.countries
 
   val fieldFixtures: List[FieldFixture[_]] = List(
     FieldFixture("name", "Germany", Operator.Equals, StringType),

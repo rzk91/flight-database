@@ -21,7 +21,7 @@ import flightdatabase.city.City
 import flightdatabase.city.CityCreate
 import flightdatabase.city.CityPatch
 import flightdatabase.persistence.itutils.RepositoryCheck
-import flightdatabase.test.fixtures.city
+import flightdatabase.test.fixtures
 import flightdatabase.test.syntax.all._
 import org.scalatest.Inspectors.forAll
 
@@ -29,15 +29,14 @@ final class CityRepositoryIT extends RepositoryCheck {
 
   lazy val repo: CityRepository[IO] = CityRepository.make[IO].unsafeRunSync()
 
-  val originalCities: Nel[City] = city.cities
+  val originalCities: Nel[City] = fixtures.cities
 
-  val countryToIdMap: Map[String, Long] = Map(
-    "India"                    -> 1,
-    "Germany"                  -> 2,
-    "United Arab Emirates"     -> 4,
-    "Netherlands"              -> 5,
-    "United States of America" -> 6
-  )
+  // name -> id, for the countries referenced by a city
+  val countryToIdMap: Map[String, Long] =
+    fixtures.countries
+      .filter(c => fixtures.cities.exists(_.countryId == c.id))
+      .map(c => c.name -> c.id)
+      .toMap
 
   val idNotPresent: Long = 100
   val valueNotPresent: String = "Not present"

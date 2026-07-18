@@ -10,7 +10,7 @@ import flightdatabase.currency.CurrencyCreate
 import flightdatabase.currency.CurrencyPatch
 import flightdatabase.partial.PartiallyAppliedGetAll
 import flightdatabase.partial.PartiallyAppliedGetBy
-import flightdatabase.test.fixtures.currency
+import flightdatabase.test.fixtures
 import io.circe.Decoder
 import io.circe.Encoder
 import org.scalamock.function.StubFunction1
@@ -34,7 +34,7 @@ final class CurrencyEndpointsTest
   val createEncoder: Encoder[CurrencyCreate] = Encoder[CurrencyCreate]
   val patchEncoder: Encoder[CurrencyPatch] = Encoder[CurrencyPatch]
 
-  val samples: Nel[Currency] = currency.currencies
+  val samples: Nel[Currency] = fixtures.currencies
 
   val fieldFixtures: List[FieldFixture[_]] = List(
     FieldFixture("name", "Euro", Operator.Equals, StringType),

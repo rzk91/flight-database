@@ -20,7 +20,7 @@ import flightdatabase.airline.Airline
 import flightdatabase.airline.AirlineCreate
 import flightdatabase.airline.AirlinePatch
 import flightdatabase.persistence.itutils.RepositoryCheck
-import flightdatabase.test.fixtures.airline
+import flightdatabase.test.fixtures
 import flightdatabase.test.syntax.all._
 import org.scalatest.Inspectors.forAll
 
@@ -28,7 +28,7 @@ final class AirlineRepositoryIT extends RepositoryCheck {
 
   lazy val repo: AirlineRepository[IO] = AirlineRepository.make[IO].unsafeRunSync()
 
-  val originalAirlines: Nel[Airline] = airline.airlines
+  val originalAirlines: Nel[Airline] = fixtures.airlines
 
   val idNotPresent: Long = 100
   val valueNotPresent: String = "Not present"
@@ -38,11 +38,12 @@ final class AirlineRepositoryIT extends RepositoryCheck {
   val invalidLongValue: String = "invalid"
   val invalidStringValue: Int = 1
 
-  // ID -> (Name, ISO2, ISO3, Country [Phone] Code)
-  val countryIdMap: Map[Long, (String, String, String, Int)] = Map(
-    2L -> ("Germany", "DE", "DEU", 49),
-    4L -> ("United Arab Emirates", "AE", "ARE", 971)
-  )
+  // id -> (name, iso2, iso3, country phone code), for the countries referenced by an airline
+  val countryIdMap: Map[Long, (String, String, String, Int)] =
+    fixtures.countries
+      .filter(c => fixtures.airlines.exists(_.countryId == c.id))
+      .map(c => c.id -> (c.name, c.iso2, c.iso3, c.countryCode))
+      .toMap
 
   val newAirline: AirlineCreate = AirlineCreate("Indigo", "6E", "IGO", "IFLY", 1)
   val updatedName: String = "IndiGo"
