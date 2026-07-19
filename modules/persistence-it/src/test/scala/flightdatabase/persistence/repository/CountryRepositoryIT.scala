@@ -20,6 +20,7 @@ import flightdatabase.country.Country
 import flightdatabase.country.CountryCreate
 import flightdatabase.country.CountryPatch
 import flightdatabase.persistence.itutils.RepositoryCheck
+import flightdatabase.test.fixtures
 import flightdatabase.test.syntax.all._
 import org.scalatest.Inspectors.forAll
 
@@ -27,38 +28,7 @@ final class CountryRepositoryIT extends RepositoryCheck {
 
   lazy val repo: CountryRepository[IO] = CountryRepository.make[IO].unsafeRunSync()
 
-  val originalCountries: Nel[Country] = Nel.of(
-    Country(1, "India", "IN", "IND", 91, Some(".in"), 7, Some(1), Some(3), 1, "Indian"),
-    Country(2, "Germany", "DE", "DEU", 49, Some(".de"), 2, None, None, 2, "German"),
-    Country(3, "Sweden", "SE", "SWE", 46, Some(".se"), 4, None, None, 3, "Swede"),
-    Country(
-      4,
-      "United Arab Emirates",
-      "AE",
-      "ARE",
-      971,
-      Some(".ae"),
-      5,
-      Some(1),
-      None,
-      4,
-      "Emirati"
-    ),
-    Country(5, "Netherlands", "NL", "NLD", 31, Some(".nl"), 6, None, None, 2, "Dutch"),
-    Country(
-      6,
-      "United States of America",
-      "US",
-      "USA",
-      1,
-      Some(".us"),
-      1,
-      None,
-      None,
-      5,
-      "US citizen"
-    )
-  )
+  val originalCountries: Nel[Country] = fixtures.countries
 
   val idNotPresent: Long = 100
   val valueNotPresent: String = "NotPresent"
@@ -68,23 +38,13 @@ final class CountryRepositoryIT extends RepositoryCheck {
   val invalidLongValue: String = "invalid"
   val invalidStringValue: Int = 1
 
-  val languageIdMap: Map[Long, (String, String)] = Map(
-    1L -> ("EN", "English"),
-    2L -> ("DE", "German"),
-    3L -> ("TA", "Tamil"),
-    4L -> ("SV", "Swedish"),
-    5L -> ("AR", "Arabic"),
-    6L -> ("NL", "Dutch"),
-    7L -> ("HI", "Hindi")
-  )
+  // id -> (iso2, name), projected from the shared language fixtures
+  val languageIdMap: Map[Long, (String, String)] =
+    fixtures.languages.map(l => l.id -> (l.iso2, l.name)).toList.toMap
 
-  val currencyIdMap: Map[Long, (String, String)] = Map(
-    1L -> ("INR", "Indian Rupee"),
-    2L -> ("EUR", "Euro"),
-    3L -> ("SEK", "Swedish Krona"),
-    4L -> ("AED", "Dirham"),
-    5L -> ("USD", "US Dollar")
-  )
+  // id -> (iso, name), projected from the shared currency fixtures
+  val currencyIdMap: Map[Long, (String, String)] =
+    fixtures.currencies.map(c => c.id -> (c.iso, c.name)).toList.toMap
 
   val newCountry: CountryCreate =
     CountryCreate("NewCountry", "NC", "NCT", 123, Some(".nc"), 5, Some(1), None, 4, "NewCountryian")

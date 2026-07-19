@@ -20,6 +20,7 @@ import flightdatabase.airline_airplane.AirlineAirplaneCreate
 import flightdatabase.airline_airplane.AirlineAirplanePatch
 import flightdatabase.persistence.itutils.RepositoryCheck
 import flightdatabase.syntax.iterable._
+import flightdatabase.test.fixtures
 import flightdatabase.test.syntax.all._
 import org.scalatest.Inspectors.forAll
 
@@ -27,13 +28,7 @@ final class AirlineAirplaneRepositoryIT extends RepositoryCheck {
 
   lazy val repo: AirlineAirplaneRepository[IO] = AirlineAirplaneRepository.make[IO].unsafeRunSync()
 
-  val originalAirlineAirplanes: Nel[AirlineAirplane] = Nel.of(
-    AirlineAirplane(1, 1, 2),
-    AirlineAirplane(2, 1, 1),
-    AirlineAirplane(3, 1, 3),
-    AirlineAirplane(4, 2, 1),
-    AirlineAirplane(5, 2, 3)
-  )
+  val originalAirlineAirplanes: Nel[AirlineAirplane] = fixtures.airlineAirplanes
 
   val idNotPresent: Long = 100
   val valueNotPresent: String = "Not Present"
@@ -42,15 +37,16 @@ final class AirlineAirplaneRepositoryIT extends RepositoryCheck {
   val invalidFieldColumn: String = "non_existent_field"
   val invalidLongValue: String = "invalid"
 
-  // airlineId -> (name, iata)
-  val airlineIdMap: Map[Long, (String, String)] = Map(
-    1L -> ("Lufthansa", "LH"),
-    2L -> ("Emirates", "EK")
-  )
+  // airlineId -> (name, iata), projected from the shared airline fixtures
+  val airlineIdMap: Map[Long, (String, String)] =
+    fixtures.airlines.map(a => a.id -> (a.name, a.iata)).toList.toMap
 
-  // airplaneId -> (name, capacity)
+  // airplaneId -> (name, capacity), for the airplanes referenced by an airline-airplane
   val airplaneIdMap: Map[Long, (String, Int)] =
-    Map(1L -> ("A380", 853), 2L -> ("747-8", 410), 3L -> ("A320neo", 194))
+    fixtures.airplanes
+      .filter(p => fixtures.airlineAirplanes.exists(_.airplaneId == p.id))
+      .map(p => p.id -> (p.name, p.capacity))
+      .toMap
 
   val newAirlineAirplane: AirlineAirplaneCreate = AirlineAirplaneCreate(2, 2) // EK -> 747-8
   val updatedAirplane: Long = 4                                               // EK -> 787-8

@@ -20,6 +20,7 @@ import flightdatabase.airline_route.AirlineRoute
 import flightdatabase.airline_route.AirlineRouteCreate
 import flightdatabase.airline_route.AirlineRoutePatch
 import flightdatabase.persistence.itutils.RepositoryCheck
+import flightdatabase.test.fixtures
 import flightdatabase.test.syntax.all._
 import org.scalatest.Inspectors.forAll
 
@@ -27,14 +28,7 @@ final class AirlineRouteRepositoryIT extends RepositoryCheck {
 
   lazy val repo: AirlineRouteRepository[IO] = AirlineRouteRepository.make[IO].unsafeRunSync()
 
-  val originalAirlineRoutes: Nel[AirlineRoute] = Nel.of(
-    AirlineRoute(1, 1, "LH754", 1, 2),
-    AirlineRoute(2, 1, "LH755", 2, 1),
-    AirlineRoute(3, 5, "EK565", 2, 3),
-    AirlineRoute(4, 5, "EK566", 3, 2),
-    AirlineRoute(5, 4, "EK47", 3, 1),
-    AirlineRoute(6, 4, "EK46", 1, 3)
-  )
+  val originalAirlineRoutes: Nel[AirlineRoute] = fixtures.airlineRoutes
 
   val idNotPresent: Long = 100
   val valueNotPresent: String = "NotPresent"
@@ -44,25 +38,29 @@ final class AirlineRouteRepositoryIT extends RepositoryCheck {
   val invalidLongValue: String = "invalid"
   val invalidStringValue: Int = 1
 
-  // airline-id -> (airline_airplane_ids, airline_name, airline_iata, airline_icao)
-  val airlineIdMap: Map[Long, (List[Long], String, String, String)] = Map(
-    1L -> (List(1L), "Lufthansa", "LH", "DLH"),
-    2L -> (List(4L, 5L), "Emirates", "EK", "UAE")
-  )
+  private val airplaneNameById: Map[Long, String] =
+    fixtures.airplanes.map(p => p.id -> p.name).toList.toMap
 
-  // airline-airplane-id -> (airplane_id, airplane_name)
-  val airplaneIdMap: Map[Long, (Long, String)] = Map(
-    1L -> (2, "747-8"),
-    4L -> (1, "A380"),
-    5L -> (3, "A320neo")
-  )
+  // airline-id -> (its airline_airplane ids, name, iata, icao), joined from the shared fixtures
+  val airlineIdMap: Map[Long, (List[Long], String, String, String)] =
+    fixtures.airlines
+      .map { a =>
+        val airlineAirplaneIds = fixtures.airlineAirplanes.filter(_.airlineId == a.id).map(_.id)
+        a.id -> (airlineAirplaneIds, a.name, a.iata, a.icao)
+      }
+      .toList
+      .toMap
 
-  // airport-id -> (airport_iata, airport_icao)
-  val airportIdMap: Map[Long, (String, String)] = Map(
-    1L -> ("FRA", "EDDF"),
-    2L -> ("BLR", "VOBL"),
-    3L -> ("DXB", "OMDB")
-  )
+  // airline-airplane-id -> (airplane_id, airplane_name), for the airline-airplanes used by a route
+  val airplaneIdMap: Map[Long, (Long, String)] =
+    fixtures.airlineAirplanes
+      .filter(aa => fixtures.airlineRoutes.exists(_.airlineAirplaneId == aa.id))
+      .map(aa => aa.id -> (aa.airplaneId, airplaneNameById(aa.airplaneId)))
+      .toMap
+
+  // airport-id -> (airport_iata, airport_icao), projected from the shared airport fixtures
+  val airportIdMap: Map[Long, (String, String)] =
+    fixtures.airports.map(a => a.id -> (a.iata, a.icao)).toList.toMap
 
   val newAirlineRoute: AirlineRouteCreate = AirlineRouteCreate(4, "EK48", 3, 1)
   val updatedRouteNumber: String = "EK49"

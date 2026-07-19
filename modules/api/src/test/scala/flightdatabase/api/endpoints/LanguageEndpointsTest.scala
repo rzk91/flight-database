@@ -10,6 +10,7 @@ import flightdatabase.language.LanguageCreate
 import flightdatabase.language.LanguagePatch
 import flightdatabase.partial.PartiallyAppliedGetAll
 import flightdatabase.partial.PartiallyAppliedGetBy
+import flightdatabase.test.fixtures
 import io.circe.Decoder
 import io.circe.Encoder
 import org.scalamock.function.StubFunction1
@@ -33,16 +34,7 @@ final class LanguageEndpointsTest
   val createEncoder: Encoder[LanguageCreate] = Encoder[LanguageCreate]
   val patchEncoder: Encoder[LanguagePatch] = Encoder[LanguagePatch]
 
-  // Mirrors `originalLanguages` in LanguageRepositoryIT.
-  val samples: Nel[Language] = Nel.of(
-    Language(1, "English", "EN", Some("ENG"), "English"),
-    Language(2, "German", "DE", Some("DEU"), "Deutsch"),
-    Language(3, "Tamil", "TA", Some("TAM"), "Tamil"),
-    Language(4, "Swedish", "SV", Some("SWE"), "Svenska"),
-    Language(5, "Arabic", "AR", Some("ARA"), "Al-Arabiyyah"),
-    Language(6, "Dutch", "NL", Some("NLD"), "Nederlands"),
-    Language(7, "Hindi", "HI", Some("HIN"), "Hindi")
-  )
+  val samples: Nel[Language] = fixtures.languages
 
   val fieldFixtures: List[FieldFixture[_]] = List(
     FieldFixture("name", "German", Operator.Equals, StringType),

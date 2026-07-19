@@ -10,6 +10,7 @@ import flightdatabase.manufacturer.ManufacturerCreate
 import flightdatabase.manufacturer.ManufacturerPatch
 import flightdatabase.partial.PartiallyAppliedGetAll
 import flightdatabase.partial.PartiallyAppliedGetBy
+import flightdatabase.test.fixtures
 import io.circe.Decoder
 import io.circe.Encoder
 import org.scalamock.function.StubFunction1
@@ -33,11 +34,7 @@ final class ManufacturerEndpointsTest
   val createEncoder: Encoder[ManufacturerCreate] = Encoder[ManufacturerCreate]
   val patchEncoder: Encoder[ManufacturerPatch] = Encoder[ManufacturerPatch]
 
-  // Mirrors `originalManufacturers` in ManufacturerRepositoryIT.
-  val samples: Nel[Manufacturer] = Nel.of(
-    Manufacturer(1, "Airbus", 5),
-    Manufacturer(2, "Boeing", 6)
-  )
+  val samples: Nel[Manufacturer] = fixtures.manufacturers
 
   val fieldFixtures: List[FieldFixture[_]] = List(
     FieldFixture("name", "Airbus", Operator.Equals, StringType),

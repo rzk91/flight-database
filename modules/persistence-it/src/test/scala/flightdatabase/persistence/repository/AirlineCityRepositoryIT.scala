@@ -19,6 +19,7 @@ import flightdatabase.airline_city.AirlineCityCreate
 import flightdatabase.airline_city.AirlineCityPatch
 import flightdatabase.persistence.itutils.RepositoryCheck
 import flightdatabase.syntax.iterable._
+import flightdatabase.test.fixtures
 import flightdatabase.test.syntax.all._
 import org.scalatest.Inspectors.forAll
 
@@ -26,10 +27,7 @@ final class AirlineCityRepositoryIT extends RepositoryCheck {
 
   lazy val repo: AirlineCityRepository[IO] = AirlineCityRepository.make[IO].unsafeRunSync()
 
-  val originalAirlineCities: Nel[AirlineCity] = Nel.of(
-    AirlineCity(1, 1, 2),
-    AirlineCity(2, 2, 4)
-  )
+  val originalAirlineCities: Nel[AirlineCity] = fixtures.airlineCities
 
   val idNotPresent: Long = 100
   val valueNotPresent: String = "Not Present"
@@ -38,15 +36,16 @@ final class AirlineCityRepositoryIT extends RepositoryCheck {
   val invalidFieldColumn: String = "non_existent_field"
   val invalidLongValue: String = "invalid"
 
-  // airlineId -> (name, iata, icao)
-  val airlineIdMap: Map[Long, (String, String, String)] = Map(
-    1L -> ("Lufthansa", "LH", "DLH"),
-    2L -> ("Emirates", "EK", "UAE")
-  )
+  // airlineId -> (name, iata, icao), projected from the shared airline fixtures
+  val airlineIdMap: Map[Long, (String, String, String)] =
+    fixtures.airlines.map(a => a.id -> (a.name, a.iata, a.icao)).toList.toMap
 
-  // cityId -> (name, population)
+  // cityId -> (name, population), for the cities referenced by an airline-city
   val cityIdMap: Map[Long, (String, Long)] =
-    Map(2L -> ("Frankfurt am Main", 791000L), 4L -> ("Dubai", 3490000L))
+    fixtures.cities
+      .filter(c => fixtures.airlineCities.exists(_.cityId == c.id))
+      .map(c => c.id -> (c.name, c.population))
+      .toMap
 
   val newAirlineCity: AirlineCityCreate = AirlineCityCreate(1, 3) // Lufthansa -> Berlin
   val updatedCity: Long = 5                                       // Leiden

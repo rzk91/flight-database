@@ -10,6 +10,7 @@ import flightdatabase.airline_route.AirlineRoutePatch
 import flightdatabase.api.testutils.endpoints._
 import flightdatabase.partial.PartiallyAppliedGetAll
 import flightdatabase.partial.PartiallyAppliedGetBy
+import flightdatabase.test.fixtures
 import io.circe.Decoder
 import io.circe.Encoder
 import org.scalamock.function.StubFunction1
@@ -34,15 +35,7 @@ final class AirlineRouteEndpointsTest
   val createEncoder: Encoder[AirlineRouteCreate] = Encoder[AirlineRouteCreate]
   val patchEncoder: Encoder[AirlineRoutePatch] = Encoder[AirlineRoutePatch]
 
-  // Mirrors `originalAirlineRoutes` in AirlineRouteRepositoryIT.
-  val samples: Nel[AirlineRoute] = Nel.of(
-    AirlineRoute(1, 1, "LH754", 1, 2),
-    AirlineRoute(2, 1, "LH755", 2, 1),
-    AirlineRoute(3, 5, "EK565", 2, 3),
-    AirlineRoute(4, 5, "EK566", 3, 2),
-    AirlineRoute(5, 4, "EK47", 3, 1),
-    AirlineRoute(6, 4, "EK46", 1, 3)
-  )
+  val samples: Nel[AirlineRoute] = fixtures.airlineRoutes
 
   val fieldFixtures: List[FieldFixture[_]] = List(
     FieldFixture("route_number", "LH754", Operator.Equals, StringType),

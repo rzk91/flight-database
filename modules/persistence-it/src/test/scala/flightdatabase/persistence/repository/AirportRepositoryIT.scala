@@ -23,6 +23,7 @@ import flightdatabase.airport.AirportPatch
 import flightdatabase.airport.TaxiDuration
 import flightdatabase.persistence.itutils.RepositoryCheck
 import flightdatabase.syntax.string._
+import flightdatabase.test.fixtures
 import flightdatabase.test.syntax.all._
 import org.scalatest.Inspectors.forAll
 
@@ -30,61 +31,24 @@ final class AirportRepositoryIT extends RepositoryCheck {
 
   lazy val repo: AirportRepository[IO] = AirportRepository.make[IO].unsafeRunSync()
 
-  val originalAirports: Nel[Airport] = Nel.of(
-    Airport(
-      1,
-      "Frankfurt am Main Airport",
-      "EDDF",
-      "FRA",
-      2,
-      4,
-      3,
-      65000000,
-      international = true,
-      junction = true,
-      latitude = BigDecimal("50.0333"),
-      longitude = BigDecimal("8.5706"),
-      taxiOutDuration = TaxiDuration(18),
-      taxiInDuration = TaxiDuration(8)
-    ),
-    Airport(
-      2,
-      "Kempegowda International Airport",
-      "VOBL",
-      "BLR",
-      1,
-      2,
-      2,
-      16800000,
-      international = true,
-      junction = false,
-      latitude = BigDecimal("13.1986"),
-      longitude = BigDecimal("77.7066"),
-      taxiOutDuration = TaxiDuration(12),
-      taxiInDuration = TaxiDuration(6)
-    ),
-    Airport(
-      3,
-      "Dubai International Airport",
-      "OMDB",
-      "DXB",
-      4,
-      2,
-      3,
-      92500000,
-      international = true,
-      junction = true,
-      latitude = BigDecimal("25.2532"),
-      longitude = BigDecimal("55.3657"),
-      taxiOutDuration = TaxiDuration(15),
-      taxiInDuration = TaxiDuration(7)
-    )
-  )
+  val originalAirports: Nel[Airport] = fixtures.airports
 
-  val cityToIdMap: Map[String, Long] = Map("Frankfurt am Main" -> 2, "Bangalore" -> 1, "Dubai" -> 4)
+  // name -> id, for the cities referenced by an airport
+  val cityToIdMap: Map[String, Long] =
+    fixtures.cities
+      .filter(c => fixtures.airports.exists(_.cityId == c.id))
+      .map(c => c.name -> c.id)
+      .toMap
 
+  private val countryNameById: Map[Long, String] =
+    fixtures.countries.map(c => c.id -> c.name).toList.toMap
+
+  // country name -> city id, for the cities referenced by an airport
   val countryToCityIdMap: Map[String, Long] =
-    Map("Germany" -> 2, "India" -> 1, "United Arab Emirates" -> 4)
+    fixtures.cities
+      .filter(c => fixtures.airports.exists(_.cityId == c.id))
+      .map(c => countryNameById(c.countryId) -> c.id)
+      .toMap
   val idNotPresent: Long = 10
   val valueNotPresent: String = "Not present"
   val veryLongIdNotPresent: Long = 1039495454540034858L

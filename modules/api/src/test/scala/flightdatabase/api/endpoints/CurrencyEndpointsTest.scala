@@ -10,6 +10,7 @@ import flightdatabase.currency.CurrencyCreate
 import flightdatabase.currency.CurrencyPatch
 import flightdatabase.partial.PartiallyAppliedGetAll
 import flightdatabase.partial.PartiallyAppliedGetBy
+import flightdatabase.test.fixtures
 import io.circe.Decoder
 import io.circe.Encoder
 import org.scalamock.function.StubFunction1
@@ -33,14 +34,7 @@ final class CurrencyEndpointsTest
   val createEncoder: Encoder[CurrencyCreate] = Encoder[CurrencyCreate]
   val patchEncoder: Encoder[CurrencyPatch] = Encoder[CurrencyPatch]
 
-  // Mirrors `originalCurrencies` in CurrencyRepositoryIT.
-  val samples: Nel[Currency] = Nel.of(
-    Currency(1, "Indian Rupee", "INR", Some("₹")),
-    Currency(2, "Euro", "EUR", Some("€")),
-    Currency(3, "Swedish Krona", "SEK", Some("kr")),
-    Currency(4, "Dirham", "AED", None),
-    Currency(5, "US Dollar", "USD", Some("$"))
-  )
+  val samples: Nel[Currency] = fixtures.currencies
 
   val fieldFixtures: List[FieldFixture[_]] = List(
     FieldFixture("name", "Euro", Operator.Equals, StringType),

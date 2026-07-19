@@ -10,6 +10,7 @@ import flightdatabase.airline.AirlinePatch
 import flightdatabase.api.testutils.endpoints._
 import flightdatabase.partial.PartiallyAppliedGetAll
 import flightdatabase.partial.PartiallyAppliedGetBy
+import flightdatabase.test.fixtures
 import io.circe.Decoder
 import io.circe.Encoder
 import org.scalamock.function.StubFunction1
@@ -32,11 +33,7 @@ final class AirlineEndpointsTest extends EntityEndpointsSpec[Airline, AirlineCre
   val createEncoder: Encoder[AirlineCreate] = Encoder[AirlineCreate]
   val patchEncoder: Encoder[AirlinePatch] = Encoder[AirlinePatch]
 
-  // Mirrors `originalAirlines` in AirlineRepositoryIT.
-  val samples: Nel[Airline] = Nel.of(
-    Airline(1, "Lufthansa", "LH", "DLH", "LUFTHANSA", 2),
-    Airline(2, "Emirates", "EK", "UAE", "EMIRATES", 4)
-  )
+  val samples: Nel[Airline] = fixtures.airlines
 
   val fieldFixtures: List[FieldFixture[_]] = List(
     FieldFixture("name", "Lufthansa", Operator.Equals, StringType),

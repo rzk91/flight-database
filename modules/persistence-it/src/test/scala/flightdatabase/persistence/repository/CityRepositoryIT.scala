@@ -21,6 +21,7 @@ import flightdatabase.city.City
 import flightdatabase.city.CityCreate
 import flightdatabase.city.CityPatch
 import flightdatabase.persistence.itutils.RepositoryCheck
+import flightdatabase.test.fixtures
 import flightdatabase.test.syntax.all._
 import org.scalatest.Inspectors.forAll
 
@@ -28,76 +29,14 @@ final class CityRepositoryIT extends RepositoryCheck {
 
   lazy val repo: CityRepository[IO] = CityRepository.make[IO].unsafeRunSync()
 
-  val originalCities: Nel[City] = Nel.of(
-    City(
-      1,
-      "Bangalore",
-      1,
-      capital = false,
-      13193000,
-      BigDecimal("12.978889"),
-      BigDecimal("77.591667"),
-      "Asia/Kolkata"
-    ),
-    City(
-      2,
-      "Frankfurt am Main",
-      2,
-      capital = false,
-      791000,
-      BigDecimal("50.110556"),
-      BigDecimal("8.682222"),
-      "Europe/Berlin"
-    ),
-    City(
-      3,
-      "Berlin",
-      2,
-      capital = true,
-      3571000,
-      BigDecimal("52.52"),
-      BigDecimal("13.405"),
-      "Europe/Berlin"
-    ),
-    City(
-      4,
-      "Dubai",
-      4,
-      capital = false,
-      3490000,
-      BigDecimal("23.5"),
-      BigDecimal("54.5"),
-      "Asia/Dubai"
-    ),
-    City(
-      5,
-      "Leiden",
-      5,
-      capital = false,
-      125100,
-      BigDecimal("52.16"),
-      BigDecimal("4.49"),
-      "Europe/Amsterdam"
-    ),
-    City(
-      6,
-      "Chicago",
-      6,
-      capital = false,
-      8901000,
-      BigDecimal("41.85003"),
-      BigDecimal("-87.65005"),
-      "America/Chicago"
-    )
-  )
+  val originalCities: Nel[City] = fixtures.cities
 
-  val countryToIdMap: Map[String, Long] = Map(
-    "India"                    -> 1,
-    "Germany"                  -> 2,
-    "United Arab Emirates"     -> 4,
-    "Netherlands"              -> 5,
-    "United States of America" -> 6
-  )
+  // name -> id, for the countries referenced by a city
+  val countryToIdMap: Map[String, Long] =
+    fixtures.countries
+      .filter(c => fixtures.cities.exists(_.countryId == c.id))
+      .map(c => c.name -> c.id)
+      .toMap
 
   val idNotPresent: Long = 100
   val valueNotPresent: String = "Not present"

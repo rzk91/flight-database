@@ -21,6 +21,7 @@ import flightdatabase.manufacturer.Manufacturer
 import flightdatabase.manufacturer.ManufacturerCreate
 import flightdatabase.manufacturer.ManufacturerPatch
 import flightdatabase.persistence.itutils.RepositoryCheck
+import flightdatabase.test.fixtures
 import flightdatabase.test.syntax.all._
 import org.scalatest.Inspectors.forAll
 
@@ -28,10 +29,7 @@ final class ManufacturerRepositoryIT extends RepositoryCheck {
 
   lazy val repo: ManufacturerRepository[IO] = ManufacturerRepository.make[IO].unsafeRunSync()
 
-  val originalManufacturers: Nel[Manufacturer] = Nel.of(
-    Manufacturer(1, "Airbus", 5),
-    Manufacturer(2, "Boeing", 6)
-  )
+  val originalManufacturers: Nel[Manufacturer] = fixtures.manufacturers
 
   val idNotPresent: Long = 100
   val valueNotPresent: String = "NotPresent"
@@ -41,10 +39,22 @@ final class ManufacturerRepositoryIT extends RepositoryCheck {
   val invalidLongValue: String = "invalid"
   val invalidStringValue: Int = 1
 
-  val cityIdMap: Map[Long, String] = Map(5L -> "Leiden", 6L -> "Chicago")
+  // id -> name, for the cities that are a manufacturer's base city
+  val cityIdMap: Map[Long, String] =
+    fixtures.cities
+      .filter(c => fixtures.manufacturers.exists(_.baseCityId == c.id))
+      .map(c => c.id -> c.name)
+      .toMap
 
+  private val countryNameById: Map[Long, String] =
+    fixtures.countries.map(c => c.id -> c.name).toList.toMap
+
+  // city id -> country name, for the cities that are a manufacturer's base city
   val cityIdCountryMap: Map[Long, String] =
-    Map(5L -> "Netherlands", 6L -> "United States of America")
+    fixtures.cities
+      .filter(c => fixtures.manufacturers.exists(_.baseCityId == c.id))
+      .map(c => c.id -> countryNameById(c.countryId))
+      .toMap
 
   val newManufacturer: ManufacturerCreate = ManufacturerCreate("ADA", 1)
   val updatedName: String = "Aeronautical Agency"

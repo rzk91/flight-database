@@ -10,6 +10,7 @@ import flightdatabase.airline_airplane.AirlineAirplanePatch
 import flightdatabase.api.testutils.endpoints._
 import flightdatabase.partial.PartiallyAppliedGetAll
 import flightdatabase.partial.PartiallyAppliedGetBy
+import flightdatabase.test.fixtures
 import io.circe.Decoder
 import io.circe.Encoder
 import org.scalamock.function.StubFunction1
@@ -36,14 +37,7 @@ final class AirlineAirplaneEndpointsTest
   val createEncoder: Encoder[AirlineAirplaneCreate] = Encoder[AirlineAirplaneCreate]
   val patchEncoder: Encoder[AirlineAirplanePatch] = Encoder[AirlineAirplanePatch]
 
-  // Mirrors `originalAirlineAirplanes` in AirlineAirplaneRepositoryIT.
-  val samples: Nel[AirlineAirplane] = Nel.of(
-    AirlineAirplane(1, 1, 2),
-    AirlineAirplane(2, 1, 1),
-    AirlineAirplane(3, 1, 3),
-    AirlineAirplane(4, 2, 1),
-    AirlineAirplane(5, 2, 3)
-  )
+  val samples: Nel[AirlineAirplane] = fixtures.airlineAirplanes
 
   // Own fields are all Long.
   val fieldFixtures: List[FieldFixture[_]] = List(
