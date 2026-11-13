@@ -25,11 +25,11 @@ lazy val commonSettings = Seq(
 )
 
 val catsVersion = "2.13.0"
-val circeVersion = "0.14.16"
+val circeVersion = "0.14.17"
 val doobieVersion = "1.0.0-RC13"
-val http4sVersion = "0.23.35"
-val pureconfigVersion = "0.17.10"
-val flywayVersion = "12.10.0"
+val http4sVersion = "0.23.38"
+val pureconfigVersion = "0.17.11"
+val flywayVersion = "12.11.0"
 val scalaTestVersion = "3.2.20"
 val testcontainersVersion = "0.44.1"
 
@@ -70,7 +70,7 @@ val enumeratumDeps = Seq("com.beachape" %% "enumeratum" % "1.9.8")
 // (META-INF/resources/webjars/scalar/scalar.js), so no version needs threading into code.
 // Used purely as a webjar for that asset, not for its Java rendering API (which needs
 // jackson-databind at runtime; this project has none).
-val scalarApiReferenceVersion = "0.6.54"
+val scalarApiReferenceVersion = "0.6.87"
 val scalarApiReferenceDeps = Seq("com.scalar.maven" % "scalar-core" % scalarApiReferenceVersion)
 
 val pureconfigDeps = Seq(
@@ -100,7 +100,7 @@ val testkitDeps = catsCoreDeps ++ Seq(
 val testingDeps = Seq(
   "org.scalactic" %% "scalactic" % scalaTestVersion % Test,
   "org.scalatest" %% "scalatest" % scalaTestVersion % Test,
-  "org.scalamock" %% "scalamock" % "7.5.5"          % Test
+  "org.scalamock" %% "scalamock" % "7.6.3"          % Test
 )
 
 val itDeps = Seq(
